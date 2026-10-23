@@ -6,3 +6,5 @@ BimmerDaten/
 bimmercode_extracted/
 bimmercode_data/
 bimmerlink_extracted/
+.DS_Store
+*.DS_Store
