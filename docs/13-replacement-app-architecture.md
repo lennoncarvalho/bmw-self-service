@@ -2,6 +2,9 @@
 
 > **Date:** 2026-10-23
 > **Status:** Complete — all gaps resolved
+>
+> **Supported vehicles:** F-series, G-series, U-series, I-series (2011+).
+> **NOT supported:** E-series (E60-E93, pre-2011). These use K+DCAN USB, not ENET.
 
 ---
 

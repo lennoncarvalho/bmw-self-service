@@ -1,7 +1,7 @@
 # Phase 3: BimmerLink APK Analysis
 
 > **Date:** 2026-10-23
-> **Status:** Complete
+> **Status:** Complete. Diagnostics for F/G/U/I-series. E-series needs K+DCAN.
 > **Source:** `sources/BimmerLink_v2.36.1.apk` (SHA-256: `da6f5b39...`)
 > **Evidence IDs:** `ev_a31be9fb0a...`, `ev_667af965c2...`, `ev_00da08c1d3...`, `ev_51f4a3457b...`
 

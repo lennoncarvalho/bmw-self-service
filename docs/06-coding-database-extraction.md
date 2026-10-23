@@ -2,6 +2,7 @@
 
 > **Extracted:** 2026-10-23
 > **Database Version:** 24.11.3
+> **Scope:** F/G/U/I-series CAFD coding. E-series not supported.
 > **Source:** `sources/BimmerCode_v4.25.04-12743.apk`
 
 ---

@@ -2,6 +2,7 @@
 
 > **Date:** 2026-10-23
 > **Status:** Complete
+> **Scope:** F-series, G-series, U-series, I-series (2011+). E-series not supported.
 > **Sources:** Web research, ISO standards, BMW community documentation, BimmerGuide.de
 
 ---

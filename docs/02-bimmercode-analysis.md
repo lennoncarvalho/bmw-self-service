@@ -1,7 +1,7 @@
 # Phase 2: BimmerCode APK Analysis
 
 > **Date:** 2026-10-23
-> **Status:** Complete
+> **Status:** Complete. F/G/U/I-series coding only. E-series uses NCS Expert format.
 > **Source:** `sources/BimmerCode_v4.25.04-12743.apk` (SHA-256: `fc6eedeb...`)
 > **Evidence IDs:** `ev_f587d9d2ca...`, `ev_d9de4fce37...`, `ev_e18220e88c...`, `ev_c256453ae9...`, `ev_dd8637fcd5...`, `ev_8b4252608e...`
 

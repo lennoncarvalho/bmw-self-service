@@ -1,8 +1,7 @@
 # Phase 5: Complete Protocol Reference
 
 > **Date:** 2026-10-23
-> **Status:** Complete
-> **Sources:** All preceding phases, BimmerGuide.de, ISO standards, community documentation
+> **Status:** Complete. Covers F-series (HSFZ), G/U/I-series (DoIP). E-series excluded.
 
 ---
 
