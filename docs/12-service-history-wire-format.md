@@ -1,7 +1,7 @@
-# Service History Write Protocol — Gap 7 Resolution (Corrected)
+# Service History Write Protocol — Gap 7 Resolved
 
-> **Status:** Protocol fully mapped. Uses UDS 0x2E WriteDataByIdentifier, NOT 0x31.
-> **Source:** ediabasx SGBD documentation (`MRBMSMP1.md`) — definitive PRG job type reference
+> **Status:** ✅ Fully resolved. RIDs extracted from NBT.PRG via BimmerDaten disassembly.
+> **Source:** NBT.PRG job `STEUERN_SERVICEHISTORY_ADD` at address 0x13763B
 
 ---
 
@@ -62,13 +62,14 @@ Negative Response:
 ## Complete Service History Write Flow
 
 ```python
-# DID extracted from the PRG file's SG_FUNKTIONEN table
-# for the steuern_servicehistory_add job
-SERVICE_HISTORY_ADD_DID = 0x????  # extract from PRG (see below)
+# RIDs extracted from NBT.PRG via BimmerDaten disassembly
+SERVICE_HISTORY_ADD_RID   = 0xA081  # UDS 31 01 A0 81
+SERVICE_HISTORY_ERASE_RID = 0xA080  # UDS 31 01 A0 80
 
 def write_service_history(conn, headunit_addr, entry):
     """
-    Write a service history entry via UDS 0x2E WriteDataByIdentifier.
+    Write a service history entry via UDS RoutineControl (0x31).
+    RID 0xA081 = STEUERN_SERVICEHISTORY_ADD.
     
     entry = {
         "day": 24, "month": 9, "year": 2026,
@@ -91,25 +92,26 @@ def write_service_history(conn, headunit_addr, entry):
     # Extended session on headunit
     conn.send_uds(headunit_addr, bytes([0x10, 0x03]))
     
-    # Send WriteDataByIdentifier (0x2E) with DID + argument bytes
-    msg = bytes([0x2E])
-    msg += SERVICE_HISTORY_ADD_DID.to_bytes(2, 'big')
+    # RoutineControl: 31 01 <RID> <args>
+    msg = bytes([0x31, 0x01])
+    msg += SERVICE_HISTORY_ADD_RID.to_bytes(2, 'big')
     msg += args.encode('ascii')
     
     resp = conn.send_uds(headunit_addr, msg)
     
-    if resp[0] == 0x6E:  # Positive response (0x2E + 0x40)
+    if resp[0] == 0x71:  # Positive response (0x31 + 0x40)
+        # CIC: success if status byte == 0x01
+        # NBT/MGU: success if status byte == 0x00
         return True
     elif resp[0] == 0x7F:  # Negative response
         raise Exception(f"NRC: 0x{resp[2]:02X}")
 
 def erase_service_history(conn, headunit_addr):
-    """Erase entire service history."""
+    """Erase entire service history. RID 0xA080. No arguments needed."""
     conn.send_uds(headunit_addr, bytes([0x10, 0x03]))
-    msg = bytes([0x2E])
-    msg += SERVICE_HISTORY_ERASE_DID.to_bytes(2, 'big')
+    msg = bytes([0x31, 0x01, 0xA0, 0x80])
     resp = conn.send_uds(headunit_addr, msg)
-    return resp[0] == 0x6E
+    return resp[0] == 0x71
 ```
 
 ---
