@@ -1,6 +1,6 @@
 # DTC Description Database — Extraction & Integration
 
-> **Status:** Approach documented. Extraction script TBD.
+> **Status:** Approach documented. One-time data preparation task.
 
 ---
 
@@ -26,93 +26,136 @@ NBT.PRG alone has 120+ fault descriptions in its `FORTTEXTE` table:
 The PRG files are XOR-obfuscated with key `0xF7`. BimmerDaten's `decoderPrg.py`
 handles the decoding.
 
-## Extraction Script
+## One-Time Data Preparation
 
-Run once at build time — outputs a JSON file shipped with the app:
+This is a **one-time programming task**, not a build step. Run once to produce
+a static SQLite database that ships as an app asset. Never re-run during builds.
+
+**Output:** `dtc_descriptions.db` — shipped as a read-only app asset.
+
+## Extraction + Translation Script
+
+One-time run. Produces an indexed SQLite database. Commit the `.db` file — it's
+a static asset, like an image or font.
 
 ```python
 #!/usr/bin/env python3
-"""Extract DTC descriptions from all BMW PRG files."""
-import sys, json, glob, os
+"""One-time extraction: PRG files → SQLite DTC database."""
+import sys, sqlite3, os, glob
 sys.path.insert(0, 'BimmerDaten')
 from decoderPrg import parse_prg
 
-PRG_DIR = "C:/EDIABAS/Ecu"  # or wherever PRG files live
-OUTPUT  = "dtc_descriptions.json"
+PRG_DIR  = "C:/EDIABAS/Ecu"
+OUTPUT   = "dtc_descriptions.db"
 
-def extract_all():
-    db = {}
-    prg_files = glob.glob(os.path.join(PRG_DIR, "*.prg"))
+def extract_for_ech_prg(db_path: str, prg_dir: str):
+    """Parse all PRG files, write DTC entries to SQLite."""
+    conn = sqlite3.connect(db_path)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS dtc_descriptions (
+            code        TEXT PRIMARY KEY,   -- "B7F805"
+            text_de     TEXT NOT NULL,       -- original German
+            text_en     TEXT,                -- translated English
+            ecu         TEXT,                -- which ECU this came from
+            translated  INTEGER DEFAULT 0    -- 0=still German, 1=translated
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_code ON dtc_descriptions(code)")
     
-    for path in sorted(prg_files):
+    prg_files = sorted(glob.glob(os.path.join(prg_dir, "*.prg")))
+    
+    for path in prg_files:
         try:
             prg = parse_prg(path)
-            ecu = prg.info.ecu if hasattr(prg.info, 'ecu') else os.path.basename(path)
-            
-            for table in prg.tables:
-                if table.name in ("FORTTEXTE", "IORTTEXTE"):
-                    for row in table.rows:
-                        code = row.values[0]          # "0xB7F805"
-                        text = row.values[1]          # German description
-                        flag = row.values[2] if len(row.values) > 2 else "0"
-                        
-                        # Some entries are test/dummy — skip those
-                        if "Dummy" in text or "Test" in text:
-                            continue
-                        
-                        db[code] = {
-                            "text": text,
-                            "ecu": ecu,
-                            "lang": "de"
-                        }
-        except Exception as e:
-            print(f"  Skipping {os.path.basename(path)}: {e}", file=sys.stderr)
+        except Exception:
+            continue
+        
+        ecu = os.path.splitext(os.path.basename(path))[0]
+        
+        for table in prg.tables:
+            if table.name in ("FORTTEXTE", "IORTTEXTE"):
+                for row in table.rows:
+                    code = row.values[0]  # "0xB7F805"
+                    text = row.values[1]  # German description
+                    
+                    # Skip dummy/test entries
+                    if any(w in text.lower() for w in ('dummy', 'test', 'nicht definiert')):
+                        continue
+                    
+                    # Normalize code: "0xB7F805" -> "B7F805"
+                    code = code.replace("0x", "").replace("0X", "").upper()
+                    
+                    conn.execute(
+                        "INSERT OR IGNORE INTO dtc_descriptions(code, text_de, ecu) VALUES(?,?,?)",
+                        (code, text, ecu)
+                    )
     
-    print(f"Extracted {len(db)} DTC descriptions from {len(prg_files)} PRG files")
-    return db
+    count = conn.execute("SELECT COUNT(*) FROM dtc_descriptions").fetchone()[0]
+    conn.commit()
+    conn.close()
+    print(f"Extracted {count} DTC descriptions from {len(prg_files)} PRG files")
+    return count
 
 
-def translate_batch(db: dict) -> dict:
-    """Translate German descriptions to English using DeepL API."""
+def translate_german_to_english(db_path: str):
+    """Translate all German texts to English using DeepL."""
     import deepl
     
-    # Collect unique texts
-    texts = list(set(entry["text"] for entry in db.values()))
-    print(f"Translating {len(texts)} unique texts...")
+    conn = sqlite3.connect(db_path)
     
-    # DeepL batch translate (free tier: 500K chars/month)
+    # Get all untranslated texts
+    rows = conn.execute(
+        "SELECT code, text_de FROM dtc_descriptions WHERE translated = 0"
+    ).fetchall()
+    
+    if not rows:
+        print("All entries already translated.")
+        conn.close()
+        return
+    
+    print(f"Translating {len(rows)} entries via DeepL...")
     translator = deepl.Translator(os.environ["DEEPL_API_KEY"])
-    results = translator.translate_text(texts, source_lang="DE", target_lang="EN-US")
+    codes, texts = zip(*rows)
     
-    # Build translation map
-    de_to_en = {text: result.text for text, result in zip(texts, results)}
+    results = translator.translate_text(list(texts), source_lang="DE", target_lang="EN-US")
     
-    # Apply translations
-    for entry in db.values():
-        entry["text_en"] = de_to_en.get(entry["text"], entry["text"])
+    for code, result in zip(codes, results):
+        conn.execute(
+            "UPDATE dtc_descriptions SET text_en = ?, translated = 1 WHERE code = ?",
+            (result.text, code)
+        )
     
-    return db
+    conn.commit()
+    conn.close()
+    print(f"Translated {len(rows)} entries.")
 
 
 if __name__ == "__main__":
-    db = extract_all()
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument("--extract", action="store_true", help="Extract from PRG files")
+    p.add_argument("--translate", action="store_true", help="Translate DE→EN via DeepL")
+    p.add_argument("--prg-dir", default=PRG_DIR)
+    p.add_argument("--output", default=OUTPUT)
+    args = p.parse_args()
     
-    # Optionally translate (comment out to keep German)
-    # db = translate_batch(db)
+    if args.extract:
+        extract_for_ech_prg(args.output, args.prg_dir)
     
-    with open(OUTPUT, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=2)
+    if args.translate:
+        translate_german_to_english(args.output)
     
-    print(f"Written {OUTPUT}")
+    if not (args.extract or args.translate):
+        p.print_help()
 ```
 
 ## Offline Translation Alternative
 
-If no API key is available, use `argos-translate` for offline German→English:
+If no DeepL API key, use `argos-translate` for offline German→English:
 
 ```bash
 pip install argostranslate
-python -c "import argostranslate.package; argostranslate.package.install_from_path('translate-de_en-1_7.argosmodel')"
+python -m argostranslate.package install translate-de_en
 ```
 
 ```python
@@ -122,83 +165,83 @@ def translate_offline(text: str) -> str:
     return argostranslate.translate.translate(text, "de", "en")
 ```
 
-## Output Format
+## SQLite Schema
 
-```json
-{
-  "0xB7F805": {
-    "text": "Verbindung Head-Unit zum DAB L-Band Antennenfuß: Leitungsunterbrechung",
-    "text_en": "Head unit to DAB L-band antenna base: line disconnection",
-    "ecu": "NBT",
-    "lang": "de"
-  },
-  "0x026300": {
-    "text": "Energiesparmode aktiv",
-    "text_en": "Energy saving mode active",
-    "ecu": "HU_MGU",
-    "lang": "de"
-  }
-}
+```sql
+CREATE TABLE dtc_descriptions (
+    code        TEXT PRIMARY KEY,   -- "B7F805"
+    text_de     TEXT NOT NULL,      -- original German
+    text_en     TEXT,               -- translated English
+    ecu         TEXT,               -- ECU name (e.g. "NBT", "DME")
+    translated  INTEGER DEFAULT 0
+);
+CREATE INDEX idx_code ON dtc_descriptions(code);
 ```
 
 ## Runtime Integration
 
 ```python
-import json
+import sqlite3
 
 class DtcDatabase:
-    def __init__(self, path="dtc_descriptions.json"):
-        with open(path) as f:
-            self.bmw_db = json.load(f)
+    def __init__(self, db_path="assets/dtc_descriptions.db"):
+        # Read-only connection — no writes, thread-safe
+        self.conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     
-    def describe(self, code: str) -> str:
-        """Look up a DTC code. Returns description or None."""
-        # BMW hex DTCs from PRG
-        hex_key = f"0x{code.upper()}"
-        if hex_key in self.bmw_db:
-            entry = self.bmw_db[hex_key]
-            return entry.get("text_en") or entry["text"]
+    def describe(self, code: str) -> str | None:
+        """Look up a DTC code. O(1) indexed lookup."""
+        code = code.upper().replace("0X", "").replace("0x", "")
         
-        # Standard OBD-II P-codes (P0xxx-P3xxx)
+        # Try BMW database first
+        row = self.conn.execute(
+            "SELECT text_en, text_de FROM dtc_descriptions WHERE code = ?",
+            (code,)
+        ).fetchone()
+        
+        if row:
+            return row[0] or row[1]  # English if translated, else German
+        
+        # Fallback: standard OBD-II P-codes
         return self._obd2_lookup(code)
     
     def _obd2_lookup(self, code: str) -> str | None:
-        """Public domain OBD-II P-code descriptions."""
-        # Source: SAE J2012 / ISO 15031-6
-        OBD2_CODES = {
-            "P0100": "Mass or Volume Air Flow Circuit Malfunction",
-            "P0101": "Mass or Volume Air Flow Circuit Range/Performance Problem",
-            # ... full public domain database
-        }
-        return OBD2_CODES.get(code.upper())
+        return OBD2_CODES.get(code)  # public domain dict
 
 
-# Usage in diagnostics module
+# Usage — single connection, used everywhere
 dtc_db = DtcDatabase()
 
-def read_and_describe_dtcs(conn, ecu_addr: int) -> list:
-    """Read DTCs and return list of (code, status, description)."""
+def read_and_describe_dtcs(conn, ecu_addr: int) -> list[tuple]:
+    """Read DTCs and return (code, status, description, ecu)."""
     dtcs = []
-    
-    # Extended session
     conn.send_uds(ecu_addr, bytes([0x10, 0x03]))
-    
-    # Read DTCs by status mask
     resp = conn.send_uds(ecu_addr, bytes([0x19, 0x02, 0x08]))
     if resp[0] != 0x59:
         return dtcs
     
-    # Parse: skip header, each DTC is 4 bytes
     offset = 2
     while offset + 4 <= len(resp):
         code = resp[offset:offset+3].hex().upper()
         status = resp[offset+3]
-        desc = dtc_db.describe(code)
+        desc = dtc_db.describe(code) or "(no description)"
         dtcs.append((code, status, desc))
         offset += 4
     
     return dtcs
 ```
+
+## Why SQLite over JSON
+
+| Factor | SQLite | JSON |
+|--------|--------|------|
+| Lookup | O(1) indexed | O(n) scan or O(1) with full load into dict |
+| Memory | Queries on disk, no full load | Must load entire file into RAM |
+| Startup | Instant, no parsing | Must parse entire file |
+| Size | ~2-4 MB uncompressed | ~3-6 MB uncompressed |
+| Shipping | Single file, read-only mode | Single file |
+
+For ~20K entries, SQLite is measurably faster at cold start and uses zero
+heap for the database itself.
 
 ## DTC Code Format
 
