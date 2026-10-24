@@ -1,10 +1,33 @@
-bimmercode_extracted/
-bimmercode_data/
+# OS
+.DS_Store
+Thumbs.db
 
-ediabasx/
-BimmerDaten/
+# Extracted / build artifacts
 bimmercode_extracted/
 bimmercode_data/
 bimmerlink_extracted/
-.DS_Store
-*.DS_Store
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+
+# Cloned repos (reference only)
+ediabasx/
+BimmerDaten/
+
+# Large source binaries (extracted once, not needed in repo)
+sources/BimmerCode_v4.25.04-12743.apk
+sources/BimmerLink_v2.36.1.apk
+sources/SHM/
+
+# Redundant PRG files (all confirmed same RIDs, full set from BMW Std Tools)
+sources/CIC.PRG
+sources/NBTEVO.PRG
+sources/HU_MGU.PRG
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
