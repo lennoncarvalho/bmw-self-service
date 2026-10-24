@@ -7,7 +7,9 @@ Never part of the app build process.
 
 Usage:
     python3 extract_dtc.py --extract --prg-dir sources/Ecu
-    python3 extract_dtc.py --translate           # DeepL German→English
+    python3 extract_dtc.py --translate           # DeepL German→English (background task)
+    python3 extract_dtc.py --translate-offline   # argos-translate (background task)
+    python3 extract_dtc.py --stats               # show database stats
 """
 
 import sys, os, sqlite3, time, glob

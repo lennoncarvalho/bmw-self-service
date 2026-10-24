@@ -3,6 +3,7 @@
 > **Status:** Built. `dtc_descriptions.db` is a static app asset.
 > **Extraction date:** 2026-10-23
 > **Source:** 2,571 BMW PRG files from ISTA / Standard Tools
+> **Language:** German. English translation is a background task — see below.
 
 ---
 
@@ -64,13 +65,14 @@ CREATE INDEX idx_type ON dtc_descriptions(table_type);
 
 ## One-time extraction (already done)
 
-The extraction script is `extract_dtc.py` at the repo root. Run once — never part of the app build.
+The extraction script is `extract_dtc.py` at the repo root. It ran once to
+produce the database — never a build step, never blocks development.
 
 ```bash
 # Already run — produces dtc_descriptions.db
 python3 extract_dtc.py --extract --prg-dir sources/Ecu --workers 8
 
-# Future: translate German → English
+# Translation: fire-and-forget background task (see "English translation" below)
 python3 extract_dtc.py --translate         # DeepL (needs DEEPL_API_KEY)
 python3 extract_dtc.py --translate-offline # argos-translate (free, offline)
 
@@ -233,23 +235,38 @@ BMW diagnostic trouble codes from PRG files use a 6-digit hex format:
 When reading DTCs from the car via UDS 0x19, the response contains 3-byte
 DTC codes. These map directly to the PRG table indices.
 
-## English translation
+## English translation (background task — do not block main development)
 
-German descriptions are fully usable for diagnostics (the German terms are
-well-known in BMW circles: "Kurzschluss", "Leitungsunterbrechung", etc.).
+**The German database is fully usable as-is.** All BMW diagnostic terms
+("Kurzschluss", "Leitungsunterbrechung", "Überspannung") are well-known
+in automotive circles. English translation is a nice-to-have, not a blocker.
 
-To translate to English, run once:
+Translation runs as a **fire-and-forget background task** — start it in a
+separate session, walk away, come back to a translated `.db` to commit.
+It must never block, interrupt, or slow down main programming work.
+
+### How to run it
 
 ```bash
+# Fire and forget — runs in a sub-session or background shell.
+# 88K entries takes ~10–30 minutes depending on API rate limits.
+
 # Option A: DeepL (best quality for technical German)
-export DEEPL_API_KEY="your-free-key"
+export DEEPL_API_KEY="your-free-key"    # https://www.deepl.com/pro-api
 python3 extract_dtc.py --translate
 
-# Option B: argos-translate (free, offline)
+# Option B: argos-translate (free, offline, slower)
 pip install argostranslate
 python -m argostranslate.package install translate-de_en
 python3 extract_dtc.py --translate-offline
 ```
 
-Then commit the updated `.db` file. The app code above already handles both
-`text_de` and `text_en` columns — it falls back to German if English is NULL.
+After translation completes, commit the updated `.db` file. The `DtcDatabase`
+class already handles both columns — `text_en` if available, else `text_de`:
+
+```python
+# In DtcDatabase.describe():
+return row[0] or row[1]  # text_en if translated, else text_de
+```
+
+No code changes needed when the translated database lands.
