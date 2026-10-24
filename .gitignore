@@ -37,4 +37,6 @@ sources/Ecu/
 .idea/
 .vscode/
 *.swp
-*.swo
+*.swo*.db-shm
+*.db-wal
+1k
