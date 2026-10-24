@@ -1,233 +1,211 @@
-# DTC Description Database — Extraction & Integration
+# DTC Description Database
 
-> **Status:** Approach documented. One-time data preparation task.
+> **Status:** Built. `dtc_descriptions.db` is a static app asset.
+> **Extraction date:** 2026-10-23
+> **Source:** 2,571 BMW PRG files from ISTA / Standard Tools
 
 ---
 
-## Source: BMW PRG Files
+## What's in the database
 
-Every BMW PRG file contains embedded fault code description tables. For example,
-NBT.PRG alone has 120+ fault descriptions in its `FORTTEXTE` table:
+| Metric | Value |
+|--------|-------|
+| PRG files processed | 2,571 |
+| Files with fault data | 1,508 |
+| Raw entries extracted | 571,968 |
+| **Unique DTCs** | **88,580** |
+| Database size | 18.9 MB |
+| Language | German (English translation deferred) |
 
-| Code | German | English (translated) |
-|------|--------|---------------------|
-| `0xB7F805` | Verbindung Head-Unit zum DAB L-Band Antennenfuß: Leitungsunterbrechung | Head unit to DAB L-band antenna base: line disconnection |
-| `0xB7F807` | Verbindung Head-Unit zum DAB L-Band Antennenfuß: Kurzschluss | Head unit to DAB L-band antenna base: short circuit |
-| `0x026300` | Energiesparmode aktiv | Energy saving mode active |
-| `0xB7F815` | HDD Kartenmaterial: Installation oder Update nötig | HDD map data: installation or update required |
+## Table types
 
-## PRG Data Sources
-
-| Source | Files | Coverage |
-|--------|-------|----------|
-| BMW Standard Tools 2024 | `C:\EDIABAS\Ecu\*.prg` | ~2,110 PRG files, all ECUs, all models |
-| Motorcarsoft PRG Collection (2023) | ~2,000+ files | Same |
-
-The PRG files are XOR-obfuscated with key `0xF7`. BimmerDaten's `decoderPrg.py`
-handles the decoding.
-
-## One-Time Data Preparation
-
-This is a **one-time programming task**, not a build step. Run once to produce
-a static SQLite database that ships as an app asset. Never re-run during builds.
-
-**Output:** `dtc_descriptions.db` — shipped as a read-only app asset.
-
-## Extraction + Translation Script
-
-One-time run. Produces an indexed SQLite database. Commit the `.db` file — it's
-a static asset, like an image or font.
-
-```python
-#!/usr/bin/env python3
-"""One-time extraction: PRG files → SQLite DTC database."""
-import sys, sqlite3, os, glob
-sys.path.insert(0, 'BimmerDaten')
-from decoderPrg import parse_prg
-
-PRG_DIR  = "C:/EDIABAS/Ecu"
-OUTPUT   = "dtc_descriptions.db"
-
-def extract_for_ech_prg(db_path: str, prg_dir: str):
-    """Parse all PRG files, write DTC entries to SQLite."""
-    conn = sqlite3.connect(db_path)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS dtc_descriptions (
-            code        TEXT PRIMARY KEY,   -- "B7F805"
-            text_de     TEXT NOT NULL,       -- original German
-            text_en     TEXT,                -- translated English
-            ecu         TEXT,                -- which ECU this came from
-            translated  INTEGER DEFAULT 0    -- 0=still German, 1=translated
-        )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_code ON dtc_descriptions(code)")
-    
-    prg_files = sorted(glob.glob(os.path.join(prg_dir, "*.prg")))
-    
-    for path in prg_files:
-        try:
-            prg = parse_prg(path)
-        except Exception:
-            continue
-        
-        ecu = os.path.splitext(os.path.basename(path))[0]
-        
-        for table in prg.tables:
-            if table.name in ("FORTTEXTE", "IORTTEXTE"):
-                for row in table.rows:
-                    code = row.values[0]  # "0xB7F805"
-                    text = row.values[1]  # German description
-                    
-                    # Skip dummy/test entries
-                    if any(w in text.lower() for w in ('dummy', 'test', 'nicht definiert')):
-                        continue
-                    
-                    # Normalize code: "0xB7F805" -> "B7F805"
-                    code = code.replace("0x", "").replace("0X", "").upper()
-                    
-                    conn.execute(
-                        "INSERT OR IGNORE INTO dtc_descriptions(code, text_de, ecu) VALUES(?,?,?)",
-                        (code, text, ecu)
-                    )
-    
-    count = conn.execute("SELECT COUNT(*) FROM dtc_descriptions").fetchone()[0]
-    conn.commit()
-    conn.close()
-    print(f"Extracted {count} DTC descriptions from {len(prg_files)} PRG files")
-    return count
-
-
-def translate_german_to_english(db_path: str):
-    """Translate all German texts to English using DeepL."""
-    import deepl
-    
-    conn = sqlite3.connect(db_path)
-    
-    # Get all untranslated texts
-    rows = conn.execute(
-        "SELECT code, text_de FROM dtc_descriptions WHERE translated = 0"
-    ).fetchall()
-    
-    if not rows:
-        print("All entries already translated.")
-        conn.close()
-        return
-    
-    print(f"Translating {len(rows)} entries via DeepL...")
-    translator = deepl.Translator(os.environ["DEEPL_API_KEY"])
-    codes, texts = zip(*rows)
-    
-    results = translator.translate_text(list(texts), source_lang="DE", target_lang="EN-US")
-    
-    for code, result in zip(codes, results):
-        conn.execute(
-            "UPDATE dtc_descriptions SET text_en = ?, translated = 1 WHERE code = ?",
-            (result.text, code)
-        )
-    
-    conn.commit()
-    conn.close()
-    print(f"Translated {len(rows)} entries.")
-
-
-if __name__ == "__main__":
-    import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument("--extract", action="store_true", help="Extract from PRG files")
-    p.add_argument("--translate", action="store_true", help="Translate DE→EN via DeepL")
-    p.add_argument("--prg-dir", default=PRG_DIR)
-    p.add_argument("--output", default=OUTPUT)
-    args = p.parse_args()
-    
-    if args.extract:
-        extract_for_ech_prg(args.output, args.prg_dir)
-    
-    if args.translate:
-        translate_german_to_english(args.output)
-    
-    if not (args.extract or args.translate):
-        p.print_help()
+```
+FORTTEXTE          55,315    Fault location descriptions (primary)
+IORTTEXTE          16,091    International fault location variants
+PCODETEXTE          8,388    BMW code → OBD-II P-code mappings
+FUMWELTTEXTE        6,685    Environmental condition labels
+FARTTEXTEINDIVIDUELL 1,202   Individual fault type variants
+IUMWELTTEXTE          558    International environment labels
+FARTTEXTEERWEITERT    242    Extended fault type descriptions
+IARTTEXTEERWEITERT     38    International extended fault types
+FARTTEXTE              33    Fault type descriptions
+HORTTEXTE              27    Fault location aux descriptions
+POSWHEBELTEXTE          1    Position texts (gear lever)
 ```
 
-## Offline Translation Alternative
+## Example entries
 
-If no DeepL API key, use `argos-translate` for offline German→English:
+| Code | Table | ECU | Description |
+|------|-------|-----|-------------|
+| `B7F805` | FORTTEXTE | CHAMP2 | Verbindung Head-Unit zum DAB L-Band Antennenfuß: Leitungsunterbrechung |
+| `9D68` | FORTTEXTE | 01MRDWA | Bordnetz Überspannung |
+| `CD9427` | FORTTEXTE | D70BX7A0 | Botschaft (DT_GRDT, 0x1AF): Botschaft von Sende-Steuergerät nicht aktuell |
+| `8040BD` | FORTTEXTE | BDC | Klemme 30F Reset oder Abschaltung |
+| `44E3F1` | FORTTEXTE | GKEHY23 | Überwachung der Fahrdynamikregelung: Signal ungültig |
+| `01` | FARTTEXTE | (many) | Signal oder Wert oberhalb Schwelle |
+| `08` | FARTTEXTE | (many) | unplausibles Signal oder Wert |
+| `23` | FARTTEXTE | (many) | Fehler momentan vorhanden, OBD-entprellt |
 
-```bash
-pip install argostranslate
-python -m argostranslate.package install translate-de_en
-```
-
-```python
-import argostranslate.translate
-
-def translate_offline(text: str) -> str:
-    return argostranslate.translate.translate(text, "de", "en")
-```
-
-## SQLite Schema
+## Schema
 
 ```sql
 CREATE TABLE dtc_descriptions (
-    code        TEXT PRIMARY KEY,   -- "B7F805"
-    text_de     TEXT NOT NULL,      -- original German
-    text_en     TEXT,               -- translated English
-    ecu         TEXT,               -- ECU name (e.g. "NBT", "DME")
-    translated  INTEGER DEFAULT 0
+    code        TEXT NOT NULL,     -- hex code, e.g. "B7F805"
+    text_de     TEXT NOT NULL,     -- original German description
+    text_en     TEXT,              -- English translation (NULL until translated)
+    ecu         TEXT,              -- source ECU name
+    table_type  TEXT,              -- FORTTEXTE / FARTTEXTE / FEHLERKLASSE / ...
+    translated  INTEGER DEFAULT 0,
+    PRIMARY KEY (code, table_type)
 );
 CREATE INDEX idx_code ON dtc_descriptions(code);
+CREATE INDEX idx_type ON dtc_descriptions(table_type);
 ```
 
-## Runtime Integration
+## One-time extraction (already done)
+
+The extraction script is `extract_dtc.py` at the repo root. Run once — never part of the app build.
+
+```bash
+# Already run — produces dtc_descriptions.db
+python3 extract_dtc.py --extract --prg-dir sources/Ecu --workers 8
+
+# Future: translate German → English
+python3 extract_dtc.py --translate         # DeepL (needs DEEPL_API_KEY)
+python3 extract_dtc.py --translate-offline # argos-translate (free, offline)
+
+# Show stats
+python3 extract_dtc.py --stats
+```
+
+## Runtime integration
+
+The app ships `dtc_descriptions.db` as a read-only asset alongside images and fonts.
 
 ```python
 import sqlite3
 
 class DtcDatabase:
+    """Read-only, thread-safe DTC lookup. O(1) per code."""
+
     def __init__(self, db_path="assets/dtc_descriptions.db"):
-        # Read-only connection — no writes, thread-safe
         self.conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    
+
     def describe(self, code: str) -> str | None:
-        """Look up a DTC code. O(1) indexed lookup."""
+        """Look up a DTC code. Returns description or None."""
         code = code.upper().replace("0X", "").replace("0x", "")
-        
-        # Try BMW database first
+
+        # Try BMW database first (FORTTEXTE has priority via dedup)
         row = self.conn.execute(
-            "SELECT text_en, text_de FROM dtc_descriptions WHERE code = ?",
+            """SELECT text_en, text_de FROM dtc_descriptions
+               WHERE code = ? LIMIT 1""",
             (code,)
         ).fetchone()
-        
+
         if row:
             return row[0] or row[1]  # English if translated, else German
-        
-        # Fallback: standard OBD-II P-codes
+
+        # Fallback: standard OBD-II P-codes (P0xxx-P3xxx)
         return self._obd2_lookup(code)
-    
+
+    def describe_with_type(self, code: str) -> tuple | None:
+        """Return (description, fault_type_description) for rich display."""
+        code = code.upper().replace("0X", "").replace("0x", "")
+
+        # Main fault location description
+        row = self.conn.execute(
+            """SELECT text_en, text_de, ecu FROM dtc_descriptions
+               WHERE code = ? AND table_type = 'FORTTEXTE' LIMIT 1""",
+            (code,)
+        ).fetchone()
+
+        if not row:
+            row = self.conn.execute(
+                """SELECT text_en, text_de, ecu FROM dtc_descriptions
+                   WHERE code = ? LIMIT 1""",
+                (code,)
+            ).fetchone()
+
+        if not row:
+            return None
+
+        desc = row[0] or row[1]
+        ecu = row[2]
+        return (desc, ecu, None)  # type description can be joined later
+
+    def fault_type(self, type_code: str) -> str | None:
+        """Describe a fault type byte (from DTC status mask)."""
+        row = self.conn.execute(
+            """SELECT text_en, text_de FROM dtc_descriptions
+               WHERE code = ? AND table_type = 'FARTTEXTE' LIMIT 1""",
+            (type_code.upper(),)
+        ).fetchone()
+        if row:
+            return row[0] or row[1]
+        return None
+
     def _obd2_lookup(self, code: str) -> str | None:
-        return OBD2_CODES.get(code)  # public domain dict
+        """Public domain OBD-II P-code descriptions per SAE J2012."""
+        return OBD2_CODES.get(code)
 
 
-# Usage — single connection, used everywhere
+# Singleton — loaded once at app startup
 dtc_db = DtcDatabase()
 
-def read_and_describe_dtcs(conn, ecu_addr: int) -> list[tuple]:
-    """Read DTCs and return (code, status, description, ecu)."""
+
+def read_and_describe_dtcs(conn, ecu_addr: int) -> list[dict]:
+    """Read DTCs from an ECU and return rich descriptions.
+
+    Returns list of dicts:
+        {code, status_byte, status_text, description, ecu}
+    """
     dtcs = []
+
+    # Extended diagnostic session
     conn.send_uds(ecu_addr, bytes([0x10, 0x03]))
+
+    # Read DTCs by status mask (0x08 = confirmed)
     resp = conn.send_uds(ecu_addr, bytes([0x19, 0x02, 0x08]))
     if resp[0] != 0x59:
         return dtcs
-    
-    offset = 2
+
+    offset = 2  # skip 0x59 + status mask echo
     while offset + 4 <= len(resp):
-        code = resp[offset:offset+3].hex().upper()
-        status = resp[offset+3]
-        desc = dtc_db.describe(code) or "(no description)"
-        dtcs.append((code, status, desc))
+        code_hex = resp[offset:offset+3].hex().upper()
+        status_byte = resp[offset+3]
+
+        desc = dtc_db.describe(code_hex) or "(no description)"
+
+        dtcs.append({
+            "code": code_hex,
+            "status_byte": status_byte,
+            "description": desc,
+        })
         offset += 4
-    
+
     return dtcs
+
+
+# Standard OBD-II P-codes (public domain, SAE J2012 / ISO 15031-6)
+OBD2_CODES = {
+    "P0100": "Mass or Volume Air Flow Circuit Malfunction",
+    "P0101": "Mass or Volume Air Flow Circuit Range/Performance Problem",
+    "P0102": "Mass or Volume Air Flow Circuit Low Input",
+    "P0103": "Mass or Volume Air Flow Circuit High Input",
+    "P0104": "Mass or Volume Air Flow Circuit Intermittent",
+    # ... extend from public domain SAE J2012 table
+    "P0171": "System Too Lean (Bank 1)",
+    "P0172": "System Too Rich (Bank 1)",
+    "P0174": "System Too Lean (Bank 2)",
+    "P0175": "System Too Rich (Bank 2)",
+    "P0300": "Random/Multiple Cylinder Misfire Detected",
+    "P0301": "Cylinder 1 Misfire Detected",
+    "P0302": "Cylinder 2 Misfire Detected",
+    "P0303": "Cylinder 3 Misfire Detected",
+    "P0304": "Cylinder 4 Misfire Detected",
+    "P0420": "Catalyst System Efficiency Below Threshold (Bank 1)",
+    "P0430": "Catalyst System Efficiency Below Threshold (Bank 2)",
+}
 ```
 
 ## Why SQLite over JSON
@@ -237,11 +215,8 @@ def read_and_describe_dtcs(conn, ecu_addr: int) -> list[tuple]:
 | Lookup | O(1) indexed | O(n) scan or O(1) with full load into dict |
 | Memory | Queries on disk, no full load | Must load entire file into RAM |
 | Startup | Instant, no parsing | Must parse entire file |
-| Size | ~2-4 MB uncompressed | ~3-6 MB uncompressed |
-| Shipping | Single file, read-only mode | Single file |
-
-For ~20K entries, SQLite is measurably faster at cold start and uses zero
-heap for the database itself.
+| Size | 18.9 MB | ~25 MB equivalent JSON |
+| Thread safety | Read-only mode, concurrent reads | Needs locking |
 
 ## DTC Code Format
 
@@ -258,14 +233,23 @@ BMW diagnostic trouble codes from PRG files use a 6-digit hex format:
 When reading DTCs from the car via UDS 0x19, the response contains 3-byte
 DTC codes. These map directly to the PRG table indices.
 
-Standard OBD-II P-codes (P0xxx-P3xxx) use a different format and are
-covered by a public domain database per SAE J2012.
+## English translation
 
-## Estimated Size
+German descriptions are fully usable for diagnostics (the German terms are
+well-known in BMW circles: "Kurzschluss", "Leitungsunterbrechung", etc.).
 
-| PRG files | Unique DTCs | JSON size |
-|-----------|-------------|-----------|
-| ~2,000 | ~15,000-25,000 | ~2-4 MB (uncompressed) |
-| ~2,000 (translated) | ~15,000-25,000 | ~3-6 MB (uncompressed) |
+To translate to English, run once:
 
-Compress with gzip for distribution: ~500 KB-1 MB.
+```bash
+# Option A: DeepL (best quality for technical German)
+export DEEPL_API_KEY="your-free-key"
+python3 extract_dtc.py --translate
+
+# Option B: argos-translate (free, offline)
+pip install argostranslate
+python -m argostranslate.package install translate-de_en
+python3 extract_dtc.py --translate-offline
+```
+
+Then commit the updated `.db` file. The app code above already handles both
+`text_de` and `text_en` columns — it falls back to German if English is NULL.

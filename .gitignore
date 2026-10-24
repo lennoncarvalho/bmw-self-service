@@ -26,6 +26,13 @@ sources/CIC.PRG
 sources/NBTEVO.PRG
 sources/HU_MGU.PRG
 
+# PRG source files — extracted once into dtc_descriptions.db, not needed in repo
+sources/Ecu/
+
+# SKILL.md and other skill metadata (not project code)
+.codebuddy/
+SKILL.md
+
 # IDE
 .idea/
 .vscode/
