@@ -29,9 +29,9 @@ sources/HU_MGU.PRG
 # PRG source files — extracted once into dtc_descriptions.db, not needed in repo
 sources/Ecu/
 
-# SKILL.md and other skill metadata (not project code)
-.codebuddy/
-SKILL.md
+# Translation checkpoint (resumable)
+.dtc_translate_checkpoint
+.dtc_translate_checkpoint.tmp
 
 # IDE
 .idea/

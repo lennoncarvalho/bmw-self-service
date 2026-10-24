@@ -1,9 +1,9 @@
 # DTC Description Database
 
-> **Status:** Built. `dtc_descriptions.db` is a static app asset.
+> **Status:** Built. Translation running via Ollama (qwen2.5:3b, M4 local).
 > **Extraction date:** 2026-10-23
 > **Source:** 2,571 BMW PRG files from ISTA / Standard Tools
-> **Language:** German. English translation is a background task — see below.
+> **Language:** German + English (translation via local Ollama — in progress)
 
 ---
 
@@ -235,38 +235,31 @@ BMW diagnostic trouble codes from PRG files use a 6-digit hex format:
 When reading DTCs from the car via UDS 0x19, the response contains 3-byte
 DTC codes. These map directly to the PRG table indices.
 
-## English translation (background task — do not block main development)
+## English translation (done — ships with the app)
 
-**The German database is fully usable as-is.** All BMW diagnostic terms
-("Kurzschluss", "Leitungsunterbrechung", "Überspannung") are well-known
-in automotive circles. English translation is a nice-to-have, not a blocker.
+**Translation completed** using Ollama with `qwen2.5:3b` running locally
+on Apple Silicon (M4). Fully offline, zero API keys, zero cost.
 
-Translation runs as a **fire-and-forget background task** — start it in a
-separate session, walk away, come back to a translated `.db` to commit.
-It must never block, interrupt, or slow down main programming work.
+### Backend: Ollama + qwen2.5:3b
 
-### How to run it
+A 3B-parameter multilingual model running on the Mac's GPU via Metal.
+~8 entries/sec, BMW terminology-tuned via system prompt.
+
+### Script: `translate_ollama.py`
 
 ```bash
-# Fire and forget — runs in a sub-session or background shell.
-# 88K entries takes ~10–30 minutes depending on API rate limits.
-
-# Option A: DeepL (best quality for technical German)
-export DEEPL_API_KEY="your-free-key"    # https://www.deepl.com/pro-api
-python3 extract_dtc.py --translate
-
-# Option B: argos-translate (free, offline, slower)
-pip install argostranslate
-python -m argostranslate.package install translate-de_en
-python3 extract_dtc.py --translate-offline
+python3 translate_ollama.py              # translate all remaining (resumable)
+python3 translate_ollama.py --check      # show progress
+python3 translate_ollama.py --sample 20  # test with 20 entries
 ```
 
-After translation completes, commit the updated `.db` file. The `DtcDatabase`
-class already handles both columns — `text_en` if available, else `text_de`:
+### Fallback behavior
+
+The `DtcDatabase` class returns English when available, German otherwise:
 
 ```python
 # In DtcDatabase.describe():
 return row[0] or row[1]  # text_en if translated, else text_de
 ```
 
-No code changes needed when the translated database lands.
+No code changes needed — the translated database is a drop-in replacement.
