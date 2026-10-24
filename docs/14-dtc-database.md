@@ -1,9 +1,10 @@
 # DTC Description Database
 
-> **Status:** Built. Translation running via Ollama (qwen2.5:3b, M4 local).
+> **Status:** Complete. `dtc_descriptions.db` ships as a static app asset.
 > **Extraction date:** 2026-10-23
+> **Translation date:** 2026-10-24
 > **Source:** 2,571 BMW PRG files from ISTA / Standard Tools
-> **Language:** German + English (translation via local Ollama — in progress)
+> **Language:** German + English (71,439 entries translated via Ollama/qwen2.5:3b on M4)
 
 ---
 
