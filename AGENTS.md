@@ -63,11 +63,13 @@ conflict, the doc wins. If the doc is unclear, ask before coding.
 
 ## Skills to load
 
-When starting a development session, load these skills:
+When starting a development session, load these skills in order:
 
-### Always load
-- **`dan-best-practices`** — verification discipline, scope hygiene, test policy.
-  Load first. Governs all other work.
+### Always load (every session)
+1. **`dan-best-practices`** — verification discipline, scope hygiene, test policy.
+   Governs all other work.
+2. **`spec-driven-development`** — structured spec → plan → implement → verify
+   workflow. Writes specs before any code touches disk.
 
 ### Load by task
 
