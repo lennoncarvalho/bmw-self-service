@@ -1,0 +1,86 @@
+{
+  "vehicle": {
+    "vin": "4A60355",
+    "model": "F48 X1 sDrive20i X-line",
+    "market": "Brazil",
+    "engine": "B48 flex fuel",
+    "series": "F48",
+    "production_date": "2017-03-01",
+    "model_year": 2018,
+    "mileage_km": 66000,
+    "headunit": "NBT",
+    "headunit_addr": "0x63",
+    "protocol": "HSFZ"
+  },
+  "dtcs": [
+    {
+      "code": "118001",
+      "description": "Upstream O2 sensor open circuit (approximate — exact code not retained)",
+      "status": "confirmed"
+    }
+  ],
+  "service_history": [
+    {
+      "date": "2022-08-03",
+      "mileage_km": 26126,
+      "items": ["Spark plugs replaced"]
+    },
+    {
+      "date": "2024-09-06",
+      "mileage_km": null,
+      "items": [
+        "Motul LL-01 5W-40 engine oil",
+        "Genuine oil filter",
+        "Ceratec additive",
+        "Engine flush",
+        "Engine air filter",
+        "Cabin filter",
+        "A/C sanitization",
+        "Brake fluid DOT 4 LV",
+        "Automatic transmission fluid (10 L machine exchange)"
+      ]
+    },
+    {
+      "date": "2024-12-16",
+      "mileage_km": null,
+      "items": ["BMW coolant replaced"]
+    },
+    {
+      "date": "2025-09-10",
+      "mileage_km": null,
+      "items": ["Motul LL-01 5W-40 engine oil", "Genuine oil filter"]
+    },
+    {
+      "date": "2026-09-01",
+      "mileage_km": 64000,
+      "items": ["Brake fluid change"]
+    },
+    {
+      "date": "2026-10-01",
+      "mileage_km": 66000,
+      "items": [
+        "Front shock absorbers",
+        "Rear shock absorbers",
+        "Upper mounts and bearings",
+        "Front lower control arms",
+        "Front sway bar links",
+        "Rear mounts and bump stops",
+        "Four-wheel alignment"
+      ]
+    }
+  ],
+  "svt_ecus": [
+    {"name": "DME", "description": "Digital Motor Electronics", "addr": "0x12"},
+    {"name": "EGS", "description": "Electronic Transmission Control", "addr": "0x18"},
+    {"name": "ZGW", "description": "Central Gateway", "addr": "0x10"},
+    {"name": "FEM_01", "description": "Front Electronic Module", "addr": "0x40"},
+    {"name": "REM_01", "description": "Rear Electronic Module", "addr": "0x50"},
+    {"name": "KOMBI", "description": "Instrument Cluster", "addr": "0x60"},
+    {"name": "HU_NBT", "description": "Headunit NBT", "addr": "0x63"},
+    {"name": "IHKA", "description": "Climate Control", "addr": "0x78"},
+    {"name": "ASD_01", "description": "Active Sound Design", "addr": "0x72"},
+    {"name": "PMA_PDC", "description": "Park Distance Control", "addr": "0x44"},
+    {"name": "ACSM", "description": "Airbag Control Unit", "addr": "0x56"},
+    {"name": "DSC", "description": "Dynamic Stability Control", "addr": "0x29"}
+  ]
+}
