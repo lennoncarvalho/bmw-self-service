@@ -7,15 +7,12 @@ Reference: docs/16-ui-spec.md Screen 4
 """
 
 import logging
-from typing import Optional
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -26,7 +23,7 @@ logger = logging.getLogger(__name__)
 class VehiclePage(QWidget):
     """Dashboard showing vehicle identity, mileage, battery, and ECU list."""
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._setup_ui()
 
@@ -92,7 +89,7 @@ class VehiclePage(QWidget):
         scroll.setWidget(self.ecu_container)
         layout.addWidget(scroll, stretch=1)
 
-    def load_data(self, connection) -> None:
+    def load_data(self, connection, series: str = "") -> None:
         """Populate the dashboard with vehicle data from the connection.
 
         For mock connections, reads from MockConnection.data.
@@ -115,29 +112,47 @@ class VehiclePage(QWidget):
             self.prod_date_label.setText(
                 f"Production Date: {vehicle.get('production_date', 'Unknown')}"
             )
-            self.ilevel_label.setText(
-                f"Engine: {vehicle.get('engine', 'Unknown')}"
-            )
-            self.battery_label.setText(
-                f"Market: {vehicle.get('market', 'Unknown')}  |  "
-                f"Headunit: {vehicle.get('headunit', 'Unknown')}"
-            )
+
+            # Read I-Level from MockConnection's canned response for 0xF18A
+            try:
+                resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]))
+                if resp[0] == 0x62:
+                    ilevel = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
+                    self.ilevel_label.setText(f"I-Level: {ilevel}")
+                else:
+                    self.ilevel_label.setText("I-Level: unavailable")
+            except Exception:
+                self.ilevel_label.setText("I-Level: unavailable")
+
+            # Read battery voltage from MockConnection's response for 0xF40C
+            try:
+                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x0C]))
+                if resp[0] == 0x62 and len(resp) >= 5:
+                    voltage_raw = int.from_bytes(resp[3:5], "big")
+                    voltage = voltage_raw / 10.0
+                    self.battery_label.setText(f"Battery: {voltage:.1f}V")
+                else:
+                    self.battery_label.setText("Battery: unavailable")
+            except Exception:
+                self.battery_label.setText("Battery: unavailable")
+
             self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")
             self._populate_ecus(ecus)
             return
 
         # Real connection: read via UDS
         try:
-            self._load_from_car(connection)
+            self._load_from_car(connection, series)
         except Exception as e:
             logger.warning("Failed to read vehicle data from car: %s", e)
             self.model_label.setText("Vehicle data unavailable")
             self.vin_label.setText("Could not read from ECU")
 
-    def _load_from_car(self, connection) -> None:
+    def _load_from_car(self, connection, series: str = "") -> None:
         """Read vehicle information via UDS 0x22 from the car."""
+        model_map = {"F": "F-series", "G": "G-series", "U": "U-series", "I": "I-series"}
+        model = model_map.get(series, "BMW")
         vin = "Unknown"
-        model = "Unknown"
         ilevel = "Unknown"
         mileage = "Unknown"
         ecus = []
@@ -170,11 +185,19 @@ class VehiclePage(QWidget):
 
     def _populate_ecus(self, ecus: list) -> None:
         """Fill the ECU list with name + description tags."""
-        # Clear existing
-        for i in reversed(range(self.ecu_layout.count())):
-            widget = self.ecu_layout.itemAt(i).widget()
-            if widget:
-                widget.deleteLater()
+        # Clear existing layouts and widgets recursively
+        while self.ecu_layout.count():
+            item = self.ecu_layout.takeAt(0)
+            if item is None:
+                continue
+            child = item.widget()
+            if child is not None:
+                child.deleteLater()
+            else:
+                # It's a layout — recursively clean up
+                child_layout = item.layout()
+                if child_layout is not None:
+                    self._clear_layout(child_layout)
 
         if not ecus:
             empty = QLabel("No ECU data available")
@@ -211,3 +234,18 @@ class VehiclePage(QWidget):
             self.ecu_layout.addLayout(row_layout)
 
         self.ecu_layout.addStretch()
+
+    @staticmethod
+    def _clear_layout(layout) -> None:
+        """Recursively remove and destroy all widgets in a layout."""
+        while layout.count():
+            item = layout.takeAt(0)
+            if item is None:
+                continue
+            child = item.widget()
+            if child is not None:
+                child.deleteLater()
+            else:
+                child_layout = item.layout()
+                if child_layout is not None:
+                    VehiclePage._clear_layout(child_layout)
