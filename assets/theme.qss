@@ -1,0 +1,370 @@
+/* BMW Diagnostic Tool — Dark Theme
+ *
+ * Colors:
+ *   Background:    #1a1a2e (dark navy)
+ *   Surface:       #16213e (slightly lighter card bg)
+ *   Primary:       #1C69D4 (BMW blue)
+ *   Primary hover: #0653B6 (BMW dark blue)
+ *   Danger:        #E30B1F (BMW red)
+ *   Text primary:  #e0e0e0
+ *   Text secondary:#a0a0a0
+ *   Border:        #2a2a4a
+ *   Success:       #2ECC71
+ *   Warning:       #F39C12
+ *
+ * Style: rounded corners (8px), dark palette, high contrast.
+ */
+
+/* ── Global ─────────────────────────────────────────────────────────────── */
+
+QMainWindow {
+    background-color: #1a1a2e;
+}
+
+QWidget {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+
+/* ── Labels ──────────────────────────────────────────────────────────── */
+
+QLabel {
+    color: #e0e0e0;
+    background: transparent;
+    border: none;
+}
+
+QLabel#titleLabel {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+QLabel#subtitleLabel {
+    font-size: 16px;
+    color: #a0a0a0;
+}
+
+QLabel#statusDot {
+    font-size: 14px;
+    min-width: 20px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+
+QPushButton {
+    background-color: #1C69D4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+QPushButton:hover {
+    background-color: #0653B6;
+}
+
+QPushButton:pressed {
+    background-color: #0442A0;
+}
+
+QPushButton:disabled {
+    background-color: #3a3a5a;
+    color: #888888;
+}
+
+QPushButton#connectButton {
+    font-size: 18px;
+    padding: 16px 48px;
+    border-radius: 12px;
+    min-height: 48px;
+}
+
+QPushButton#dangerButton {
+    background-color: #E30B1F;
+}
+
+QPushButton#dangerButton:hover {
+    background-color: #C40A1A;
+}
+
+QPushButton#successButton {
+    background-color: #2ECC71;
+}
+
+QPushButton#successButton:hover {
+    background-color: #27AE60;
+}
+
+/* ── Navigation Buttons (Bottom Bar) ──────────────────────────────── */
+
+QPushButton#navButton {
+    background-color: transparent;
+    color: #a0a0a0;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 11px;
+    min-height: 52px;
+}
+
+QPushButton#navButton:checked {
+    color: #1C69D4;
+    background-color: rgba(28, 105, 212, 0.12);
+}
+
+QPushButton#navButton:hover:!checked {
+    color: #d0d0d0;
+}
+
+QPushButton#navButton:disabled {
+    color: #555555;
+    background-color: transparent;
+}
+
+/* ── Scroll Areas ────────────────────────────────────────────────── */
+
+QScrollArea {
+    background-color: #1a1a2e;
+    border: none;
+}
+
+QScrollBar:vertical {
+    background-color: #1a1a2e;
+    width: 8px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #3a3a5a;
+    border-radius: 4px;
+    min-height: 30 px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #4a4a6a;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar:horizontal {
+    background-color: #1a1a2e;
+    height: 8px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #3a3a5a;
+    border-radius: 4px;
+    min-width: 30px;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+
+QFrame#card {
+    background-color: #16213e;
+    border: 1px solid #2a2a4a;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+QFrame#card:hover {
+    border-color: #1C69D4;
+}
+
+/* ── Top Bar ──────────────────────────────────────────────────────────── */
+
+QFrame#topBar {
+    background-color: #0f0f23;
+    border-bottom: 1px solid #2a2a4a;
+    min-height: 48px;
+    max-height: 48 px;
+}
+
+/* ── Bottom Nav Bar ─────────────────────────────────────────────── */
+
+QFrame#bottomNav {
+    background-color: #0f0f23;
+    border-top: 1px solid #2a2a4a;
+    min-height: 68 px;
+    max-height: 68px;
+}
+
+/* ── Comobox (Series/Interface Pickers) ─────────────────────────── */
+
+QComboBox {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1 px solid #2a2a4a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-height: 24px;
+}
+
+QComboBox:hover {
+    border-color: #1C69D4;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1px solid #2a2a4a;
+    selection-background-color: #1C69D4;
+}
+
+/* ── Mens ──────────────────────────────────────────────────────────── */
+
+QMenu {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1px solid #2a2a4a;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QMenu::item {
+    padding: 8px 24px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background-color: #1C69D4;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #2a2a4a;
+    margin: 4px 8px;
+}
+
+QMenu::indicator {
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+}
+
+/* ── Tooltips ─────────────────────────────────────────────────────── */
+
+QToolTip {
+    background-color: #0f0f23;
+    color: #e0e0e0;
+    border: 1px solid #2a2a4a;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* ── Spinner Overlay ──────────────────────────────────────────────── */
+
+QFrame#spinnerOverlay {
+    background-color: rgba(26, 26, 46, 0.85);
+    border-radius: 12px;
+}
+
+QLabel#spinnerText {
+    color: #e0e0e0;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* ── Dialog ────────────────────────────────────────────────────────── */
+
+QDialog {
+    background-color: #1a1a2e;
+}
+
+/* ── Checkox ──────────────────────────────────────────────────────── */
+
+QCheckBox {
+    color: #e0e0e0;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #3a3a5a;
+    border-radius: 4px;
+    background-color: #16213e;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #1C69D4;
+    border-color: #1C69D4;
+}
+
+/* ── Radio Button ──────────────────────────────────────────────────── */
+
+QRadioButton {
+    color: #e0e0e0;
+    spacing: 8px;
+}
+
+QRadioButton::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #3a3a5a;
+    border-radius: 9px;
+    background-color: #16213e;
+}
+
+QRadioButton::indicator:checked {
+    background-color: #1C69D4;
+    border-color: #1C69D4;
+}
+
+/* ── Line Edit / Text Input ─────────────────────────────────────────── */
+
+QLineEdit {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1px solid #2a2a4a;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+QLineEdit:focus {
+    border-color: #1C69D4;
+}
+
+/* ── SpinBox ────────────────────────────────────────────────────────── */
+
+QSpinBox {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1px solid #2a2a4a;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+QSpinBox::up-button, QSpinBox::down-button {
+    border: none;
+    background: transparent;
+    width: 20px;
+}
+
+/* ── DateEdit ────────────────────────────────────────────────────────── */
+
+QDateEdit {
+    background-color: #16213e;
+    color: #e0e0e0;
+    border: 1 px solid #2a2a4a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-height: 24px;
+}
