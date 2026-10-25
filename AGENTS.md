@@ -1,4 +1,4 @@
-# BMW Diagnostic Tool — AGENTS.md
+# BMW Self Service — AGENTS.md
 
 > OpenCode project configuration. Read automatically at session start.
 > Compatible with OpenCode, Claude Code, and Codex.
@@ -7,7 +7,7 @@
 
 ## Project identity
 
-**BMW Diagnostic Tool** — cross-platform desktop app for BMW diagnostics,
+**BMW Self Service** — cross-platform desktop app for BMW diagnostics,
 coding, and service history via ENET cable (F/G/U/I-series, 2011+).
 
 - **Language:** Python 3.13
@@ -124,14 +124,14 @@ When starting a development session, load these skills in order:
 
 ```bash
 # macOS
-pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
+pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "dtc_descriptions.db:." \
     --add-data "coding_data:coding_data" \
     --osx-bundle-identifier "com.bmwtool.app" \
     main.py
 
 # Windows
-pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
+pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "dtc_descriptions.db;." \
     --add-data "bimmercode_data;bimmercode_data" \
     main.py

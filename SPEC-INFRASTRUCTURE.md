@@ -1,7 +1,7 @@
 # Spec: Infrastructure Layer
 
 > **Phase 1 — Specify.** Reviewed by human before any code.
-> Part of: BMW Diagnostic Tool (`CAPABILITY-MAP.md`)
+> Part of: BMW Self Service (`CAPABILITY-MAP.md`)
 
 ---
 
@@ -68,7 +68,7 @@ pip install netifaces==0.11.0
 python main.py
 
 # Build distributable
-pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
+pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "dtc_descriptions.db:." \
     --add-data "coding_data:coding_data" \
     --add-data "assets/theme.qss:assets" \

@@ -1,4 +1,4 @@
-# BMW Diagnostic Tool
+# BMW Self Service
 
 Cross-platform desktop app for BMW diagnostics, coding, and service history via ENET cable. Supports F/G/U/I-series vehicles (2011+).
 
@@ -12,8 +12,8 @@ Cross-platform desktop app for BMW diagnostics, coding, and service history via 
 
 ```bash
 # Clone and enter the project
-git clone <repo-url> bmw-tool
-cd bmw-tool
+git clone https://github.com/lennoncarvalho/bmw-self-service.git
+cd bmw-self-service
 
 # Create virtual environment
 python3 -m venv .venv
@@ -74,7 +74,7 @@ pytest tests/ -v
 
 ```bash
 # macOS
-pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
+pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "assets/dtc_descriptions.db:assets" \
     --add-data "assets/theme.qss:assets" \
     --add-data "coding_data:coding_data" \
@@ -82,7 +82,7 @@ pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
     main.py
 
 # Windows
-pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
+pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "assets/dtc_descriptions.db;assets" \
     --add-data "assets/theme.qss;assets" \
     --add-data "coding_data;coding_data" \

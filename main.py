@@ -1,4 +1,4 @@
-"""BMW Diagnostic Tool — entry point.
+"""BMW Self Service — entry point.
 
 Cross-platform desktop app for BMW diagnostics, coding, and service history
 via ENET cable (F/G/U/I-series, 2011+).
@@ -52,12 +52,12 @@ def setup_logging() -> None:
 
 
 def main() -> None:
-    """Launch the BMW Diagnostic Tool application."""
+    """Launch the BMW Self Service application."""
     setup_logging()
 
     app = QApplication(sys.argv)
-    app.setApplicationName("BMW Diagnostic Tool")
-    app.setOrganizationName("BMWTool")
+    app.setApplicationName("BMW Self Service")
+    app.setOrganizationName("BMWSelfService")
 
     apply_theme(app)
 

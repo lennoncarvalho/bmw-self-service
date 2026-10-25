@@ -1,4 +1,4 @@
-"""Main window shell for BMW Diagnostic Tool.
+"""Main window shell for BMW Self Service.
 
 Single QMainWindow + QStackedWidget architecture.
 Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
@@ -35,7 +35,7 @@ CLIPBOARD_ICON = chr(0x1F4CB)
 
 
 class MainWindow(QMainWindow):
-    """Main application window for the BMW Diagnostic Tool."""
+    """Main application window for the BMW Self Service."""
 
     NAV_ITEMS = [
         ("Vehicle", HOME_ICON),
@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("BMW Diagnostic Tool")
+        self.setWindowTitle("BMW Self Service")
         self.setMinimumSize(800, 600)
         self._demo_mode = False
         self._connection: Optional[object] = None
@@ -119,9 +119,17 @@ class MainWindow(QMainWindow):
         gear_btn = QPushButton(GEAR_ICON)
         gear_btn.setFixedSize(36, 36)
         gear_btn.setStyleSheet(
-            "QPushButton { background: transparent; border: none; "
-            "font-size: 20px; color: #a0a0a0; border-radius: 18px; }"
-            "QPushButton:hover { background: #2a2a4a; }"
+            "QPushButton {"
+            "  background: rgba(255,255,255,0.08);"
+            "  border: none;"
+            "  font-size: 18px;"
+            "  color: #c0c0d0;"
+            "  border-radius: 18px;"
+            "}"
+            "QPushButton:hover {"
+            "  background: rgba(255,255,255,0.15);"
+            "  color: #ffffff;"
+            "}"
         )
         gear_btn.clicked.connect(self._show_gear_menu)
         layout.addWidget(gear_btn)
@@ -486,7 +494,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About",
-            "BMW Diagnostic Tool\nVersion 1.0.0\n\n"
+            "BMW Self Service\nVersion 1.0.0\n\n"
             "Built with Python, PySide6, and a lot of hard work.\n\n"
             "Compatible with BMW F, G, U, I series (2011+).\n"
             "ENET cable required.\n\n"

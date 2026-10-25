@@ -1,4 +1,4 @@
-# New Session Prompt — BMW Diagnostic Tool Implementation
+# New Session Prompt — BMW Self Service Implementation
 
 Copy this entire block into a new session. It contains everything needed to start building.
 

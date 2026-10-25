@@ -65,7 +65,7 @@ class WelcomePage(QWidget):
         layout.addSpacing(8)
 
         # Title
-        title = QLabel("BMW Diagnostic Tool")
+        title = QLabel("BMW Self Service")
         title.setObjectName("titleLabel")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)

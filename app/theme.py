@@ -1,4 +1,4 @@
-"""Dark theme loader for the BMW Diagnostic Tool.
+"""Dark theme loader for the BMW Self Service.
 
 Loads QSS from assets/theme.qss and applies it to a QApplication.
 Also provides color constants for use in Python code when QSS is insufficient.

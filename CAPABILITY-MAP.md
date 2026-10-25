@@ -1,4 +1,4 @@
-# Capability Map: BMW Diagnostic Tool
+# Capability Map: BMW Self Service
 
 > Phase 0 Scope Check.
 > This is a **single desktop app** — one window, one connection, one theme.

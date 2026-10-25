@@ -2,32 +2,33 @@
 .DS_Store
 Thumbs.db
 
-# Extracted / build artifacts
-bimmercode_extracted/
-bimmercode_data/
-bimmerlink_extracted/
-node_modules/
-dist/
-build/
+# Python virtual environment
+.venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 
-# Cloned repos (reference only)
-ediabasx/
+# Build artifacts
+dist/
+build/
+*.spec
+
+# Reverse-engineered sources — not shipped, not committed
+sources/
 BimmerDaten/
+ediabasx/
 
-# Large source binaries (extracted once, not needed in repo)
-sources/BimmerCode_v4.25.04-12743.apk
-sources/BimmerLink_v2.36.1.apk
-sources/SHM/
+# Extracted data — kept locally, not in repo
+bimmercode_extracted/
+bimmerlink_extracted/
+bimmercode_data/
 
-# Redundant PRG files (all confirmed same RIDs, full set from BMW Std Tools)
-sources/CIC.PRG
-sources/NBTEVO.PRG
-sources/HU_MGU.PRG
+# Cloned repos (reference only, not shipped)
+node_modules/
 
-# PRG source files — extracted once into dtc_descriptions.db, not needed in repo
-sources/Ecu/
+# SQLite WAL / SHM files (from read-only connections)
+*.db-shm
+*.db-wal
 
 # Translation checkpoint (resumable)
 .dtc_translate_checkpoint
@@ -37,6 +38,7 @@ sources/Ecu/
 .idea/
 .vscode/
 *.swp
-*.swo*.db-shm
-*.db-wal
-1k
+*.swo
+
+# Logs
+*.log
