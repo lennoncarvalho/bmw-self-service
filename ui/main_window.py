@@ -281,16 +281,24 @@ class MainWindow(QMainWindow):
         self._async_connect(do_connect, series)
 
     def _connect_real(self, series: str, interface: str) -> None:
+        logger.info(
+            "Connecting: series=%s interface=%s proto=%s",
+            series, interface,
+            {chr(70): "HSFZ", chr(71): "DoIP", chr(85): "DoIP", chr(73): "DoIP"}.get(series, "?"),
+        )
         self.show_spinner(f"Searching for vehicle on {interface}...")
 
         def do_connect():
             from app.connection import discover_zgw
 
+            logger.debug("Step 1: UDP discovery on %s", interface)
             info = discover_zgw(interface, timeout=5.0)
 
             if info is None:
+                logger.warning("Discovery failed, trying DHCP fallback")
                 from app.connection import start_dhcp_server
                 if start_dhcp_server(interface):
+                    logger.debug("DHCP server started, waiting 10s")
                     import time
                     time.sleep(10)
                     info = discover_zgw(interface, timeout=5.0)
@@ -300,6 +308,7 @@ class MainWindow(QMainWindow):
                             "and ensure ignition is on."
                         )
                 else:
+                    logger.debug("DHCP denied, waiting 20s for APIPA")
                     import time
                     time.sleep(20)
                     info = discover_zgw(interface, timeout=5.0)
@@ -311,6 +320,7 @@ class MainWindow(QMainWindow):
                         )
 
             host = info["ip"]
+            logger.info("Step 2: TCP connect to %s", host)
             if series == "F":
                 conn = HSFZConnection(host)
             else:
@@ -321,6 +331,7 @@ class MainWindow(QMainWindow):
                     "Failed to connect to vehicle at " + host
                 )
 
+            logger.info("Step 3: reading vehicle identity")
             return conn
 
         self._async_connect(do_connect, series)
@@ -362,8 +373,10 @@ class MainWindow(QMainWindow):
         if not self._demo_mode and hasattr(connection, "send_uds"):
             try:
                 # Extended diagnostic session first
+                logger.debug("Sending DiagnosticSessionControl (0x10 0x03)")
                 connection.send_uds(0x10, bytes([0x10, 0x03]))
                 # Read VIN via ReadDataByIdentifier 0xF190
+                logger.debug("Reading VIN via 0x22 0xF1 0x90")
                 resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
                 if len(resp) >= 4 and resp[0] == 0x62:
                     # Positive response: 0x62 + DID(2 bytes) + VIN(17 chars)
@@ -416,17 +429,23 @@ class MainWindow(QMainWindow):
 
         # Transport-layer: HSFZ alive check every 2 seconds
         if hasattr(conn, "alive_check"):
+            logger.debug("Starting HSFZ alive-check timer (every 2s)")
             self._alive_timer = QTimer(self)
             self._alive_timer.timeout.connect(conn.alive_check)
             self._alive_timer.start(2000)
 
         # Application-layer: UDS TesterPresent every 2.5 seconds
         if hasattr(conn, "send_uds"):
+            _first_tp = [True]  # mutable to capture in closure
+
             def _tester_present():
                 try:
                     conn.send_uds(0x10, bytes([0x3E, 0x00]))
+                    if _first_tp[0]:
+                        logger.debug("Starting TesterPresent timer (every 2.5s)")
+                        _first_tp[0] = False
                 except Exception:
-                    pass  # Connection may be closing
+                    pass
 
             self._tester_present_timer = QTimer(self)
             self._tester_present_timer.timeout.connect(_tester_present)
@@ -456,6 +475,7 @@ class MainWindow(QMainWindow):
     # ---- Disconnect ----
 
     def _on_disconnect(self) -> None:
+        logger.info("Disconnecting from vehicle...")
         self._stop_keepalive()
         if self._connection:
             try:

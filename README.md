@@ -90,9 +90,29 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
     main.py
 ```
 
-## Logs
+## Logs & debugging
 
-UDS diagnostic messages are logged to `~/BMW-Tool/logs/uds.log` (5 MB rotating files, 3 backups).
+```bash
+# Normal mode — logs errors only
+python main.py
+
+# Verbose mode — logs all UDS traffic, connection steps, and diagnostics
+python main.py --debug
+
+# No log file — console only
+python main.py --no-log
+```
+
+When `--debug` is active, the log file at `~/BMW-Tool/logs/uds.log` records:
+
+- Startup: Python version, platform, available Ethernet interfaces, theme load
+- Discovery: broadcast address, timeout, response data (IP, VIN, MAC)
+- Connection: TCP connect attempt, HSFZ/DoIP handshake, success/failure reason
+- Diagnostics: every UDS request/response in hex with ECU address and length
+- Keep-alive: timer start/stop for HSFZ alive-check and UDS TesterPresent
+- Disconnect: clean shutdown sequence
+
+The log rotates at 5 MB with 3 backup files. All timestamps are ISO 8601.
 
 ## Troubleshooting
 

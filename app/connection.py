@@ -175,6 +175,11 @@ def discover_zgw(
     # Without this, UDP broadcast may go to Wi-Fi instead of the ENET cable.
     _bind_to_interface(disc_sock, interface)
 
+    logger.debug(
+        "Discovery: broadcasting on %s -> %s:%d (timeout %.1fs)",
+        interface, HSFZ_DISCOVERY_BROADCAST, HSFZ_DISCOVERY_PORT, timeout,
+    )
+
     try:
         request = struct.pack(">IH", 0, TYPE_VEHICLE_IDENT)
         disc_sock.sendto(
@@ -415,6 +420,7 @@ class HSFZConnection:
         Returns:
             True if connected successfully, False on failure.
         """
+        logger.debug("HSFZ: connecting to %s:%d ...", self.host, self.port)
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -422,7 +428,8 @@ class HSFZConnection:
             self.sock.connect((self.host, self.port))
             self.sock.settimeout(30.0)  # Data timeout
             logger.info(
-                "HSFZ connected to %s:%d", self.host, self.port
+                "HSFZ connected to %s:%d (TCP_NODELAY, timeout=30s)",
+                self.host, self.port,
             )
             return True
         except (socket.timeout, ConnectionRefusedError, OSError) as e:
@@ -461,6 +468,11 @@ class HSFZConnection:
         service = payload[0]
         extra = payload[1:] if len(payload) > 1 else b""
         frame = build_uds(ecu_addr, service, extra)
+
+        logger.debug(
+            "UDS tx ECU=0x%02X len=%d: %s",
+            ecu_addr, len(frame), frame.hex(" "),
+        )
 
         self.sock.settimeout(timeout)
         try:
