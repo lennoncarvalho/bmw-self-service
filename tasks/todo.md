@@ -4,7 +4,7 @@
 
 ---
 
-## Day 1: Pure functions (no car, no UI)
+## Pure functions (no car, no UI)
 
 - [ ] **T-1: `app/uds.py`**
   - Build: `build_uds()`, `parse_uds_response()`, `is_negative_response()`, `get_negative_code()`
@@ -24,7 +24,7 @@
   - Verify: Visual — apply to a minimal QApplication, confirm dark background and blue buttons
   - Files: `assets/theme.qss`, `app/theme.py`
 
-## Day 2: Networking (mock first, then real)
+## Networking (mock first, then real)
 
 - [ ] **T-4: `app/connection.py` — interface detection**
   - Build: `list_interfaces()` using `netifaces`. `discover_zgw()`.
@@ -56,7 +56,7 @@
   - Verify: Subclass `TestWorker` that sleeps 1s then returns "done". Connect signals to print.
   - Files: `app/worker.py`
 
-## Day 3: UI shell
+## UI shell
 
 - [ ] **T-9: `ui/welcome_page.py`**
   - Build: `WelcomePage(QWidget)`. BMW logo, series picker dropdown (F/G/U/I with year/model labels), interface dropdown (hidden when DEMO mode on), "Connect to your BMW" button, 5 instruction bullets, 4 gray nav buttons.

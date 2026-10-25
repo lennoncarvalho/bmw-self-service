@@ -102,14 +102,13 @@ Start with T-1 (`app/uds.py`), verify, move to T-2, etc. Do NOT skip ahead. Do N
 
 ```
 T-1 (uds) ─┐
-T-2 (dtc_db) ├─ parallel, Day 1
-T-3 (theme) ─┘
+T-2 (dtc_db) �爂 parallel — no dependencies
+T-3 (theme) ┘
       │
 T-4 (interfaces) → T-5 (HSFZ) → T-6 (DoIP+DHCP)
       │
-T-7 (mock) ├─ parallel, Day 2
-T-8 (worker) ─┘
+T-7 (mock) ─ parallel — both need connection interface
+T-8 (worker) ┘
       │
 T-9 (welcome) → T-10 (main_window) → T-11 (connect flow) → T-12 (main.py)
-      └────────── Day 3 ─────────────┘
 ```

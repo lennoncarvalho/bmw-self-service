@@ -22,10 +22,10 @@
 ## Build order
 
 ```
-Day 1 (parallel)          Day 2              Day 3
-C1 ─┐                     C4 ─┐              C7 ─┐
-C2 ─┤  pure functions     C5 ─┤  networking  C8 ─┤  UI shell
-C3 ─┘  no car needed      C6 ─┘  mock first  C9 ─┘  wires all
+Pure functions          Networking            UI shell
+C1 ─┐                   C4 ─┐                C7 ─┐
+C2 ─┤  no car needed    C5 ─┤  mock first    C8 ─┤  wires all
+C3 ─┘                   C6 ─┘                C9 ─┘
 ```
 
 C1, C2, C3 are independent — can be built in any order or parallel.
