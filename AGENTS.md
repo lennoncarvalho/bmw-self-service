@@ -66,19 +66,16 @@ conflict, the doc wins. If the doc is unclear, ask before coding.
 When starting a development session, load these skills in order:
 
 ### Always load (every session)
-1. **`spec-driven-development`** — structured spec → plan → implement → verify
-   workflow. Writes specs before any code touches disk.
+1. **`spec-driven-development`** — structured spec → plan → implement → verify workflow
 
 ### Load by task
 
 | Task | Skill | Why |
 |------|-------|-----|
-| **Any Python code** | None needed (DeepSeek V4 Pro is natively strong at Python) | |
-| **PySide6 UI code** | None needed — follow `docs/16-ui-spec.md` + `docs/17-ui-decisions.md` | |
-| **SQLite queries** | `supabase-postgres-best-practices` (general SQL principles apply) | Schema design, indexing, query patterns |
-| **Protocol/debugging** | REA tools (`rea.*`) | Reverse-engineering, troubleshooting car communication |
-| **Planning/architecture** | `opencode` | Session management, subagents, worktrees |
-| **Code review** | `code-review` (if installed) | Pre-commit review of complex changes |
+| **PySide6 code review** | `pyside6-reviewer` | Thread safety, signal/slot, Qt 6.8+ idioms, anti-pattern detection |
+| **SQLite queries/schema** | `sqlite` | Prepared statements, WAL mode, indexing, Python sqlite3 patterns |
+| **Protocol/debugging** | REA tools (`rea.*`) | Reverse-engineering, car communication troubleshooting |
+| **Session management** | `opencode` | Subagents, worktrees, parallel work |
 
 ## Coding conventions
 
