@@ -70,7 +70,7 @@ python main.py
 # Build distributable
 pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
     --add-data "dtc_descriptions.db:." \
-    --add-data "bimmercode_data:bimmercode_data" \
+    --add-data "coding_data:coding_data" \
     --add-data "assets/theme.qss:assets" \
     main.py
 
@@ -86,29 +86,29 @@ bmw-tool/
 ├── CAPABILITY-MAP.md                # This document
 ├── SPEC-INFRASTRUCTURE.md           # This spec
 ├── requirements.txt                 # pyside6==6.12.0, pyinstaller==6.22.3
-├── mock_data/                          # Car data for offline development
-│   └── f48_x1.json                     # User's F48 X1: VIN, DTCs, service history, SVT
+├── coding_data/                 # Vehicle coding database (decrypted CAFD files, strings, ECUs)
+├── mock_data/                      # Car data for offline development
+│   └── f48_x1.json                 # User's F48 X1: VIN, DTCs, service history, SVT
 ├── assets/
-│   ├── theme.qss                    # Dark theme — loaded once at startup
-│   └── dtc_descriptions.db          # 88K DTC entries (committed, read-only)
-├── bimmercode_data/                 # Decrypted .enc files (committed)
+│   ├── theme.qss                # Dark theme — loaded once at startup
+│   └── dtc_descriptions.db      # 88K DTC entries (committed, read-only)
 ├── app/
 │   ├── __init__.py
-│   ├── connection.py                # ENET detection, HSFZ, DoIP, DHCP, discover_zgw()
-│   ├── mock_connection.py           # MockConnection for DEMO mode (loads mock_data/)
-│   ├── uds.py                       # UDS message build/parse (ISO 14229)
-│   ├── worker.py                    # CarWorker(QThread) base class + subclasses
-│   ├── dtc_db.py                    # DtcDatabase singleton (from docs/14)
-│   └── theme.py                     # QSS loader, color constants
+│   ├── connection.py            # ENET detection, HSFZ, DoIP, DHCP, discover_zgw()
+│   ├── mock_connection.py       # MockConnection for DEMO mode
+│   ├── uds.py                   # UDS message build/parse (ISO 14229)
+│   ├── worker.py                # CarWorker(QThread) base class + subclasses
+│   ├── dtc_db.py                # DtcDatabase singleton (from docs/14)
+│   └── theme.py                 # QSS loader, color constants
 ├── ui/
 │   ├── __init__.py
-│   ├── main_window.py              # QMainWindow, top bar, bottom nav, QStackedWidget
-│   └── welcome_page.py             # BMW logo, connect button, instructions
-├── tests/                          # Unit tests for pure functions only
+│   ├── main_window.py           # QMainWindow, top bar, bottom nav, QStackedWidget
+│   └── welcome_page.py          # BMW logo, connect button, series picker
+├── tests/
 │   ├── test_uds.py
 │   ├── test_dtc_db.py
 │   └── test_connection.py
-└── backups/                        # Auto-backup directory (gitignored, created at runtime)
+└── backups/                     # Auto-backup directory (gitignored, created at runtime)
 ```
 
 ##5. Code Style
@@ -167,6 +167,7 @@ def build_uds(ecu_addr: int, service: int, payload: bytes = b"") -> bytes:
 - Use QML — Qt Widgets only
 - Use QListView/QAbstractItemModel — QScrollArea + widgets instead
 - Mix asyncio with Qt — QThread only
+- Mention external tools or sources in code: no "BimmerCode", "BimmerLink", "ISTA", "EDIABAS", "BimmerDaten", "PRG files", or reverse-engineering references. Use generic terms: `coding_data/` not `bimmercode_data/`, `dtc_descriptions.db` is ours, UDS knowledge is from ISO 14229
 
 ##8. Success Criteria
 

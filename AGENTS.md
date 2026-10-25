@@ -36,8 +36,8 @@ docs/                       # All specifications (read-first before coding)
 extract_dtc.py              # DTC extraction script (one-time, already run)
 translate_ollama.py         # DTC translation script (one-time, already run)
 dtc_descriptions.db         # 88K DTC entries, German + English (static asset)
-bimmercode_data/            # Decrypted BimmerCode coding database (~400 CAFD files)
-BimmerDaten/decoderPrg.py   # PRG file parser
+coding_data/                # Vehicle coding database (CAFD files, strings, ECU metadata)
+BimmerDaten/decoderPrg.py   # PRG file parser (reference only, not used by app)
 ```
 
 ## Development workflow — spec-driven
@@ -81,10 +81,15 @@ When starting a development session, load these skills in order:
 
 ### Python style
 - Type hints on all function signatures (`def foo(x: int) -> str:`)
-- Docstrings on public methods (Google style: `"""One-line summary.\n\nArgs:\n    ...\nReturns:\n    ..."""`)
+- Docstrings on public methods (Google style)
 - 4-space indentation, 100-char line limit
-- `snake_case` for functions/variables, `PascalCase` for classes
-- All car I/O on background threads (`QThread` subclasses, never block the UI)
+- snake_case for functions/variables, PascalCase for classes
+- All car I/O on background threads (QThread subclasses, never block the UI)
+- **No external tool names in code or shipped assets.** The app is standalone.
+  No mentions of BimmerCode, BimmerLink, ISTA, EDIABAS, BimmerDaten, or any
+  reverse-engineering source. Use generic names: `coding_data/`, `vehicle
+  coding database`, `diagnostic descriptions`. The `docs/` folder is internal
+  research — it is NOT shipped with the app.
 
 ### PySide6 patterns
 - **No QML.** Qt Widgets only, styled with QSS.
@@ -121,7 +126,7 @@ When starting a development session, load these skills in order:
 # macOS
 pyinstaller --onefile --windowed --name "BMW Diagnostic Tool" \
     --add-data "dtc_descriptions.db:." \
-    --add-data "bimmercode_data:bimmercode_data" \
+    --add-data "coding_data:coding_data" \
     --osx-bundle-identifier "com.bmwtool.app" \
     main.py
 
