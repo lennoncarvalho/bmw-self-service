@@ -32,48 +32,154 @@ pip install pyinstaller==6.22.3
 
 Everything else is stdlib: `socket`, `asyncio`, `sqlite3`, `struct`, `json`, `logging`, `pathlib`.
 
-## Networking: how the ENET cable works in Python
+## Networking: ENET cable connection
 
-The ENET cable presents as a standard Ethernet interface. No special drivers, no kernel modules, no admin privileges for the actual diagnostics.
+BMW's ISTA software uses a **local DHCP server** (`ZGW_SEARCH.exe` / `pd64`)
+to assign the ZGW an IP address. This is more reliable than relying on the
+car's self-assigned link-local address — especially on G-series vehicles
+where the ZGW may not auto-configure APIPA after a sleep cycle.
 
-### Interface setup (one-time per session)
+Our app uses a **two-tier approach**:
 
-**macOS:**
-```bash
-# ENET cable via USB-Ethernet adapter appears as enX
-sudo ifconfig en7 inet 169.254.1.1 netmask 255.255.0.0
-```
-One `sudo` to assign the auto-IP address. After that, all TCP/UDP communication runs as the appuser.
+1. **APIPA first** (no admin) — try the car's self-assigned 169.254.x.x address
+2. **DHCP fallback** (needs admin) — run a local DHCP server on the ENET interface
 
-**Windows:**
-```powershell
-# ENET cable appears as a new Ethernet adapter
-netsh interface ip set address "Ethernet 2" static 169.254.1.1 255.255.0.0
-```
-Requires admin for interface config. Could be automated or done manually by the user once.
-
-### Protocol sockets (no privileges needed)
+### Tier 1: APIPA auto-discovery (no privileges)
 
 ```python
 import socket
 
-# HSFZ — F-series vehicles (BMW's proprietary TCP protocol)
-tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-tcp_sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-tcp_sock.settimeout(5.0)
-tcp_sock.connect(("169.254.1.2", 6801))   # ZGW is always .1.2
+def discover_zgw(timeout=5.0) -> tuple[str, int] | None:
+    """Find ZGW via UDP broadcast. No admin needed."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.settimeout(timeout)
 
-# HSFZ discovery — UDP broadcast to find the ZGW
-udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-udp_sock.sendto(b"\x00\x00\x00\x01", ("169.254.255.255", 6811))
+    # HSFZ discovery broadcast
+    sock.sendto(b"\x00\x00\x00\x01", ("169.254.255.255", 6811))
 
-# DoIP — G/U/I-series vehicles (ISO 13400 standard)
-doip_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-doip_sock.connect(("169.254.1.2", 13400))   # DoIP gateway
+    try:
+        data, addr = sock.recvfrom(1024)
+        return (addr[0], 6801)  # ZGW IP + HSFZ TCP port
+    except socket.timeout:
+        return None
 ```
 
-No raw sockets, no packet injection, no admin. Just standard TCP/UDP — same as a web browser.
+Works for most F-series cars. If the ZGW responds, connect and proceed — zero
+elevation beyond the initial interface IP assignment.
+
+### Tier 2: DHCP server (elevated privileges)
+
+For cars that don't respond to APIPA discovery — common on G-series after
+sleep cycles, or when the ZGW needs a fresh lease:
+
+**macOS — built-in `bootpd` (zero dependencies, pre-installed on every Mac):**
+
+```python
+import subprocess, plistlib, os
+
+ENET_INTERFACE = "en7"  # detect dynamically at runtime
+DHCP_PLIST = "/etc/bootpd.plist"
+
+def start_dhcp_server_macos():
+    """Configure and start macOS built-in DHCP server on ENET interface."""
+    config = {
+        "bootp_enabled": False,
+        "dhcp_enabled": [ENET_INTERFACE],
+        "reply_threshold_seconds": 0,
+        "Subnets": [{
+            "name": "BMW ENET",
+            "net_address": "169.254.0.0",
+            "net_mask": "255.255.0.0",
+            "net_range": ["169.254.1.2", "169.254.1.254"],
+            "dhcp_router": "169.254.1.1",
+            "allocate": True,
+            "lease_max": 3600,
+        }]
+    }
+    with open(DHCP_PLIST, "wb") as f:
+        plistlib.dump(config, f)
+    subprocess.run([
+        "sudo", "/bin/launchctl", "load", "-w",
+        "/System/Library/LaunchDaemons/bootps.plist"
+    ], check=True)
+
+def stop_dhcp_server_macos():
+    subprocess.run([
+        "sudo", "/bin/launchctl", "unload", "-w",
+        "/System/Library/LaunchDaemons/bootps.plist"
+    ], check=True)
+    if os.path.exists(DHCP_PLIST):
+        os.remove(DHCP_PLIST)
+```
+
+`bootpd` is Apple's production DHCP server — the same one Internet Sharing
+uses. No `pip install` needed. Just a plist file + `launchctl`.
+
+**Windows — pure Python `simple-dhcp-server` (one dependency):**
+
+```
+pip install simple-dhcp-server
+```
+
+```python
+from simple_dhcp_server import DHCPServer
+
+def start_dhcp_server_windows():
+    server = DHCPServer(
+        interface=find_enet_interface(),   # detect at runtime
+        ip_range=("169.254.1.2", "169.254.1.254"),
+        subnet_mask="255.255.0.0",
+        gateway="169.254.1.1",
+        lease_time=3600,
+    )
+    server.start()  # needs admin on Windows for port 67
+    return server
+```
+
+Pure Python, no native dependencies, tested on Windows 7+.
+
+### Connection flow
+
+```
+App starts
+  │
+  ├─ Detect ENET interface (USB-Ethernet adapter)
+  │
+  ├─ Set interface IP to 169.254.1.1/16 (sudo on macOS, netsh on Windows)
+  │
+  ├─ UDP broadcast discovery on 169.254.255.255:6811
+  │    │
+  │    ├─ ZGW responds → CONNECTED
+  │    │    (most F-series — no admin beyond interface config)
+  │    │
+  │    └─ No response after 5s
+  │         │
+  │         └─ Show "Start DHCP Server" button
+  │              │
+  │              ├─ User approves → elevation prompt
+  │              ├─ DHCP server starts → ZGW gets IP from pool
+  │              └─ Re-discover → CONNECTED
+  │
+  └─ TCP connect to ZGW (port 6801 for HSFZ, 13400 for DoIP)
+       │
+       └─ UDS diagnostics/coding over established TCP channel
+```
+
+### Protocol sockets (no privileges needed once connected)
+
+```python
+# HSFZ — F-series (TCP 6801)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+sock.connect((zgw_ip, 6801))
+
+# DoIP — G/U/I-series (TCP 13400)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((zgw_ip, 13400))
+```
+
+All diagnostics run over standard TCP. No raw sockets, no kernel bypass, no admin.
 
 ## Binary distribution
 
@@ -130,6 +236,7 @@ bmw-tool/
 │   ├── __init__.py
 │   ├── hsfz.py                # HSFZ protocol (TCP 6801, UDP 6811)
 │   ├── doip.py                # DoIP protocol (TCP 13400)
+│   ├── network.py             # ENET detection, APIPA discovery, DHCP server
 │   ├── uds.py                 # UDS message building/parsing
 │   ├── diagnostics.py         # DTC read/clear, sensor values
 │   ├── coding.py              # Easy + Advanced coding UI
@@ -169,8 +276,8 @@ bmw-tool/
 
 | Constraint | Impact |
 |-----------|--------|
-| **No admin/root for diagnostics** | TCP/UDP on user ports — satisfied. Only initial interface config may need sudo (one-time). |
-| **Cross-platform macOS + Windows** | Python `socket`, PySide6, and PyInstaller all work on both. |
-| **ENET cable auto-detection** | UDP broadcast on 169.254.255.255:6811 discovers the ZGW. If no response, fall back to known addresses. |
-| **Offline capable** | Entire coding database and DTC descriptions are embedded in the binary. No network beyond the ENET cable needed. |
+| **ENET connection reliability** | Two-tier: APIPA first (no admin), DHCP fallback (needs elevation). Matches how ISTA works. |
+| **Cross-platform macOS + Windows** | macOS uses built-in `bootpd`. Windows uses pure Python `simple-dhcp-server`. Both need admin for DHCP. |
+| **No admin for routine diagnostics** | Interface config + DHCP setup needs one-time elevation. All subsequent TCP/UDS traffic runs as user. |
+| **Offline capable** | Coding database and DTC descriptions embedded in binary. No internet beyond ENET cable needed. |
 | **DeepSeek V4 Pro as dev tool** | Python is the model's strongest language. All existing docs reference Python code. |
