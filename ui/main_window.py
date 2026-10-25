@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 from app.connection import HSFZConnection, DoIPConnection
 from app.mock_connection import MockConnection
 from ui.welcome_page import WelcomePage
+from ui.vehicle_page import VehiclePage
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,7 @@ class MainWindow(QMainWindow):
         self.welcome_page.connect_clicked.connect(self._on_connect_requested)
         self.stack.addWidget(self.welcome_page)
 
-        self.vehicle_page = self._make_placeholder("Vehicle Dashboard")
+        self.vehicle_page = VehiclePage()
         self.stack.addWidget(self.vehicle_page)
 
         self.diag_page = self._make_placeholder("Diagnostics")
@@ -413,6 +414,9 @@ class MainWindow(QMainWindow):
 
         self.nav_group.button(0).setChecked(True)
         self.stack.setCurrentIndex(1)
+
+        # Load vehicle data into the dashboard
+        self.vehicle_page.load_data(connection)
 
         # Start keep-alive timers for real connections
         if not self._demo_mode:

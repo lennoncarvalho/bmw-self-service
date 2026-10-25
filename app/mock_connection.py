@@ -122,6 +122,12 @@ class MockConnection:
             ilevel = b"F056-18-07-530"
             return bytes([0x62, 0xF1, 0x8A]) + ilevel
 
+        # Battery voltage: DID 0xF40C — mock 12.4V
+        if did_high == 0xF4 and did_low == 0x0C:
+            voltage_raw = 124  # 12.4V * 10
+            voltage_bytes = struct.pack(">H", voltage_raw)
+            return bytes([0x62, 0xF4, 0x0C]) + voltage_bytes
+
         # Mileage: any F4xx DID
         if did_high == 0xF4:
             mileage_km = self.data.get("vehicle", {}).get("mileage_km", 66000)
