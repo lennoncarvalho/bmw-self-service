@@ -74,7 +74,7 @@ When starting a development session, load these skills in order:
 |------|-------|-----|
 | **PySide6 code review** | `pyside6-reviewer` | Thread safety, signal/slot, Qt 6.8+ idioms, anti-pattern detection |
 | **SQLite queries/schema** | `sqlite` | Prepared statements, WAL mode, indexing, Python sqlite3 patterns |
-| **Protocol/debugging** | REA tools (`rea.*`) | Reverse-engineering, car communication troubleshooting |
+| **Protocol/debugging** | REA tools (`rea.*`) | Inspect original APKs and PRG files to resolve protocol gaps during implementation |
 | **Session management** | `opencode` | Subagents, worktrees, parallel work |
 
 ## Coding conventions
