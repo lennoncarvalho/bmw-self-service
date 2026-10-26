@@ -439,44 +439,58 @@ class CodingPage(QWidget):
                 )
                 detail_layout.addWidget(block_warn)
             else:
-                # Mock FDL parameters for demo
-                fdl_funcs = [
-                    ("PfFzgKl30BlerFahrzeugstart", "Terminal 30B output on start",
-                     "Wert_2 (1 byte)", "01"),
-                    ("PfKlemme15Status", "Terminal 15 status",
-                     "Wert_1 (1 bit)", "01"),
-                    ("PfCanKomfortStatus", "Comfort CAN status",
-                     "Wert_2 (1 byte)", "02"),
-                ]
-                for func_name, func_desc, func_type, func_val in fdl_funcs:
-                    func_card = QFrame()
-                    func_card.setStyleSheet(
-                        "background: #1a1a3e; border: 1px solid #2a2a4a; "
-                        "border-radius: 6px; padding: 8px;"
-                    )
-                    func_layout = QVBoxLayout(func_card)
-                    func_layout.setSpacing(2)
+                # T-5: Real FDL parameters from coding database
+                fdl_funcs: list[dict] = []
+                cafd_entry = _CAFD_MAP.get(name)
+                if cafd_entry:
+                    try:
+                        cafd_id, variant = cafd_entry
+                        coding_db.load_ecu(cafd_id, variant)
+                        fdl_funcs = coding_db.get_ecu_fdl_functions(
+                            cafd_id, variant
+                        )[:50]  # limit to 50 for performance
+                    except Exception:
+                        pass
 
-                    fn = QLabel(func_name)
-                    fn.setStyleSheet(
-                        "font-size: 12px; font-weight: bold; color: #e0e0e0; "
-                        "background: transparent;"
-                    )
-                    func_layout.addWidget(fn)
+                if fdl_funcs:
+                    for func in fdl_funcs:
+                        si = func.get("storageInfo", {})
+                        func_type = (
+                            f"byte {si.get('start', '?')}"
+                            f"  mask {si.get('mask', '?')}"
+                        )
+                        func_card = QFrame()
+                        func_card.setStyleSheet(
+                            "background: #1a1a3e; border: 1px solid #2a2a4a; "
+                            "border-radius: 6px; padding: 8px;"
+                        )
+                        func_layout = QVBoxLayout(func_card)
+                        func_layout.setSpacing(2)
 
-                    fd = QLabel(func_desc)
-                    fd.setStyleSheet(
-                        "font-size: 11px; color: #a0a0a0; background: transparent;"
-                    )
-                    func_layout.addWidget(fd)
+                        fn = QLabel(func["name"])
+                        fn.setStyleSheet(
+                            "font-size: 12px; font-weight: bold; "
+                            "color: #e0e0e0; background: transparent;"
+                        )
+                        func_layout.addWidget(fn)
 
-                    ft = QLabel(f"Type: {func_type}  |  Current: {func_val}")
-                    ft.setStyleSheet(
-                        "font-size: 11px; color: #a0a0a0; background: transparent;"
-                    )
-                    func_layout.addWidget(ft)
+                        ft_lbl = QLabel(
+                            f"DID: 0x{func['did']:04X}  |  {func_type}"
+                        )
+                        ft_lbl.setStyleSheet(
+                            "font-size: 11px; color: #a0a0a0; "
+                            "background: transparent;"
+                        )
+                        func_layout.addWidget(ft_lbl)
 
-                    detail_layout.addWidget(func_card)
+                        detail_layout.addWidget(func_card)
+                else:
+                    no_data = QLabel("No FDL data available for this ECU")
+                    no_data.setStyleSheet(
+                        "font-size: 11px; color: #a0a0a0; "
+                        "font-style: italic;"
+                    )
+                    detail_layout.addWidget(no_data)
 
             card_layout.addWidget(detail)
 
