@@ -428,7 +428,10 @@ class DiagnosticsPage(QWidget):
         else:
             try:
                 # Clear the specific DTC: 0x14 + 3-byte DTC code
-                dtc_bytes = bytes.fromhex(code)
+                code_clean = code.upper().replace("0X", "").replace("0x", "")
+                if len(code_clean) % 2 != 0:
+                    code_clean = "0" + code_clean  # pad odd-length (e.g. P0300)
+                dtc_bytes = bytes.fromhex(code_clean)
                 if len(dtc_bytes) < 3:
                     dtc_bytes = dtc_bytes.rjust(3, b'\x00')
                 self._connection.send_uds(addr, bytes([0x14]) + dtc_bytes[:3])

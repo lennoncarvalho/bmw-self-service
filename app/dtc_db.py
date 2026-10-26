@@ -6,6 +6,7 @@ English preferred, German fallback.
 Reference: docs/14-dtc-database.md
 """
 
+import logging
 import sqlite3
 
 # Standard OBD-II P-code fallback (SAE J2012 / ISO 15031-6)
@@ -129,7 +130,6 @@ class DtcDatabase:
         except sqlite3.OperationalError:
             self.conn = sqlite3.connect(":memory:")
             self._missing = True
-            import logging
             logging.getLogger(__name__).warning(
                 "DTC database not found at %s — descriptions unavailable", db_path
             )

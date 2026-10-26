@@ -644,7 +644,7 @@ class CodingPage(QWidget):
 
         backup_dir = os.path.join(
             os.path.expanduser("~"), "BMW-Tool", "backups",
-            datetime.now().strftime("%Y-%m-%d_%H-%M"),
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         )
         try:
             os.makedirs(backup_dir, exist_ok=True)

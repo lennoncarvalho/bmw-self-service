@@ -95,7 +95,7 @@ class BackupsPage(QWidget):
             return []
 
         results: list[dict] = []
-        for entry in sorted(backup_root.iterdir(), reverse=True):
+        for entry in sorted(backup_root.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
             if not entry.is_dir():
                 continue
             manifest_path = entry / "manifest.json"
