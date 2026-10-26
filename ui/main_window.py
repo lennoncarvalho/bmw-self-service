@@ -20,6 +20,7 @@ from app.connection import HSFZConnection, DoIPConnection
 from app.mock_connection import MockConnection
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
+from ui.diagnostics_page import DiagnosticsPage
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ class MainWindow(QMainWindow):
         self.vehicle_page = VehiclePage()
         self.stack.addWidget(self.vehicle_page)
 
-        self.diag_page = self._make_placeholder("Diagnostics")
+        self.diag_page = DiagnosticsPage()
         self.stack.addWidget(self.diag_page)
 
         self.coding_page = self._make_placeholder("Coding")
@@ -416,6 +417,11 @@ class MainWindow(QMainWindow):
 
         # Load vehicle data into the dashboard
         self.vehicle_page.load_data(connection, series)
+        # Pass connection and ECUs to diagnostics page
+        ecus: list[dict] = []
+        if hasattr(connection, "data") and connection.data:
+            ecus = connection.data.get("svt_ecus", [])
+        self.diag_page.set_connection(connection, ecus)
 
         # Start keep-alive timers for real connections
         if not self._demo_mode:
