@@ -386,10 +386,7 @@ class MainWindow(QMainWindow):
 
             host = info["ip"]
             logger.info("Step 2: TCP connect to %s", host)
-            if series == "F":
-                conn = HSFZConnection(host)
-            else:
-                conn = DoIPConnection(host)
+            conn = HSFZConnection(host) if series == "F" else DoIPConnection(host)
 
             if not conn.connect():
                 raise ConnectionError(
