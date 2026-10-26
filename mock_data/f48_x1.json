@@ -40,7 +40,9 @@
     {
       "date": "2022-08-03",
       "mileage_km": 26126,
-      "items": ["Spark plugs replaced"]
+      "items": [
+        "Spark plugs replaced"
+      ]
     },
     {
       "date": "2024-09-06",
@@ -57,17 +59,24 @@
     {
       "date": "2024-12-16",
       "mileage_km": 50000,
-      "items": ["Coolant replaced"]
+      "items": [
+        "Coolant replaced"
+      ]
     },
     {
       "date": "2025-09-10",
       "mileage_km": 58000,
-      "items": ["Engine oil change (5W-40)", "Oil filter"]
+      "items": [
+        "Engine oil change (5W-40)",
+        "Oil filter"
+      ]
     },
     {
       "date": "2026-09-01",
       "mileage_km": 64000,
-      "items": ["Brake fluid change"]
+      "items": [
+        "Brake fluid change"
+      ]
     },
     {
       "date": "2026-10-01",
@@ -81,20 +90,78 @@
         "Rear mounts and bump stops",
         "Four-wheel alignment"
       ]
+    },
+    {
+      "date": "2026-10-26",
+      "mileage_km": 66000,
+      "dealer": "Lennon",
+      "items": [
+        "Spark plugs",
+        "Front brake pads",
+        "Rear brake pads"
+      ]
     }
   ],
   "svt_ecus": [
-    {"name": "DME", "description": "Digital Motor Electronics", "addr": "0x12"},
-    {"name": "EGS", "description": "Electronic Transmission Control", "addr": "0x18"},
-    {"name": "ZGW", "description": "Central Gateway", "addr": "0x10"},
-    {"name": "FEM_01", "description": "Front Electronic Module", "addr": "0x40"},
-    {"name": "REM_01", "description": "Rear Electronic Module", "addr": "0x50"},
-    {"name": "KOMBI", "description": "Instrument Cluster", "addr": "0x60"},
-    {"name": "HU_NBT", "description": "Headunit NBT", "addr": "0x63"},
-    {"name": "IHKA", "description": "Climate Control", "addr": "0x78"},
-    {"name": "ASD_01", "description": "Active Sound Design", "addr": "0x72"},
-    {"name": "PMA_PDC", "description": "Park Distance Control", "addr": "0x44"},
-    {"name": "ACSM", "description": "Airbag Control Unit", "addr": "0x56"},
-    {"name": "DSC", "description": "Dynamic Stability Control", "addr": "0x29"}
+    {
+      "name": "DME",
+      "description": "Digital Motor Electronics",
+      "addr": "0x12"
+    },
+    {
+      "name": "EGS",
+      "description": "Electronic Transmission Control",
+      "addr": "0x18"
+    },
+    {
+      "name": "ZGW",
+      "description": "Central Gateway",
+      "addr": "0x10"
+    },
+    {
+      "name": "FEM_01",
+      "description": "Front Electronic Module",
+      "addr": "0x40"
+    },
+    {
+      "name": "REM_01",
+      "description": "Rear Electronic Module",
+      "addr": "0x50"
+    },
+    {
+      "name": "KOMBI",
+      "description": "Instrument Cluster",
+      "addr": "0x60"
+    },
+    {
+      "name": "HU_NBT",
+      "description": "Headunit NBT",
+      "addr": "0x63"
+    },
+    {
+      "name": "IHKA",
+      "description": "Climate Control",
+      "addr": "0x78"
+    },
+    {
+      "name": "ASD_01",
+      "description": "Active Sound Design",
+      "addr": "0x72"
+    },
+    {
+      "name": "PMA_PDC",
+      "description": "Park Distance Control",
+      "addr": "0x44"
+    },
+    {
+      "name": "ACSM",
+      "description": "Airbag Control Unit",
+      "addr": "0x56"
+    },
+    {
+      "name": "DSC",
+      "description": "Dynamic Stability Control",
+      "addr": "0x29"
+    }
   ]
 }

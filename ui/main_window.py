@@ -137,14 +137,14 @@ class MainWindow(QMainWindow):
         gear_btn.setFixedSize(36, 36)
         gear_btn.setStyleSheet(
             "QPushButton {"
-            "  background: rgba(255,255,255,0.08);"
+            "  background: rgba(255,255,255,0.10);"
             "  border: none;"
-            "  font-size: 18px;"
-            "  color: #c0c0d0;"
+            "  font-size: 20px;"
+            "  color: #e0e0e0;"
             "  border-radius: 18px;"
             "}"
             "QPushButton:hover {"
-            "  background: rgba(255,255,255,0.15);"
+            "  background: rgba(255,255,255,0.20);"
             "  color: #ffffff;"
             "}"
         )

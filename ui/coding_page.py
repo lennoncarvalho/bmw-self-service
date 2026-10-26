@@ -130,9 +130,12 @@ class CodingPage(QWidget):
         self._easy_tab.setCheckable(True)
         self._easy_tab.setChecked(True)
         self._easy_tab.setStyleSheet(
-            "QPushButton { padding: 8px 24px; border: none; "
-            "border-bottom: 2px solid transparent; color: #a0a0a0; font-weight: bold; }"
-            "QPushButton:checked { color: #1C69D4; border-bottom: 2px solid #1C69D4; }"
+            "QPushButton { background-color: transparent; padding: 8px 24px; "
+            "border: none; border-bottom: 2px solid transparent; "
+            "color: #a0a0a0; font-weight: bold; }"
+            "QPushButton:hover { color: #d0d0d0; }"
+            "QPushButton:checked { color: #1C69D4; "
+            "border-bottom: 2px solid #1C69D4; }"
         )
         self._easy_tab.clicked.connect(lambda: self._sub_stack.setCurrentIndex(0))
         tab_bar.addWidget(self._easy_tab)
@@ -140,9 +143,12 @@ class CodingPage(QWidget):
         self._adv_tab = QPushButton("Advanced")
         self._adv_tab.setCheckable(True)
         self._adv_tab.setStyleSheet(
-            "QPushButton { padding: 8px 24px; border: none; "
-            "border-bottom: 2px solid transparent; color: #a0a0a0; font-weight: bold; }"
-            "QPushButton:checked { color: #1C69D4; border-bottom: 2px solid #1C69D4; }"
+            "QPushButton { background-color: transparent; padding: 8px 24px; "
+            "border: none; border-bottom: 2px solid transparent; "
+            "color: #a0a0a0; font-weight: bold; }"
+            "QPushButton:hover { color: #d0d0d0; }"
+            "QPushButton:checked { color: #1C69D4; "
+            "border-bottom: 2px solid #1C69D4; }"
         )
         self._adv_tab.clicked.connect(lambda: self._sub_stack.setCurrentIndex(1))
         tab_bar.addWidget(self._adv_tab)
