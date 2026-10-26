@@ -145,10 +145,13 @@ class DtcReadWorker(CarWorker):
         """
         snapshots: list[dict] = []
         try:
-            resp = self.connection.send_uds(addr, bytes([0x19, 0x04]))
+            resp = self.connection.send_uds(addr, bytes([0x19, 0x03]))
             if resp[0] != 0x59:
                 return snapshots
-            # Parse: 0x59 04 + [DTC(3) + status(1) + snap_count(1) + records...]
+            # Parse: 0x59 03 + [DTC(3) + status(1) + snap_count(1) + records...]
+            # ISO 14229-1: 0x19 03 = reportDTCSnapshotIdentification
+            # BMW-specific: records contain timestamp (seconds since 2000-01-01)
+            # and mileage (km × 10) — tentative, verify per chassis
             offset = 2
             while offset + 5 <= len(resp):
                 code = resp[offset:offset + 3].hex().upper()

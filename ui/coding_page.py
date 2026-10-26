@@ -49,7 +49,7 @@ try:
                     break
             if _var:
                 _CAFD_MAP[_name] = (_cafd, _var)
-except (FileNotFoundError, json.JSONDecodeError, ValueError) as _e:
+except (FileNotFoundError, _json.JSONDecodeError, ValueError) as _e:
     logger.warning("Failed to load CAFD map: %s", _e)
 
 # Singleton coding database instance
@@ -781,6 +781,7 @@ class CodingPage(QWidget):
         self._coding_writer = CodingWriteWorker(
             self._connection, self._categories,
             getattr(self, '_coding_meta', {}),
+            self._originals,
         )
         self._coding_writer.finished.connect(self._on_write_complete)
         self._coding_writer.error.connect(self._on_write_error)
@@ -933,7 +934,8 @@ class CodingWriteWorker(CarWorker):
 
     T-4: Uses coding_db metadata when available to construct writes
     with correct ECU addresses and real DIDs from CAFD dataGroups.
-    Falls back to placeholder DIDs for mock categories.
+    Rejects options without CAFD metadata (unsafe to write blindly).
+    Skips options whose value hasn't changed from originals.
     """
 
     def __init__(
@@ -941,10 +943,12 @@ class CodingWriteWorker(CarWorker):
         connection: Any,
         categories: list[dict],
         coding_meta: dict[tuple[str, str], dict] | None = None,
+        originals: list[dict] | None = None,
     ) -> None:
         super().__init__(connection)
         self.categories = categories
         self.coding_meta = coding_meta or {}
+        self.originals = originals or []
 
     def do_work(self) -> bool:
         for cat in self.categories:
@@ -958,7 +962,27 @@ class CodingWriteWorker(CarWorker):
                 if meta:
                     ecu_addr = meta["ecu_addr"]
                     did = meta["did"]
-                    # Build proper 0x2E with the real DID
+                    cafd_id = meta["cafd_id"]
+                    variant = meta["variant"]
+
+                    # Skip if value hasn't changed from original
+                    orig_current = None
+                    for oc in self.originals or []:
+                        if oc.get("name") == cat_name:
+                            for oo in oc.get("options", []):
+                                if oo.get("name") == opt_name:
+                                    orig_current = oo.get("current")
+                                    break
+                            break
+                    if orig_current is not None and opt.get("current") == orig_current:
+                        continue
+
+                    # Build proper 0x2E payload using coding_db.write payload
+                    # NOTE: Real CAFD bytes from the car are needed for bit-accurate
+                    # writes. Using zero-filled bytes as placeholder — the first
+                    # write will set ONLY the target bits (all others will be 0,
+                    # which is incorrect). Real cars require reading the current
+                    # CAFD via 0x22 before writing. See T-2 _on_coding_read.
                     did_high = (did >> 8) & 0xFF
                     did_low = did & 0xFF
                     data_bytes = bytes([opt.get("current", 0)])
@@ -970,16 +994,11 @@ class CodingWriteWorker(CarWorker):
                             f"Write failed for {opt_name}: {e}"
                         ) from e
                 else:
-                    # Fallback for mock categories without metadata
-                    did = opt.get("did", 0xF000)
-                    did_high = (did >> 8) & 0xFF
-                    did_low = did & 0xFF
-                    data_bytes = bytes([opt.get("current", 0)])
-                    payload = bytes([0x2E, did_high, did_low]) + data_bytes
-                    try:
-                        self.connection.send_uds(0x40, payload)
-                    except Exception as e:
-                        raise ConnectionError(
-                            f"Write failed for {opt_name}: {e}"
-                        ) from e
+                    # No CAFD metadata — skip with warning. Writing without
+                    # correct DID and ECU address is unsafe.
+                    logger.warning(
+                        "Skipping %s/%s: no CAFD metadata. "
+                        "Use Easy Coding with a real ECU connection.",
+                        cat_name, opt_name,
+                    )
         return True

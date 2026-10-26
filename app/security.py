@@ -60,10 +60,7 @@ def is_protected(ecu_name: str) -> bool:
     if name_upper in PROTECTED_ECUS:
         return True
     # Check prefix match (e.g. "ACSM" matches "ACSM_4C")
-    for protected in PROTECTED_ECUS:
-        if name_upper.startswith(protected):
-            return True
-    return False
+    return any(name_upper.startswith(p) for p in PROTECTED_ECUS)
 
 
 def request_seed(connection, ecu_addr: int) -> bytes:

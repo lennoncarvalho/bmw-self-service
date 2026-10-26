@@ -157,37 +157,42 @@ def clear_dtcs(conn, ecu_addr: int):
 
 ## UDS 0x19 sub-function reference
 
-| Sub-function | Description | Common usage |
-|-------------|-------------|-------------|
-| `0x19 01` | Report number of DTCs by status mask | Quick check: any faults? |
-| `0x19 02` | Report DTCs by status mask | Read all confirmed/pending DTC codes |
-| `0x19 04` | Report DTC snapshot identification | Which DTCs have freeze-frame data? |
-| `0x19 06` | Report DTC with snapshot record | Read freeze-frame data for one DTC |
+Per ISO 14229-1. BMW follows the standard for these sub-functions.
 
-### Snapshot identification (0x19 04)
+| Sub-function | ISO name | Common usage |
+|-------------|----------|-------------|
+| `0x19 01` | reportNumberOfDTCByStatusMask | Quick check: any faults? |
+| `0x19 02` | reportDTCByStatusMask | Read all confirmed/pending DTC codes |
+| `0x19 03` | reportDTCSnapshotIdentification | Which DTCs have freeze-frame data? |
+| `0x19 04` | reportDTCSnapshotRecordByDTCNumber | Read freeze-frame for one DTC (needs DTC+record params) |
+| `0x19 06` | reportDTCExtDataRecordByDTCNumber | Read extended data (environment, aging counters) |
 
-Response format: `0x59 04 + [DTC(3) + status(1) + snapshot_count(1) + records...]*`
+### Snapshot identification (0x19 03)
 
-Each record (when snapshot_count > 0): `record_num(1) + timestamp(4) + mileage(4)`
+Request: `0x19 03` (no parameters)
+Response: `0x59 03 + [DTC(3) + status(1) + snapshot_count(1) + records...]*`
 
-- **timestamp**: Seconds since 2000-01-01 00:00:00 UTC (BMW convention)
-- **mileage**: Kilometers × 10, big-endian uint32
+Each record (when snapshot_count > 0), BMW-specific format (tentative):
+`record_num(1) + timestamp(4) + mileage(4)`
 
-Example: `0x59 04 B7F805 08 01 01 A1B2C3D4 0001A340`
+- **timestamp**: Seconds since 2000-01-01 00:00:00 UTC (BMW convention, needs per-chassis verification)
+- **mileage**: Kilometers × 10, big-endian uint32 (BMW convention, needs per-chassis verification)
+
+Example: `0x59 03 B7F805 08 01 01 A1B2C3D4 0001A340`
 → DTC B7F805, 1 snapshot, record #1, timestamp=..., mileage=10,720 km
 
-### Snapshot record (0x19 06)
+### Snapshot record (0x19 04)
 
-Request: `0x19 06 [DTC(3)] [record_num(1)]`
-Response: `0x59 06 [DTC(3)] [status(1)] [record_num(1)] [snapshot_data...]`
+Request: `0x19 04 [DTC(3)] [record_num(1)]`
+Response: `0x59 04 [DTC(3)] [status(1)] [record_num(1)] [snapshot_data...]`
 
-Snapshot data format is ECU-specific. Common fields:
+Snapshot data format is ECU-specific. Common DID→value pairs:
 - Engine RPM, vehicle speed, coolant temperature, battery voltage
 - Ambient temperature, intake air temperature
 - Fuel system status, calculated load
 
 The snapshot data format varies by ECU and is not decoded by this app.
-Only the timestamp and mileage from 0x19 04 are used for display.
+Only the timestamp and mileage from 0x19 03 are used for display.
 
 ## DTC code format
 
