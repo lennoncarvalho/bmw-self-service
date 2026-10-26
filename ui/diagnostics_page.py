@@ -109,6 +109,21 @@ class DiagnosticsPage(QWidget):
         title_row.addWidget(self.read_btn)
         layout.addLayout(title_row)
 
+        # T-9: MIL (Check Engine) status indicator
+        mil_row = QHBoxLayout()
+        self._mil_indicator = QLabel("")
+        self._mil_indicator.setStyleSheet(
+            "font-size: 32px; background: transparent;"
+        )
+        mil_row.addWidget(self._mil_indicator)
+        self._mil_label = QLabel("MIL status unknown — read DTCs to check")
+        self._mil_label.setStyleSheet(
+            "font-size: 13px; color: #a0a0a0; background: transparent;"
+        )
+        mil_row.addWidget(self._mil_label)
+        mil_row.addStretch()
+        layout.addLayout(mil_row)
+
         # Stack: empty state vs DTC list
         self.stack = QVBoxLayout()
         layout.addLayout(self.stack)
@@ -180,7 +195,13 @@ class DiagnosticsPage(QWidget):
         if hasattr(self._connection, "data") and self._connection.data:
             # Mock path — read directly from canned data
             self._on_dtcs_loaded(self._connection.data.get("dtcs", []))
+            self._update_mil(False, 0)  # Mock: no MIL
             return
+
+        # T-9: Read MIL status alongside DTCs
+        self._read_mil()
+
+        # Real car: use CarWorker
 
         # Real car: use CarWorker
         ecus = self._ecus if self._ecus else [{"name": "ZGW", "addr": "0x10"}]
@@ -413,6 +434,44 @@ class DiagnosticsPage(QWidget):
     def _open_search(checked: bool, code: str) -> None:
         import webbrowser
         webbrowser.open(f"https://www.google.com/search?q={code}+BMW")
+
+    # ── T-9: MIL status ──────────────────────────────────────────────
+
+    def _read_mil(self) -> None:
+        """Read MIL status via OBD-II Mode 01 PID 01.
+
+        Reference: docs/13:159-166
+        """
+        if self._connection is None:
+            return
+        try:
+            resp = self._connection.send_uds(0x10, bytes([0x01, 0x01]))
+            if len(resp) >= 6:
+                mil_on = (resp[4] & 0x80) != 0
+                dtc_count = resp[4] & 0x7F
+                self._update_mil(mil_on, dtc_count)
+            else:
+                self._update_mil(False, 0)
+        except Exception:
+            self._update_mil(False, 0)
+
+    def _update_mil(self, mil_on: bool, dtc_count: int) -> None:
+        """Update the MIL indicator on the UI."""
+        if mil_on:
+            self._mil_indicator.setText(chr(0x1F6A8))  # 🚨
+            self._mil_label.setText(
+                f"Check Engine Light ON — {dtc_count} code(s) stored"
+            )
+            self._mil_label.setStyleSheet(
+                "font-size: 13px; color: #E30B1F; font-weight: bold; "
+                "background: transparent;"
+            )
+        else:
+            self._mil_indicator.setText(chr(0x2705))  # ✅
+            self._mil_label.setText("No Check Engine Light — MIL off")
+            self._mil_label.setStyleSheet(
+                "font-size: 13px; color: #2ECC71; background: transparent;"
+            )
 
     def _on_clear_single(self, code: str, ecu_addr: int = 0x10) -> None:
         """Clear a single DTC from its ECU.
