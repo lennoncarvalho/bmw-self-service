@@ -333,7 +333,18 @@ class MainWindow(QMainWindow):
                 )
 
             logger.info("Step 3: reading vehicle identity")
-            return conn
+            vin = ""
+            # Extended diagnostic session on the ZGW
+            try:
+                conn.send_uds(0x10, bytes([0x10, 0x03]))
+                resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
+                if len(resp) >= 4 and resp[0] == 0x62:
+                    vin_bytes = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
+                    vin = vin_bytes
+            except Exception as exc:
+                logger.warning("VIN/DSC read failed in worker: %s", exc)
+
+            return (conn, vin)
 
         self._async_connect(do_connect, series)
 
@@ -357,39 +368,19 @@ class MainWindow(QMainWindow):
 
         self._worker = ConnectWorker(connect_fn)
         self._worker.result_signal.connect(
-            lambda conn: self._on_connect_success(conn, series)
+            lambda result: self._on_connect_success(*result, series)
         )
         self._worker.error_signal.connect(self._on_connect_error)
         self._worker.progress_signal.connect(self.show_spinner)
         self._worker.start()
 
-    def _on_connect_success(self, connection, series: str) -> None:
+    def _on_connect_success(self, connection, vin: str, series: str) -> None:
         self._connection = connection
         self._connected = True
 
         model = ""
-        vin = ""
-
-        # For real connections: read VIN from car via UDS
-        if not self._demo_mode and hasattr(connection, "send_uds"):
-            try:
-                # Extended diagnostic session first
-                logger.debug("Sending DiagnosticSessionControl (0x10 0x03)")
-                connection.send_uds(0x10, bytes([0x10, 0x03]))
-                # Read VIN via ReadDataByIdentifier 0xF190
-                logger.debug("Reading VIN via 0x22 0xF1 0x90")
-                resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
-                if len(resp) >= 4 and resp[0] == 0x62:
-                    # Positive response: 0x62 + DID(2 bytes) + VIN(17 chars)
-                    vin_bytes = resp[3:]
-                    vin = vin_bytes.decode("ascii", errors="ignore").strip("\x00 ")
-                elif len(resp) >= 3 and resp[0] == 0x7F:
-                    logger.warning(
-                    "VIN read rejected: NRC 0x%02X", resp[2]
-                    )
-                self.show_spinner("Connected! Reading vehicle data...")
-            except Exception as e:
-                logger.warning("VIN read failed: %s", e)
+        if vin:
+            logger.debug("VIN from worker: %s", vin)
 
         # For mock connections: pull from stored data
         if hasattr(connection, "data") and connection.data:

@@ -7,11 +7,13 @@ Reference: docs/16-ui-spec.md Screen 4
 """
 
 import logging
+from typing import Any
 
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QScrollArea,
     QVBoxLayout,
     QWidget,
@@ -89,7 +91,7 @@ class VehiclePage(QWidget):
         scroll.setWidget(self.ecu_container)
         layout.addWidget(scroll, stretch=1)
 
-    def load_data(self, connection, series: str = "") -> None:
+    def load_data(self, connection: Any, series: str = "") -> None:
         """Populate the dashboard with vehicle data from the connection.
 
         For mock connections, reads from MockConnection.data.
@@ -148,7 +150,7 @@ class VehiclePage(QWidget):
             self.model_label.setText("Vehicle data unavailable")
             self.vin_label.setText("Could not read from ECU")
 
-    def _load_from_car(self, connection, series: str = "") -> None:
+    def _load_from_car(self, connection: Any, series: str = "") -> None:
         """Read vehicle information via UDS 0x22 from the car."""
         model_map = {"F": "F-series", "G": "G-series", "U": "U-series", "I": "I-series"}
         model = model_map.get(series, "BMW")
@@ -236,7 +238,7 @@ class VehiclePage(QWidget):
         self.ecu_layout.addStretch()
 
     @staticmethod
-    def _clear_layout(layout) -> None:
+    def _clear_layout(layout: QLayout) -> None:
         """Recursively remove and destroy all widgets in a layout."""
         while layout.count():
             item = layout.takeAt(0)
