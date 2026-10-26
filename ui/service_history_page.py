@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLayout,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -386,8 +387,17 @@ class ServiceHistoryPage(QWidget):
 
         self._worker = ServiceHistoryEraseWorker(self._connection)
         self._worker.finished.connect(self._on_history_erased)
-        self._worker.error.connect(self._on_history_error)
+        self._worker.error.connect(self._on_erase_error)
         self._worker.start()
+
+    def _on_erase_error(self, msg: str) -> None:
+        """Handle erase failure — re-enable button, preserve entries."""
+        self.erase_btn.setEnabled(True)
+        logger.warning("Service history erase failed: %s", msg)
+        QMessageBox.warning(
+            self, "Erase Failed",
+            f"Could not erase service history: {msg}",
+        )
 
     def _update_erase_visibility(self) -> None:
         """Show erase button only when there are entries."""
