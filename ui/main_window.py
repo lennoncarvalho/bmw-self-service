@@ -484,7 +484,7 @@ class MainWindow(QMainWindow):
         self.diag_page.set_connection(connection, ecus)
         # Pass connection to service history page
         self.history_page.set_connection(connection)
-        self.coding_page.set_connection(connection)
+        self.coding_page.set_connection(connection, ecus)
 
         # Start keep-alive timers for real connections
         if not self._demo_mode:

@@ -8,6 +8,7 @@ Reference: docs/16-ui-spec.md Screens 7, 8, 9
 
 import copy
 import logging
+import os
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -25,9 +26,34 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.coding_db import CodingDatabase, _decrypt_enc
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
+
+# T-3: Build CAFD lookup from coding-ecu-infos.enc at import time.
+# Maps ECU short names to (cafd_id, first_available_variant) tuples.
+_CAFD_MAP: dict[str, tuple[str, str]] = {}
+try:
+    import json as _json
+    _infos = _json.loads(_decrypt_enc("coding_data/coding-ecu-infos.enc"))
+    for _e in _infos:
+        _name = _e.get("shortName", "")
+        _cafd = _e.get("identifier", "")
+        if _name and _cafd:
+            # Find first available variant file
+            _var = None
+            for _f in os.listdir("coding_data"):
+                if _f.startswith(f"{_cafd}-") and _f.endswith(".enc"):
+                    _var = _f[len(_cafd) + 1 : -4]
+                    break
+            if _var:
+                _CAFD_MAP[_name] = (_cafd, _var)
+except (FileNotFoundError, json.JSONDecodeError, ValueError) as _e:
+    logger.warning("Failed to load CAFD map: %s", _e)
+
+# Singleton coding database instance
+coding_db = CodingDatabase("coding_data")
 
 MOCK_CATEGORIES = [
     {
@@ -82,10 +108,12 @@ class CodingPage(QWidget):
         super().__init__(parent)
         self._connection: Any = None
         self._pending: int = 0
-        self._originals = copy.deepcopy(MOCK_CATEGORIES)
+        self._categories: list[dict] = copy.deepcopy(MOCK_CATEGORIES)
+        self._originals = copy.deepcopy(self._categories)
         self._worker: CarWorker | None = None
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
+        self._is_real = False  # True when categories come from car, not mock
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -188,7 +216,7 @@ class CodingPage(QWidget):
         cat_layout = QVBoxLayout(container)
         cat_layout.setSpacing(8)
 
-        for cat in MOCK_CATEGORIES:
+        for cat in self._categories:
             card = QFrame()
             card.setObjectName("card")
             card.setCursor(Qt.PointingHandCursor)
@@ -481,15 +509,23 @@ class CodingPage(QWidget):
             {"name": "DSC", "description": "Dynamic Stability Control"},
         ]
 
-    def set_connection(self, connection: Any) -> None:
+    def set_connection(self, connection: Any, ecus: list[dict] | None = None) -> None:
         """Store the active connection for future coding operations.
 
+        T-2: If ECU list is provided (from SVT read), load real coding
+        presets from the coding database, replacing MOCK_CATEGORIES.
+
         Args:
-            conection: An HSFZConnection, DoIPConnection, or MockConnection.
+            connection: An HSFZConnection, DoIPConnection, or MockConnection.
+            ecus: Optional SVT ECU list from vehicle connection.
         """
         self._connection = connection
 
-        # G-8: For real cars, read CAFD/FDL data from each ECU
+        # T-2: Try loading real coding presets from ECU list
+        if ecus:
+            self._load_coding_presets(ecus)
+
+        # G-8: For demo mode, skip; for real cars, try reading via UDS
         if not (hasattr(connection, "data") and connection.data):
             self._write_btn.setEnabled(False)
             self._coding_reader = CodingReadWorker(connection)
@@ -504,6 +540,85 @@ class CodingPage(QWidget):
                 lambda _: self._write_btn.setEnabled(True)
             )
             self._coding_reader.start()
+
+    def _load_coding_presets(self, ecus: list[dict]) -> None:
+        """T-2/T-3: Load coding presets from database for discovered ECUs.
+
+        Matches ECU names against coding-ecu-infos.enc to find CAFD IDs,
+        loads the coding database, and builds Easy Coding presets grouped
+        by section with human-readable labels.
+
+        Falls back to MOCK_CATEGORIES if no ECUs match the database.
+        """
+        presets_by_section: dict[str, list[dict]] = {}
+        loaded_ecus = 0
+
+        for ecu in ecus:
+            name = ecu.get("name", "")
+            # Try exact match first, then prefix match
+            if name in _CAFD_MAP:
+                cafd_id, variant = _CAFD_MAP[name]
+            else:
+                # Try prefix match (e.g. "FEM_01" matches "FEM" prefix)
+                match = None
+                for short_name, (cid, var) in _CAFD_MAP.items():
+                    if name.upper().startswith(short_name.upper().split()[0][:3]):
+                        cafd_id, variant = cid, var
+                        match = short_name
+                        break
+                if match is None:
+                    logger.debug("No CAFD match for ECU %s", name)
+                    continue
+                cafd_id, variant = _CAFD_MAP[match]
+
+            # Load this ECU's coding database
+            try:
+                coding_db.load_ecu(cafd_id, variant)
+                loaded_ecus += 1
+            except Exception as e:
+                logger.warning("Failed to load coding for %s: %s", name, e)
+                continue
+
+            # Build presets grouped by section
+            for preset in coding_db.get_presets(cafd_id):
+                section = preset["section"]
+                if section not in presets_by_section:
+                    presets_by_section[section] = []
+                # Format as a category entry compatible with _build_easy_page
+                opt_entry = {
+                    "name": preset["label"],
+                    "values": [o["label"] for o in preset["options"]],
+                    "current": 0,  # Will be updated when CAFD bytes are read
+                }
+                # Check if this option already exists in section
+                existing_names = [
+                    o["name"] for o in presets_by_section[section]
+                ]
+                if opt_entry["name"] not in existing_names:
+                    presets_by_section[section].append(opt_entry)
+
+        if loaded_ecus == 0:
+            logger.info("No coding data for discovered ECUs — using mock")
+            return
+
+        # T-3: Build categories from presets, replacing MOCK_CATEGORIES
+        categories: list[dict] = []
+        section_icons: dict[str, str] = {}  # first letter of section as icon
+        for section, options in presets_by_section.items():
+            icon_text = section.split("_")[0][:1] if "_" in section else section[:1]
+            categories.append({
+                "name": section.replace("_", " ").title(),
+                "icon": icon_text,
+                "description": f"{len(options)} coding options",
+                "options": sorted(options, key=lambda o: o["name"]),
+            })
+
+        if categories:
+            self._on_coding_read(categories)
+            logger.info(
+                "Loaded coding presets: %d categories from %d ECUs",
+                len(categories), loaded_ecus,
+            )
 
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
         """Keep the active sub-tab button checked — clicking it again keeps it."""
@@ -522,8 +637,8 @@ class CodingPage(QWidget):
         """
         # Save pre-restore originals to count differences
         prev_originals = self._originals
-        MOCK_CATEGORIES.clear()
-        MOCK_CATEGORIES.extend(copy.deepcopy(categories))
+        self._categories.clear()
+        self._categories.extend(copy.deepcopy(categories))
         self._originals = prev_originals  # keep old originals so diff is correct
         # Rebuild easy page
         old_page = self._sub_stack.widget(0)
@@ -550,7 +665,7 @@ class CodingPage(QWidget):
     def _recalc_pending(self) -> None:
         """Count how many options differ from the saved originals."""
         pending = 0
-        for cat_idx, cat in enumerate(MOCK_CATEGORIES):
+        for cat_idx, cat in enumerate(self._categories):
             orig_cat = self._originals[cat_idx]
             for opt_idx, opt in enumerate(cat["options"]):
                 orig_opt = orig_cat["options"][opt_idx]
@@ -579,9 +694,9 @@ class CodingPage(QWidget):
             return
         self._pending = 0
         self._update_pending_label()
-        # Restore original option values by deep-copying into MOCK_CATEGORIES
-        MOCK_CATEGORIES.clear()
-        MOCK_CATEGORIES.extend(copy.deepcopy(self._originals))
+        # Restore original option values by deep-copying into self._categories
+        self._categories.clear()
+        self._categories.extend(copy.deepcopy(self._originals))
         # Rebuild the easy page to reflect restored values
         old_page = self._sub_stack.widget(0)
         self._sub_stack.removeWidget(old_page)
@@ -615,13 +730,13 @@ class CodingPage(QWidget):
         if hasattr(self._connection, "data") and self._connection.data:
             self._pending = 0
             self._update_pending_label()
-            self._originals = copy.deepcopy(MOCK_CATEGORIES)
+            self._originals = copy.deepcopy(self._categories)
             logger.info("Coding changes written (mock)")
             return
 
         # G-9: Real car — write via UDS 0x2E WriteDataByIdentifier
         self._write_btn.setEnabled(False)
-        self._coding_writer = CodingWriteWorker(self._connection, MOCK_CATEGORIES)
+        self._coding_writer = CodingWriteWorker(self._connection, self._categories)
         self._coding_writer.finished.connect(self._on_write_complete)
         self._coding_writer.error.connect(self._on_write_error)
         self._coding_writer.start()
@@ -632,7 +747,7 @@ class CodingPage(QWidget):
         self._coding_writer = None
         self._pending = 0
         self._update_pending_label()
-        self._originals = copy.deepcopy(MOCK_CATEGORIES)
+        self._originals = copy.deepcopy(self._categories)
         QMessageBox.information(
             self,
             "Coding Written",
@@ -705,11 +820,14 @@ class CodingPage(QWidget):
         return True
 
     def _on_coding_read(self, categories: list[dict]) -> None:
-        """Populate mock categories from real-car read."""
+        """Populate categories from real-car read or coding database."""
         if categories:
-            MOCK_CATEGORIES.clear()
-            MOCK_CATEGORIES.extend(categories)
-            self._originals = copy.deepcopy(MOCK_CATEGORIES)
+            self._categories.clear()
+            self._categories.extend(categories)
+            self._originals = copy.deepcopy(self._categories)
+            self._pending = 0
+            self._update_pending_label()
+            self._is_real = True
             # Rebuild easy page
             old_page = self._sub_stack.widget(0)
             self._sub_stack.removeWidget(old_page)
@@ -717,7 +835,7 @@ class CodingPage(QWidget):
             self._sub_stack.insertWidget(0, self._build_easy_page())
             self._sub_stack.setCurrentIndex(0)
             self._easy_tab.setChecked(True)
-            logger.info("Coding data loaded from car (%d categories)", len(categories))
+            logger.info("Coding data loaded (%d categories)", len(categories))
 
 
 # ---- Coding Workers ----
