@@ -12,6 +12,7 @@ from typing import Any
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QButtonGroup,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -32,8 +33,10 @@ MOCK_CATEGORIES = [
         "icon": "L",
         "description": "Angel eyes brightness, welcome lights, DRL behavior",
         "options": [
-            {"name": "Angel Eyes Brightness", "values": ["4%", "8%", "12%", "16%", "20%"], "current": 1},
-            {"name": "Welcome Lights Duration", "values": ["10s", "20s", "30s", "40s"], "current": 2},
+            {"name": "Angel Eyes Brightness",
+             "values": ["4%", "8%", "12%", "16%", "20%"], "current": 1},
+            {"name": "Welcome Lights Duration",
+             "values": ["10s", "20s", "30s", "40s"], "current": 2},
             {"name": "DRL Rear Lights", "values": ["Off", "On"], "current": 0},
         ],
     },
@@ -42,8 +45,10 @@ MOCK_CATEGORIES = [
         "icon": "C",
         "description": "Fold mirrors, window control, seat heating memory",
         "options": [
-            {"name": "Fold Mirrors on Lock", "values": ["Off", "On (hold)", "On (instant)"], "current": 1},
-            {"name": "Window Control after Ignition Off", "values": ["Disabled", "30s", "60s", "Unlimited"], "current": 2},
+            {"name": "Fold Mirrors on Lock",
+             "values": ["Off", "On (hold)", "On (instant)"], "current": 1},
+            {"name": "Window Control after Ignition Off",
+             "values": ["Disabled", "30s", "60s", "Unlimited"], "current": 2},
         ],
     },
     {
@@ -109,6 +114,14 @@ class CodingPage(QWidget):
         self._adv_tab.clicked.connect(lambda: self._sub_stack.setCurrentIndex(1))
         tab_bar.addWidget(self._adv_tab)
         tab_bar.addStretch()
+
+        # Make Easy/Advanced exclusive — clicking the active tab keeps it checked
+        self._tab_group = QButtonGroup(self)
+        self._tab_group.setExclusive(True)
+        self._tab_group.addButton(self._easy_tab, 0)
+        self._tab_group.addButton(self._adv_tab, 1)
+        # Prevent unchecking the active tab
+        self._tab_group.buttonClicked.connect(self._ensure_tab_checked)
 
         # Pending changes counter
         self._pending_label = QLabel("")
@@ -217,18 +230,22 @@ class CodingPage(QWidget):
                 opt_lbl.setWordWrap(True)
                 opts_layout.addWidget(opt_lbl)
 
+                # QButtonGroup ensures exclusivity within this option only
+                opt_group = QButtonGroup(self)
+
                 for v_i, v_name in enumerate(opt["values"]):
                     rb = QRadioButton(f"  {v_name}")
                     rb.setStyleSheet(
                         "QRadioButton { color: #a0a0a0; spacing: 8px; }"
                         "QRadioButton::indicator { width: 14px; height: 14px; }"
                     )
+                    opt_group.addButton(rb, v_i)
                     # Set checked state before connecting signal so init
                     # does not fire toggled and increment _pending
                     rb.setChecked(v_i == opt["current"])
                     rb.toggled.connect(
                         lambda checked, lbl=opt_lbl, o=opt,
-                               vi=v_i, nm=v_name: (
+                               vi=v_i: (
                             self._apply_option(o, vi, lbl, checked)
                             if checked else None
                         )
@@ -237,10 +254,30 @@ class CodingPage(QWidget):
 
             card_layout.addWidget(opts_widget)
 
-            # Toggle expand on card click
-            card.mousePressEvent = lambda e, ow=opts_widget: (
-                ow.setVisible(not ow.isVisible())
+            # Toggle button for accessibility
+            toggle_btn = QPushButton("\u25bc Expand")
+            toggle_btn.setFlat(True)
+            toggle_btn.setStyleSheet(
+                "QPushButton { color: #1C69D4; font-size: 11px; "
+                "background: transparent; border: none; padding: 4px 0; }"
+                "QPushButton:hover { color: #4A90E2; }"
             )
+            toggle_btn.clicked.connect(
+                lambda checked, ow=opts_widget, b=None: (
+                    ow.setVisible(not ow.isVisible()),
+                    # Update via closure: set b reference on first click
+                )
+            )
+            # Use a single-shot approach — rebuild the connection to capture btn
+            def _make_toggle(ow: QWidget, btn: QPushButton):
+                def _toggle():
+                    visible = not ow.isVisible()
+                    ow.setVisible(visible)
+                    btn.setText("\u25b2 Collapse" if visible else "\u25bc Expand")
+                return _toggle
+            toggle_btn.clicked.disconnect()
+            toggle_btn.clicked.connect(_make_toggle(opts_widget, toggle_btn))
+            card_layout.addWidget(toggle_btn)
 
             cat_layout.addWidget(card)
 
@@ -270,7 +307,17 @@ class CodingPage(QWidget):
         return page
 
     def set_connection(self, connection: Any) -> None:
+        """Store the active connection for future coding operations.
+
+        Args:
+            conection: An HSFZConnection, DoIPConnection, or MockConnection.
+        """
         self._connection = connection
+
+    def _ensure_tab_checked(self, btn: QPushButton) -> None:
+        """Keep the active sub-tab button checked — clicking it again keeps it."""
+        if not btn.isChecked():
+            btn.setChecked(True)
 
     def _apply_option(
         self, opt: dict, idx: int, label: QLabel, checked: bool
@@ -278,9 +325,21 @@ class CodingPage(QWidget):
         if not checked:
             return
         opt["current"] = idx
-        self._pending += 1
         val = opt["values"][idx]
         label.setText(f"{opt['name']}: {val}")
+        # Recalculate pending count by comparing against originals
+        self._recalc_pending()
+
+    def _recalc_pending(self) -> None:
+        """Count how many options differ from the saved originals."""
+        pending = 0
+        for cat_idx, cat in enumerate(MOCK_CATEGORIES):
+            orig_cat = self._originals[cat_idx]
+            for opt_idx, opt in enumerate(cat["options"]):
+                orig_opt = orig_cat["options"][opt_idx]
+                if opt["current"] != orig_opt["current"]:
+                    pending += 1
+        self._pending = pending
         self._update_pending_label()
 
     def _update_pending_label(self) -> None:
@@ -330,4 +389,6 @@ class CodingPage(QWidget):
         # Mock: simulate write
         self._pending = 0
         self._update_pending_label()
+        # Update originals so Clear All restores post-write basline
+        self._originals = copy.deepcopy(MOCK_CATEGORIES)
         logger.info("Coding changes written (mock)")

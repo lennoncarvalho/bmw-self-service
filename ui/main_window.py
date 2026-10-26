@@ -18,11 +18,11 @@ from PySide6.QtWidgets import (
 
 from app.connection import HSFZConnection, DoIPConnection
 from app.mock_connection import MockConnection
+from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
 from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
-from ui.coding_page import CodingPage
 
 logger = logging.getLogger(__name__)
 
