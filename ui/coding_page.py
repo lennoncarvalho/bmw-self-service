@@ -6,6 +6,7 @@ Advanced: SVT ECU tree -> FDL hex editor (stub).
 Reference: docs/16-ui-spec.md Screens 7, 8, 9
 """
 
+import copy
 import logging
 from typing import Any
 
@@ -74,6 +75,7 @@ class CodingPage(QWidget):
         super().__init__(parent)
         self._connection: Any = None
         self._pending: int = 0
+        self._originals = copy.deepcopy(MOCK_CATEGORIES)
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -221,11 +223,13 @@ class CodingPage(QWidget):
                         "QRadioButton { color: #a0a0a0; spacing: 8px; }"
                         "QRadioButton::indicator { width: 14px; height: 14px; }"
                     )
+                    # Set checked state before connecting signal so init
+                    # does not fire toggled and increment _pending
                     rb.setChecked(v_i == opt["current"])
                     rb.toggled.connect(
                         lambda checked, lbl=opt_lbl, o=opt,
                                vi=v_i, nm=v_name: (
-                            self._apply_option(o, vi, nm, lbl, checked)
+                            self._apply_option(o, vi, lbl, checked)
                             if checked else None
                         )
                     )
@@ -269,7 +273,7 @@ class CodingPage(QWidget):
         self._connection = connection
 
     def _apply_option(
-        self, opt: dict, idx: int, name: str, label: QLabel, checked: bool
+        self, opt: dict, idx: int, label: QLabel, checked: bool
     ) -> None:
         if not checked:
             return
@@ -299,6 +303,16 @@ class CodingPage(QWidget):
             return
         self._pending = 0
         self._update_pending_label()
+        # Restore original option values by deep-copying into MOCK_CATEGORIES
+        MOCK_CATEGORIES.clear()
+        MOCK_CATEGORIES.extend(copy.deepcopy(self._originals))
+        # Rebuild the easy page to reflect restored values
+        old_page = self._sub_stack.widget(0)
+        self._sub_stack.removeWidget(old_page)
+        old_page.deleteLater()
+        self._sub_stack.insertWidget(0, self._build_easy_page())
+        self._sub_stack.setCurrentIndex(0)
+        self._easy_tab.setChecked(True)
         logger.info("Coding changes cleared")
 
     def _on_write(self) -> None:
