@@ -85,7 +85,7 @@
   - Reference: `docs/13:159-166`, `docs/16` screen 5
   - Files: `ui/diagnostics_page.py`, `app/worker.py`
 
-- [ ] **T-10: Implement DTC snapshot read**
+- [x] **T-10: Implement DTC snapshot read**
   - UDS 0x19 04 (report DTC snapshot identification) or 0x19 06 (report DTC with snapshot)
   - Per-DTC: mileage/km at first occurrence, date/timestamp, freeze-frame data
   - Show in DTC detail expanded view
@@ -119,12 +119,12 @@
   - Currently `_load_from_car` sets `prod_date_label` to empty string
   - Files: `ui/vehicle_page.py`
 
-- [ ] **T-14: Add ECU-level Skip/Retry/Abort for DTC reads**
+- [x] **T-14: Add ECU-level Skip/Retry/Abort for DTC reads**
   - When an ECU times out (30s), offer: [Skip] [Retry] [Abort]
   - Reference: `docs/16:575` error matrix
   - Files: `ui/diagnostics_page.py`, `app/worker.py`
 
-- [ ] **T-15: Implement read_fa() for factory options**
+- [x] **T-15: Implement read_fa() for factory options**
   - UDS 0x22 to ZGW to read Vehicle Order / FA
   - Display factory option codes on Vehicle page
   - Reference: `docs/13:56`

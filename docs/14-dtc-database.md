@@ -155,6 +155,40 @@ def clear_dtcs(conn, ecu_addr: int):
     conn.send_uds(ecu_addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
 ```
 
+## UDS 0x19 sub-function reference
+
+| Sub-function | Description | Common usage |
+|-------------|-------------|-------------|
+| `0x19 01` | Report number of DTCs by status mask | Quick check: any faults? |
+| `0x19 02` | Report DTCs by status mask | Read all confirmed/pending DTC codes |
+| `0x19 04` | Report DTC snapshot identification | Which DTCs have freeze-frame data? |
+| `0x19 06` | Report DTC with snapshot record | Read freeze-frame data for one DTC |
+
+### Snapshot identification (0x19 04)
+
+Response format: `0x59 04 + [DTC(3) + status(1) + snapshot_count(1) + records...]*`
+
+Each record (when snapshot_count > 0): `record_num(1) + timestamp(4) + mileage(4)`
+
+- **timestamp**: Seconds since 2000-01-01 00:00:00 UTC (BMW convention)
+- **mileage**: Kilometers × 10, big-endian uint32
+
+Example: `0x59 04 B7F805 08 01 01 A1B2C3D4 0001A340`
+→ DTC B7F805, 1 snapshot, record #1, timestamp=..., mileage=10,720 km
+
+### Snapshot record (0x19 06)
+
+Request: `0x19 06 [DTC(3)] [record_num(1)]`
+Response: `0x59 06 [DTC(3)] [status(1)] [record_num(1)] [snapshot_data...]`
+
+Snapshot data format is ECU-specific. Common fields:
+- Engine RPM, vehicle speed, coolant temperature, battery voltage
+- Ambient temperature, intake air temperature
+- Fuel system status, calculated load
+
+The snapshot data format varies by ECU and is not decoded by this app.
+Only the timestamp and mileage from 0x19 04 are used for display.
+
 ## DTC code format
 
 BMW hex codes from UDS `0x19` responses:

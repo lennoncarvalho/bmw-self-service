@@ -7,9 +7,10 @@ Reference: docs/16-ui-spec.md Screen 5, docs/14-dtc-database.md
 """
 
 import logging
+from threading import Event
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -28,16 +29,39 @@ logger = logging.getLogger(__name__)
 
 
 class DtcReadWorker(CarWorker):
-    """Read DTCs from all provided ECUs and enrich with descriptions."""
+    """Read DTCs from all provided ECUs and enrich with descriptions.
+
+    T-14: Emits ``ecu_timeout`` signal when an ECU times out.
+    The UI slot sets ``self._timeout_action`` to 'skip', 'retry', or 'abort'
+    and then sets ``self._timeout_event`` to unblock the worker thread.
+
+    Signals:
+        ecu_timeout(str): Emitted with ECU name when 30s timeout expires.
+    """
+
+    ecu_timeout = Signal(str)
 
     def __init__(self, connection: Any, ecus: list[dict]) -> None:
         super().__init__(connection)
         self.ecus = ecus
+        self._timeout_event = Event()
+        self._timeout_action = "abort"
+
+    def _handle_timeout(self, ecu_name: str) -> str:
+        """Block until the UI thread decides: skip, retry, or abort."""
+        self._timeout_event.clear()
+        self.ecu_timeout.emit(ecu_name)
+        # Wait up to 60s for UI response — if UI never responds, abort
+        self._timeout_event.wait(60.0)
+        return self._timeout_action
 
     def do_work(self) -> list[dict]:
         dtcs: list[dict] = []
         total = len(self.ecus)
-        for i, ecu in enumerate(self.ecus):
+        i = 0
+        retries: dict[str, int] = {}
+        while i < len(self.ecus):
+            ecu = self.ecus[i]
             name = ecu.get("name", "ECU")
             addr_str = ecu.get("addr", "0x00")
             addr = int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str)
@@ -51,6 +75,7 @@ class DtcReadWorker(CarWorker):
                 resp = self.connection.send_uds(addr, bytes([0x19, 0x02, 0x08]))
 
                 if resp[0] != 0x59:
+                    i += 1
                     continue
 
                 # Parse: 0x59 + status_mask + [3-byte DTC + 1-byte status]*
@@ -67,10 +92,98 @@ class DtcReadWorker(CarWorker):
                         "ecu_addr": addr,
                     })
                     offset += 4
+                i += 1
+                retries.pop(name, None)
+
+                # T-10: Read DTC snapshot identification for this ECU
+                try:
+                    snapshots = self._read_snapshots(addr)
+                    for snap in snapshots:
+                        snap_code = snap.get("code", "")
+                        for dtc_entry in dtcs:
+                            if dtc_entry.get("code") == snap_code and dtc_entry.get("ecu_addr") == addr:
+                                dtc_entry.update(snap)
+                                break
+                except Exception:
+                    pass  # snapshots are optional, don't fail the read
+
+            except TimeoutError:
+                # T-14: Ask UI what to do
+                action = self._handle_timeout(name)
+                if action == "skip":
+                    i += 1
+                    continue
+                elif action == "retry":
+                    retries[name] = retries.get(name, 0) + 1
+                    if retries[name] > 3:
+                        logger.warning("ECU %s: max retries exceeded, skipping", name)
+                        i += 1
+                    # Don't increment i — retry the same ECU
+                    continue
+                else:  # abort
+                    break
+
             except Exception as exc:
                 logger.debug("ECU 0x%02X (%s) DTC read skipped: %s", addr, name, exc)
+                i += 1
 
         return dtcs
+
+    def _read_snapshots(self, addr: int) -> list[dict]:
+        """T-10: Read DTC snapshot identification from an ECU.
+
+        UDS 0x19 04 returns a list of DTCs that have freeze-frame data
+        along with snapshot record numbers. Each entry includes the DTC
+        code, snapshot record number, and a timestamp/mileage when the
+        fault was first detected.
+
+        ISO 14229-1: 0x59 04 + DTC(3) + status(1) + snapshot_count(1)
+        + [record_num(1) + timestamp(4) + mileage(4)]*
+
+        Returns:
+            List of dicts with snapshot metadata per DTC.
+        """
+        snapshots: list[dict] = []
+        try:
+            resp = self.connection.send_uds(addr, bytes([0x19, 0x04]))
+            if resp[0] != 0x59:
+                return snapshots
+            # Parse: 0x59 04 + [DTC(3) + status(1) + snap_count(1) + records...]
+            offset = 2
+            while offset + 5 <= len(resp):
+                code = resp[offset:offset + 3].hex().upper()
+                status = resp[offset + 3]
+                snap_count = resp[offset + 4]
+                offset += 5
+                snap_entry = {
+                    "code": code,
+                    "snapshot_count": snap_count,
+                }
+                # Parse snapshot record(s) if present
+                if snap_count > 0 and offset + 8 <= len(resp):
+                    # Record number
+                    record_num = resp[offset]
+                    offset += 1
+                    # Timestamp: 4 bytes — seconds since 2000-01-01 (BMW convention)
+                    if offset + 4 <= len(resp):
+                        ts_raw = int.from_bytes(resp[offset:offset + 4], "big")
+                        if ts_raw > 0:
+                            from datetime import datetime, timedelta
+                            ts = datetime(2000, 1, 1) + timedelta(seconds=ts_raw)
+                            snap_entry["first_seen"] = ts.strftime("%Y-%m-%d %H:%M")
+                        offset += 4
+                    # Mileage: 4 bytes — km * 10
+                    if offset + 4 <= len(resp):
+                        km_raw = int.from_bytes(resp[offset:offset + 4], "big")
+                        if km_raw > 0:
+                            snap_entry["first_mileage_km"] = km_raw // 10
+                        offset += 4
+                else:
+                    offset += snap_count * 9  # skip unknown records
+                snapshots.append(snap_entry)
+        except Exception:
+            pass
+        return snapshots
 
 
 class DiagnosticsPage(QWidget):
@@ -209,7 +322,36 @@ class DiagnosticsPage(QWidget):
         self._worker.started.connect(lambda: self.read_btn.setEnabled(False))
         self._worker.finished.connect(self._on_dtcs_loaded)
         self._worker.error.connect(self._on_dtc_error)
+        self._worker.ecu_timeout.connect(self._on_ecu_timeout)
         self._worker.start()
+
+    def _on_ecu_timeout(self, ecu_name: str) -> None:
+        """T-14: Handle ECU timeout — show Skip/Retry/Abort dialog.
+
+        Runs on the main thread. Sets the worker's _timeout_action and
+        _timeout_event to unblock the worker thread.
+        """
+        msg = QMessageBox(self)
+        msg.setWindowTitle("ECU Timeout")
+        msg.setText(f"ECU {ecu_name} is not responding.")
+        msg.setInformativeText("What would you like to do?")
+        skip_btn = msg.addButton("Skip", QMessageBox.ButtonRole.AcceptRole)
+        retry_btn = msg.addButton("Retry", QMessageBox.ButtonRole.ActionRole)
+        abort_btn = msg.addButton("Abort", QMessageBox.ButtonRole.RejectRole)
+        msg.setDefaultButton(skip_btn)
+        msg.exec()
+
+        worker = self._worker
+        if worker is None:
+            return
+        clicked = msg.clickedButton()
+        if clicked == skip_btn:
+            worker._timeout_action = "skip"
+        elif clicked == retry_btn:
+            worker._timeout_action = "retry"
+        else:
+            worker._timeout_action = "abort"
+        worker._timeout_event.set()
 
     def _on_dtcs_loaded(self, dtcs: list[dict]) -> None:
         """Display the DTC list after reading."""

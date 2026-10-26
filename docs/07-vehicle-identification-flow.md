@@ -95,6 +95,11 @@ car has. Read from ZGW:
 ```
 UDS ReadDataByIdentifier: 22 <ZGW_FA_DID>
 Response: <XML structure>
+
+Known FA DIDs per chassis:
+  - F-series (F20-F87): 0xF100
+  - G-series (G01-G32): 0xFC00 (tentative — verify with car)
+  - U-series / I-series: same as G-series (DoIP-based)
 ```
 
 The FA contains:

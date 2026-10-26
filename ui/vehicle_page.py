@@ -216,6 +216,21 @@ class VehiclePage(QWidget):
         except Exception as e:
             logger.debug("Production date read failed: %s", e)
 
+        # T-15: Read FA (Vehicle Order) from ZGW
+        # FA DID varies by chassis: 0xF100 (F-series), 0xFC00 (some G-series).
+        # Returns XML with VIN, TypeCode, ProductionDate, SALAPA option codes.
+        fa_xml = ""
+        for fa_did in (0xF100, 0xFC00):
+            try:
+                resp = connection.send_uds(0x10, bytes([0x22, (fa_did >> 8) & 0xFF, fa_did & 0xFF]))
+                if resp[0] == 0x62:
+                    fa_xml = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
+                    break
+            except Exception:
+                pass
+        if fa_xml:
+            logger.debug("FA read: %d bytes", len(fa_xml))
+
         # G-1: Mileage via UDS 0x1A from KOMBI (0x60)
         # Falls back to 0x22 0xF4xx DID if 0x1A not supported
         try:
