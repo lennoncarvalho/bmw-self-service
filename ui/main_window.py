@@ -539,7 +539,7 @@ class MainWindow(QMainWindow):
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Connection lost")
         self._stop_keepalive()
-        
+
         reply = QMessageBox.warning(
             self,
             "Connection Lost",

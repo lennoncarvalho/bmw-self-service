@@ -961,8 +961,6 @@ class CodingWriteWorker(CarWorker):
                 if meta:
                     ecu_addr = meta["ecu_addr"]
                     did = meta["did"]
-                    cafd_id = meta["cafd_id"]
-                    variant = meta["variant"]
 
                     # Skip if value hasn't changed from original
                     orig_current = None

@@ -567,8 +567,9 @@ class DiagnosticsPage(QWidget):
                 "padding: 4px 12px; font-size: 11px; }"
                 "QPushButton:hover { background: rgba(227,11,31,0.15); }"
             )
+            clear_btn_addr = dtc.get("ecu_addr", 0x10)  # capture before lambda
             clear_one_btn.clicked.connect(
-                lambda checked, c=code, a=dtc.get("ecu_addr", 0x10): (
+                lambda checked, c=code, a=clear_btn_addr: (
                     self._on_clear_single(c, a)
                 )
             )
