@@ -7,7 +7,7 @@
 
 ## Phase 1: Coding database foundation (blocks all real-car coding)
 
-- [ ] **T-1: Build `app/coding_db.py` — `CodingDatabase` class**
+- [x] **T-1: Build `app/coding_db.py` — `CodingDatabase` class**
   - Decrypt `.enc` files with AES-256-CBC (key `2443...`, IV `7639...`, from `docs/08`)
   - Optional GZIP decompress after decryption
   - Output: JSON plaintext
@@ -19,7 +19,7 @@
   - Reference: `docs/13:282-406`, `docs/11`, `docs/08`
   - Files: `app/coding_db.py` (new)
 
-- [ ] **T-2: Wire SVT → coding database after connection**
+- [x] **T-2: Wire SVT → coding database after connection**
   - After reading SVT ECU list in `CodingPage`, for each ECU:
     - Determine CAFD ID from SVT response (format: `CAFD_XXXXXXXX_XXX_XXX_XXX`)
     - Load root index + variant from `CodingDatabase`
@@ -28,21 +28,21 @@
     - Replace `MOCK_CATEGORIES` with real presets
   - Files: `ui/coding_page.py`, `app/coding_db.py`
 
-- [ ] **T-3: Replace MOCK_CATEGORIES with coding database lookups**
+- [x] **T-3: Replace MOCK_CATEGORIES with coding database lookups**
   - Remove the 4 hardcoded categories and 10 mock options
   - `_build_easy_page()` reads from `CodingDatabase` instead
   - Proper `.strings` labels: "BC_DIGITAL_V" → "Digital Speed in Board Computer"
   - Proper sections from root index: `BOARD_COMPUTER`, `ANGEL_EYES`, etc.
   - Files: `ui/coding_page.py`
 
-- [ ] **T-4: Fix CodingWriteWorker to use real DIDs**
+- [x] **T-4: Fix CodingWriteWorker to use real DIDs**
   - Use `build_write_payload()` from `CodingDatabase` for each modified option
   - Correct ECU address per option (not hardcoded 0x40)
   - Correct DID per option (not placeholder 0xF000)
   - Correct byte offset + bit mask from CAFD variant
   - Files: `ui/coding_page.py`, `app/coding_db.py`
 
-- [ ] **T-5: Replace hardcoded Advanced FDL with real CAFD data**
+- [x] **T-5: Replace hardcoded Advanced FDL with real CAFD data**
   - Remove the 3 hardcoded `PfFzgKl30...` mock functions
   - Read real FDL parameters from CAFD variant for selected ECU
   - Show `function name`, `storageInfo` (byte offset, mask), current value
@@ -53,7 +53,7 @@
 
 ## Phase 2: Service history protocol fix
 
-- [ ] **T-6: Fix service history write — 0x2E not 0x31**
+- [x] **T-6: Fix service history write — 0x2E not 0x31**
   - `ServiceHistoryWriteWorker` currently uses 0x31 (RoutineControl)
   - Spec correction (`docs/12:181-186`): STEUERN jobs use 0x2E WriteDataByIdentifier
   - Use `SERVICE_HISTORY_ADD_RID = 0xA081` as the DID for 0x2E
@@ -62,13 +62,13 @@
   - Check negative response: `0x7F 0x2E <NRC>`
   - Files: `ui/service_history_page.py`
 
-- [ ] **T-7: Fix service history read — 0x22 for headunit records**
+- [x] **T-7: Fix service history read — 0x22 for headunit records**
   - `ServiceHistoryReadWorker` currently uses 0x31
   - Spec (`docs/13:43-44`): use 0x22 ReadDataByIdentifier from headunit
   - Parse response into entries with proper structure
   - Files: `ui/service_history_page.py`
 
-- [ ] **T-8: Add erase service history**
+- [x] **T-8: Add erase service history**
   - `SERVICE_HISTORY_ERASE_RID = 0xA080`
   - UDS 0x2E with DID 0xA080 to headunit
   - Add "Erase History" button to service history page (with confirmation)
@@ -78,7 +78,7 @@
 
 ## Phase 3: Diagnostics completeness
 
-- [ ] **T-9: Implement MIL status**
+- [x] **T-9: Implement MIL status**
   - OBD-II Mode 01 PID 01 via UDS: `0x01 0x01`
   - Parse: bit 7 = MIL on/off, bits 0-6 = DTC count
   - Show MIL indicator (check-engine icon) on diagnostics page
@@ -96,7 +96,7 @@
 
 ## Phase 4: Security & robustness
 
-- [ ] **T-11: Implement SecurityAccess (0x27) for protected ECUs**
+- [x] **T-11: Implement SecurityAccess (0x27) for protected ECUs**
   - 22 of 139 ECUs require seed/key before writing
   - UDS flow: `0x27 0x01` → ECU returns seed → compute key → `0x27 0x02 [key]`
   - Blocked ECUs list: ACSM, DME, DSC, SAS, ZGW, AIRBAG, ABG, MRS, SRS
@@ -104,7 +104,7 @@
   - (Seed/key algorithms are ECU-specific; document as future work)
   - Files: `app/security.py` (new), `ui/coding_page.py`
 
-- [ ] **T-12: Add connection-lost detection**
+- [x] **T-12: Add connection-lost detection**
   - Monitor alive-check / TesterPresent failures
   - On failure: set status dot red, show "Connection lost. [Reconnect]" dialog
   - Reference: `docs/16:578`
@@ -114,7 +114,7 @@
 
 ## Phase 5: Polish
 
-- [ ] **T-13: Read production date from car**
+- [x] **T-13: Read production date from car**
   - UDS 0x22 to ZGW with production-date DID
   - Currently `_load_from_car` sets `prod_date_label` to empty string
   - Files: `ui/vehicle_page.py`
