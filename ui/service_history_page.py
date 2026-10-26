@@ -127,6 +127,7 @@ class ServiceHistoryPage(QWidget):
         super().__init__(parent)
         self._connection: Any = None
         self._entries: list[dict] = []
+        self._pending_writes: list[dict] = []
         self._worker: CarWorker | None = None
         self._setup_ui()
 
@@ -177,6 +178,40 @@ class ServiceHistoryPage(QWidget):
         self.erase_btn.clicked.connect(self._on_erase_clicked)
         self.erase_btn.setVisible(False)
         layout.addWidget(self.erase_btn, alignment=Qt.AlignCenter)
+
+        # Bottom bar (visible when pending writes exist)
+        self._write_bar = QFrame()
+        self._write_bar.setObjectName("bottomNav")
+        self._write_bar.setFixedHeight(52)
+        self._write_bar.setVisible(False)
+        bar_layout = QHBoxLayout(self._write_bar)
+        bar_layout.setContentsMargins(24, 8, 24, 8)
+
+        clear_pending_btn = QPushButton("Clear")
+        clear_pending_btn.setStyleSheet(
+            "QPushButton { background: #3a3a5a; color: #a0a0a0; "
+            "border-radius: 8px; padding: 8px 24px; font-weight: bold; }"
+            "QPushButton:hover { background: #5a5a7a; color: white; }"
+        )
+        clear_pending_btn.clicked.connect(self._on_clear_pending)
+        bar_layout.addWidget(clear_pending_btn)
+
+        self._pending_label = QLabel("")
+        self._pending_label.setStyleSheet(
+            "color: #F39C12; font-size: 13px; font-weight: bold;"
+        )
+        bar_layout.addWidget(self._pending_label)
+        bar_layout.addStretch()
+
+        self._write_btn = QPushButton("Write to Car")
+        self._write_btn.setStyleSheet(
+            "QPushButton { background: #2ECC71; color: white; "
+            "border-radius: 8px; padding: 8px 24px; font-weight: bold; }"
+            "QPushButton:hover { background: #27AE60; }"
+        )
+        self._write_btn.clicked.connect(self._on_write_clicked)
+        bar_layout.addWidget(self._write_btn)
+        layout.addWidget(self._write_bar)
 
     def set_connection(self, connection: Any) -> None:
         """Set the active connection and load service history."""
@@ -344,12 +379,9 @@ class ServiceHistoryPage(QWidget):
                 self._connection.save()
             return
 
-        # G-7: Real car — write via UDS 0x31 RoutineControl RID 0xA081 to headunit
-        self.add_btn.setEnabled(False)
-        self._worker = ServiceHistoryWriteWorker(self._connection, data)
-        self._worker.finished.connect(self._on_entry_written)
-        self._worker.error.connect(self._on_history_error)
-        self._worker.start()
+        # Real car: add to pending writes (user must click "Write to Car")
+        self._pending_writes.append(data)
+        self._update_pending_label()
 
     def _on_history_erased(self, _result: object = None) -> None:
         """Re-load history after successful erase."""
@@ -358,8 +390,68 @@ class ServiceHistoryPage(QWidget):
 
     def _on_entry_written(self, _result: object = None) -> None:
         """Re-load history after a successful write."""
+        self._write_btn.setEnabled(True)
         self.add_btn.setEnabled(True)
+        self._pending_writes = []
+        self._update_pending_label()
         self._load_history()
+
+    def _update_pending_label(self) -> None:
+        """Show/hide the bottom bar based on pending write count."""
+        count = len(self._pending_writes)
+        if count > 0:
+            self._pending_label.setText(f"[{count} pending writes]")
+            self._write_bar.setVisible(True)
+        else:
+            self._pending_label.setText("")
+            self._write_bar.setVisible(False)
+
+    def _on_write_clicked(self) -> None:
+        """Write all pending service entries to the car with confirmation."""
+        count = len(self._pending_writes)
+        if count == 0 or self._connection is None:
+            return
+        reply = QMessageBox.question(
+            self,
+            "Write to Car",
+            f"Write {count} new service entr{'y' if count == 1 else 'ies'} to the vehicle?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self.add_btn.setEnabled(False)
+        self._write_btn.setEnabled(False)
+        self._worker = ServiceHistoryWriteWorker(self._connection, self._pending_writes)
+        self._worker.finished.connect(self._on_entry_written)
+        self._worker.error.connect(self._on_write_error)
+        self._worker.start()
+
+    def _on_write_error(self, msg: str) -> None:
+        """Handle write failure — re-enable buttons, preserve pending entries."""
+        self.add_btn.setEnabled(True)
+        self._write_btn.setEnabled(True)
+        logger.warning("Service history write failed: %s", msg)
+        QMessageBox.warning(
+            self, "Write Failed",
+            f"Could not write service entr{'ies' if len(self._pending_writes) > 1 else 'y'}: {msg}",
+        )
+
+    def _on_clear_pending(self) -> None:
+        """Discard all pending writes without writing to the car."""
+        if not self._pending_writes:
+            return
+        reply = QMessageBox.question(
+            self,
+            "Clear Pending",
+            f"Discard {len(self._pending_writes)} pending service entr{'ies' if len(self._pending_writes) > 1 else 'y'}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self._pending_writes = []
+        self._update_pending_label()
 
     def _on_erase_clicked(self) -> None:
         """T-8: Confirm and erase entire service history."""
@@ -522,31 +614,36 @@ class ServiceHistoryWriteWorker(CarWorker):
 
     HEADUNIT_ADDR = 0x63
 
-    def __init__(self, connection: Any, entry: dict) -> None:
+    def __init__(self, connection: Any, entry_or_entries: dict | list[dict]) -> None:
         super().__init__(connection)
-        self.entry = entry
+        if isinstance(entry_or_entries, list):
+            self.entries = entry_or_entries
+        else:
+            self.entries = [entry_or_entries]
 
     def do_work(self) -> bool:
         # Extended session
         self.connection.send_uds(self.HEADUNIT_ADDR, bytes([0x10, 0x03]))
-        # Build argument string per docs/12:84-90
-        args = _build_service_args(self.entry)
-        did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
-        did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
-        payload = (
-            bytes([0x2E, did_high, did_low]) + args.encode("ascii")
-        )
-        resp = self.connection.send_uds(self.HEADUNIT_ADDR, payload)
-        if resp[0] == 0x6E:
-            return True
-        if resp[0] == 0x7F:
-            nrc = resp[2] if len(resp) > 2 else 0
-            raise ConnectionError(
-                f"Headunit rejected write: NRC 0x{nrc:02X}"
+        for entry in self.entries:
+            self.progress.emit(f"Writing service entry ({entry.get('date', '?')})...")
+            args = _build_service_args(entry)
+            did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
+            did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
+            payload = (
+                bytes([0x2E, did_high, did_low]) + args.encode("ascii")
             )
-        raise ConnectionError(
-            f"Unexpected response: 0x{resp[0]:02X}"
-        )
+            resp = self.connection.send_uds(self.HEADUNIT_ADDR, payload)
+            if resp[0] == 0x6E:
+                continue
+            if resp[0] == 0x7F:
+                nrc = resp[2] if len(resp) > 2 else 0
+                raise ConnectionError(
+                    f"Headunit rejected write: NRC 0x{nrc:02X}"
+                )
+            raise ConnectionError(
+                f"Unexpected response: 0x{resp[0]:02X}"
+            )
+        return True
 
 
 class ServiceHistoryEraseWorker(CarWorker):
