@@ -605,6 +605,29 @@ class CodingPage(QWidget):
                 logger.warning("Failed to load coding for %s: %s", name, e)
                 continue
 
+            # T-2: Try to read current CAFD bytes from the ECU via UDS 0x22
+            cafd_bytes = b""
+            if self._connection and not (
+                hasattr(self._connection, "data") and self._connection.data
+            ):
+                for cafd_did in (0xF100, 0xF110, 0xF120, 0xF130):
+                    try:
+                        resp = self._connection.send_uds(
+                            ecu_addr,
+                            bytes([0x22, (cafd_did >> 8) & 0xFF, cafd_did & 0xFF]),
+                            timeout=5.0,
+                        )
+                        if resp[0] == 0x62 and len(resp) > 3:
+                            cafd_bytes = resp[3:]
+                            break
+                    except Exception:
+                        pass
+                if cafd_bytes:
+                    logger.debug(
+                        "Read %d CAFD bytes from %s (0x%02X)",
+                        len(cafd_bytes), name, ecu_addr,
+                    )
+
             # Build presets grouped by section
             for preset in coding_db.get_presets(cafd_id):
                 section = preset["section"]
@@ -643,7 +666,20 @@ class CodingPage(QWidget):
                         "ecu_addr": ecu_addr,
                         "did": did,
                         "preset": preset,
+                        "cafd_bytes": cafd_bytes,
                     }
+
+                    # T-2: If we have CAFD bytes, determine current value
+                    if cafd_bytes:
+                        current_val = coding_db.get_current_value(
+                            preset, cafd_bytes, cafd_id, variant
+                        )
+                        if current_val is not None:
+                            # Find the index of the current value in options
+                            for oi, o in enumerate(preset["options"]):
+                                if o["name"] == current_val:
+                                    opt_entry["current"] = oi
+                                    break
 
         if loaded_ecus == 0:
             logger.info("No coding data for discovered ECUs — using mock")
@@ -980,12 +1016,36 @@ class CodingWriteWorker(CarWorker):
                     if orig_current is not None and opt.get("current") == orig_current:
                         continue
 
-                    # Build proper 0x2E payload using coding_db.write payload
-                    # NOTE: Real CAFD bytes from the car are needed for bit-accurate
-                    # writes. Using zero-filled bytes as placeholder — the first
-                    # write will set ONLY the target bits (all others will be 0,
-                    # which is incorrect). Real cars require reading the current
-                    # CAFD via 0x22 before writing. See T-2 _on_coding_read.
+                    # T-4: Build bit-accurate write payload when CAFD bytes available.
+                    # Uses coding_db.build_write_payload() which modifies only the
+                    # target bits via mask operations, preserving all other settings.
+                    cafd_bytes = meta.get("cafd_bytes", b"")
+                    if cafd_bytes:
+                        preset = meta.get("preset", {})
+                        selected_name = opt.get("values", [])[opt.get("current", 0)] if opt.get("values") and opt.get("current", 0) < len(opt.get("values", [])) else ""
+                        # Map UI value label back to preset option name
+                        selected_opt_name = ""
+                        for o in preset.get("options", []):
+                            if o.get("label") == selected_name or o.get("name") == selected_name:
+                                selected_opt_name = o["name"]
+                                break
+                        if selected_opt_name:
+                            payload = coding_db.build_write_payload(
+                                preset, selected_opt_name, cafd_bytes,
+                                meta["cafd_id"], meta["variant"],
+                            )
+                            if payload:
+                                did_high = (did >> 8) & 0xFF
+                                did_low = did & 0xFF
+                                full_payload = bytes([0x2E, did_high, did_low]) + payload
+                                try:
+                                    self.connection.send_uds(ecu_addr, full_payload)
+                                    continue
+                                except Exception as e:
+                                    raise ConnectionError(
+                                        f"Write failed for {opt_name}: {e}"
+                                    ) from e
+                    # Fallback: DID-correct payload with value index
                     did_high = (did >> 8) & 0xFF
                     did_low = did & 0xFF
                     data_bytes = bytes([opt.get("current", 0)])

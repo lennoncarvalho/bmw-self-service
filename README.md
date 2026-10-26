@@ -17,10 +17,11 @@ cd bmw-self-service
 
 # Create virtual environment
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate  # macOS/Linux
+# .venv\Scripts\activate   # Windows
 
 # Install dependencies
-pip install pyside6==6.12.0 pyinstaller==6.22.3 netifaces==0.11.0
+pip install pyside6==6.12.0 pyinstaller==6.22.3 netifaces==0.11.0 pycryptodome
 
 # Run the app
 python main.py
@@ -38,56 +39,89 @@ python main.py
 
 ### DEMO mode
 
-Toggle **Enable DEMO Mode** in the gear menu (top-right) to explore the app without a car. In DEMO mode, the interface dropdown is hidden and connection is instant with mock data.
+Toggle **Enable DEMO Mode** in the gear menu (top-right) to explore the app without a car. In DEMO mode, the interface dropdown is hidden and connection is instant with mock data from an F48 X1 (2018).
 
 ## Project structure
 
 ```
-bmw-tool/
-├── main.py                     # Entry point
+bmw-self-service/
+├── main.py                     # Entry point, logging setup
 ├── app/
-│   ├── uds.py                  # UDS message build/parse (ISO 14229)
 │   ├── connection.py           # ENET detection, HSFZ, DoIP, DHCP
 │   ├── mock_connection.py      # DEMO mode connection
+│   ├── uds.py                  # UDS message build/parse (ISO 14229)
 │   ├── worker.py               # CarWorker QThread base class
 │   ├── dtc_db.py               # DTC description database (88K entries)
+│   ├── coding_db.py            # AES decrypt .enc files, query CAFD presets
+│   ├── security.py             # Protected ECU registry, seed/key framework
 │   └── theme.py                # Dark theme loader
 ├── ui/
+│   ├── main_window.py          # QMainWindow shell, top bar, bottom nav
 │   ├── welcome_page.py         # Series picker + connect screen
-│   └── main_window.py          # QMainWindow shell
+│   ├── vehicle_page.py         # VIN, model, mileage, battery, ECU list
+│   ├── diagnostics_page.py     # DTC read/clear, MIL status, snapshots
+│   ├── service_history_page.py # Timeline, add/erase entries
+│   ├── coding_page.py          # Easy + Advanced coding, write/backup
+│   └── backups_page.py         # Backup list, rollback
 ├── assets/
 │   ├── theme.qss               # Dark QSS theme
-│   └── dtc_descriptions.db     # Read-only DTC database
+│   └── gear.svg                # SVG gear icon
+├── coding_data/                # Decrypted .enc CAFD files + .strings
 ├── mock_data/
 │   └── f48_x1.json             # Canned car data for DEMO mode
-├── tests/                      # pytest unit tests
-└── docs/                       # Protocol specs and research
+├── dtc_descriptions.db         # Read-only DTC database (18.9 MB)
+├── tests/                      # pytest unit tests (39 passing)
+└── docs/                       # Protocol specs and research (18 docs)
 ```
 
 ## Running tests
 
 ```bash
 pytest tests/ -v
+# 39 tests: test_uds.py, test_dtc_db.py, test_connection.py
 ```
 
-## Building a standalone app
+## Building a standalone app (production)
+
+The PyInstaller command bundles the app into a single executable with all data files embedded.
 
 ```bash
 # macOS
 pyinstaller --onefile --windowed --name "BMW Self Service" \
-    --add-data "assets/dtc_descriptions.db:assets" \
-    --add-data "assets/theme.qss:assets" \
+    --add-data "dtc_descriptions.db:." \
     --add-data "coding_data:coding_data" \
     --add-data "mock_data:mock_data" \
+    --add-data "assets/theme.qss:assets" \
+    --add-data "assets/gear.svg:assets" \
+    --osx-bundle-identifier "com.bmwtool.app" \
+    --hidden-import PySide6.QtSvg \
     main.py
 
 # Windows
 pyinstaller --onefile --windowed --name "BMW Self Service" \
-    --add-data "assets/dtc_descriptions.db;assets" \
-    --add-data "assets/theme.qss;assets" \
+    --add-data "dtc_descriptions.db;." \
     --add-data "coding_data;coding_data" \
     --add-data "mock_data;mock_data" \
+    --add-data "assets/theme.qss;assets" \
+    --add-data "assets/gear.svg;assets" \
+    --hidden-import PySide6.QtSvg \
     main.py
+```
+
+The resulting binary is at:
+- **macOS:** `dist/BMW Self Service.app`
+- **Windows:** `dist/BMW Self Service.exe`
+
+### Verifying the build
+
+```bash
+# Launch the standalone app
+open "dist/BMW Self Service.app"           # macOS
+.\dist\"BMW Self Service.exe"               # Windows
+
+# In DEMO mode: enable from gear menu, click Connect
+# Verify: Vehicle page shows F48 X1, Diagnostics shows 3 DTCs,
+#         Service History has 7 entries, Coding has 33 categories
 ```
 
 ## Logs & debugging

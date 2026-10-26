@@ -127,13 +127,21 @@ When starting a development session, load these skills in order:
 pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "dtc_descriptions.db:." \
     --add-data "coding_data:coding_data" \
+    --add-data "mock_data:mock_data" \
+    --add-data "assets/theme.qss:assets" \
+    --add-data "assets/gear.svg:assets" \
     --osx-bundle-identifier "com.bmwtool.app" \
+    --hidden-import PySide6.QtSvg \
     main.py
 
 # Windows
 pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "dtc_descriptions.db;." \
-    --add-data "bimmercode_data;bimmercode_data" \
+    --add-data "coding_data;coding_data" \
+    --add-data "mock_data;mock_data" \
+    --add-data "assets/theme.qss;assets" \
+    --add-data "assets/gear.svg;assets" \
+    --hidden-import PySide6.QtSvg \
     main.py
 ```
 
