@@ -5,9 +5,9 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
-from PySide6.QtCore import Qt, Signal, QThread, QTimer
+from PySide6.QtCore import Qt, Signal, QThread, QTimer, Slot
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication, QButtonGroup, QFrame, QHBoxLayout,
@@ -277,7 +277,7 @@ class MainWindow(QMainWindow):
         def do_connect():
             conn = MockConnection()
             conn.connect()
-            return conn
+            return (conn, "")
 
         self._async_connect(do_connect, series)
 
@@ -367,14 +367,22 @@ class MainWindow(QMainWindow):
                     self.error_signal.emit(str(e))
 
         self._worker = ConnectWorker(connect_fn)
-        self._worker.result_signal.connect(
-            lambda result: self._on_connect_success(*result, series)
-        )
+        self._worker._connect_series = series  # captured for slot
+        self._worker.result_signal.connect(self._on_worker_result)
         self._worker.error_signal.connect(self._on_connect_error)
         self._worker.progress_signal.connect(self.show_spinner)
         self._worker.start()
 
-    def _on_connect_success(self, connection, vin: str, series: str) -> None:
+    @Slot(object)
+    def _on_worker_result(self, result: object) -> None:
+        """Handle worker result — runs on the main thread."""
+        conn: Any
+        vin: str
+        conn, vin = result  # (connection, vin_str) tuple
+        series = getattr(self._worker, "_connect_series", "")
+        self._on_connect_success(conn, vin, series)
+
+    def _on_connect_success(self, connection: Any, vin: str, series: str) -> None:
         self._connection = connection
         self._connected = True
 
