@@ -193,7 +193,7 @@ class VehiclePage(QWidget):
 
         # VIN (0xF190) — may already have been read during connect
         try:
-            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
+            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x90]), timeout=5.0)
             if resp[0] == 0x62:
                 vin = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
         except Exception as e:
@@ -201,48 +201,55 @@ class VehiclePage(QWidget):
 
         # I-Level (0xF18A)
         try:
-            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]))
+            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
             if resp[0] == 0x62:
                 ilevel = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
         except Exception as e:
             logger.debug("I-Level read failed: %s", e)
 
-        # T-13: Production date — try DID 0xF180 (build date) from ZGW
-        try:
-            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x80]))
-            if resp[0] == 0x62 and len(resp) >= 11:
-                # BMW encodes date as ASCII: e.g. "2017-03-01" or "01.03.2017"
-                date_bytes = resp[3:13]
-                prod_date = date_bytes.decode("ascii", errors="ignore").strip("\x00 ")
-        except Exception as e:
-            logger.debug("Production date read failed: %s", e)
-
-        # T-15: Read FA (Vehicle Order) from ZGW
-        # FA DID varies by chassis: 0xF100 (F-series), 0xFC00 (some G-series).
+        # T-15: Read FA (Vehicle Order) from ZGW — use bounded timeout
+        # FA DID varies: 0xF100 (F-series), 0xFC00 (some G-series).
         # Returns XML with VIN, TypeCode, ProductionDate, SALAPA option codes.
         fa_xml = ""
         for fa_did in (0xF100, 0xFC00):
             try:
-                resp = connection.send_uds(0x10, bytes([0x22, (fa_did >> 8) & 0xFF, fa_did & 0xFF]))
+                resp = connection.send_uds(
+                    0x10,
+                    bytes([0x22, (fa_did >> 8) & 0xFF, fa_did & 0xFF]),
+                    timeout=5.0,
+                )
                 if resp[0] == 0x62:
                     fa_xml = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
                     break
             except Exception:
                 pass
+        # Store FA for callers (coding_page uses it for model detection)
+        self._fa_xml = fa_xml
+
+        # T-13: Extract production date from FA XML
+        # FA contains <ProductionDate>MMYY</ProductionDate> (e.g. "0317" = March 2017)
         if fa_xml:
-            logger.debug("FA read: %d bytes", len(fa_xml))
+            import re as _re
+            _m = _re.search(r"<ProductionDate>(\d{4})</ProductionDate>", fa_xml)
+            if _m:
+                pd = _m.group(1)
+                prod_date = f"20{pd[2:]}-{pd[:2]}"  # "0317" → "2017-03"
+            # Also extract type code for model identification
+            _tc = _re.search(r"<TypeCode>(\w+)</TypeCode>", fa_xml)
+            if _tc:
+                self._type_code = _tc.group(1)
 
         # G-1: Mileage via UDS 0x1A from KOMBI (0x60)
         # Falls back to 0x22 0xF4xx DID if 0x1A not supported
         try:
-            resp = connection.send_uds(0x60, bytes([0x1A, 0x00]))
+            resp = connection.send_uds(0x60, bytes([0x1A, 0x00]), timeout=5.0)
             if resp[0] == 0x5A and len(resp) >= 5:
                 mileage_raw = int.from_bytes(resp[3:7], "big")
                 mileage = f"{mileage_raw:,} km"
         except Exception:
             # Fallback: ReadDataByIdentifier 0xF406 (odometer DID)
             try:
-                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x06]))
+                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x06]), timeout=5.0)
                 if resp[0] == 0x62 and len(resp) >= 7:
                     mileage_raw = int.from_bytes(resp[3:7], "big")
                     # BMW encodes mileage in 10s of km
@@ -253,13 +260,13 @@ class VehiclePage(QWidget):
 
         # G-3: Battery voltage via 0x22 0xF40C from DME (0x12) or ZGW
         try:
-            resp = connection.send_uds(0x12, bytes([0x22, 0xF4, 0x0C]))
+            resp = connection.send_uds(0x12, bytes([0x22, 0xF4, 0x0C]), timeout=5.0)
             if resp[0] == 0x62 and len(resp) >= 5:
                 voltage_raw = int.from_bytes(resp[3:5], "big")
                 battery = f"{voltage_raw / 10.0:.1f}V"
         except Exception:
             try:
-                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x0C]))
+                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x0C]), timeout=5.0)
                 if resp[0] == 0x62 and len(resp) >= 5:
                     voltage_raw = int.from_bytes(resp[3:5], "big")
                     battery = f"{voltage_raw / 10.0:.1f}V"
