@@ -10,18 +10,17 @@ Provides:
 Reference: docs/10-hsfz-protocol.md, docs/05-protocol-reference.md
 """
 
+import contextlib
 import logging
 import os
 import platform
 import socket
 import struct
 import subprocess
-import time
-from typing import Optional
 
 import netifaces
 
-from app.uds import build_uds, TESTER_ADDR
+from app.uds import TESTER_ADDR, build_uds
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +152,7 @@ def _bind_to_interface(sock: socket.socket, interface: str) -> None:
 
 def discover_zgw(
     interface: str, timeout: float = 5.0
-) -> Optional[dict[str, str]]:
+) -> dict[str, str] | None:
     """Discover a BMW ZGW on the ENET network via UDP broadcast.
 
     Sends a vehicle_ident_data request to 169.254.255.255:6811.
@@ -188,7 +187,7 @@ def discover_zgw(
 
         try:
             data, addr = disc_sock.recvfrom(1024)
-        except socket.timeout:
+        except TimeoutError:
             logger.debug("Vehicle discovery timed out after %.1fs", timeout)
             return None
 
@@ -412,7 +411,7 @@ class HSFZConnection:
         """
         self.host = host
         self.port = port
-        self.sock: Optional[socket.socket] = None
+        self.sock: socket.socket | None = None
 
     def connect(self) -> bool:
         """Open TCP connection to the vehicle's ZGW.
@@ -432,7 +431,7 @@ class HSFZConnection:
                 self.host, self.port,
             )
             return True
-        except (socket.timeout, ConnectionRefusedError, OSError) as e:
+        except (TimeoutError, ConnectionRefusedError, OSError) as e:
             logger.warning(
                 "HSFZ connect to %s:%d failed: %s",
                 self.host, self.port, e,
@@ -483,7 +482,7 @@ class HSFZConnection:
         # Read HSFZ response header (8 bytes)
         try:
             hdr = self._recv_exact(8)
-        except (ConnectionError, socket.timeout) as e:
+        except (TimeoutError, ConnectionError) as e:
             if isinstance(e, socket.timeout):
                 raise TimeoutError(
                     f"ECU 0x{ecu_addr:02X} did not respond within "
@@ -499,7 +498,7 @@ class HSFZConnection:
         payload_len = hsfz_len - 2
         try:
             uds_payload = self._recv_exact(payload_len)
-        except (ConnectionError, socket.timeout) as e:
+        except (TimeoutError, ConnectionError) as e:
             if isinstance(e, socket.timeout):
                 raise TimeoutError(
                     f"ECU 0x{ecu_addr:02X} response payload timeout"
@@ -531,22 +530,16 @@ class HSFZConnection:
         if self.sock is None:
             return
         frame = struct.pack(">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR)
-        try:
+        with contextlib.suppress(OSError):
             self.sock.sendall(frame)
-        except OSError:
-            pass  # Connection may be closed; handled by caller
 
     def disconnect(self) -> None:
         """Close the TCP connection to the ZGW."""
         if self.sock:
-            try:
+            with contextlib.suppress(OSError):
                 self.sock.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass  # Socket may already be closed
-            try:
+            with contextlib.suppress(OSError):
                 self.sock.close()
-            except OSError:
-                pass
             self.sock = None
             logger.info("HSFZ disconnected from %s:%d", self.host, self.port)
 
@@ -560,7 +553,7 @@ class HSFZConnection:
         while len(data) < n:
             try:
                 chunk = self.sock.recv(n - len(data))
-            except socket.timeout:
+            except TimeoutError:
                 raise
             if not chunk:
                 raise ConnectionError("Connection closed by remote")
@@ -603,7 +596,7 @@ class DoIPConnection:
         """
         self.host = host
         self.port = port
-        self.sock: Optional[socket.socket] = None
+        self.sock: socket.socket | None = None
         self.source_addr: int = DOIP_TESTER_LOGICAL_ADDR
         self.activated: bool = False
 
@@ -623,7 +616,7 @@ class DoIPConnection:
                 "DoIP connected to %s:%d", self.host, self.port
             )
             return True
-        except (socket.timeout, ConnectionRefusedError, OSError) as e:
+        except (TimeoutError, ConnectionRefusedError, OSError) as e:
             logger.warning(
                 "DoIP connect to %s:%d failed: %s",
                 self.host, self.port, e,
@@ -759,19 +752,15 @@ class DoIPConnection:
     def disconnect(self) -> None:
         """Close the DoIP connection."""
         if self.sock:
-            try:
+            with contextlib.suppress(OSError):
                 self.sock.shutdown(socket.SHUT_RDWR)
-            except OSError:
-                pass
-            try:
+            with contextlib.suppress(OSError):
                 self.sock.close()
-            except OSError:
-                pass
             self.sock = None
             self.activated = False
             logger.info("DoIP disconnected from %s:%d", self.host, self.port)
 
-    def _recv_doip_message(self) -> Optional[tuple[int, bytes]]:
+    def _recv_doip_message(self) -> tuple[int, bytes] | None:
         """Receive a single DoIP message.
 
         Returns:
@@ -786,12 +775,9 @@ class DoIPConnection:
             version, inv_version, ptype, length = struct.unpack(
                 ">BBHI", hdr
             )
-            if length > 0:
-                payload = self._recv_exact(length)
-            else:
-                payload = b""
+            payload = self._recv_exact(length) if length > 0 else b""
             return (ptype, payload)
-        except (ConnectionError, socket.timeout, struct.error) as e:
+        except (TimeoutError, ConnectionError, struct.error) as e:
             logger.warning("DoIP receive error: %s", e)
             return None
 
@@ -842,7 +828,7 @@ def _build_doip_header(payload_type: int, payload: bytes) -> bytes:
 
 def discover_doip_vehicle(
     interface: str, timeout: float = 5.0
-) -> Optional[dict[str, str]]:
+) -> dict[str, str] | None:
     """Discover a DoIP-capable vehicle via UDP broadcast on port 13400.
 
     Used for G/U/I-series vehicles. Sends a Vehicle Identification Request
@@ -868,7 +854,7 @@ def discover_doip_vehicle(
 
         try:
             data, addr = disc_sock.recvfrom(4096)
-        except socket.timeout:
+        except TimeoutError:
             return None
 
         if len(data) < 8:

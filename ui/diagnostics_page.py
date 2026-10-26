@@ -7,9 +7,10 @@ Reference: docs/16-ui-spec.md Screen 5, docs/14-dtc-database.md
 """
 
 import logging
+from threading import Event
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -28,16 +29,45 @@ logger = logging.getLogger(__name__)
 
 
 class DtcReadWorker(CarWorker):
-    """Read DTCs from all provided ECUs and enrich with descriptions."""
+    """Read DTCs from all provided ECUs and enrich with descriptions.
+
+    T-14: Emits ``ecu_timeout`` signal when an ECU times out.
+    The UI slot sets ``self._timeout_action`` to 'skip', 'retry', or 'abort'
+    and then sets ``self._timeout_event`` to unblock the worker thread.
+
+    Signals:
+        ecu_timeout(str): Emitted with ECU name when 30s timeout expires.
+    """
+
+    ecu_timeout = Signal(str)
+    mil_status = Signal(bool, int)  # T-9: MIL on/off, DTC count
 
     def __init__(self, connection: Any, ecus: list[dict]) -> None:
         super().__init__(connection)
         self.ecus = ecus
+        self._timeout_event = Event()
+        self._timeout_action = "abort"
 
-    def do_work(self) -> list[dict]:
+    def _handle_timeout(self, ecu_name: str) -> str:
+        """Block until the UI thread decides: skip, retry, or abort."""
+        self._timeout_event.clear()
+        self._timeout_action = "abort"  # default if UI never responds
+        self.ecu_timeout.emit(ecu_name)
+        # Wait up to 60s for UI response — if UI never responds, abort
+        self._timeout_event.wait(60.0)
+        return self._timeout_action
+
+    def do_work(self) -> dict:
+        # T-9: Read MIL first (OBD-II Mode 01 PID 01)
+        self._read_mil_in_worker()
+
         dtcs: list[dict] = []
+        complete = True
         total = len(self.ecus)
-        for i, ecu in enumerate(self.ecus):
+        i = 0
+        retries: dict[str, int] = {}
+        while i < len(self.ecus):
+            ecu = self.ecus[i]
             name = ecu.get("name", "ECU")
             addr_str = ecu.get("addr", "0x00")
             addr = int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str)
@@ -51,6 +81,7 @@ class DtcReadWorker(CarWorker):
                 resp = self.connection.send_uds(addr, bytes([0x19, 0x02, 0x08]))
 
                 if resp[0] != 0x59:
+                    i += 1
                     continue
 
                 # Parse: 0x59 + status_mask + [3-byte DTC + 1-byte status]*
@@ -67,10 +98,141 @@ class DtcReadWorker(CarWorker):
                         "ecu_addr": addr,
                     })
                     offset += 4
+                i += 1
+                retries.pop(name, None)
+
+                # T-10: Read DTC snapshot identification for this ECU
+                try:
+                    snapshots = self._read_snapshots(addr)
+                    for snap in snapshots:
+                        snap_code = snap.get("code", "")
+                        for dtc_entry in dtcs:
+                            if dtc_entry.get("code") == snap_code and dtc_entry.get("ecu_addr") == addr:
+                                dtc_entry.update(snap)
+                                break
+                except Exception:
+                    pass  # snapshots are optional, don't fail the read
+
+            except TimeoutError:
+                # T-14: Ask UI what to do
+                action = self._handle_timeout(name)
+                if action == "skip":
+                    i += 1
+                    continue
+                elif action == "retry":
+                    retries[name] = retries.get(name, 0) + 1
+                    if retries[name] > 3:
+                        logger.warning("ECU %s: max retries exceeded, skipping", name)
+                        i += 1
+                    # Don't increment i — retry the same ECU
+                    continue
+                else:  # abort
+                    complete = False
+                    break
+
             except Exception as exc:
                 logger.debug("ECU 0x%02X (%s) DTC read skipped: %s", addr, name, exc)
+                i += 1
 
-        return dtcs
+        return {"dtcs": dtcs, "complete": complete}
+
+    def _read_mil_in_worker(self) -> None:
+        """T-9: Read MIL via OBD-II Mode 01 PID 01 on the worker thread.
+
+        OBD-II response format: 0x41 0x01 [A] [B] [C] [D]
+          byte A (index 2): bit 7 = MIL on/off, bits 0-6 = DTC count
+        """
+        try:
+            resp = self.connection.send_uds(0x10, bytes([0x01, 0x01]))
+            if len(resp) >= 3 and resp[0] == 0x41 and resp[1] == 0x01:
+                mil_on = (resp[2] & 0x80) != 0
+                dtc_count = resp[2] & 0x7F
+                self.mil_status.emit(mil_on, dtc_count)
+        except Exception:
+            pass  # MIL read is optional — sender handles unknown state
+
+    def _read_snapshots(self, addr: int) -> list[dict]:
+        """T-10: Read DTC snapshot data from an ECU.
+
+        Two-step flow per ISO 14229-1:
+        1. 0x19 03: discover which DTCs have snapshot records
+        2. 0x19 04: fetch snapshot data for each DTC+record
+
+        Returns:
+            List of dicts with snapshot metadata per DTC
+            ({code, first_seen, first_mileage_km}).
+        """
+        snapshots: list[dict] = []
+        try:
+            # Step 1: Discover snapshot records
+            resp = self.connection.send_uds(addr, bytes([0x19, 0x03]))
+            if resp[0] != 0x59:
+                return snapshots
+            # Parse: 0x59 03 + [DTC(3) + status(1) + record_count(1)]*
+            offset = 2
+            records_to_fetch: list[tuple[str, int]] = []
+            while offset + 5 <= len(resp):
+                code = resp[offset:offset + 3].hex().upper()
+                offset += 3  # status byte skipped
+                record_count = resp[offset + 1]
+                offset += 2
+                for rec_num in range(record_count):
+                    records_to_fetch.append((code, rec_num + 1))
+
+            # Step 2: Fetch each snapshot record via 0x19 04
+            for code, rec_num in records_to_fetch:
+                try:
+                    dtc_bytes = bytes.fromhex(code)
+                    if len(dtc_bytes) < 3:
+                        dtc_bytes = dtc_bytes.rjust(3, b'\x00')
+                    snap_resp = self.connection.send_uds(
+                        addr,
+                        bytes([0x19, 0x04]) + dtc_bytes[:3] + bytes([rec_num]),
+                    )
+                    if snap_resp[0] != 0x59:
+                        continue
+                    # Parse 0x19 04 response:
+                    # 0x59 04 [DTC(3)] [status(1)] [record_num(1)]
+                    #   [DID_count(1)] [(DID(2) + value(variable))...]
+                    snap_offset = 6  # skip 0x59 04 + DTC + status + record_num
+                    if snap_offset >= len(snap_resp):
+                        continue
+                    did_count = snap_resp[snap_offset]
+                    snap_offset += 1
+                    snap_entry: dict = {"code": code}
+                    for _ in range(did_count):
+                        if snap_offset + 2 >= len(snap_resp):
+                            break
+                        did = (snap_resp[snap_offset] << 8) | snap_resp[snap_offset + 1]
+                        snap_offset += 2
+                        # Read variable-length DID value based on known DIDs
+                        if did == 0x0202:  # Odometer (km × 10, 4 bytes)
+                            if snap_offset + 4 <= len(snap_resp):
+                                km_raw = int.from_bytes(
+                                    snap_resp[snap_offset:snap_offset + 4], "big"
+                                )
+                                snap_entry["first_mileage_km"] = km_raw // 10
+                                snap_offset += 4
+                        elif did == 0x0101:  # Timestamp (seconds since 2000-01-01)
+                            if snap_offset + 4 <= len(snap_resp):
+                                ts_raw = int.from_bytes(
+                                    snap_resp[snap_offset:snap_offset + 4], "big"
+                                )
+                                if ts_raw > 0:
+                                    from datetime import datetime, timedelta
+                                    ts = datetime(2000, 1, 1) + timedelta(seconds=ts_raw)
+                                    snap_entry["first_seen"] = ts.strftime("%Y-%m-%d %H:%M")
+                                snap_offset += 4
+                        else:
+                            # Unknown DID — skip 2 bytes (common value size)
+                            snap_offset += 2
+                    if len(snap_entry) > 1:  # has data beyond code
+                        snapshots.append(snap_entry)
+                except Exception:
+                    pass  # individual snapshot fetch failure is non-fatal
+        except Exception:
+            pass
+        return snapshots
 
 
 class DiagnosticsPage(QWidget):
@@ -108,6 +270,21 @@ class DiagnosticsPage(QWidget):
         self.read_btn.clicked.connect(self._on_read_clicked)
         title_row.addWidget(self.read_btn)
         layout.addLayout(title_row)
+
+        # T-9: MIL (Check Engine) status indicator
+        mil_row = QHBoxLayout()
+        self._mil_indicator = QLabel("")
+        self._mil_indicator.setStyleSheet(
+            "font-size: 32px; background: transparent;"
+        )
+        mil_row.addWidget(self._mil_indicator)
+        self._mil_label = QLabel("MIL status unknown — read DTCs to check")
+        self._mil_label.setStyleSheet(
+            "font-size: 13px; color: #a0a0a0; background: transparent;"
+        )
+        mil_row.addWidget(self._mil_label)
+        mil_row.addStretch()
+        layout.addLayout(mil_row)
 
         # Stack: empty state vs DTC list
         self.stack = QVBoxLayout()
@@ -180,7 +357,11 @@ class DiagnosticsPage(QWidget):
         if hasattr(self._connection, "data") and self._connection.data:
             # Mock path — read directly from canned data
             self._on_dtcs_loaded(self._connection.data.get("dtcs", []))
+            self._update_mil(False, 0)  # Mock: no MIL
             return
+
+        # T-9: Read MIL status alongside DTCs — now done inside DtcReadWorker
+        # so it runs on the background thread, not the UI thread.
 
         # Real car: use CarWorker
         ecus = self._ecus if self._ecus else [{"name": "ZGW", "addr": "0x10"}]
@@ -188,10 +369,53 @@ class DiagnosticsPage(QWidget):
         self._worker.started.connect(lambda: self.read_btn.setEnabled(False))
         self._worker.finished.connect(self._on_dtcs_loaded)
         self._worker.error.connect(self._on_dtc_error)
+        # Capture worker ref at connect time so timeout handler always
+        # references the correct DtcReadWorker, even if clear starts mid-read.
+        _captured_worker = self._worker
+        self._worker.ecu_timeout.connect(
+            lambda name, w=_captured_worker: self._on_ecu_timeout(name, w)
+        )
+        self._worker.mil_status.connect(self._update_mil)
         self._worker.start()
 
-    def _on_dtcs_loaded(self, dtcs: list[dict]) -> None:
+    def _on_ecu_timeout(self, ecu_name: str, worker: object = None) -> None:
+        """T-14: Handle ECU timeout — show Skip/Retry/Abort dialog.
+
+        Runs on the main thread. Sets the worker's _timeout_action and
+        _timeout_event to unblock the worker thread.
+        The worker parameter is captured at connect time to avoid
+        reading self._worker which may have changed (e.g. clear started).
+        """
+        if worker is None:
+            return
+        msg = QMessageBox(self)
+        msg.setWindowTitle("ECU Timeout")
+        msg.setText(f"ECU {ecu_name} is not responding.")
+        msg.setInformativeText("What would you like to do?")
+        skip_btn = msg.addButton("Skip", QMessageBox.ButtonRole.AcceptRole)
+        retry_btn = msg.addButton("Retry", QMessageBox.ButtonRole.ActionRole)
+        msg.addButton("Abort", QMessageBox.ButtonRole.RejectRole)
+        msg.setDefaultButton(skip_btn)
+        msg.exec()
+
+        clicked = msg.clickedButton()
+        if clicked == skip_btn:
+            worker._timeout_action = "skip"
+        elif clicked == retry_btn:
+            worker._timeout_action = "retry"
+        else:
+            worker._timeout_action = "abort"
+        worker._timeout_event.set()
+
+    def _on_dtcs_loaded(self, result: object) -> None:
         """Display the DTC list after reading."""
+        # Handle both legacy list format and new dict format
+        if isinstance(result, dict):
+            dtcs = result.get("dtcs", [])
+            complete = result.get("complete", True)
+        else:
+            dtcs = result if isinstance(result, list) else []
+            complete = True
         self._dtcs = dtcs
         self.read_btn.setEnabled(True)
 
@@ -202,13 +426,41 @@ class DiagnosticsPage(QWidget):
                 item.widget().deleteLater()
 
         if not dtcs:
-            self.empty_state.setVisible(True)
-            self.list_container.setVisible(False)
+            if not complete:
+                # Scan was aborted before all ECUs were read — don't claim healthy
+                self.empty_state.setVisible(False)
+                aborted_lbl = QLabel("DTC scan aborted.\nSome ECUs were not checked.")
+                aborted_lbl.setAlignment(Qt.AlignCenter)
+                aborted_lbl.setStyleSheet(
+                    "font-size: 14px; color: #F39C12; padding: 24px;"
+                )
+                self.dtc_list_layout.insertWidget(
+                    self.dtc_list_layout.count() - 1, aborted_lbl
+                )
+                self.list_container.setVisible(True)
+            else:
+                self.empty_state.setVisible(True)
+                self.list_container.setVisible(False)
             return
 
         self.empty_state.setVisible(False)
         self.list_container.setVisible(True)
         self.clear_btn.setVisible(True)
+
+        if not complete:
+            warn = QLabel(
+                "\u26A0 DTC scan aborted — showing partial results. "
+                "Some ECUs were not checked."
+            )
+            warn.setStyleSheet(
+                "font-size: 12px; color: #F39C12; background: "
+                "rgba(243,156,18,0.1); border: 1px solid #F39C12; "
+                "border-radius: 6px; padding: 6px 12px;"
+            )
+            warn.setWordWrap(True)
+            self.dtc_list_layout.insertWidget(
+                self.dtc_list_layout.count() - 1, warn
+            )
 
         for dtc in dtcs:
             code = dtc.get("code", "???")
@@ -315,8 +567,9 @@ class DiagnosticsPage(QWidget):
                 "padding: 4px 12px; font-size: 11px; }"
                 "QPushButton:hover { background: rgba(227,11,31,0.15); }"
             )
+            clear_btn_addr = dtc.get("ecu_addr", 0x10)  # capture before lambda
             clear_one_btn.clicked.connect(
-                lambda checked, c=code, a=dtc.get("ecu_addr", 0x10): (
+                lambda checked, c=code, a=clear_btn_addr: (
                     self._on_clear_single(c, a)
                 )
             )
@@ -413,6 +666,26 @@ class DiagnosticsPage(QWidget):
     def _open_search(checked: bool, code: str) -> None:
         import webbrowser
         webbrowser.open(f"https://www.google.com/search?q={code}+BMW")
+
+    # ── T-9: MIL status (updated from DtcReadWorker.mil_status signal) ─
+
+    def _update_mil(self, mil_on: bool, dtc_count: int) -> None:
+        """Update the MIL indicator on the UI thread."""
+        if mil_on:
+            self._mil_indicator.setText(chr(0x1F6A8))  # 🚨
+            self._mil_label.setText(
+                f"Check Engine Light ON — {dtc_count} code(s) stored"
+            )
+            self._mil_label.setStyleSheet(
+                "font-size: 13px; color: #E30B1F; font-weight: bold; "
+                "background: transparent;"
+            )
+        else:
+            self._mil_indicator.setText(chr(0x2705))  # ✅
+            self._mil_label.setText("No Check Engine Light — MIL off")
+            self._mil_label.setStyleSheet(
+                "font-size: 13px; color: #2ECC71; background: transparent;"
+            )
 
     def _on_clear_single(self, code: str, ecu_addr: int = 0x10) -> None:
         """Clear a single DTC from its ECU.

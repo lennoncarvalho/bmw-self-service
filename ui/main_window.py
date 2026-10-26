@@ -481,10 +481,12 @@ class MainWindow(QMainWindow):
         ecus: list[dict] = []
         if hasattr(connection, "data") and connection.data:
             ecus = connection.data.get("svt_ecus", [])
+        elif hasattr(self.vehicle_page, "_ecus"):
+            ecus = self.vehicle_page._ecus
         self.diag_page.set_connection(connection, ecus)
         # Pass connection to service history page
         self.history_page.set_connection(connection)
-        self.coding_page.set_connection(connection)
+        self.coding_page.set_connection(connection, ecus)
 
         # Start keep-alive timers for real connections
         if not self._demo_mode:
@@ -509,19 +511,50 @@ class MainWindow(QMainWindow):
         # Application-layer: UDS TesterPresent every 2.5 seconds
         if hasattr(conn, "send_uds"):
             _first_tp = [True]  # mutable to capture in closure
+            _failed_tp = [0]    # T-12: consecutive failure counter
 
             def _tester_present():
                 try:
-                    conn.send_uds(0x10, bytes([0x3E, 0x00]))
+                    conn.send_uds(0x10, bytes([0x3E, 0x00]), timeout=2.0)
+                    _failed_tp[0] = 0  # reset on success
                     if _first_tp[0]:
                         logger.debug("Starting TesterPresent timer (every 2.5s)")
                         _first_tp[0] = False
                 except Exception:
-                    pass
+                    _failed_tp[0] += 1
+                    # T-12: After 3 consecutive failures (~7.5s), treat as lost
+                    if _failed_tp[0] >= 3:
+                        self._tester_present_timer.stop()
+                        self._on_connection_lost()
 
             self._tester_present_timer = QTimer(self)
             self._tester_present_timer.timeout.connect(_tester_present)
             self._tester_present_timer.start(2500)
+
+    def _on_connection_lost(self) -> None:
+        """T-12: Handle lost connection with reconnect dialog.
+
+        Reference: docs/16-ui-spec.md error matrix (line 578).
+        """
+        self.status_dot.setText(RED_DOT)
+        self.status_dot.setToolTip("Connection lost")
+        self._stop_keepalive()
+
+        reply = QMessageBox.warning(
+            self,
+            "Connection Lost",
+            "The connection to the vehicle has been lost.\n\n"
+            "Check the ENET cable and ensure ignition is on.\n\n"
+            "Reconnect?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            self._on_disconnect()
+        else:
+            # No or closed dialog — still disconnect to prevent pages
+            # from using a broken connection
+            self._on_disconnect()
 
     def _stop_keepalive(self) -> None:
         """Stop all keep-alive timers."""

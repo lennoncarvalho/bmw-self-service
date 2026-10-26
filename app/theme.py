@@ -11,7 +11,6 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 
-
 # BMW M colour palette — use these for programmatic styling only
 # (e.g. status dots, dynamic colour changes). Prefer QSS for static styles.
 COLOR_BG_DARK = "#1a1a2e"
@@ -66,7 +65,7 @@ def load_theme() -> str:
         FileNotFoundError: If theme.qss can't be found.
     """
     path = _find_theme_qss()
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 

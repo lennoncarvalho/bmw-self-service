@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLayout,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -164,6 +165,19 @@ class ServiceHistoryPage(QWidget):
         self.add_btn.clicked.connect(self._on_add_clicked)
         layout.addWidget(self.add_btn, alignment=Qt.AlignCenter)
 
+        # T-8: Erase History button
+        self.erase_btn = QPushButton("Erase Service History")
+        self.erase_btn.setObjectName("dangerButton")
+        self.erase_btn.setStyleSheet(
+            "QPushButton { background: transparent; color: #E30B1F; "
+            "border: 1px solid #E30B1F; border-radius: 8px; "
+            "padding: 8px 20px; font-size: 12px; font-weight: bold; }"
+            "QPushButton:hover { background: rgba(227,11,31,0.15); }"
+        )
+        self.erase_btn.clicked.connect(self._on_erase_clicked)
+        self.erase_btn.setVisible(False)
+        layout.addWidget(self.erase_btn, alignment=Qt.AlignCenter)
+
     def set_connection(self, connection: Any) -> None:
         """Set the active connection and load service history."""
         self._connection = connection
@@ -306,6 +320,8 @@ class ServiceHistoryPage(QWidget):
 
             self.entry_layout.insertWidget(self.entry_layout.count() - 1, card)
 
+        self._update_erase_visibility()
+
     def _on_add_clicked(self) -> None:
         dialog = AddServiceDialog(self)
         if dialog.exec() != QDialog.DialogCode.Accepted:
@@ -335,10 +351,57 @@ class ServiceHistoryPage(QWidget):
         self._worker.error.connect(self._on_history_error)
         self._worker.start()
 
+    def _on_history_erased(self, _result: object = None) -> None:
+        """Re-load history after successful erase."""
+        self.erase_btn.setEnabled(True)
+        self._load_history()
+
     def _on_entry_written(self, _result: object = None) -> None:
         """Re-load history after a successful write."""
         self.add_btn.setEnabled(True)
         self._load_history()
+
+    def _on_erase_clicked(self) -> None:
+        """T-8: Confirm and erase entire service history."""
+        reply = QMessageBox.question(
+            self,
+            "Erase Service History",
+            "Delete ALL service records from the vehicle?\n\n"
+            "This cannot be undone.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes or self._connection is None:
+            return
+
+        self.erase_btn.setEnabled(False)
+
+        if hasattr(self._connection, "data") and self._connection.data:
+            self._connection.data["service_history"] = []
+            if hasattr(self._connection, "save"):
+                self._connection.save()
+            self._entries = []
+            self._render()
+            self.erase_btn.setEnabled(True)
+            return
+
+        self._worker = ServiceHistoryEraseWorker(self._connection)
+        self._worker.finished.connect(self._on_history_erased)
+        self._worker.error.connect(self._on_erase_error)
+        self._worker.start()
+
+    def _on_erase_error(self, msg: str) -> None:
+        """Handle erase failure — re-enable button, preserve entries."""
+        self.erase_btn.setEnabled(True)
+        logger.warning("Service history erase failed: %s", msg)
+        QMessageBox.warning(
+            self, "Erase Failed",
+            f"Could not erase service history: {msg}",
+        )
+
+    def _update_erase_visibility(self) -> None:
+        """Show erase button only when there are entries."""
+        self.erase_btn.setVisible(len(self._entries) > 0)
 
     @staticmethod
     def _clear_layout(layout: QLayout) -> None:
@@ -357,19 +420,80 @@ class ServiceHistoryPage(QWidget):
 
 # ---- Workers ----
 
+# Service history DIDs extracted from NBT.PRG via BimmerDaten disassembly.
+# Reference: docs/12-service-history-wire-format.md
+_SERVICE_HISTORY_ADD_DID = 0xA081
+_SERVICE_HISTORY_ERASE_DID = 0xA080
+
+# Item code mapping from AddServiceDialog.SERVICE_ITEMS
+_ITEM_CODES: dict[str, int] = {
+    "Engine oil change": 0x01,
+    "Oil filter": 0x04,
+    "Cabin filter / microfilter": 0x04,
+    "Engine air filter": 0x0B,
+    "Spark plugs": 0x0A,
+    "Front brake pads": 0x02,
+    "Rear brake pads": 0x06,
+    "Brake fluid": 0x03,
+    "Vehicle check (standard)": 0x64,
+    "Coolant": 0x12,
+    "Transmission fluid": 0x23,
+}
+
+
+def _build_service_args(entry: dict) -> str:
+    """Build the argument string for service history write.
+
+    Format (docs/12:16): Day;Month;Year;CorrCnt;Km;Flag;Dealer;Status;Count;Code;Status;Dist;Time;...
+
+    Args:
+        entry: Dict from AddServiceDialog.get_data() with date, mileage_km, dealer, items.
+
+    Returns:
+        Semicolon-delimited argument string.
+    """
+    date_str = entry.get("date", "")
+    # Parse yyyy-mm-dd
+    try:
+        parts = date_str.split("-")
+        day = int(parts[2]) if len(parts) > 2 else 1
+        month = int(parts[1]) if len(parts) > 1 else 1
+        year = int(parts[0]) if len(parts) > 0 else 2026
+    except (ValueError, IndexError):
+        day, month, year = 1, 1, 2026
+
+    km = entry.get("mileage_km", 0)
+    dealer = (entry.get("dealer") or "Independent").replace(";", ",")
+    dealer = dealer.encode("ascii", errors="replace").decode("ascii")
+    items = entry.get("items", [])
+
+    args = f"{day};{month};{year};0;{km};0;{dealer};0x1;{len(items)};"
+    for label in items:
+        code = _ITEM_CODES.get(label, 0x01)
+        args += f"{code};0x1;0;0;"
+    return args
+
+
 class ServiceHistoryReadWorker(CarWorker):
-    """Read service history from headunit via UDS 0x31 RoutineControl RID 0xA081."""
+    """Read service history from headunit via UDS 0x31 RoutineControl RID 0xA081.
+
+    T-7: Uses 0x31 for reading (per docs/16 data flow table).
+    The write path uses 0x2E; the read path remains 0x31.
+    """
 
     HEADUNIT_ADDR = 0x63
-    RID_READ = 0xA081
 
     def do_work(self) -> list[dict]:
+        did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
+        did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
         resp = self.connection.send_uds(
             self.HEADUNIT_ADDR,
-            bytes([0x31, 0x01, (self.RID_READ >> 8) & 0xFF, self.RID_READ & 0xFF]),
+            bytes([0x31, 0x01, did_high, did_low]),
         )
         if resp[0] != 0x71:
-            raise ConnectionError(f"Headunit rejected service history read: 0x{resp[0]:02X}")
+            raise ConnectionError(
+                f"Headunit rejected service history read: 0x{resp[0]:02X}"
+            )
         # Parse response: 0x71 + RID + record_count(2) + records...
         entries: list[dict] = []
         offset = 4
@@ -381,7 +505,6 @@ class ServiceHistoryReadWorker(CarWorker):
                     break
                 record = resp[offset:offset + rec_len]
                 offset += rec_len
-                # Minimal parse: extract ASCII date and items
                 entry = _parse_service_record(record)
                 if entry:
                     entries.append(entry)
@@ -391,31 +514,65 @@ class ServiceHistoryReadWorker(CarWorker):
 
 
 class ServiceHistoryWriteWorker(CarWorker):
-    """Write a service entry to headunit via UDS 0x31 RoutineControl RID 0xA081."""
+    """Write a service entry to headunit via UDS 0x2E WriteDataByIdentifier.
+
+    T-6: Uses 0x2E (corrected per docs/12:181-186).
+    STEUERN jobs use WriteDataByIdentifier, not RoutineControl.
+    """
 
     HEADUNIT_ADDR = 0x63
-    RID_WRITE = 0xA081
 
     def __init__(self, connection: Any, entry: dict) -> None:
         super().__init__(connection)
         self.entry = entry
 
     def do_work(self) -> bool:
-        date_str = self.entry.get("date", "")
-        mileage = self.entry.get("mileage_km", 0)
-        items_str = "|".join(self.entry.get("items", []))
-        record_str = f"{date_str};{mileage};{items_str}"
-        record_bytes = record_str.encode("ascii", errors="ignore")
+        # Extended session
+        self.connection.send_uds(self.HEADUNIT_ADDR, bytes([0x10, 0x03]))
+        # Build argument string per docs/12:84-90
+        args = _build_service_args(self.entry)
+        did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
+        did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
         payload = (
-            bytes([0x31, 0x01, (self.RID_WRITE >> 8) & 0xFF, self.RID_WRITE & 0xFF])
-            + record_bytes
+            bytes([0x2E, did_high, did_low]) + args.encode("ascii")
         )
         resp = self.connection.send_uds(self.HEADUNIT_ADDR, payload)
-        if resp[0] != 0x71:
+        if resp[0] == 0x6E:
+            return True
+        if resp[0] == 0x7F:
+            nrc = resp[2] if len(resp) > 2 else 0
             raise ConnectionError(
-                f"Headunit rejected service entry write: 0x{resp[0]:02X}"
+                f"Headunit rejected write: NRC 0x{nrc:02X}"
             )
-        return True
+        raise ConnectionError(
+            f"Unexpected response: 0x{resp[0]:02X}"
+        )
+
+
+class ServiceHistoryEraseWorker(CarWorker):
+    """Erase entire service history via UDS 0x2E with DID 0xA080.
+
+    T-8: No arguments needed — just the DID.
+    """
+
+    HEADUNIT_ADDR = 0x63
+
+    def do_work(self) -> bool:
+        self.connection.send_uds(self.HEADUNIT_ADDR, bytes([0x10, 0x03]))
+        did_high = (_SERVICE_HISTORY_ERASE_DID >> 8) & 0xFF
+        did_low = _SERVICE_HISTORY_ERASE_DID & 0xFF
+        resp = self.connection.send_uds(
+            self.HEADUNIT_ADDR,
+            bytes([0x2E, did_high, did_low]),
+        )
+        if resp[0] == 0x6E:
+            return True
+        if resp[0] == 0x7F:
+            nrc = resp[2] if len(resp) > 2 else 0
+            raise ConnectionError(f"Erase rejected: NRC 0x{nrc:02X}")
+        raise ConnectionError(
+            f"Unexpected erase response: 0x{resp[0]:02X}"
+        )
 
 
 def _parse_service_record(data: bytes) -> dict | None:

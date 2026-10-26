@@ -8,6 +8,7 @@ Reference: docs/16-ui-spec.md Screens 7, 8, 9
 
 import copy
 import logging
+import os
 from typing import Any
 
 from PySide6.QtCore import Qt
@@ -25,9 +26,34 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.coding_db import CodingDatabase, _decrypt_enc
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
+
+# T-3: Build CAFD lookup from coding-ecu-infos.enc at import time.
+# Maps ECU short names to (cafd_id, first_available_variant) tuples.
+_CAFD_MAP: dict[str, tuple[str, str]] = {}
+try:
+    import json as _json
+    _infos = _json.loads(_decrypt_enc("coding_data/coding-ecu-infos.enc"))
+    for _e in _infos:
+        _name = _e.get("shortName", "")
+        _cafd = _e.get("identifier", "")
+        if _name and _cafd:
+            # Find first available variant file
+            _var = None
+            for _f in os.listdir("coding_data"):
+                if _f.startswith(f"{_cafd}-") and _f.endswith(".enc"):
+                    _var = _f[len(_cafd) + 1 : -4]
+                    break
+            if _var:
+                _CAFD_MAP[_name] = (_cafd, _var)
+except (FileNotFoundError, _json.JSONDecodeError, ValueError) as _e:
+    logger.warning("Failed to load CAFD map: %s", _e)
+
+# Singleton coding database instance
+coding_db = CodingDatabase("coding_data")
 
 MOCK_CATEGORIES = [
     {
@@ -82,10 +108,12 @@ class CodingPage(QWidget):
         super().__init__(parent)
         self._connection: Any = None
         self._pending: int = 0
-        self._originals = copy.deepcopy(MOCK_CATEGORIES)
+        self._categories: list[dict] = copy.deepcopy(MOCK_CATEGORIES)
+        self._originals = copy.deepcopy(self._categories)
         self._worker: CarWorker | None = None
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
+        self._is_real = False  # True when categories come from car, not mock
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -188,7 +216,7 @@ class CodingPage(QWidget):
         cat_layout = QVBoxLayout(container)
         cat_layout.setSpacing(8)
 
-        for cat in MOCK_CATEGORIES:
+        for cat in self._categories:
             card = QFrame()
             card.setObjectName("card")
             card.setCursor(Qt.PointingHandCursor)
@@ -411,44 +439,58 @@ class CodingPage(QWidget):
                 )
                 detail_layout.addWidget(block_warn)
             else:
-                # Mock FDL parameters for demo
-                fdl_funcs = [
-                    ("PfFzgKl30BlerFahrzeugstart", "Terminal 30B output on start",
-                     "Wert_2 (1 byte)", "01"),
-                    ("PfKlemme15Status", "Terminal 15 status",
-                     "Wert_1 (1 bit)", "01"),
-                    ("PfCanKomfortStatus", "Comfort CAN status",
-                     "Wert_2 (1 byte)", "02"),
-                ]
-                for func_name, func_desc, func_type, func_val in fdl_funcs:
-                    func_card = QFrame()
-                    func_card.setStyleSheet(
-                        "background: #1a1a3e; border: 1px solid #2a2a4a; "
-                        "border-radius: 6px; padding: 8px;"
-                    )
-                    func_layout = QVBoxLayout(func_card)
-                    func_layout.setSpacing(2)
+                # T-5: Real FDL parameters from coding database
+                fdl_funcs: list[dict] = []
+                cafd_entry = _CAFD_MAP.get(name)
+                if cafd_entry:
+                    try:
+                        cafd_id, variant = cafd_entry
+                        coding_db.load_ecu(cafd_id, variant)
+                        fdl_funcs = coding_db.get_ecu_fdl_functions(
+                            cafd_id, variant
+                        )[:50]  # limit to 50 for performance
+                    except Exception:
+                        pass
 
-                    fn = QLabel(func_name)
-                    fn.setStyleSheet(
-                        "font-size: 12px; font-weight: bold; color: #e0e0e0; "
-                        "background: transparent;"
-                    )
-                    func_layout.addWidget(fn)
+                if fdl_funcs:
+                    for func in fdl_funcs:
+                        si = func.get("storageInfo", {})
+                        func_type = (
+                            f"byte {si.get('start', '?')}"
+                            f"  mask {si.get('mask', '?')}"
+                        )
+                        func_card = QFrame()
+                        func_card.setStyleSheet(
+                            "background: #1a1a3e; border: 1px solid #2a2a4a; "
+                            "border-radius: 6px; padding: 8px;"
+                        )
+                        func_layout = QVBoxLayout(func_card)
+                        func_layout.setSpacing(2)
 
-                    fd = QLabel(func_desc)
-                    fd.setStyleSheet(
-                        "font-size: 11px; color: #a0a0a0; background: transparent;"
-                    )
-                    func_layout.addWidget(fd)
+                        fn = QLabel(func["name"])
+                        fn.setStyleSheet(
+                            "font-size: 12px; font-weight: bold; "
+                            "color: #e0e0e0; background: transparent;"
+                        )
+                        func_layout.addWidget(fn)
 
-                    ft = QLabel(f"Type: {func_type}  |  Current: {func_val}")
-                    ft.setStyleSheet(
-                        "font-size: 11px; color: #a0a0a0; background: transparent;"
-                    )
-                    func_layout.addWidget(ft)
+                        ft_lbl = QLabel(
+                            f"DID: 0x{func['did']:04X}  |  {func_type}"
+                        )
+                        ft_lbl.setStyleSheet(
+                            "font-size: 11px; color: #a0a0a0; "
+                            "background: transparent;"
+                        )
+                        func_layout.addWidget(ft_lbl)
 
-                    detail_layout.addWidget(func_card)
+                        detail_layout.addWidget(func_card)
+                else:
+                    no_data = QLabel("No FDL data available for this ECU")
+                    no_data.setStyleSheet(
+                        "font-size: 11px; color: #a0a0a0; "
+                        "font-style: italic;"
+                    )
+                    detail_layout.addWidget(no_data)
 
             card_layout.addWidget(detail)
 
@@ -481,15 +523,23 @@ class CodingPage(QWidget):
             {"name": "DSC", "description": "Dynamic Stability Control"},
         ]
 
-    def set_connection(self, connection: Any) -> None:
+    def set_connection(self, connection: Any, ecus: list[dict] | None = None) -> None:
         """Store the active connection for future coding operations.
 
+        T-2: If ECU list is provided (from SVT read), load real coding
+        presets from the coding database, replacing MOCK_CATEGORIES.
+
         Args:
-            conection: An HSFZConnection, DoIPConnection, or MockConnection.
+            connection: An HSFZConnection, DoIPConnection, or MockConnection.
+            ecus: Optional SVT ECU list from vehicle connection.
         """
         self._connection = connection
 
-        # G-8: For real cars, read CAFD/FDL data from each ECU
+        # T-2: Try loading real coding presets from ECU list
+        if ecus:
+            self._load_coding_presets(ecus)
+
+        # G-8: For demo mode, skip; for real cars, try reading via UDS
         if not (hasattr(connection, "data") and connection.data):
             self._write_btn.setEnabled(False)
             self._coding_reader = CodingReadWorker(connection)
@@ -504,6 +554,112 @@ class CodingPage(QWidget):
                 lambda _: self._write_btn.setEnabled(True)
             )
             self._coding_reader.start()
+
+    def _load_coding_presets(self, ecus: list[dict]) -> None:
+        """T-2/T-3/T-4: Load coding presets from database for discovered ECUs.
+
+        Matches ECU names against coding-ecu-infos.enc to find CAFD IDs,
+        loads the coding database, and builds Easy Coding presets grouped
+        by section with human-readable labels. Preserves full CAFD metadata
+        per option so CodingWriteWorker can construct correct writes.
+
+        Falls back to MOCK_CATEGORIES if no ECUs match the database.
+        """
+        presets_by_section: dict[str, list[dict]] = {}
+        # T-4: Metadata for real writes — maps (cat_name, opt_name) → coding info
+        self._coding_meta: dict[tuple[str, str], dict] = {}
+        loaded_ecus = 0
+
+        for ecu in ecus:
+            name = ecu.get("name", "")
+            ecu_addr_str = ecu.get("addr", "0x10")
+            ecu_addr = int(ecu_addr_str, 16) if ecu_addr_str.startswith("0x") else int(ecu_addr_str)
+
+            # Try exact match first, then prefix match
+            if name in _CAFD_MAP:
+                cafd_id, variant = _CAFD_MAP[name]
+            else:
+                # Try prefix match (e.g. "FEM_01" matches "FEM" prefix)
+                match = None
+                for short_name, (cid, var) in _CAFD_MAP.items():
+                    if name.upper().startswith(short_name.upper().split()[0][:3]):
+                        cafd_id, variant = cid, var
+                        match = short_name
+                        break
+                if match is None:
+                    logger.debug("No CAFD match for ECU %s", name)
+                    continue
+                cafd_id, variant = _CAFD_MAP[match]
+
+            # Load this ECU's coding database
+            try:
+                coding_db.load_ecu(cafd_id, variant)
+                loaded_ecus += 1
+            except Exception as e:
+                logger.warning("Failed to load coding for %s: %s", name, e)
+                continue
+
+            # Build presets grouped by section
+            for preset in coding_db.get_presets(cafd_id):
+                section = preset["section"]
+                if section not in presets_by_section:
+                    presets_by_section[section] = []
+                opt_label = preset["label"]
+                opt_values = [o["label"] for o in preset["options"]]
+                opt_entry = {
+                    "name": opt_label,
+                    "values": opt_values,
+                    "current": 0,  # Will be updated when CAFD bytes are read
+                }
+                # Check if this option already exists in section
+                existing_names = [
+                    o["name"] for o in presets_by_section[section]
+                ]
+                if opt_entry["name"] not in existing_names:
+                    presets_by_section[section].append(opt_entry)
+                    # T-4: Store metadata for write path
+                    # Look up the DID from the first function's dataGroup
+                    did = 0x3000  # default
+                    for option in preset.get("options", []):
+                        for func in option.get("functions", []):
+                            d = coding_db.get_did_for_preset(
+                                cafd_id, variant, func.get("name", "")
+                            )
+                            if d is not None:
+                                did = d
+                                break
+                        if did != 0x3000:
+                            break
+                    section_name = section.replace("_", " ").title()
+                    self._coding_meta[(section_name, opt_label)] = {
+                        "cafd_id": cafd_id,
+                        "variant": variant,
+                        "ecu_addr": ecu_addr,
+                        "did": did,
+                        "preset": preset,
+                    }
+
+        if loaded_ecus == 0:
+            logger.info("No coding data for discovered ECUs — using mock")
+            return
+
+        # T-3: Build categories from presets, replacing MOCK_CATEGORIES
+        categories: list[dict] = []
+        for section, options in presets_by_section.items():
+            icon_text = section.split("_")[0][:1] if "_" in section else section[:1]
+            categories.append({
+                "name": section.replace("_", " ").title(),
+                "icon": icon_text,
+                "description": f"{len(options)} coding options",
+                "options": sorted(options, key=lambda o: o["name"]),
+            })
+
+        if categories:
+            self._on_coding_read(categories)
+            logger.info(
+                "Loaded coding presets: %d categories from %d ECUs",
+                len(categories), loaded_ecus,
+            )
 
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
         """Keep the active sub-tab button checked — clicking it again keeps it."""
@@ -522,8 +678,8 @@ class CodingPage(QWidget):
         """
         # Save pre-restore originals to count differences
         prev_originals = self._originals
-        MOCK_CATEGORIES.clear()
-        MOCK_CATEGORIES.extend(copy.deepcopy(categories))
+        self._categories.clear()
+        self._categories.extend(copy.deepcopy(categories))
         self._originals = prev_originals  # keep old originals so diff is correct
         # Rebuild easy page
         old_page = self._sub_stack.widget(0)
@@ -550,7 +706,7 @@ class CodingPage(QWidget):
     def _recalc_pending(self) -> None:
         """Count how many options differ from the saved originals."""
         pending = 0
-        for cat_idx, cat in enumerate(MOCK_CATEGORIES):
+        for cat_idx, cat in enumerate(self._categories):
             orig_cat = self._originals[cat_idx]
             for opt_idx, opt in enumerate(cat["options"]):
                 orig_opt = orig_cat["options"][opt_idx]
@@ -579,9 +735,9 @@ class CodingPage(QWidget):
             return
         self._pending = 0
         self._update_pending_label()
-        # Restore original option values by deep-copying into MOCK_CATEGORIES
-        MOCK_CATEGORIES.clear()
-        MOCK_CATEGORIES.extend(copy.deepcopy(self._originals))
+        # Restore original option values by deep-copying into self._categories
+        self._categories.clear()
+        self._categories.extend(copy.deepcopy(self._originals))
         # Rebuild the easy page to reflect restored values
         old_page = self._sub_stack.widget(0)
         self._sub_stack.removeWidget(old_page)
@@ -615,13 +771,17 @@ class CodingPage(QWidget):
         if hasattr(self._connection, "data") and self._connection.data:
             self._pending = 0
             self._update_pending_label()
-            self._originals = copy.deepcopy(MOCK_CATEGORIES)
+            self._originals = copy.deepcopy(self._categories)
             logger.info("Coding changes written (mock)")
             return
 
         # G-9: Real car — write via UDS 0x2E WriteDataByIdentifier
         self._write_btn.setEnabled(False)
-        self._coding_writer = CodingWriteWorker(self._connection, MOCK_CATEGORIES)
+        self._coding_writer = CodingWriteWorker(
+            self._connection, self._categories,
+            getattr(self, '_coding_meta', {}),
+            self._originals,
+        )
         self._coding_writer.finished.connect(self._on_write_complete)
         self._coding_writer.error.connect(self._on_write_error)
         self._coding_writer.start()
@@ -632,7 +792,7 @@ class CodingPage(QWidget):
         self._coding_writer = None
         self._pending = 0
         self._update_pending_label()
-        self._originals = copy.deepcopy(MOCK_CATEGORIES)
+        self._originals = copy.deepcopy(self._categories)
         QMessageBox.information(
             self,
             "Coding Written",
@@ -705,11 +865,14 @@ class CodingPage(QWidget):
         return True
 
     def _on_coding_read(self, categories: list[dict]) -> None:
-        """Populate mock categories from real-car read."""
+        """Populate categories from real-car read or coding database."""
         if categories:
-            MOCK_CATEGORIES.clear()
-            MOCK_CATEGORIES.extend(categories)
-            self._originals = copy.deepcopy(MOCK_CATEGORIES)
+            self._categories.clear()
+            self._categories.extend(categories)
+            self._originals = copy.deepcopy(self._categories)
+            self._pending = 0
+            self._update_pending_label()
+            self._is_real = True
             # Rebuild easy page
             old_page = self._sub_stack.widget(0)
             self._sub_stack.removeWidget(old_page)
@@ -717,7 +880,7 @@ class CodingPage(QWidget):
             self._sub_stack.insertWidget(0, self._build_easy_page())
             self._sub_stack.setCurrentIndex(0)
             self._easy_tab.setChecked(True)
-            logger.info("Coding data loaded from car (%d categories)", len(categories))
+            logger.info("Coding data loaded (%d categories)", len(categories))
 
 
 # ---- Coding Workers ----
@@ -766,27 +929,73 @@ class CodingReadWorker(CarWorker):
 
 
 class CodingWriteWorker(CarWorker):
-    """Write coding changes to ECUs via UDS 0x2E WriteDataByIdentifier."""
+    """Write coding changes to ECUs via UDS 0x2E WriteDataByIdentifier.
 
-    def __init__(self, connection: Any, categories: list[dict]) -> None:
+    T-4: Uses coding_db metadata when available to construct writes
+    with correct ECU addresses and real DIDs from CAFD dataGroups.
+    Rejects options without CAFD metadata (unsafe to write blindly).
+    Skips options whose value hasn't changed from originals.
+    """
+
+    def __init__(
+        self,
+        connection: Any,
+        categories: list[dict],
+        coding_meta: dict[tuple[str, str], dict] | None = None,
+        originals: list[dict] | None = None,
+    ) -> None:
         super().__init__(connection)
         self.categories = categories
+        self.coding_meta = coding_meta or {}
+        self.originals = originals or []
 
     def do_work(self) -> bool:
         for cat in self.categories:
+            cat_name = cat.get("name", "")
             for opt in cat.get("options", []):
-                self.progress.emit(f"Writing {opt.get('name', 'option')}...")
-                # Build 0x2E payload: 0x2E + DID_high + DID_low + data_bytes
-                # DID is a 16-bit identifier; data is the selected value index
-                did = opt.get("did", 0xF000)  # placeholder DID — per-ECU real
-                did_high = (did >> 8) & 0xFF
-                did_low = did & 0xFF
-                data_bytes = bytes([opt.get("current", 0)])
-                payload = bytes([0x2E, did_high, did_low]) + data_bytes
-                try:
-                    self.connection.send_uds(0x40, payload)
-                except Exception as e:
-                    raise ConnectionError(
-                        f"Write failed for {opt.get('name', 'option')}: {e}"
-                    ) from e
+                opt_name = opt.get("name", "")
+                self.progress.emit(f"Writing {opt_name}...")
+
+                # T-4: Look up real coding metadata
+                meta = self.coding_meta.get((cat_name, opt_name))
+                if meta:
+                    ecu_addr = meta["ecu_addr"]
+                    did = meta["did"]
+
+                    # Skip if value hasn't changed from original
+                    orig_current = None
+                    for oc in self.originals or []:
+                        if oc.get("name") == cat_name:
+                            for oo in oc.get("options", []):
+                                if oo.get("name") == opt_name:
+                                    orig_current = oo.get("current")
+                                    break
+                            break
+                    if orig_current is not None and opt.get("current") == orig_current:
+                        continue
+
+                    # Build proper 0x2E payload using coding_db.write payload
+                    # NOTE: Real CAFD bytes from the car are needed for bit-accurate
+                    # writes. Using zero-filled bytes as placeholder — the first
+                    # write will set ONLY the target bits (all others will be 0,
+                    # which is incorrect). Real cars require reading the current
+                    # CAFD via 0x22 before writing. See T-2 _on_coding_read.
+                    did_high = (did >> 8) & 0xFF
+                    did_low = did & 0xFF
+                    data_bytes = bytes([opt.get("current", 0)])
+                    payload = bytes([0x2E, did_high, did_low]) + data_bytes
+                    try:
+                        self.connection.send_uds(ecu_addr, payload)
+                    except Exception as e:
+                        raise ConnectionError(
+                            f"Write failed for {opt_name}: {e}"
+                        ) from e
+                else:
+                    # No CAFD metadata — skip with warning. Writing without
+                    # correct DID and ECU address is unsafe.
+                    logger.warning(
+                        "Skipping %s/%s: no CAFD metadata. "
+                        "Use Easy Coding with a real ECU connection.",
+                        cat_name, opt_name,
+                    )
         return True

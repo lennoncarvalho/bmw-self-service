@@ -9,7 +9,6 @@ Reference: docs/16-ui-spec.md (Screen 1), docs/17-ui-decisions.md (Decisions 1-3
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -152,10 +151,7 @@ class WelcomePage(QWidget):
         series = self.series_combo.currentData()
         iface = self.interface_combo.currentData()
 
-        if self._demo_mode:
-            enable = bool(series)
-        else:
-            enable = bool(series) and bool(iface)
+        enable = bool(series) if self._demo_mode else bool(series) and bool(iface)
 
         self.connect_btn.setEnabled(enable)
 
