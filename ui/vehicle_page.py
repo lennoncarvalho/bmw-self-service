@@ -22,6 +22,35 @@ from PySide6.QtWidgets import (
 logger = logging.getLogger(__name__)
 
 
+def _parse_svt_response(resp: bytes) -> list[dict]:
+    """Parse a raw SVT (0x62 F0 00 ...) UDS response into ECU entries.
+
+    Attempts to extract ECU short names from the response payload.
+    Format varies by BMW generation; this parser handles common patterns.
+
+    Args:
+        resp: Raw UDS response including SID/DID echo bytes.
+
+    Returns:
+        List of dicts with 'name' and 'addr' keys, or empty list.
+    """
+    ecus: list[dict] = []
+    payload = resp[3:] if len(resp) > 3 else resp
+    try:
+        text = payload.decode("ascii", errors="ignore")
+        # Try to find ECU short-name patterns (2-8 uppercase alphanumeric)
+        import re
+        seen: set[str] = set()
+        for match in re.finditer(r'\b([A-Z]{2,8}(?:_[A-Z0-9]{1,4})?)\b', text):
+            name = match.group(1)
+            if name not in seen and len(name) >= 2:
+                seen.add(name)
+                ecus.append({"name": name, "description": ""})
+    except Exception:
+        pass
+    return ecus
+
+
 class VehiclePage(QWidget):
     """Dashboard showing vehicle identity, mileage, battery, and ECU list."""
 
@@ -151,13 +180,14 @@ class VehiclePage(QWidget):
             self.vin_label.setText("Could not read from ECU")
 
     def _load_from_car(self, connection: Any, series: str = "") -> None:
-        """Read vehicle information via UDS 0x22 from the car."""
+        """Read vehicle information via UDS from the car."""
         model_map = {"F": "F-series", "G": "G-series", "U": "U-series", "I": "I-series"}
         model = model_map.get(series, "BMW")
         vin = "Unknown"
         ilevel = "Unknown"
         mileage = "Unknown"
-        ecus = []
+        battery = "Unknown"
+        ecus: list[dict] = []
 
         # VIN (0xF190) — may already have been read during connect
         try:
@@ -175,12 +205,57 @@ class VehiclePage(QWidget):
         except Exception as e:
             logger.debug("I-Level read failed: %s", e)
 
+        # G-1: Mileage via UDS 0x1A from KOMBI (0x60)
+        # Falls back to 0x22 0xF4xx DID if 0x1A not supported
+        try:
+            resp = connection.send_uds(0x60, bytes([0x1A, 0x00]))
+            if resp[0] == 0x5A and len(resp) >= 5:
+                mileage_raw = int.from_bytes(resp[3:7], "big")
+                mileage = f"{mileage_raw:,} km"
+        except Exception:
+            # Fallback: ReadDataByIdentifier 0xF406 (odometer DID)
+            try:
+                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x06]))
+                if resp[0] == 0x62 and len(resp) >= 7:
+                    mileage_raw = int.from_bytes(resp[3:7], "big")
+                    # BMW encodes mileage in 10s of km
+                    mileage_val = mileage_raw // 10
+                    mileage = f"{mileage_val:,} km"
+            except Exception as e:
+                logger.debug("Mileage read failed: %s", e)
+
+        # G-3: Battery voltage via 0x22 0xF40C from DME (0x12) or ZGW
+        try:
+            resp = connection.send_uds(0x12, bytes([0x22, 0xF4, 0x0C]))
+            if resp[0] == 0x62 and len(resp) >= 5:
+                voltage_raw = int.from_bytes(resp[3:5], "big")
+                battery = f"{voltage_raw / 10.0:.1f}V"
+        except Exception:
+            try:
+                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x0C]))
+                if resp[0] == 0x62 and len(resp) >= 5:
+                    voltage_raw = int.from_bytes(resp[3:5], "big")
+                    battery = f"{voltage_raw / 10.0:.1f}V"
+            except Exception as e:
+                logger.debug("Battery voltage read failed: %s", e)
+
+        # G-2: SVT ECU list from ZGW via 0x22 0xF0 0x00
+        # NOTE: Exact SVT DID varies by chassis. 0xF000 is a common placeholder;
+        # real-car testing will determine the correct DID for each series.
+        try:
+            resp = connection.send_uds(0x10, bytes([0x22, 0xF0, 0x00]))
+            if resp[0] == 0x62:
+                # Minimal parser: skip echo bytes, try to extract ECU names
+                ecus = _parse_svt_response(resp)
+        except Exception as e:
+            logger.debug("SVT read failed: %s", e)
+
         self.model_label.setText(model)
         self.vin_label.setText(f"VIN: {vin}")
         self.mileage_label.setText(f"Mileage: {mileage}")
         self.ilevel_label.setText(f"I-Level: {ilevel}")
         self.prod_date_label.setText("")
-        self.battery_label.setText("")
+        self.battery_label.setText(f"Battery: {battery}" if battery != "Unknown" else "")
 
         self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")
         self._populate_ecus(ecus)

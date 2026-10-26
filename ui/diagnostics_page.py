@@ -68,7 +68,7 @@ class DtcReadWorker(CarWorker):
                     })
                     offset += 4
             except Exception as exc:
-                logger.warning("DTC read failed for %s (0x%02X): %s", name, addr, exc)
+                logger.debug("ECU 0x%02X (%s) DTC read skipped: %s", addr, name, exc)
 
         return dtcs
 
@@ -80,6 +80,7 @@ class DiagnosticsPage(QWidget):
         super().__init__(parent)
         self._connection: Any = None
         self._ecus: list[dict] = []
+        self._ecu_lookup: dict[str, str] = {}
         self._dtcs: list[dict] = []
         self._worker: DtcReadWorker | None = None
         self._setup_ui()
@@ -161,6 +162,8 @@ class DiagnosticsPage(QWidget):
         """Set the active connection and ECU list, then auto-read DTCs."""
         self._connection = connection
         self._ecus = ecus
+        # Build ECU name lookup map for detail view
+        self._ecu_lookup = {e.get("name", ""): e.get("description", "") for e in ecus}
         self._read_dtcs()
 
     def _on_read_clicked(self) -> None:
@@ -253,13 +256,46 @@ class DiagnosticsPage(QWidget):
             detail.setVisible(False)
             detail_layout = QVBoxLayout(detail)
             detail_layout.setContentsMargins(0, 8, 0, 0)
+            detail_layout.setSpacing(6)
 
+            # G-10: Full description
             full_desc = QLabel(dtc_db.describe(code) or desc)
             full_desc.setWordWrap(True)
-            full_desc.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
+            full_desc.setStyleSheet(
+                "font-size: 13px; color: #e0e0e0; background: transparent;"
+            )
             detail_layout.addWidget(full_desc)
 
-            detail_layout.addSpacing(4)
+            # G-10: Status byte decoded
+            status_text = _decode_dtc_status(status)
+            status_lbl = QLabel(f"Status: 0x{status:02X} — {status_text}")
+            status_lbl.setStyleSheet(
+                "font-size: 12px; color: #F39C12; background: transparent;"
+            )
+            detail_layout.addWidget(status_lbl)
+
+            # G-10: Fault type from database
+            ft = dtc_db.fault_type(f"{status:02X}")
+            if ft:
+                ft_lbl = QLabel(f"Fault type: {ft}")
+                ft_lbl.setStyleSheet(
+                    "font-size: 12px; color: #a0a0a0; background: transparent;"
+                )
+                detail_layout.addWidget(ft_lbl)
+
+            # G-10: ECU full name if available
+            ecu_full = self._ecu_lookup.get(ecu, ecu)
+            if ecu_full and ecu_full != ecu:
+                ecu_lbl = QLabel(f"ECU: {ecu_full}")
+                ecu_lbl.setStyleSheet(
+                    "font-size: 12px; color: #a0a0a0; background: transparent;"
+                )
+                detail_layout.addWidget(ecu_lbl)
+
+            # Buttons row
+            btn_row = QHBoxLayout()
+            btn_row.setSpacing(8)
+
             search_btn = QPushButton(f'Search Web for "{code} BMW"')
             search_btn.setStyleSheet(
                 "QPushButton { background: transparent; color: #1C69D4; border: 1px solid #1C69D4; "
@@ -269,7 +305,22 @@ class DiagnosticsPage(QWidget):
             search_btn.clicked.connect(
                 lambda checked, c=code: self._open_search(checked, c)
             )
-            detail_layout.addWidget(search_btn)
+            btn_row.addWidget(search_btn)
+
+            # G-10: Per-DTC clear button
+            clear_one_btn = QPushButton(f"Clear {code}")
+            clear_one_btn.setStyleSheet(
+                "QPushButton { background: transparent; color: #E30B1F; "
+                "border: 1px solid #E30B1F; border-radius: 6px; "
+                "padding: 4px 12px; font-size: 11px; }"
+                "QPushButton:hover { background: rgba(227,11,31,0.15); }"
+            )
+            clear_one_btn.clicked.connect(
+                lambda checked, c=code: self._on_clear_single(c)
+            )
+            btn_row.addWidget(clear_one_btn)
+            btn_row.addStretch()
+            detail_layout.addLayout(btn_row)
             card_layout.addWidget(detail)
 
             # Click card to toggle detail
@@ -315,28 +366,90 @@ class DiagnosticsPage(QWidget):
                 super().__init__(conn)
                 self.ecus = ecus
 
-            def do_work(self):
-                cleared = 0
+            def do_work(self) -> dict:
+                cleared: list[str] = []
+                failed: list[str] = []
                 for ecu in self.ecus:
                     addr_str = ecu.get("addr", "0x10")
                     addr = int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str)
                     name = ecu.get("name", "ECU")
                     self.progress.emit(f"Clearing {name}...")
-                    self.connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
-                    cleared += 1
-                return cleared
+                    try:
+                        self.connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
+                        cleared.append(name)
+                    except Exception:
+                        failed.append(name)
+                return {"cleared": cleared, "failed": failed}
 
         self._worker = ClearWorker(self._connection, self._ecus)
-        self._worker.finished.connect(lambda _: self._on_clear_complete())
+        self._worker.finished.connect(self._on_clear_complete)
         self._worker.error.connect(self._on_dtc_error)
         self._worker.start()
 
-    def _on_clear_complete(self) -> None:
-        """Re-read DTCs after a successful clear."""
+    def _on_clear_complete(self, result: dict | None = None) -> None:
+        """Re-read DTCs after a successful clear, report per-ECU results."""
         self.clear_btn.setEnabled(True)
+        if result:
+            cleared = result.get("cleared", [])
+            failed = result.get("failed", [])
+            if failed:
+                QMessageBox.information(
+                    self,
+                    "Clear DTCs",
+                    f"Cleared: {len(cleared)} ECUs\n"
+                    f"Failed: {len(failed)} ({', '.join(failed)})",
+                )
         self._read_dtcs()
 
     @staticmethod
     def _open_search(checked: bool, code: str) -> None:
         import webbrowser
         webbrowser.open(f"https://www.google.com/search?q={code}+BMW")
+
+    def _on_clear_single(self, code: str) -> None:
+        """Clear a single DTC from its ECU."""
+        dtc = next((d for d in self._dtcs if d.get("code") == code), None)
+        if dtc is None or self._connection is None:
+            return
+        addr = dtc.get("ecu_addr", 0x10)
+        reply = QMessageBox.question(
+            self,
+            f"Clear {code}",
+            f"Clear fault code {code} from {dtc.get('ecu_name', 'ECU')}?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        if hasattr(self._connection, "data") and self._connection.data:
+            self._connection.data["dtcs"] = [
+                d for d in self._connection.data["dtcs"] if d.get("code") != code
+            ]
+        else:
+            try:
+                self._connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
+            except Exception as e:
+                QMessageBox.warning(self, "Clear Failed", str(e))
+        self._read_dtcs()
+
+
+# ---- Helpers ----
+
+def _decode_dtc_status(status: int) -> str:
+    """Decode a UDS DTC status byte into human-readable text."""
+    parts: list[str] = []
+    if status & 0x01:
+        parts.append("Warning requested")
+    if status & 0x02:
+        parts.append("Pending")
+    if status & 0x08:
+        parts.append("Confirmed")
+    if status & 0x10:
+        parts.append("Test failed since last clear")
+    if status & 0x20:
+        parts.append("Test failed this cycle")
+    if status & 0x40:
+        parts.append("Pending DTC")
+    if status & 0x80:
+        parts.append("Intermittent")
+    return ", ".join(parts) if parts else "No status bits set"

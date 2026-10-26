@@ -21,7 +21,7 @@ ediabasx/
 # Extracted data — kept locally, not in repo
 bimmercode_extracted/
 bimmerlink_extracted/
-bimmercode_data/
+coding_data/
 
 # Cloned repos (reference only, not shipped)
 node_modules/
