@@ -9,7 +9,7 @@ Reference: docs/16-ui-spec.md Screen 6
 import logging
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QDate
 from PySide6.QtWidgets import (
     QCheckBox,
     QDateEdit,
@@ -61,6 +61,7 @@ class AddServiceDialog(QDialog):
 
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
+        self.date_edit.setDate(QDate.currentDate())
         form.addRow("Date:", self.date_edit)
 
         self.mileage_spin = QSpinBox()
@@ -83,18 +84,20 @@ class AddServiceDialog(QDialog):
         self.checkboxes: dict[str, QCheckBox] = {}
         for label_text, _ in self.SERVICE_ITEMS:
             cb = QCheckBox(label_text)
+            cb.toggled.connect(self._on_item_toggled)
             self.checkboxes[label_text] = cb
             layout.addWidget(cb)
 
         layout.addSpacing(8)
 
         # Buttons
-        buttons = QDialogButtonBox(
+        self._button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        self._button_box.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+        self._button_box.accepted.connect(self.accept)
+        self._button_box.rejected.connect(self.reject)
+        layout.addWidget(self._button_box)
 
     def get_data(self) -> dict:
         """Collect form data as a service entry dict."""
@@ -105,6 +108,13 @@ class AddServiceDialog(QDialog):
             "dealer": self.dealer_edit.text() or None,
             "items": selected,
         }
+
+    def _on_item_toggled(self) -> None:
+        """Enable OK only when at least one service item is checked."""
+        any_checked = any(cb.isChecked() for cb in self.checkboxes.values())
+        ok_btn = self._button_box.button(QDialogButtonBox.StandardButton.Ok)
+        if ok_btn is not None:
+            ok_btn.setEnabled(any_checked)
 
 
 class ServiceHistoryPage(QWidget):
@@ -211,14 +221,22 @@ class ServiceHistoryPage(QWidget):
             )
             top_row.addWidget(date_label)
             if km is not None:
-                km_label = QLabel(f"\u00b7 {km:,} km")
+                km_label = QLabel(f"  {km:,} km")
                 km_label.setStyleSheet("font-size: 13px; color: #a0a0a0; background: transparent;")
                 top_row.addWidget(km_label)
             top_row.addStretch()
 
-            arrow = QLabel("\u25b6")
-            arrow.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-            top_row.addWidget(arrow)
+            # Toggle button for expand/collapse
+            toggle_btn = QPushButton("\u25b6")
+            toggle_btn.setFlat(True)
+            toggle_btn.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+            toggle_btn.setStyleSheet(
+                "QPushButton { font-size: 12px; color: #a0a0a0; background: transparent; "
+                "border: none; padding: 4px; }"
+                "QPushButton:hover { color: #2ECC71; }"
+                "QPushButton:focus { border: 1px solid #2ECC71; border-radius: 4px; }"
+            )
+            top_row.addWidget(toggle_btn)
             card_layout.addLayout(top_row)
 
             # Summary line
@@ -251,10 +269,12 @@ class ServiceHistoryPage(QWidget):
 
             card_layout.addWidget(detail)
 
-            # Toggle detail on click
-            card.mousePressEvent = lambda e, d=detail, a=arrow: (
-                d.setVisible(not d.isVisible()),
-                a.setText("\u25bc" if d.isVisible() else "\u25b6"),
+            # Toggle detail on button click
+            toggle_btn.clicked.connect(
+                lambda checked, d=detail, b=toggle_btn: (
+                    d.setVisible(not d.isVisible()),
+                    b.setText("▼" if d.isVisible() else "▶"),
+                )
             )
 
             self.entry_layout.insertWidget(self.entry_layout.count() - 1, card)
@@ -268,14 +288,17 @@ class ServiceHistoryPage(QWidget):
         if not data.get("items"):
             return
 
-        # Prepend to entries and re-render
-        self._entries.insert(0, data)
+        # Prepend and re-sort by date descending, then re-render
+        self._entries.append(data)
+        self._entries.sort(key=lambda e: e.get("date", ""), reverse=True)
         self._render()
 
         # Persist to mock data if in DEMO mode
         if hasattr(self._connection, "data") and self._connection.data:
             history = self._connection.data.setdefault("service_history", [])
-            history.insert(0, data)
+            history.append(data)
+            if hasattr(self._connection, "save"):
+                self._connection.save()
 
     @staticmethod
     def _clear_layout(layout: QLayout) -> None:

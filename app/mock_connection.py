@@ -65,6 +65,15 @@ class MockConnection:
             self.data = {}
             return True
 
+    def save(self) -> None:
+        """Persist current in-memory mock data back to the JSON file."""
+        try:
+            with open(self.mock_data_path, "w", encoding="utf-8") as f:
+                json.dump(self.data, f, indent=2, ensure_ascii=False)
+            logger.debug("Mock data saved to %s", self.mock_data_path)
+        except OSError as e:
+            logger.warning("Failed to save mock data: %s", e)
+
     def send_uds(
         self, ecu_addr: int, payload: bytes, timeout: float = 30.0
     ) -> bytes:
