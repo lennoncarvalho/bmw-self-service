@@ -123,8 +123,8 @@ When starting a development session, load these skills in order:
 ## Build & packaging
 
 ```bash
-# macOS
-pyinstaller --onefile --windowed --name "BMW Self Service" \
+# macOS (onedir — proper .app bundle, macOS security compatible)
+pyinstaller --onedir --windowed --name "BMW Self Service" \
     --add-data "dtc_descriptions.db:." \
     --add-data "coding_data:coding_data" \
     --add-data "mock_data:mock_data" \
