@@ -18,9 +18,10 @@ from PySide6.QtWidgets import (
 
 from app.connection import HSFZConnection, DoIPConnection
 from app.mock_connection import MockConnection
+from ui.diagnostics_page import DiagnosticsPage
+from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
-from ui.diagnostics_page import DiagnosticsPage
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class MainWindow(QMainWindow):
         self.coding_page = self._make_placeholder("Coding")
         self.stack.addWidget(self.coding_page)
 
-        self.history_page = self._make_placeholder("Service History")
+        self.history_page = ServiceHistoryPage()
         self.stack.addWidget(self.history_page)
 
         main_layout.addWidget(self.stack, stretch=1)
@@ -422,6 +423,8 @@ class MainWindow(QMainWindow):
         if hasattr(connection, "data") and connection.data:
             ecus = connection.data.get("svt_ecus", [])
         self.diag_page.set_connection(connection, ecus)
+        # Pass connection to service history page
+        self.history_page.set_connection(connection)
 
         # Start keep-alive timers for real connections
         if not self._demo_mode:
