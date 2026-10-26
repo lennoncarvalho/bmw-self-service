@@ -187,6 +187,7 @@ class VehiclePage(QWidget):
         ilevel = "Unknown"
         mileage = "Unknown"
         battery = "Unknown"
+        prod_date = "Unknown"
         ecus: list[dict] = []
 
         # VIN (0xF190) — may already have been read during connect
@@ -204,6 +205,16 @@ class VehiclePage(QWidget):
                 ilevel = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
         except Exception as e:
             logger.debug("I-Level read failed: %s", e)
+
+        # T-13: Production date — try DID 0xF180 (build date) from ZGW
+        try:
+            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x80]))
+            if resp[0] == 0x62 and len(resp) >= 11:
+                # BMW encodes date as ASCII: e.g. "2017-03-01" or "01.03.2017"
+                date_bytes = resp[3:13]
+                prod_date = date_bytes.decode("ascii", errors="ignore").strip("\x00 ")
+        except Exception as e:
+            logger.debug("Production date read failed: %s", e)
 
         # G-1: Mileage via UDS 0x1A from KOMBI (0x60)
         # Falls back to 0x22 0xF4xx DID if 0x1A not supported
@@ -254,7 +265,7 @@ class VehiclePage(QWidget):
         self.vin_label.setText(f"VIN: {vin}")
         self.mileage_label.setText(f"Mileage: {mileage}")
         self.ilevel_label.setText(f"I-Level: {ilevel}")
-        self.prod_date_label.setText("")
+        self.prod_date_label.setText(f"Production Date: {prod_date}" if prod_date != "Unknown" else "")
         self.battery_label.setText(f"Battery: {battery}" if battery != "Unknown" else "")
 
         self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")
