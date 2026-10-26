@@ -9,7 +9,7 @@ Reference: docs/16-ui-spec.md Screen 5, docs/14-dtc-database.md
 import logging
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -310,18 +309,30 @@ class DiagnosticsPage(QWidget):
             self.clear_btn.setEnabled(True)
             return
 
-        # Real car: send 0x14 FF FF FF to each ECU
-        try:
-            for ecu in self._ecus:
-                addr_str = ecu.get("addr", "0x10")
-                addr = int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str)
-                self._connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
-        except Exception as exc:
-            logger.warning("DTC clear failed: %s", exc)
-            self.clear_btn.setEnabled(True)
-            return
+        # Real car: send 0x14 FF FF FF to each ECU via background worker
+        class ClearWorker(CarWorker):
+            def __init__(self, conn, ecus):
+                super().__init__(conn)
+                self.ecus = ecus
 
-        # Re-read to confirm
+            def do_work(self):
+                cleared = 0
+                for ecu in self.ecus:
+                    addr_str = ecu.get("addr", "0x10")
+                    addr = int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str)
+                    name = ecu.get("name", "ECU")
+                    self.progress.emit(f"Clearing {name}...")
+                    self.connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
+                    cleared += 1
+                return cleared
+
+        self._worker = ClearWorker(self._connection, self._ecus)
+        self._worker.finished.connect(lambda _: self._on_clear_complete())
+        self._worker.error.connect(self._on_dtc_error)
+        self._worker.start()
+
+    def _on_clear_complete(self) -> None:
+        """Re-read DTCs after a successful clear."""
         self.clear_btn.setEnabled(True)
         self._read_dtcs()
 
