@@ -1,7 +1,6 @@
 # Tasks: Feature Gaps — Real-Car Readiness
 
-> Generated from audit against `docs/16-ui-spec.md`, `CAPABILITY-MAP.md`.
-> Depends on: Infrastructure (T-1 through T-12), all four feature sections (done).
+> Merged in PR #6 (`feat/feature-gaps`). All 17 tasks complete.
 
 ---
 

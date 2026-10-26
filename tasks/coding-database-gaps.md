@@ -1,7 +1,7 @@
 # Tasks: Coding Database & Protocol Gaps
 
-> Audit of all specs against current code. 15 gaps found.
-> Branch: `feat/coding-database`
+> Merged in PR #7 (`feat/coding-database`). 12 of 15 tasks complete.
+> 3 tasks remain open: T-2 (CAFD reads), T-4 (build_write_payload), T-11 (seed/key).
 
 ---
 
