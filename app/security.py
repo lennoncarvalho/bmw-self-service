@@ -80,10 +80,12 @@ def request_seed(connection, ecu_addr: int) -> bytes:
         ConnectionError: If ECU rejects the request.
     """
     resp = connection.send_uds(ecu_addr, bytes([0x27, 0x01]))
+    if len(resp) < 1:
+        raise ConnectionError("Empty security response")
     if resp[0] == 0x7F:
         nrc = resp[2] if len(resp) > 2 else 0
         raise ConnectionError(f"SecurityAccess rejected: NRC 0x{nrc:02X}")
-    if resp[0] != 0x67 or resp[1] != 0x01:
+    if len(resp) < 2 or resp[0] != 0x67 or resp[1] != 0x01:
         raise ConnectionError(
             f"Unexpected security response: 0x{resp[0]:02X}"
         )
@@ -106,6 +108,8 @@ def send_key(connection, ecu_addr: int, key: bytes) -> bool:
     """
     payload = bytes([0x27, 0x02]) + key
     resp = connection.send_uds(ecu_addr, payload)
+    if len(resp) < 2:
+        return False
     if resp[0] == 0x67 and resp[1] == 0x02:
         logger.info("SecurityAccess unlocked ECU 0x%02X", ecu_addr)
         return True

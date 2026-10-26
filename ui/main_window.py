@@ -551,6 +551,10 @@ class MainWindow(QMainWindow):
         )
         if reply == QMessageBox.StandardButton.Yes:
             self._on_disconnect()
+        else:
+            # No or closed dialog — still disconnect to prevent pages
+            # from using a broken connection
+            self._on_disconnect()
 
     def _stop_keepalive(self) -> None:
         """Stop all keep-alive timers."""

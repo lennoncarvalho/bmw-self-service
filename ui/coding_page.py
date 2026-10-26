@@ -645,7 +645,6 @@ class CodingPage(QWidget):
 
         # T-3: Build categories from presets, replacing MOCK_CATEGORIES
         categories: list[dict] = []
-        section_icons: dict[str, str] = {}  # first letter of section as icon
         for section, options in presets_by_section.items():
             icon_text = section.split("_")[0][:1] if "_" in section else section[:1]
             categories.append({

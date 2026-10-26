@@ -19,7 +19,10 @@
   - Reference: `docs/13:282-406`, `docs/11`, `docs/08`
   - Files: `app/coding_db.py` (new)
 
-- [x] **T-2: Wire SVT → coding database after connection**
+- [ ] **T-2: Wire SVT → coding database after connection**
+  - ✅ ECU name → CAFD ID matching via coding-ecu-infos.enc
+  - ❌ CAFD read from each ECU via UDS 0x22 (needs car)
+  - ❌ get_current_value() call for each preset (needs current CAFD bytes)
   - After reading SVT ECU list in `CodingPage`, for each ECU:
     - Determine CAFD ID from SVT response (format: `CAFD_XXXXXXXX_XXX_XXX_XXX`)
     - Load root index + variant from `CodingDatabase`
@@ -35,7 +38,10 @@
   - Proper sections from root index: `BOARD_COMPUTER`, `ANGEL_EYES`, etc.
   - Files: `ui/coding_page.py`
 
-- [x] **T-4: Fix CodingWriteWorker to use real DIDs**
+- [ ] **T-4: Fix CodingWriteWorker to use real DIDs**
+  - ✅ Correct ECU address and DID from CAFD dataGroup metadata
+  - ❌ build_write_payload() integration (needs current CAFD bytes from car)
+  - ❌ Byte-level modification with correct mask/offset per function
   - Use `build_write_payload()` from `CodingDatabase` for each modified option
   - Correct ECU address per option (not hardcoded 0x40)
   - Correct DID per option (not placeholder 0xF000)
@@ -96,7 +102,11 @@
 
 ## Phase 4: Security & robustness
 
-- [x] **T-11: Implement SecurityAccess (0x27) for protected ECUs**
+- [ ] **T-11: Implement SecurityAccess (0x27) for protected ECUs**
+  - ✅ Protected ECU registry (26 families) and seed/key framework
+  - ❌ Seed/key algorithms for BMW Level 3/5/7 (in native libs, needs REA)
+  - ❌ Automatic SecurityAccess before writes to protected ECUs
+  - ❌ Integration with CodingWriteWorker write flow
   - 22 of 139 ECUs require seed/key before writing
   - UDS flow: `0x27 0x01` → ECU returns seed → compute key → `0x27 0x02 [key]`
   - Blocked ECUs list: ACSM, DME, DSC, SAS, ZGW, AIRBAG, ABG, MRS, SRS

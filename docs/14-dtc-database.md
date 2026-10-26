@@ -179,7 +179,7 @@ Each record (when snapshot_count > 0), BMW-specific format (tentative):
 - **mileage**: Kilometers × 10, big-endian uint32 (BMW convention, needs per-chassis verification)
 
 Example: `0x59 03 B7F805 08 01 01 A1B2C3D4 0001A340`
-→ DTC B7F805, 1 snapshot, record #1, timestamp=..., mileage=10,720 km
+→ DTC B7F805, 1 snapshot, record #1, timestamp=..., mileage=10,732.8 km
 
 ### Snapshot record (0x19 04)
 
