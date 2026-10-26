@@ -7,8 +7,8 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 import logging
 from typing import Any
 
-from PySide6.QtCore import Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QAction
+from PySide6.QtCore import Qt, QSize, QThread, QTimer, Signal, Slot
+from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -41,7 +41,6 @@ logger = logging.getLogger(__name__)
 RED_DOT = chr(0x1F534)
 ORANGE_DOT = chr(0x1F7E0)
 GREEN_DOT = chr(0x1F7E2)
-GEAR_ICON = chr(0x2699)
 HOME_ICON = chr(0x1F3E0)
 SEARCH_ICON = chr(0x1F50D)
 WRENCH_ICON = chr(0x1F6E0)
@@ -133,19 +132,18 @@ class MainWindow(QMainWindow):
 
         layout.addStretch()
 
-        gear_btn = QPushButton(GEAR_ICON)
+        gear_btn = QPushButton()
+        gear_btn.setIcon(QIcon("assets/gear.svg"))
+        gear_btn.setIconSize(QSize(20, 20))
         gear_btn.setFixedSize(36, 36)
         gear_btn.setStyleSheet(
             "QPushButton {"
             "  background: rgba(255,255,255,0.10);"
             "  border: none;"
-            "  font-size: 20px;"
-            "  color: #e0e0e0;"
             "  border-radius: 18px;"
             "}"
             "QPushButton:hover {"
             "  background: rgba(255,255,255,0.20);"
-            "  color: #ffffff;"
             "}"
         )
         gear_btn.clicked.connect(self._show_gear_menu)
