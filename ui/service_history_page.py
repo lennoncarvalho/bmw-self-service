@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QLineEdit,
     QPushButton,
     QScrollArea,
@@ -277,7 +278,7 @@ class ServiceHistoryPage(QWidget):
             history.insert(0, data)
 
     @staticmethod
-    def _clear_layout(layout) -> None:
+    def _clear_layout(layout: QLayout) -> None:
         while layout.count():
             item = layout.takeAt(0)
             if item is None:
