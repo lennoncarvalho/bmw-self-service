@@ -130,6 +130,7 @@ class VehiclePage(QWidget):
         if hasattr(connection, "data") and connection.data:
             vehicle = connection.data.get("vehicle", {})
             ecus = connection.data.get("svt_ecus", [])
+            self._ecus = ecus
 
             self.model_label.setText(
                 vehicle.get("model", "Unknown model")
@@ -284,6 +285,7 @@ class VehiclePage(QWidget):
         self.battery_label.setText(f"Battery: {battery}" if battery != "Unknown" else "")
 
         self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")
+        self._ecus = ecus
         self._populate_ecus(ecus)
 
     def _populate_ecus(self, ecus: list) -> None:

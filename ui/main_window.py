@@ -481,6 +481,8 @@ class MainWindow(QMainWindow):
         ecus: list[dict] = []
         if hasattr(connection, "data") and connection.data:
             ecus = connection.data.get("svt_ecus", [])
+        elif hasattr(self.vehicle_page, "_ecus"):
+            ecus = self.vehicle_page._ecus
         self.diag_page.set_connection(connection, ecus)
         # Pass connection to service history page
         self.history_page.set_connection(connection)
@@ -513,7 +515,7 @@ class MainWindow(QMainWindow):
 
             def _tester_present():
                 try:
-                    conn.send_uds(0x10, bytes([0x3E, 0x00]))
+                    conn.send_uds(0x10, bytes([0x3E, 0x00]), timeout=2.0)
                     _failed_tp[0] = 0  # reset on success
                     if _first_tp[0]:
                         logger.debug("Starting TesterPresent timer (every 2.5s)")
@@ -531,7 +533,7 @@ class MainWindow(QMainWindow):
 
     def _on_connection_lost(self) -> None:
         """T-12: Handle lost connection with reconnect dialog.
-        
+
         Reference: docs/16-ui-spec.md error matrix (line 578).
         """
         self.status_dot.setText(RED_DOT)
