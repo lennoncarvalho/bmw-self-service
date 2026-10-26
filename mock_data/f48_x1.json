@@ -8,15 +8,32 @@
     "production_date": "2017-03-01",
     "model_year": 2018,
     "mileage_km": 66000,
+    "battery_voltage": 12.4,
     "headunit": "NBT",
     "headunit_addr": "0x63",
     "protocol": "HSFZ"
   },
   "dtcs": [
     {
+      "code": "B7F805",
+      "description": "Diversity connection to Antennae: Line disconnection",
+      "status_byte": 8,
+      "ecu_name": "HU_NBT",
+      "ecu_addr": "0x63"
+    },
+    {
+      "code": "B7F807",
+      "description": "Connector 2 not connected",
+      "status_byte": 8,
+      "ecu_name": "HU_NBT",
+      "ecu_addr": "0x63"
+    },
+    {
       "code": "118001",
-      "description": "Upstream O2 sensor open circuit (approximate — exact code not retained)",
-      "status": "confirmed"
+      "description": "Mixture control: fuel-air mixture too lean",
+      "status_byte": 8,
+      "ecu_name": "DME",
+      "ecu_addr": "0x12"
     }
   ],
   "service_history": [
@@ -27,28 +44,25 @@
     },
     {
       "date": "2024-09-06",
-      "mileage_km": null,
+      "mileage_km": 45000,
       "items": [
-        "Motul LL-01 5W-40 engine oil",
-        "Genuine oil filter",
-        "Ceratec additive",
-        "Engine flush",
-        "Engine air filter",
+        "Engine oil change (5W-40)",
+        "Oil filter",
         "Cabin filter",
-        "A/C sanitization",
+        "Engine air filter",
         "Brake fluid DOT 4 LV",
-        "Automatic transmission fluid (10 L machine exchange)"
+        "Automatic transmission fluid"
       ]
     },
     {
       "date": "2024-12-16",
-      "mileage_km": null,
-      "items": ["BMW coolant replaced"]
+      "mileage_km": 50000,
+      "items": ["Coolant replaced"]
     },
     {
       "date": "2025-09-10",
-      "mileage_km": null,
-      "items": ["Motul LL-01 5W-40 engine oil", "Genuine oil filter"]
+      "mileage_km": 58000,
+      "items": ["Engine oil change (5W-40)", "Oil filter"]
     },
     {
       "date": "2026-09-01",
