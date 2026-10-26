@@ -5,9 +5,9 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
-from PySide6.QtCore import Qt, Signal, QThread, QTimer
+from PySide6.QtCore import Qt, Signal, QThread, QTimer, Slot
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QApplication, QButtonGroup, QFrame, QHBoxLayout,
@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 
 from app.connection import HSFZConnection, DoIPConnection
 from app.mock_connection import MockConnection
+from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class MainWindow(QMainWindow):
         self.welcome_page.connect_clicked.connect(self._on_connect_requested)
         self.stack.addWidget(self.welcome_page)
 
-        self.vehicle_page = self._make_placeholder("Vehicle Dashboard")
+        self.vehicle_page = VehiclePage()
         self.stack.addWidget(self.vehicle_page)
 
         self.diag_page = self._make_placeholder("Diagnostics")
@@ -276,7 +277,7 @@ class MainWindow(QMainWindow):
         def do_connect():
             conn = MockConnection()
             conn.connect()
-            return conn
+            return (conn, "")
 
         self._async_connect(do_connect, series)
 
@@ -332,7 +333,18 @@ class MainWindow(QMainWindow):
                 )
 
             logger.info("Step 3: reading vehicle identity")
-            return conn
+            vin = ""
+            # Extended diagnostic session on the ZGW
+            try:
+                conn.send_uds(0x10, bytes([0x10, 0x03]))
+                resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
+                if len(resp) >= 4 and resp[0] == 0x62:
+                    vin_bytes = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
+                    vin = vin_bytes
+            except Exception as exc:
+                logger.warning("VIN/DSC read failed in worker: %s", exc)
+
+            return (conn, vin)
 
         self._async_connect(do_connect, series)
 
@@ -355,40 +367,28 @@ class MainWindow(QMainWindow):
                     self.error_signal.emit(str(e))
 
         self._worker = ConnectWorker(connect_fn)
-        self._worker.result_signal.connect(
-            lambda conn: self._on_connect_success(conn, series)
-        )
+        self._worker._connect_series = series  # captured for slot
+        self._worker.result_signal.connect(self._on_worker_result)
         self._worker.error_signal.connect(self._on_connect_error)
         self._worker.progress_signal.connect(self.show_spinner)
         self._worker.start()
 
-    def _on_connect_success(self, connection, series: str) -> None:
+    @Slot(object)
+    def _on_worker_result(self, result: object) -> None:
+        """Handle worker result — runs on the main thread."""
+        conn: Any
+        vin: str
+        conn, vin = result  # (connection, vin_str) tuple
+        series = getattr(self._worker, "_connect_series", "")
+        self._on_connect_success(conn, vin, series)
+
+    def _on_connect_success(self, connection: Any, vin: str, series: str) -> None:
         self._connection = connection
         self._connected = True
 
         model = ""
-        vin = ""
-
-        # For real connections: read VIN from car via UDS
-        if not self._demo_mode and hasattr(connection, "send_uds"):
-            try:
-                # Extended diagnostic session first
-                logger.debug("Sending DiagnosticSessionControl (0x10 0x03)")
-                connection.send_uds(0x10, bytes([0x10, 0x03]))
-                # Read VIN via ReadDataByIdentifier 0xF190
-                logger.debug("Reading VIN via 0x22 0xF1 0x90")
-                resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
-                if len(resp) >= 4 and resp[0] == 0x62:
-                    # Positive response: 0x62 + DID(2 bytes) + VIN(17 chars)
-                    vin_bytes = resp[3:]
-                    vin = vin_bytes.decode("ascii", errors="ignore").strip("\x00 ")
-                elif len(resp) >= 3 and resp[0] == 0x7F:
-                    logger.warning(
-                    "VIN read rejected: NRC 0x%02X", resp[2]
-                    )
-                self.show_spinner("Connected! Reading vehicle data...")
-            except Exception as e:
-                logger.warning("VIN read failed: %s", e)
+        if vin:
+            logger.debug("VIN from worker: %s", vin)
 
         # For mock connections: pull from stored data
         if hasattr(connection, "data") and connection.data:
@@ -413,6 +413,9 @@ class MainWindow(QMainWindow):
 
         self.nav_group.button(0).setChecked(True)
         self.stack.setCurrentIndex(1)
+
+        # Load vehicle data into the dashboard
+        self.vehicle_page.load_data(connection, series)
 
         # Start keep-alive timers for real connections
         if not self._demo_mode:
