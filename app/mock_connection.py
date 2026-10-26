@@ -10,7 +10,6 @@ import json
 import logging
 import struct
 from pathlib import Path
-from typing import Optional
 
 from app.uds import UDS_NEGATIVE_RESPONSE
 
@@ -32,6 +31,7 @@ class MockConnection:
     SID_DIAG_SESSION_CONTROL = 0x10
     SID_ECU_RESET = 0x11
     SID_CLEAR_DTC = 0x14
+    SID_READ_DYNAMIC_DATA = 0x1A
     SID_READ_DTC = 0x19
     SID_READ_DATA_BY_ID = 0x22
     SID_READ_MEMORY_BY_ADDRESS = 0x23
@@ -43,7 +43,7 @@ class MockConnection:
     NRC_SUB_FUNCTION_NOT_SUPPORTED = 0x12
     NRC_REQUEST_OUT_OF_RANGE = 0x31
 
-    def __init__(self, mock_data_path: Optional[str] = None) -> None:
+    def __init__(self, mock_data_path: str | None = None) -> None:
         if mock_data_path is None:
             project_root = Path(__file__).resolve().parent.parent
             mock_data_path = str(project_root / "mock_data" / "f48_x1.json")
@@ -52,7 +52,7 @@ class MockConnection:
 
     def connect(self) -> bool:
         try:
-            with open(self.mock_data_path, "r", encoding="utf-8") as f:
+            with open(self.mock_data_path, encoding="utf-8") as f:
                 self.data = json.load(f)
             logger.info(
                 "MockConnection ready: VIN=%s, model=%s",
@@ -90,6 +90,9 @@ class MockConnection:
 
         elif service == self.SID_READ_DTC:
             return self._handle_read_dtc(ecu_addr, payload)
+
+        elif service == self.SID_READ_DYNAMIC_DATA:
+            return self._handle_read_dynamic_data(ecu_addr, payload)
 
         elif service == self.SID_CLEAR_DTC:
             return bytes([0x54])
@@ -136,6 +139,13 @@ class MockConnection:
             voltage_raw = 124  # 12.4V * 10
             voltage_bytes = struct.pack(">H", voltage_raw)
             return bytes([0x62, 0xF4, 0x0C]) + voltage_bytes
+
+        # SVT ECU list: DID 0xF000 — return ECU name bytes from mock data
+        if did_high == 0xF0 and did_low == 0x00:
+            svt_ecus = self.data.get("svt_ecus", [])
+            names = " ".join(e.get("name", "???") for e in svt_ecus)
+            name_bytes = names.encode("ascii", errors="ignore")
+            return bytes([0x62, 0xF0, 0x00]) + name_bytes
 
         # Mileage: any F4xx DID
         if did_high == 0xF4:
@@ -185,6 +195,13 @@ class MockConnection:
                 UDS_NEGATIVE_RESPONSE, self.SID_READ_DTC,
                 self.NRC_SUB_FUNCTION_NOT_SUPPORTED,
             ])
+
+    def _handle_read_dynamic_data(self, ecu_addr: int, payload: bytes) -> bytes:
+        """Handle 0x1A (ReadDynamicallyDefineDataIdentifier) — mock mileage."""
+        mileage_km = self.data.get("vehicle", {}).get("mileage_km", 66000)
+        mileage_raw = mileage_km * 10
+        mileage_bytes = struct.pack(">I", mileage_raw)
+        return bytes([0x5A, payload[1] if len(payload) > 1 else 0x00]) + mileage_bytes
 
     def disconnect(self) -> None:
         """No-op for mock connection."""

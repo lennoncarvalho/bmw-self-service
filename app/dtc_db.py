@@ -6,6 +6,7 @@ English preferred, German fallback.
 Reference: docs/14-dtc-database.md
 """
 
+import logging
 import sqlite3
 
 # Standard OBD-II P-code fallback (SAE J2012 / ISO 15031-6)
@@ -116,15 +117,28 @@ class DtcDatabase:
     def __init__(self, db_path: str = "dtc_descriptions.db") -> None:
         """Open the DTC database in read-only mode.
 
+        G-14: If the database file is missing, the singleton still
+        initializes but all lookups return None / fallback values.
+        The app shows a user-facing warning on the diagnostics page.
+
         Args:
             db_path: Path to the SQLite database file.
         """
-        self.conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        self._missing = False
+        try:
+            self.conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        except sqlite3.OperationalError:
+            self.conn = sqlite3.connect(":memory:")
+            self._missing = True
+            logging.getLogger(__name__).warning(
+                "DTC database not found at %s — descriptions unavailable", db_path
+            )
 
     def describe(self, code: str) -> str | None:
         """Look up a DTC code. Returns English text, falls back to German.
 
         Normalises the input by uppercasing and stripping 0x/0X prefixes.
+        If the database is missing, falls back to OBD2 codes only.
 
         Args:
             code: DTC code as hex string (e.g. "B7F805", "0x8040BD").
@@ -137,6 +151,9 @@ class DtcDatabase:
             'Connection head unit to DAB L-band antenna base: line disconnection'
         """
         code = code.upper().replace("0X", "").replace("0x", "")
+
+        if self._missing:
+            return _OBD2_CODES.get(code)
 
         row = self.conn.execute(
             "SELECT text_en, text_de FROM dtc_descriptions WHERE code = ? LIMIT 1",
@@ -164,6 +181,9 @@ class DtcDatabase:
             >>> result[1]  # ecu
             'BDC'
         """
+        if self._missing:
+            desc = _OBD2_CODES.get(code.upper().replace("0X", "").replace("0x", ""))
+            return (desc, "") if desc else None
         code = code.upper().replace("0X", "").replace("0x", "")
 
         row = self.conn.execute(
@@ -188,6 +208,8 @@ class DtcDatabase:
             >>> db.fault_type("08")
             'implausible signal or value'
         """
+        if self._missing:
+            return None
         row = self.conn.execute(
             "SELECT text_en, text_de FROM dtc_descriptions "
             "WHERE code = ? AND table_type = 'FARTTEXTE' LIMIT 1",

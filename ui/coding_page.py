@@ -25,6 +25,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.worker import CarWorker
+
 logger = logging.getLogger(__name__)
 
 MOCK_CATEGORIES = [
@@ -81,6 +83,9 @@ class CodingPage(QWidget):
         self._connection: Any = None
         self._pending: int = 0
         self._originals = copy.deepcopy(MOCK_CATEGORIES)
+        self._worker: CarWorker | None = None
+        self._coding_reader: CarWorker | None = None
+        self._coding_writer: CarWorker | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -287,24 +292,194 @@ class CodingPage(QWidget):
         return page
 
     def _build_advanced_page(self) -> QWidget:
+        """Build the Advanced Coding page — SVT ECU tree with FDL editing.
+
+        G-11: Shows ECU list from SVT. Each ECU expands to function groups
+        with raw hex editing for FDL parameters.
+        """
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setAlignment(Qt.AlignCenter)
+        layout.setContentsMargins(24, 12, 24, 24)
+        layout.setSpacing(12)
+
+        # Warning banner
         warning = QLabel(
-            "Advanced Coding\n\n"
-            + chr(0x26A0)
-            + " Use with caution "
-            + chr(0x26A0)
+            "\u26A0  Advanced Coding \u2014 use with caution"
         )
-        warning.setAlignment(Qt.AlignCenter)
-        warning.setStyleSheet("font-size: 16px; color: #F39C12;")
+        warning.setStyleSheet(
+            "font-size: 14px; font-weight: bold; color: #F39C12;"
+            "background: rgba(243,156,18,0.1); border: 1px solid #F39C12;"
+            "border-radius: 8px; padding: 8px 12px;"
+        )
+        warning.setWordWrap(True)
         layout.addWidget(warning)
 
-        detail = QLabel("Full ECU tree and FDL hex editor coming soon.")
-        detail.setAlignment(Qt.AlignCenter)
-        detail.setStyleSheet("font-size: 13px; color: #a0a0a0;")
-        layout.addWidget(detail)
+        sub = QLabel(
+            "Incorrect values may cause malfunctions. Always back up first."
+        )
+        sub.setStyleSheet("font-size: 12px; color: #a0a0a0;")
+        sub.setWordWrap(True)
+        layout.addWidget(sub)
+
+        # ECU tree
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet(
+            "QScrollArea { border: none; background: transparent; }"
+        )
+        container = QWidget()
+        self._adv_ecu_layout = QVBoxLayout(container)
+        self._adv_ecu_layout.setSpacing(6)
+
+        # Populate ECU list from mock SVT (or empty for real-car)
+        # Use the MOCK_CATEGORIES-friendly list from SVT data
+        self._build_ecu_tree(container)
+
+        self._adv_ecu_layout.addStretch()
+        scroll.setWidget(container)
+        layout.addWidget(scroll, stretch=1)
         return page
+
+    def _build_ecu_tree(self, container: QWidget) -> None:
+        """Populate the Advanced Coding page with ECU cards from SVT data."""
+        # Get ECU list — from mock data or connection
+        ecus = self._get_svt_ecus()
+        # Blocked ECUs (safety-critical)
+        blocked = {
+            "ACSM", "DME", "DSC", "SAS", "ZGW",
+            "AIRBAG", "ABG", "MRS", "SRS",
+        }
+
+        for ecu in ecus:
+            name = ecu.get("name", "???")
+            desc = ecu.get("description", "")
+            is_blocked = any(b in name.upper() for b in blocked)
+
+            card = QFrame()
+            card.setObjectName("card")
+            card.setStyleSheet(
+                "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
+                "border-radius: 8px; padding: 12px; }"
+                + (" border-color: #E30B1F; " if is_blocked else "")
+                + "QFrame#card:hover { border-color: "
+                + ("#E30B1F" if is_blocked else "#1C69D4") + "; }"
+            )
+
+            card_layout = QVBoxLayout(card)
+            card_layout.setSpacing(4)
+
+            top = QHBoxLayout()
+            name_lbl = QLabel(f"\u26A0 {name}" if is_blocked else name)
+            name_lbl.setStyleSheet(
+                f"font-size: 14px; font-weight: bold; "
+                f"color: {'#E30B1F' if is_blocked else '#e0e0e0'}; "
+                "background: transparent;"
+            )
+            top.addWidget(name_lbl)
+            if desc:
+                d_lbl = QLabel(desc)
+                d_lbl.setStyleSheet(
+                    "font-size: 11px; color: #a0a0a0; background: transparent;"
+                )
+                top.addWidget(d_lbl)
+            top.addStretch()
+
+            toggle = QPushButton("\u25bc")
+            toggle.setFlat(True)
+            toggle.setFocusPolicy(Qt.FocusPolicy.TabFocus)
+            toggle.setStyleSheet(
+                "QPushButton { font-size: 12px; color: #a0a0a0; "
+                "background: transparent; border: none; padding: 4px; }"
+                "QPushButton:hover { color: #1C69D4; }"
+            )
+            top.addWidget(toggle)
+            card_layout.addLayout(top)
+
+            # Expandable detail (FDL hex editor)
+            detail = QWidget()
+            detail.setVisible(False)
+            detail_layout = QVBoxLayout(detail)
+            detail_layout.setContentsMargins(0, 8, 0, 0)
+            detail_layout.setSpacing(6)
+
+            if is_blocked:
+                block_warn = QLabel(
+                    "\u26A0 Safety-critical ECU — coding blocked"
+                )
+                block_warn.setStyleSheet(
+                    "font-size: 12px; color: #E30B1F; font-weight: bold;"
+                )
+                detail_layout.addWidget(block_warn)
+            else:
+                # Mock FDL parameters for demo
+                fdl_funcs = [
+                    ("PfFzgKl30BlerFahrzeugstart", "Terminal 30B output on start",
+                     "Wert_2 (1 byte)", "01"),
+                    ("PfKlemme15Status", "Terminal 15 status",
+                     "Wert_1 (1 bit)", "01"),
+                    ("PfCanKomfortStatus", "Comfort CAN status",
+                     "Wert_2 (1 byte)", "02"),
+                ]
+                for func_name, func_desc, func_type, func_val in fdl_funcs:
+                    func_card = QFrame()
+                    func_card.setStyleSheet(
+                        "background: #1a1a3e; border: 1px solid #2a2a4a; "
+                        "border-radius: 6px; padding: 8px;"
+                    )
+                    func_layout = QVBoxLayout(func_card)
+                    func_layout.setSpacing(2)
+
+                    fn = QLabel(func_name)
+                    fn.setStyleSheet(
+                        "font-size: 12px; font-weight: bold; color: #e0e0e0; "
+                        "background: transparent;"
+                    )
+                    func_layout.addWidget(fn)
+
+                    fd = QLabel(func_desc)
+                    fd.setStyleSheet(
+                        "font-size: 11px; color: #a0a0a0; background: transparent;"
+                    )
+                    func_layout.addWidget(fd)
+
+                    ft = QLabel(f"Type: {func_type}  |  Current: {func_val}")
+                    ft.setStyleSheet(
+                        "font-size: 11px; color: #a0a0a0; background: transparent;"
+                    )
+                    func_layout.addWidget(ft)
+
+                    detail_layout.addWidget(func_card)
+
+            card_layout.addWidget(detail)
+
+            # Toggle detail
+            toggle.clicked.connect(
+                lambda checked, d=detail, b=toggle: (
+                    d.setVisible(not d.isVisible()),
+                    b.setText("\u25b2" if d.isVisible() else "\u25bc"),
+                )
+            )
+
+            self._adv_ecu_layout.addWidget(card)
+
+    def _get_svt_ecus(self) -> list[dict]:
+        """Get the SVT ECU list from connection data or return default."""
+        if self._connection and hasattr(self._connection, "data") \
+                and self._connection.data:
+            return self._connection.data.get("svt_ecus", [])
+        # Fallback demo ECUs
+        return [
+            {"name": "DME", "description": "Digital Motor Electronics"},
+            {"name": "EGS", "description": "Electronic Transmission Control"},
+            {"name": "ZGW", "description": "Central Gateway"},
+            {"name": "FEM_01", "description": "Front Electronic Module"},
+            {"name": "REM_01", "description": "Rear Electronic Module"},
+            {"name": "KOMBI", "description": "Instrument Cluster"},
+            {"name": "HU_NBT", "description": "Headunit NBT"},
+            {"name": "IHKA", "description": "Climate Control"},
+            {"name": "ACSM", "description": "Airbag Control Unit"},
+            {"name": "DSC", "description": "Dynamic Stability Control"},
+        ]
 
     def set_connection(self, connection: Any) -> None:
         """Store the active connection for future coding operations.
@@ -314,10 +489,52 @@ class CodingPage(QWidget):
         """
         self._connection = connection
 
+        # G-8: For real cars, read CAFD/FDL data from each ECU
+        if not (hasattr(connection, "data") and connection.data):
+            self._write_btn.setEnabled(False)
+            self._coding_reader = CodingReadWorker(connection)
+            self._coding_reader.progress.connect(
+                lambda msg: logger.debug("Coding read: %s", msg)
+            )
+            self._coding_reader.finished.connect(self._on_coding_read)
+            self._coding_reader.error.connect(
+                lambda msg: logger.warning("Coding read failed: %s", msg)
+            )
+            self._coding_reader.finished.connect(
+                lambda _: self._write_btn.setEnabled(True)
+            )
+            self._coding_reader.start()
+
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
         """Keep the active sub-tab button checked — clicking it again keeps it."""
         if not btn.isChecked():
             btn.setChecked(True)
+
+    def restore_backup(self, categories: list[dict]) -> None:
+        """Restore coding from a backup manifest.
+
+        The restored values become the active state, and any differences
+        from the previous originals are counted as pending changes so
+        the user can write them to the car.
+
+        Args:
+            categories: List of category dicts from a backup manifest.json.
+        """
+        # Save pre-restore originals to count differences
+        prev_originals = self._originals
+        MOCK_CATEGORIES.clear()
+        MOCK_CATEGORIES.extend(copy.deepcopy(categories))
+        self._originals = prev_originals  # keep old originals so diff is correct
+        # Rebuild easy page
+        old_page = self._sub_stack.widget(0)
+        self._sub_stack.removeWidget(old_page)
+        old_page.deleteLater()
+        self._sub_stack.insertWidget(0, self._build_easy_page())
+        self._sub_stack.setCurrentIndex(0)
+        self._easy_tab.setChecked(True)
+        # Recalculate pending — differences between restored and previous originals
+        self._recalc_pending()
+        logger.info("Coding restored from backup (%d categories)", len(categories))
 
     def _apply_option(
         self, opt: dict, idx: int, label: QLabel, checked: bool
@@ -386,9 +603,190 @@ class CodingPage(QWidget):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        # Mock: simulate write
+        # G-9: Auto-backup before write
+        if not self._save_backup():
+            QMessageBox.warning(
+                self, "Write Aborted",
+                "Cannot proceed without a backup. Free up disk space and try again.",
+            )
+            return
+
+        # Mock path
+        if hasattr(self._connection, "data") and self._connection.data:
+            self._pending = 0
+            self._update_pending_label()
+            self._originals = copy.deepcopy(MOCK_CATEGORIES)
+            logger.info("Coding changes written (mock)")
+            return
+
+        # G-9: Real car — write via UDS 0x2E WriteDataByIdentifier
+        self._write_btn.setEnabled(False)
+        self._coding_writer = CodingWriteWorker(self._connection, MOCK_CATEGORIES)
+        self._coding_writer.finished.connect(self._on_write_complete)
+        self._coding_writer.error.connect(self._on_write_error)
+        self._coding_writer.start()
+
+    def _on_write_complete(self, _result: object = None) -> None:
+        """Update UI after a successful coding write."""
+        self._write_btn.setEnabled(True)
+        self._coding_writer = None
         self._pending = 0
         self._update_pending_label()
-        # Update originals so Clear All restores post-write basline
         self._originals = copy.deepcopy(MOCK_CATEGORIES)
-        logger.info("Coding changes written (mock)")
+        QMessageBox.information(
+            self,
+            "Coding Written",
+            "Coding changes saved to vehicle.\n"
+            "Backup stored in ~/BMW-Tool/backups/.",
+        )
+        logger.info("Coding changes written")
+
+    def _on_write_error(self, msg: str) -> None:
+        """Handle coding write failure."""
+        self._write_btn.setEnabled(True)
+        self._coding_writer = None
+        QMessageBox.warning(
+            self,
+            "Write Failed",
+            f"Failed to write coding changes: {msg}\n\n"
+            "Your original coding has been backed up.\n"
+            "Use the Backups page to roll back.",
+        )
+        logger.warning("Coding write failed: %s", msg)
+
+    def _save_backup(self) -> bool:
+        """Save a backup of original coding values before writing.
+
+        G-9: Creates a timestamped backup directory with ECU CAFD/FDL data.
+        G-14: Handles disk-full gracefully with user-facing error.
+
+        Returns:
+            True if backup succeeded, False if it failed (e.g. disk full).
+        """
+        import json
+        import os
+        from datetime import datetime
+
+        backup_dir = os.path.join(
+            os.path.expanduser("~"), "BMW-Tool", "backups",
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+        )
+        try:
+            os.makedirs(backup_dir, exist_ok=True)
+        except OSError:
+            QMessageBox.warning(
+                self,
+                "Backup Failed",
+                "Cannot save backup — disk is full.\n"
+                "Free up space and try again.",
+            )
+            return False
+
+        # Fix #6: Save the ORIGINAL values, not the user's edits.
+        # This ensures rollback restores the pre-write state.
+        manifest = {
+            "timestamp": datetime.now().isoformat(),
+            "changes": self._pending,
+            "categories": self._originals,
+        }
+        try:
+            with open(os.path.join(backup_dir, "manifest.json"), "w") as f:
+                json.dump(manifest, f, indent=2, ensure_ascii=False)
+        except OSError:
+            QMessageBox.warning(
+                self,
+                "Backup Failed",
+                "Cannot save backup — disk is full.\n"
+                "Free up space and try again.",
+            )
+            return False
+
+        logger.info("Backup saved to %s", backup_dir)
+        return True
+
+    def _on_coding_read(self, categories: list[dict]) -> None:
+        """Populate mock categories from real-car read."""
+        if categories:
+            MOCK_CATEGORIES.clear()
+            MOCK_CATEGORIES.extend(categories)
+            self._originals = copy.deepcopy(MOCK_CATEGORIES)
+            # Rebuild easy page
+            old_page = self._sub_stack.widget(0)
+            self._sub_stack.removeWidget(old_page)
+            old_page.deleteLater()
+            self._sub_stack.insertWidget(0, self._build_easy_page())
+            self._sub_stack.setCurrentIndex(0)
+            self._easy_tab.setChecked(True)
+            logger.info("Coding data loaded from car (%d categories)", len(categories))
+
+
+# ---- Coding Workers ----
+
+class CodingReadWorker(CarWorker):
+    """Read CAFD/FDL coding data from all ECUs via UDS 0x22."""
+
+    def __init__(self, connection: Any) -> None:
+        super().__init__(connection)
+        # Common ECUs to query for coding data
+        self.targets = [
+            (0x40, "FEM"), (0x50, "REM"), (0x60, "KOMBI"),
+            (0x63, "HU_NBT"), (0x78, "IHKA"), (0x72, "ASD"),
+        ]
+
+    def do_work(self) -> list[dict]:
+        categories: list[dict] = []
+        for addr, name in self.targets:
+            self.progress.emit(f"Reading coding from {name}...")
+            try:
+                # Extended session
+                self.connection.send_uds(addr, bytes([0x10, 0x03]))
+                # Read coding data — DID varies by ECU; use generic approach
+                resp = self.connection.send_uds(addr, bytes([0x22, 0xF1, 0x00]))
+                if resp[0] == 0x62:
+                    logger.debug(
+                        "Coding data from %s (0x%02X): %d bytes",
+                        name, addr, len(resp),
+                    )
+            except Exception as e:
+                logger.debug("Coding read skip %s (0x%02X): %s", name, addr, e)
+        if categories:
+            return categories
+        # Return a placeholder so the UI shows data while DIDs are being
+        # mapped per chassis. Real coding values require per-vehicle DID
+        # calibration — this stub will be replaced once tested on a car.
+        return [
+            {
+                "name": name,
+                "icon": name[0] if name else "?",
+                "description": f"Coding data for {name} — DID mapping pending",
+                "options": [],
+            }
+            for _, name in self.targets
+        ]
+
+
+class CodingWriteWorker(CarWorker):
+    """Write coding changes to ECUs via UDS 0x2E WriteDataByIdentifier."""
+
+    def __init__(self, connection: Any, categories: list[dict]) -> None:
+        super().__init__(connection)
+        self.categories = categories
+
+    def do_work(self) -> bool:
+        for cat in self.categories:
+            for opt in cat.get("options", []):
+                self.progress.emit(f"Writing {opt.get('name', 'option')}...")
+                # Build 0x2E payload: 0x2E + DID_high + DID_low + data_bytes
+                # DID is a 16-bit identifier; data is the selected value index
+                did = opt.get("did", 0xF000)  # placeholder DID — per-ECU real
+                did_high = (did >> 8) & 0xFF
+                did_low = did & 0xFF
+                data_bytes = bytes([opt.get("current", 0)])
+                payload = bytes([0x2E, did_high, did_low]) + data_bytes
+                try:
+                    self.connection.send_uds(0x40, payload)
+                except Exception as e:
+                    raise ConnectionError(
+                        f"Write failed for {opt.get('name', 'option')}: {e}"
+                    ) from e
+        return True

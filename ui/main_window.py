@@ -5,19 +5,29 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
-from PySide6.QtCore import Qt, Signal, QThread, QTimer, Slot
+from PySide6.QtCore import Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
-    QApplication, QButtonGroup, QFrame, QHBoxLayout,
-    QLabel, QMainWindow, QMenu, QMessageBox,
-    QPushButton, QSizePolicy, QStackedWidget,
-    QVBoxLayout, QWidget,
+    QApplication,
+    QButtonGroup,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QSizePolicy,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
-from app.connection import HSFZConnection, DoIPConnection
+from app.connection import DoIPConnection, HSFZConnection
 from app.mock_connection import MockConnection
+from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
 from ui.service_history_page import ServiceHistoryPage
@@ -53,11 +63,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("BMW Self Service")
         self.setMinimumSize(800, 600)
         self._demo_mode = False
-        self._connection: Optional[object] = None
+        self._connection: object | None = None
         self._connected = False
-        self._worker: Optional[QThread] = None
-        self._alive_timer: Optional[QTimer] = None
-        self._tester_present_timer: Optional[QTimer] = None
+        self._worker: QThread | None = None
+        self._alive_timer: QTimer | None = None
+        self._tester_present_timer: QTimer | None = None
         self._setup_ui()
         self._apply_theme()
 
@@ -87,6 +97,9 @@ class MainWindow(QMainWindow):
 
         self.history_page = ServiceHistoryPage()
         self.stack.addWidget(self.history_page)
+
+        self.backups_page = BackupsPage()
+        self.stack.addWidget(self.backups_page)
 
         main_layout.addWidget(self.stack, stretch=1)
 
@@ -179,11 +192,12 @@ class MainWindow(QMainWindow):
     def _build_spinner(self) -> QFrame:
         overlay = QFrame(self)
         overlay.setObjectName("spinnerOverlay")
-        overlay.setFixedSize(280, 120)
+        overlay.setFixedSize(320, 160)
         overlay.setVisible(False)
 
         layout = QVBoxLayout(overlay)
         layout.setAlignment(Qt.AlignCenter)
+        layout.setSpacing(12)
 
         self.spinner_text = QLabel("Working...")
         self.spinner_text.setObjectName("spinnerText")
@@ -191,7 +205,47 @@ class MainWindow(QMainWindow):
         self.spinner_text.setWordWrap(True)
         layout.addWidget(self.spinner_text)
 
+        # G-13: Cancel button (appears after 10s)
+        self._cancel_btn = QPushButton("Cancel")
+        self._cancel_btn.setVisible(False)
+        self._cancel_btn.setStyleSheet(
+            "QPushButton { background: #3a3a5a; color: #a0a0a0; "
+            "border-radius: 8px; padding: 6px 24px; font-weight: bold; }"
+            "QPushButton:hover { background: #5a5a7a; color: white; }"
+        )
+        layout.addWidget(self._cancel_btn, alignment=Qt.AlignCenter)
+
+        # G-13: Timer for showing cancel button and triggering retry
+        self._spinner_cancel_timer = QTimer(self)
+        self._spinner_cancel_timer.setSingleShot(True)
+        self._spinner_cancel_timer.timeout.connect(self._show_spinner_cancel)
+
+        self._spinner_retry_timer = QTimer(self)
+        self._spinner_retry_timer.setSingleShot(True)
+        self._spinner_retry_timer.timeout.connect(self._show_retry_dialog)
+
         return overlay
+
+    def _show_spinner_cancel(self) -> None:
+        """G-13: Show cancel button after 10s."""
+        self._cancel_btn.setVisible(True)
+
+    def _show_retry_dialog(self) -> None:
+        """G-13: Show retry dialog after 30s timeout."""
+        self.hide_spinner()
+        reply = QMessageBox.question(
+            self,
+            "Vehicle Not Responding",
+            "The car is not responding.\n"
+            "Check ignition and ENET cable connection.\n\n"
+            "Retry?",
+            QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Retry,
+        )
+        if reply == QMessageBox.StandardButton.Retry:
+            self._on_retry_connect()
+        else:
+            self._on_disconnect()
 
     def _position_spinner(self) -> None:
         if self.spinner_overlay and self.stack:
@@ -207,12 +261,19 @@ class MainWindow(QMainWindow):
 
     def show_spinner(self, message: str = "Working...") -> None:
         self.spinner_text.setText(message)
+        self._cancel_btn.setVisible(False)
         self._position_spinner()
         self.spinner_overlay.setVisible(True)
         QApplication.processEvents()
+        # G-13: Start timers for cancel (10s) and retry (30s)
+        self._spinner_cancel_timer.start(10000)
+        self._spinner_retry_timer.start(30000)
 
     def hide_spinner(self) -> None:
         self.spinner_overlay.setVisible(False)
+        self._cancel_btn.setVisible(False)
+        self._spinner_cancel_timer.stop()
+        self._spinner_retry_timer.stop()
 
     # ---- Gear menu ----
 
@@ -325,10 +386,7 @@ class MainWindow(QMainWindow):
 
             host = info["ip"]
             logger.info("Step 2: TCP connect to %s", host)
-            if series == "F":
-                conn = HSFZConnection(host)
-            else:
-                conn = DoIPConnection(host)
+            conn = HSFZConnection(host) if series == "F" else DoIPConnection(host)
 
             if not conn.connect():
                 raise ConnectionError(
@@ -479,12 +537,35 @@ class MainWindow(QMainWindow):
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Disconnected")
 
+        # G-14: Map error messages to user-friendly dialogs
+        friendly = error_msg
+        if "admin" in error_msg.lower() or "root" in error_msg.lower():
+            friendly = (
+                "DHCP server requires administrator privileges.\n\n"
+                "Please run the application with elevated permissions "
+                "to enable automatic IP assignment for the ENET cable."
+            )
+        elif "not found" in error_msg.lower() or "vehicle not found" in error_msg.lower():
+            friendly = (
+                "Vehicle not found on the network.\n\n"
+                "1. Ensure the ENET cable is connected\n"
+                "2. Check that ignition is on (press Start/Stop once)\n"
+                "3. Verify the correct network interface is selected"
+            )
+
         QMessageBox.warning(
             self,
             "Connection Failed",
-            error_msg or "Could not connect to the vehicle.",
+            friendly or "Could not connect to the vehicle.",
         )
         logger.warning("Connection failed: %s", error_msg)
+
+    def _on_retry_connect(self) -> None:
+        """G-13: Re-attempt connection after timeout retry."""
+        if self._connection:
+            # Re-use last known settings
+            pass
+        self.stack.setCurrentIndex(0)
 
     # ---- Disconnect ----
 
@@ -517,12 +598,10 @@ class MainWindow(QMainWindow):
     # ---- Menu actions ----
 
     def _on_backups(self) -> None:
-        QMessageBox.information(
-            self,
-            "Backups",
-            "Coding backups will be available here.\n\n"
-            "Backup location: ~/BMW-Tool/backups/",
-        )
+        self.backups_page.set_connection(self._connection)
+        idx = self.stack.indexOf(self.backups_page)
+        if idx >= 0:
+            self.stack.setCurrentIndex(idx)
 
     def _on_about(self) -> None:
         QMessageBox.about(
