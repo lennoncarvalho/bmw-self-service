@@ -181,6 +181,9 @@ class DtcDatabase:
             >>> result[1]  # ecu
             'BDC'
         """
+        if self._missing:
+            desc = _OBD2_CODES.get(code.upper().replace("0X", "").replace("0x", ""))
+            return (desc, "") if desc else None
         code = code.upper().replace("0X", "").replace("0x", "")
 
         row = self.conn.execute(
@@ -205,6 +208,8 @@ class DtcDatabase:
             >>> db.fault_type("08")
             'implausible signal or value'
         """
+        if self._missing:
+            return None
         row = self.conn.execute(
             "SELECT text_en, text_de FROM dtc_descriptions "
             "WHERE code = ? AND table_type = 'FARTTEXTE' LIMIT 1",

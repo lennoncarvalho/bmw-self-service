@@ -84,6 +84,8 @@ class CodingPage(QWidget):
         self._pending: int = 0
         self._originals = copy.deepcopy(MOCK_CATEGORIES)
         self._worker: CarWorker | None = None
+        self._coding_reader: CarWorker | None = None
+        self._coding_writer: CarWorker | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -489,15 +491,19 @@ class CodingPage(QWidget):
 
         # G-8: For real cars, read CAFD/FDL data from each ECU
         if not (hasattr(connection, "data") and connection.data):
-            self._worker = CodingReadWorker(connection)
-            self._worker.progress.connect(
+            self._write_btn.setEnabled(False)
+            self._coding_reader = CodingReadWorker(connection)
+            self._coding_reader.progress.connect(
                 lambda msg: logger.debug("Coding read: %s", msg)
             )
-            self._worker.finished.connect(self._on_coding_read)
-            self._worker.error.connect(
+            self._coding_reader.finished.connect(self._on_coding_read)
+            self._coding_reader.error.connect(
                 lambda msg: logger.warning("Coding read failed: %s", msg)
             )
-            self._worker.start()
+            self._coding_reader.finished.connect(
+                lambda _: self._write_btn.setEnabled(True)
+            )
+            self._coding_reader.start()
 
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
         """Keep the active sub-tab button checked — clicking it again keeps it."""
@@ -507,14 +513,18 @@ class CodingPage(QWidget):
     def restore_backup(self, categories: list[dict]) -> None:
         """Restore coding from a backup manifest.
 
+        The restored values become the active state, and any differences
+        from the previous originals are counted as pending changes so
+        the user can write them to the car.
+
         Args:
             categories: List of category dicts from a backup manifest.json.
         """
+        # Save pre-restore originals to count differences
+        prev_originals = self._originals
         MOCK_CATEGORIES.clear()
         MOCK_CATEGORIES.extend(copy.deepcopy(categories))
-        self._originals = copy.deepcopy(MOCK_CATEGORIES)
-        self._pending = 0
-        self._update_pending_label()
+        self._originals = prev_originals  # keep old originals so diff is correct
         # Rebuild easy page
         old_page = self._sub_stack.widget(0)
         self._sub_stack.removeWidget(old_page)
@@ -522,6 +532,8 @@ class CodingPage(QWidget):
         self._sub_stack.insertWidget(0, self._build_easy_page())
         self._sub_stack.setCurrentIndex(0)
         self._easy_tab.setChecked(True)
+        # Recalculate pending — differences between restored and previous originals
+        self._recalc_pending()
         logger.info("Coding restored from backup (%d categories)", len(categories))
 
     def _apply_option(
@@ -592,7 +604,12 @@ class CodingPage(QWidget):
             return
 
         # G-9: Auto-backup before write
-        self._save_backup()
+        if not self._save_backup():
+            QMessageBox.warning(
+                self, "Write Aborted",
+                "Cannot proceed without a backup. Free up disk space and try again.",
+            )
+            return
 
         # Mock path
         if hasattr(self._connection, "data") and self._connection.data:
@@ -603,13 +620,16 @@ class CodingPage(QWidget):
             return
 
         # G-9: Real car — write via UDS 0x2E WriteDataByIdentifier
-        self._worker = CodingWriteWorker(self._connection, MOCK_CATEGORIES)
-        self._worker.finished.connect(self._on_write_complete)
-        self._worker.error.connect(self._on_write_error)
-        self._worker.start()
+        self._write_btn.setEnabled(False)
+        self._coding_writer = CodingWriteWorker(self._connection, MOCK_CATEGORIES)
+        self._coding_writer.finished.connect(self._on_write_complete)
+        self._coding_writer.error.connect(self._on_write_error)
+        self._coding_writer.start()
 
     def _on_write_complete(self, _result: object = None) -> None:
         """Update UI after a successful coding write."""
+        self._write_btn.setEnabled(True)
+        self._coding_writer = None
         self._pending = 0
         self._update_pending_label()
         self._originals = copy.deepcopy(MOCK_CATEGORIES)
@@ -623,6 +643,8 @@ class CodingPage(QWidget):
 
     def _on_write_error(self, msg: str) -> None:
         """Handle coding write failure."""
+        self._write_btn.setEnabled(True)
+        self._coding_writer = None
         QMessageBox.warning(
             self,
             "Write Failed",
@@ -632,11 +654,14 @@ class CodingPage(QWidget):
         )
         logger.warning("Coding write failed: %s", msg)
 
-    def _save_backup(self) -> None:
-        """Save a backup of current MOCK_CATEGORIES before writing.
+    def _save_backup(self) -> bool:
+        """Save a backup of original coding values before writing.
 
         G-9: Creates a timestamped backup directory with ECU CAFD/FDL data.
         G-14: Handles disk-full gracefully with user-facing error.
+
+        Returns:
+            True if backup succeeded, False if it failed (e.g. disk full).
         """
         import json
         import os
@@ -655,13 +680,14 @@ class CodingPage(QWidget):
                 "Cannot save backup — disk is full.\n"
                 "Free up space and try again.",
             )
-            return
+            return False
 
-        # Save manifest
+        # Fix #6: Save the ORIGINAL values, not the user's edits.
+        # This ensures rollback restores the pre-write state.
         manifest = {
             "timestamp": datetime.now().isoformat(),
             "changes": self._pending,
-            "categories": MOCK_CATEGORIES,
+            "categories": self._originals,
         }
         try:
             with open(os.path.join(backup_dir, "manifest.json"), "w") as f:
@@ -673,9 +699,10 @@ class CodingPage(QWidget):
                 "Cannot save backup — disk is full.\n"
                 "Free up space and try again.",
             )
-            return
+            return False
 
         logger.info("Backup saved to %s", backup_dir)
+        return True
 
     def _on_coding_read(self, categories: list[dict]) -> None:
         """Populate mock categories from real-car read."""

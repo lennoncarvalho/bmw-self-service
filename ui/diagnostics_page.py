@@ -316,7 +316,9 @@ class DiagnosticsPage(QWidget):
                 "QPushButton:hover { background: rgba(227,11,31,0.15); }"
             )
             clear_one_btn.clicked.connect(
-                lambda checked, c=code: self._on_clear_single(c)
+                lambda checked, c=code, a=dtc.get("ecu_addr", 0x10): (
+                    self._on_clear_single(c, a)
+                )
             )
             btn_row.addWidget(clear_one_btn)
             btn_row.addStretch()
@@ -375,8 +377,14 @@ class DiagnosticsPage(QWidget):
                     name = ecu.get("name", "ECU")
                     self.progress.emit(f"Clearing {name}...")
                     try:
-                        self.connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
-                        cleared.append(name)
+                        resp = self.connection.send_uds(
+                            addr, bytes([0x14, 0xFF, 0xFF, 0xFF])
+                        )
+                        # Check for negative response (0x7F)
+                        if resp and resp[0] == 0x7F:
+                            failed.append(name)
+                        else:
+                            cleared.append(name)
                     except Exception:
                         failed.append(name)
                 return {"cleared": cleared, "failed": failed}
@@ -406,9 +414,17 @@ class DiagnosticsPage(QWidget):
         import webbrowser
         webbrowser.open(f"https://www.google.com/search?q={code}+BMW")
 
-    def _on_clear_single(self, code: str) -> None:
-        """Clear a single DTC from its ECU."""
-        dtc = next((d for d in self._dtcs if d.get("code") == code), None)
+    def _on_clear_single(self, code: str, ecu_addr: int = 0x10) -> None:
+        """Clear a single DTC from its ECU.
+
+        Matches by both DTC code and ECU address to distinguish
+        duplicate codes across different ECUs (e.g. B7F805 on HU_NBT vs FEM).
+        """
+        dtc = next(
+            (d for d in self._dtcs
+             if d.get("code") == code and d.get("ecu_addr") == ecu_addr),
+            None,
+        )
         if dtc is None or self._connection is None:
             return
         addr = dtc.get("ecu_addr", 0x10)
