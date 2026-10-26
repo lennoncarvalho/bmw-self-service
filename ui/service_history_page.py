@@ -463,7 +463,8 @@ def _build_service_args(entry: dict) -> str:
         day, month, year = 1, 1, 2026
 
     km = entry.get("mileage_km", 0)
-    dealer = entry.get("dealer") or "Independent"
+    dealer = (entry.get("dealer") or "Independent").replace(";", ",")
+    dealer = dealer.encode("ascii", errors="replace").decode("ascii")
     items = entry.get("items", [])
 
     args = f"{day};{month};{year};0;{km};0;{dealer};0x1;{len(items)};"
@@ -569,7 +570,9 @@ class ServiceHistoryEraseWorker(CarWorker):
         if resp[0] == 0x7F:
             nrc = resp[2] if len(resp) > 2 else 0
             raise ConnectionError(f"Erase rejected: NRC 0x{nrc:02X}")
-        return False
+        raise ConnectionError(
+            f"Unexpected erase response: 0x{resp[0]:02X}"
+        )
 
 
 def _parse_service_record(data: bytes) -> dict | None:
