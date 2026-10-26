@@ -599,7 +599,9 @@ class MainWindow(QMainWindow):
 
     def _on_backups(self) -> None:
         self.backups_page.set_connection(self._connection)
-        self.stack.setCurrentIndex(6)  # BackupsPage is at index 6
+        idx = self.stack.indexOf(self.backups_page)
+        if idx >= 0:
+            self.stack.setCurrentIndex(idx)
 
     def _on_about(self) -> None:
         QMessageBox.about(

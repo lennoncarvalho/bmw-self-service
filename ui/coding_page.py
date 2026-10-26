@@ -722,8 +722,20 @@ class CodingReadWorker(CarWorker):
                     )
             except Exception as e:
                 logger.debug("Coding read skip %s (0x%02X): %s", name, addr, e)
-        # Return empty — real coding data requires per-chassis DID mapping
-        return categories
+        if categories:
+            return categories
+        # Return a placeholder so the UI shows data while DIDs are being
+        # mapped per chassis. Real coding values require per-vehicle DID
+        # calibration — this stub will be replaced once tested on a car.
+        return [
+            {
+                "name": name,
+                "icon": name[0] if name else "?",
+                "description": f"Coding data for {name} — DID mapping pending",
+                "options": [],
+            }
+            for _, name in self.targets
+        ]
 
 
 class CodingWriteWorker(CarWorker):
@@ -737,8 +749,13 @@ class CodingWriteWorker(CarWorker):
         for cat in self.categories:
             for opt in cat.get("options", []):
                 self.progress.emit(f"Writing {opt.get('name', 'option')}...")
-                # Build 0x2E payload — DID + data bytes
-                payload = bytes([0x2E, opt.get("current", 0) & 0xFF])
+                # Build 0x2E payload: 0x2E + DID_high + DID_low + data_bytes
+                # DID is a 16-bit identifier; data is the selected value index
+                did = opt.get("did", 0xF000)  # placeholder DID — per-ECU real
+                did_high = (did >> 8) & 0xFF
+                did_low = did & 0xFF
+                data_bytes = bytes([opt.get("current", 0)])
+                payload = bytes([0x2E, did_high, did_low]) + data_bytes
                 try:
                     self.connection.send_uds(0x40, payload)
                 except Exception as e:

@@ -423,11 +423,15 @@ class DiagnosticsPage(QWidget):
             return
         if hasattr(self._connection, "data") and self._connection.data:
             self._connection.data["dtcs"] = [
-                d for d in self._connection.data["dtcs"] if d.get("code") != code
+                d for d in self._connection.data.get("dtcs", []) if d.get("code") != code
             ]
         else:
             try:
-                self._connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
+                # Clear the specific DTC: 0x14 + 3-byte DTC code
+                dtc_bytes = bytes.fromhex(code)
+                if len(dtc_bytes) < 3:
+                    dtc_bytes = dtc_bytes.rjust(3, b'\x00')
+                self._connection.send_uds(addr, bytes([0x14]) + dtc_bytes[:3])
             except Exception as e:
                 QMessageBox.warning(self, "Clear Failed", str(e))
         self._read_dtcs()

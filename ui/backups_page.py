@@ -32,7 +32,6 @@ class BackupsPage(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._connection: Any = None
         self._backups: list[dict] = []
         self._setup_ui()
 
@@ -80,8 +79,7 @@ class BackupsPage(QWidget):
         layout.addWidget(refresh_btn, alignment=Qt.AlignCenter)
 
     def set_connection(self, connection: Any) -> None:
-        """Store connection for rollback writes."""
-        self._connection = connection
+        """Store connection for rollback writes (reserved for future use)."""
         self.refresh()
 
     def refresh(self) -> None:

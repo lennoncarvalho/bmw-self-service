@@ -144,3 +144,16 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 - **ENET cable only.** No Bluetooth, no WiFi OBD adapters, no K+DCAN.
 - **F/G/U/I-series only (2011+).** No E-series.
 - **117 of 139 ECUs are codable without SecurityAccess.** The 22 blocked ECUs are safety-critical (airbags, engine ECU, cameras).
+
+## GitHub CLI (pushing to this repo)
+
+This machine has two GitHub accounts: `lennoncarvalho` (personal, for this repo)
+and `lcarvalho-tns` (work, for other repos). This repo must always use
+`lennoncarvalho`.
+
+- **Before any `git push` or `gh pr` command**, switch to the personal account:
+  `gh auth switch --user lennoncarvalho`
+- **Never** run `gh auth switch` to `lcarvalho-tns` while working in this repo.
+- **Never** modify `~/.config/gh/` (the shared default config).
+- The repo-local `user.name` is `Lennon Carvalho` and `user.email` is
+  set from the personal account.
