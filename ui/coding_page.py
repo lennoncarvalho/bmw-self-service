@@ -556,19 +556,25 @@ class CodingPage(QWidget):
             self._coding_reader.start()
 
     def _load_coding_presets(self, ecus: list[dict]) -> None:
-        """T-2/T-3: Load coding presets from database for discovered ECUs.
+        """T-2/T-3/T-4: Load coding presets from database for discovered ECUs.
 
         Matches ECU names against coding-ecu-infos.enc to find CAFD IDs,
         loads the coding database, and builds Easy Coding presets grouped
-        by section with human-readable labels.
+        by section with human-readable labels. Preserves full CAFD metadata
+        per option so CodingWriteWorker can construct correct writes.
 
         Falls back to MOCK_CATEGORIES if no ECUs match the database.
         """
         presets_by_section: dict[str, list[dict]] = {}
+        # T-4: Metadata for real writes — maps (cat_name, opt_name) → coding info
+        self._coding_meta: dict[tuple[str, str], dict] = {}
         loaded_ecus = 0
 
         for ecu in ecus:
             name = ecu.get("name", "")
+            ecu_addr_str = ecu.get("addr", "0x10")
+            ecu_addr = int(ecu_addr_str, 16) if ecu_addr_str.startswith("0x") else int(ecu_addr_str)
+
             # Try exact match first, then prefix match
             if name in _CAFD_MAP:
                 cafd_id, variant = _CAFD_MAP[name]
@@ -598,10 +604,11 @@ class CodingPage(QWidget):
                 section = preset["section"]
                 if section not in presets_by_section:
                     presets_by_section[section] = []
-                # Format as a category entry compatible with _build_easy_page
+                opt_label = preset["label"]
+                opt_values = [o["label"] for o in preset["options"]]
                 opt_entry = {
-                    "name": preset["label"],
-                    "values": [o["label"] for o in preset["options"]],
+                    "name": opt_label,
+                    "values": opt_values,
                     "current": 0,  # Will be updated when CAFD bytes are read
                 }
                 # Check if this option already exists in section
@@ -610,6 +617,27 @@ class CodingPage(QWidget):
                 ]
                 if opt_entry["name"] not in existing_names:
                     presets_by_section[section].append(opt_entry)
+                    # T-4: Store metadata for write path
+                    # Look up the DID from the first function's dataGroup
+                    did = 0x3000  # default
+                    for option in preset.get("options", []):
+                        for func in option.get("functions", []):
+                            d = coding_db.get_did_for_preset(
+                                cafd_id, variant, func.get("name", "")
+                            )
+                            if d is not None:
+                                did = d
+                                break
+                        if did != 0x3000:
+                            break
+                    section_name = section.replace("_", " ").title()
+                    self._coding_meta[(section_name, opt_label)] = {
+                        "cafd_id": cafd_id,
+                        "variant": variant,
+                        "ecu_addr": ecu_addr,
+                        "did": did,
+                        "preset": preset,
+                    }
 
         if loaded_ecus == 0:
             logger.info("No coding data for discovered ECUs — using mock")
@@ -750,7 +778,10 @@ class CodingPage(QWidget):
 
         # G-9: Real car — write via UDS 0x2E WriteDataByIdentifier
         self._write_btn.setEnabled(False)
-        self._coding_writer = CodingWriteWorker(self._connection, self._categories)
+        self._coding_writer = CodingWriteWorker(
+            self._connection, self._categories,
+            getattr(self, '_coding_meta', {}),
+        )
         self._coding_writer.finished.connect(self._on_write_complete)
         self._coding_writer.error.connect(self._on_write_error)
         self._coding_writer.start()
@@ -898,27 +929,57 @@ class CodingReadWorker(CarWorker):
 
 
 class CodingWriteWorker(CarWorker):
-    """Write coding changes to ECUs via UDS 0x2E WriteDataByIdentifier."""
+    """Write coding changes to ECUs via UDS 0x2E WriteDataByIdentifier.
 
-    def __init__(self, connection: Any, categories: list[dict]) -> None:
+    T-4: Uses coding_db metadata when available to construct writes
+    with correct ECU addresses and real DIDs from CAFD dataGroups.
+    Falls back to placeholder DIDs for mock categories.
+    """
+
+    def __init__(
+        self,
+        connection: Any,
+        categories: list[dict],
+        coding_meta: dict[tuple[str, str], dict] | None = None,
+    ) -> None:
         super().__init__(connection)
         self.categories = categories
+        self.coding_meta = coding_meta or {}
 
     def do_work(self) -> bool:
         for cat in self.categories:
+            cat_name = cat.get("name", "")
             for opt in cat.get("options", []):
-                self.progress.emit(f"Writing {opt.get('name', 'option')}...")
-                # Build 0x2E payload: 0x2E + DID_high + DID_low + data_bytes
-                # DID is a 16-bit identifier; data is the selected value index
-                did = opt.get("did", 0xF000)  # placeholder DID — per-ECU real
-                did_high = (did >> 8) & 0xFF
-                did_low = did & 0xFF
-                data_bytes = bytes([opt.get("current", 0)])
-                payload = bytes([0x2E, did_high, did_low]) + data_bytes
-                try:
-                    self.connection.send_uds(0x40, payload)
-                except Exception as e:
-                    raise ConnectionError(
-                        f"Write failed for {opt.get('name', 'option')}: {e}"
-                    ) from e
+                opt_name = opt.get("name", "")
+                self.progress.emit(f"Writing {opt_name}...")
+
+                # T-4: Look up real coding metadata
+                meta = self.coding_meta.get((cat_name, opt_name))
+                if meta:
+                    ecu_addr = meta["ecu_addr"]
+                    did = meta["did"]
+                    # Build proper 0x2E with the real DID
+                    did_high = (did >> 8) & 0xFF
+                    did_low = did & 0xFF
+                    data_bytes = bytes([opt.get("current", 0)])
+                    payload = bytes([0x2E, did_high, did_low]) + data_bytes
+                    try:
+                        self.connection.send_uds(ecu_addr, payload)
+                    except Exception as e:
+                        raise ConnectionError(
+                            f"Write failed for {opt_name}: {e}"
+                        ) from e
+                else:
+                    # Fallback for mock categories without metadata
+                    did = opt.get("did", 0xF000)
+                    did_high = (did >> 8) & 0xFF
+                    did_low = did & 0xFF
+                    data_bytes = bytes([opt.get("current", 0)])
+                    payload = bytes([0x2E, did_high, did_low]) + data_bytes
+                    try:
+                        self.connection.send_uds(0x40, payload)
+                    except Exception as e:
+                        raise ConnectionError(
+                            f"Write failed for {opt_name}: {e}"
+                        ) from e
         return True
