@@ -78,13 +78,27 @@ class CodingDatabase:
     # ── loading ──────────────────────────────────────────────────────
 
     def _load_strings(self) -> None:
-        """Load English (primary) and German (fallback) labels."""
+        """Load English (primary) and German (fallback for untranslated keys).
+
+        English translations are used when available. German values only
+        fill in keys that have no English translation (en == de, copy-pasted).
+        """
+        # Load English first as the authoritative source
         for lang in ("en", "de"):
             path = f"{self.data_dir}/{lang}.strings"
             try:
-                self.strings.update(_parse_strings(path))
+                new_entries = _parse_strings(path)
             except FileNotFoundError:
                 logger.debug("%s.strings not found", lang)
+                continue
+            if lang == "en":
+                self.strings = dict(new_entries)  # English: primary
+            else:
+                # German: only add entries where English has no translation
+                # (i.e. the English file has the German copy-pasted)
+                for key, value in new_entries.items():
+                    if key not in self.strings or self.strings[key] == value:
+                        self.strings[key] = value
 
     def load_ecu(self, cafd_id: str, variant: str) -> None:
         """Load coding database for one ECU variant.
