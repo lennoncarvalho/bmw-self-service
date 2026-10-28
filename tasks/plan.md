@@ -1,5 +1,10 @@
 # Plan: Infrastructure Layer
 
+> **Historical plan/status:** superseded by [the 2026-10-28 audit](../docs/19-audit-and-readiness.md).
+> Checkboxes/merge claims below are not acceptance evidence. Protocol examples
+> may be wrong; use [corrections](../docs/20-protocol-evidence.md) and
+> [owner decisions](../docs/21-product-decisions.md) before implementing.
+
 > **Phase 2.** Reviewed by human before task breakdown.
 > Spec: `SPEC-INFRASTRUCTURE.md` | Capability Map: `CAPABILITY-MAP.md`
 

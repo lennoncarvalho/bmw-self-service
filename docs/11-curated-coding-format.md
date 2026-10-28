@@ -1,5 +1,10 @@
 # Curated Coding Database Format
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+> Live coded bytes, data-group boundaries and multi-function masks must be matched to the exact variant.
+
 > **Source:** BimmerCode decrypted root index `.enc` files (e.g., `00000069.enc`, `00001082.enc`)
 
 ---

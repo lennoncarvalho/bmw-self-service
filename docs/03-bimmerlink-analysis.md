@@ -1,5 +1,9 @@
 # Phase 3: BimmerLink APK Analysis
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+
 > **Date:** 2026-10-23
 > **Status:** Complete. Diagnostics for F/G/U/I-series. E-series needs K+DCAN.
 > **Source:** `sources/BimmerLink_v2.36.1.apk` (SHA-256: `da6f5b39...`)

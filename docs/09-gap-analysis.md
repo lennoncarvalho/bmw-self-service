@@ -1,5 +1,9 @@
 # Gap Analysis: What We Have vs. What We Need
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+
 > **Date:** 2026-10-23
 > **Target:** Replacement BMW ENET app with 4 modules
 

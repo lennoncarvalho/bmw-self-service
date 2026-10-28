@@ -1,0 +1,252 @@
+[
+  {
+    "path": "ediabasx/AGENTS.md",
+    "sha256": "e43207cb7fb8ced1e0a529aa6404418df41071497101617e902b4f3fc16f02d9",
+    "lines": 363
+  },
+  {
+    "path": "ediabasx/CHANGELOG.md",
+    "sha256": "50dbd6a852426955c8e519ffefad113b3e9e751883e50e5a8613bd0635a199a7",
+    "lines": 1037
+  },
+  {
+    "path": "ediabasx/CONCEPT.md",
+    "sha256": "3397358784f34207e5e2c36fc4be51770ce9fca8ee0b612401184ab55f8215e4",
+    "lines": 407
+  },
+  {
+    "path": "ediabasx/README.md",
+    "sha256": "673da46912bcec1d50b50a8446a75b43365f7a8a0296d76d5155cfde322a728f",
+    "lines": 475
+  },
+  {
+    "path": "ediabasx/apps/cli/README.md",
+    "sha256": "098ee24960e72ff4373864ccafc8cd89b15c4a2562cb8c7f3a964d75a742c626",
+    "lines": 230
+  },
+  {
+    "path": "ediabasx/apps/web/README.md",
+    "sha256": "d10ffe6d76e777b4cefc5a4dac44dce6037ad8dabc4fa6b5594628a846055c88",
+    "lines": 125
+  },
+  {
+    "path": "ediabasx/docs/guidelines/typescript.md",
+    "sha256": "9a254021286ad6312515e1580eb877dbf8acd2f186e89ef7571e8375706939e0",
+    "lines": 166
+  },
+  {
+    "path": "ediabasx/docs/ifh-layer.md",
+    "sha256": "655649edc9b2dbb7d8ca1a74e3fe55ce064d1451ade4c2336745d2ad78d68bbc",
+    "lines": 186
+  },
+  {
+    "path": "ediabasx/docs/interfaces/README.md",
+    "sha256": "a1a33272dffa8a748c6cfd32277aeccc49856881aeee0bf5b1f401a258099664",
+    "lines": 86
+  },
+  {
+    "path": "ediabasx/docs/interfaces/obd32-analysis.md",
+    "sha256": "e57eb990317f9d52c891584bd2d92e861239b40fa6eab7da53e44ba09ad14faf",
+    "lines": 726
+  },
+  {
+    "path": "ediabasx/docs/interfaces/obd32-protocols.md",
+    "sha256": "b5c60b4d9655ddd30b6dec256c9301f6cde020ac337b465bd89a0fde29140f6c",
+    "lines": 931
+  },
+  {
+    "path": "ediabasx/docs/interfaces/xenet32-analysis.md",
+    "sha256": "600b46231eb1e44898f28d8ac269ee635f5dab7849aa4020512eca96beb0fd02",
+    "lines": 603
+  },
+  {
+    "path": "ediabasx/docs/interfaces/xnul32-analysis.md",
+    "sha256": "6108cb770cf2c1e91a4f752fec13bcb3a0e5e2f04e4147e436e73617e8a110b9",
+    "lines": 201
+  },
+  {
+    "path": "ediabasx/docs/interfaces/xstd32-analysis.md",
+    "sha256": "24de29529a0c1af2a16704f712fb12dd84ef1253fa7f5f516ab1dad735876209",
+    "lines": 553
+  },
+  {
+    "path": "ediabasx/docs/interfaces-and-transports.md",
+    "sha256": "2fe2e6a3953f2a5316484945a5112a2a1a82a2649f8f075e9cfcc2b420e36d84",
+    "lines": 170
+  },
+  {
+    "path": "ediabasx/docs/logging-plan.md",
+    "sha256": "74943e1c65688952bdd3424ccd2751f9884275880ef78c2adfd4163ce30abba2",
+    "lines": 101
+  },
+  {
+    "path": "ediabasx/docs/prompts/architecture-docs.md",
+    "sha256": "3c3f6271d22b2b12f96a0c241d15574cca5770843c42d0cc003e87157855bf1a",
+    "lines": 72
+  },
+  {
+    "path": "ediabasx/docs/prompts/generate-interpreter-docs.md",
+    "sha256": "fe79aa676a6b8798cfe8dc8c44e65a27be22d6e18505fa272809d33d4bb87fa1",
+    "lines": 181
+  },
+  {
+    "path": "ediabasx/docs/prompts/reports-summary.md",
+    "sha256": "1422302abdaecbd4175abcec3722bf7b8d47dcd3bc4521aabd0473b27485507f",
+    "lines": 38
+  },
+  {
+    "path": "ediabasx/docs/prompts/user-guide.md",
+    "sha256": "347ca9073a96eea759aee4c53bd2b2cd920522d926adce23189a198c730cd856",
+    "lines": 66
+  },
+  {
+    "path": "ediabasx/docs/prompts/vitepress-site.md",
+    "sha256": "3455984ec376a03a1a6f05d53bcc72263caa7b0c7b836ede2167d6c5057c5eee",
+    "lines": 15
+  },
+  {
+    "path": "ediabasx/docs/s-register-refactor-proposal.md",
+    "sha256": "d88af8ddc5c447a4b512467fcd1d7c3872671895a974c0e3a482b786a59a0c28",
+    "lines": 123
+  },
+  {
+    "path": "ediabasx/docs/sgbd-format.md",
+    "sha256": "42f15a9011d5b1a728fb4f36ae19ea0b8183bf9f3db128e99912f94fe3503ac3",
+    "lines": 113
+  },
+  {
+    "path": "ediabasx/docs/vm-decompilation-analysis.md",
+    "sha256": "29c7f2be99778920a1bb106e9e2b5f7d35c31dc874dabdc10876a3a0072b1476",
+    "lines": 996
+  },
+  {
+    "path": "ediabasx/docs/vm-ebas32-audit.md",
+    "sha256": "09aec821d98e1552ff80e2e5db800ef1541dae8123aa4547627d700684c2bccc",
+    "lines": 1885
+  },
+  {
+    "path": "ediabasx/docs/vm-opcode-handlers-pseudocode.md",
+    "sha256": "ba9749ca1e4ef2fdb008481c9e2ef1784137d13221df55b55a5f8316a31d0e08",
+    "lines": 2092
+  },
+  {
+    "path": "ediabasx/docs/vm-opcode-handlers.md",
+    "sha256": "09091d88f4273936fa5d956f64805c484cad63bcedf58f027d854b740b746ffa",
+    "lines": 634
+  },
+  {
+    "path": "ediabasx/docs/vm-opcode-reference.md",
+    "sha256": "6da77d05fa1c1e168f5c43f3a1371a5295e64c3126a17c11e726ae294f7c0863",
+    "lines": 215
+  },
+  {
+    "path": "ediabasx/docs/vm-reference.md",
+    "sha256": "8e4d67161584af1c4955e14867f326b1d47f040b4dbefef3e8b5c37c3c060a34",
+    "lines": 482
+  },
+  {
+    "path": "ediabasx/native/README.md",
+    "sha256": "278d9e18c38a4befa8e4451dea21557359052312dbec451116bc0baefe10468f",
+    "lines": 243
+  },
+  {
+    "path": "ediabasx/native/platform/esp32/README.md",
+    "sha256": "e410334ff9c77e55ce32694dfd737a25dbb16340b3085af3808511b04c6dd158",
+    "lines": 25
+  },
+  {
+    "path": "ediabasx/native/platform/posix/README.md",
+    "sha256": "009ee0bb3d14465a62e039769a41f16566c0ad81d234a0953687a35c5815f3e6",
+    "lines": 66
+  },
+  {
+    "path": "ediabasx/packages/best-parser/README.md",
+    "sha256": "a772919ccffe7b23e9ff383aa9497bb19720604ac15f0adbfb24d4fa040a32fe",
+    "lines": 73
+  },
+  {
+    "path": "ediabasx/packages/core/README.md",
+    "sha256": "c860f1d7886ce7394a978e1f84ba76a13401feb4793c526865a6425821c6fd83",
+    "lines": 39
+  },
+  {
+    "path": "ediabasx/packages/ediabas/README.md",
+    "sha256": "1a3050229b86a212d7b2dbba81a4516b54fbca298cc1364c075d48e861715196",
+    "lines": 139
+  },
+  {
+    "path": "ediabasx/packages/ediabasx-client/README.md",
+    "sha256": "1efbae022243308305cfa7ba9d7c325094ff3bf4d426cc375c46414460255320",
+    "lines": 127
+  },
+  {
+    "path": "ediabasx/packages/ediabasx-server/README.md",
+    "sha256": "b7a9e9e1b974a2c90ac4cdf58f21ca4e71c3cb1fc819c1714626d91f717b767a",
+    "lines": 113
+  },
+  {
+    "path": "ediabasx/packages/host-config/README.md",
+    "sha256": "6a80d6394bfe3d49920cf94ce41b6b98f7dfdac18f75a4d73c5977297b5f4af9",
+    "lines": 79
+  },
+  {
+    "path": "ediabasx/packages/interface-base/README.md",
+    "sha256": "589d572a9623a3e1f145acf0d370143f2448e9d8956b03b82f1b228860168029",
+    "lines": 35
+  },
+  {
+    "path": "ediabasx/packages/interface-enet/README.md",
+    "sha256": "1278330ebaff7280d6b87e4eb815fbc864ad1d3e8d7a7fd54c150bafd5020b08",
+    "lines": 31
+  },
+  {
+    "path": "ediabasx/packages/interface-j2534/README.md",
+    "sha256": "b2f0d35790e2274464e0d9d2551c6533375bcba8f1a925c3baccfaa9f204f979",
+    "lines": 92
+  },
+  {
+    "path": "ediabasx/packages/interface-serial/README.md",
+    "sha256": "5d362b6dc96c923c608ebd1f23527abf290a6ecd91ecbbdb73acbd62beec3930",
+    "lines": 73
+  },
+  {
+    "path": "ediabasx/packages/interfaces/README.md",
+    "sha256": "9720c2502c627b577bf6ac21934ff7fd674d1ba5c93287b110d6752979d97f29",
+    "lines": 121
+  },
+  {
+    "path": "ediabasx/packages/interpreter/README.md",
+    "sha256": "e9f57039098e575a8a36424b1579947d7b16d8cc53d18b219bffd948d17a0eb0",
+    "lines": 74
+  },
+  {
+    "path": "ediabasx/packages/mac-ftdi-latency/README.md",
+    "sha256": "6e50214c715e1bf8b27b173faa2fcfce08eb3536a899e441db10022cf04fd0bb",
+    "lines": 58
+  },
+  {
+    "path": "ediabasx/packages/protocol-doip/README.md",
+    "sha256": "a926f0cb30af56ae26944782c6d095da1d50592848f79aa35b76ef2f6fa359e3",
+    "lines": 15
+  },
+  {
+    "path": "ediabasx/packages/protocol-kwp/README.md",
+    "sha256": "3d8f247fdb3aefa4d51f570e6a9285a6ea9b337a954a556c77945a7fa4644bac",
+    "lines": 33
+  },
+  {
+    "path": "ediabasx/packages/protocol-uds/README.md",
+    "sha256": "8f70107eb00353899a3ee49aa6ac18efd32bc455ecec514416a2df98062dc0be",
+    "lines": 42
+  },
+  {
+    "path": "ediabasx/packages/web-ui/README.md",
+    "sha256": "548bd671ad646082c9e92ed3628b79154afa37c4381bab5cecf142b3369a1ea0",
+    "lines": 87
+  },
+  {
+    "path": "BimmerDaten/README.md",
+    "sha256": "4ac462f4cc2500729ea4f9876988b97e2b8687933ff69b260827454710a2ced7",
+    "lines": 218
+  }
+]

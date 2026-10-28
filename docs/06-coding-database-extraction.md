@@ -1,5 +1,9 @@
 # BimmerCode Coding Database — Extraction Guide
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+
 > **Extracted:** 2026-10-23
 > **Database Version:** 24.11.3
 > **Scope:** F/G/U/I-series CAFD coding. E-series not supported.

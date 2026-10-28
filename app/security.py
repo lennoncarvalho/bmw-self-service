@@ -17,32 +17,32 @@ logger = logging.getLogger(__name__)
 # These ECUs are safety-critical; incorrect writes can prevent the car from
 # starting or disable safety systems.
 PROTECTED_ECUS: set[str] = {
-    "ACSM",     # Airbag Control Unit
-    "ACSM2",    # Airbag Control Unit v2
+    "ACSM",  # Airbag Control Unit
+    "ACSM2",  # Airbag Control Unit v2
     "ACSM2CD",  # Airbag Control Unit (convertible)
-    "ACSM_3",   # Airbag Control Unit gen 3
+    "ACSM_3",  # Airbag Control Unit gen 3
     "ACSM_4B",  # Airbag Control Unit gen 4B
     "ACSM_4C",  # Airbag Control Unit gen 4C
     "ACSM_4i",  # Airbag Control Unit gen 4i
-    "ACSM_5",   # Airbag Control Unit gen 5
-    "DME",      # Digital Motor Electronics (engine ECU)
-    "DME2",     # Digital Motor Electronics v2
-    "EDME",     # Electric DME
-    "DSC",      # Dynamic Stability Control
-    "DSC_60",   # Dynamic Stability Control (E60)
-    "DSC_87",   # Dynamic Stability Control (E87)
-    "DSC_56",   # Dynamic Stability Control (R56)
+    "ACSM_5",  # Airbag Control Unit gen 5
+    "DME",  # Digital Motor Electronics (engine ECU)
+    "DME2",  # Digital Motor Electronics v2
+    "EDME",  # Electric DME
+    "DSC",  # Dynamic Stability Control
+    "DSC_60",  # Dynamic Stability Control (E60)
+    "DSC_87",  # Dynamic Stability Control (E87)
+    "DSC_56",  # Dynamic Stability Control (R56)
     "DSC_E65",  # Dynamic Stability Control (E65)
-    "SAS",      # Steering Angle Sensor (when integrated with DSC)
-    "ZGW",      # Central Gateway (sometimes locked, depends on firmware)
-    "AIRBAG",   # Generic airbag module
-    "ABG",      # Airbag (German: AirBag Gerät)
-    "MRS",      # Multiple Restraint System
-    "MRS5",     # Multiple Restraint System v5
-    "MRS6",     # Multiple Restraint System v6
-    "MRS7",     # Multiple Restraint System v7
-    "MRS8",     # Multiple Restraint System v8
-    "SRS",      # Supplemental Restraint System
+    "SAS",  # Steering Angle Sensor (when integrated with DSC)
+    "ZGW",  # Central Gateway (sometimes locked, depends on firmware)
+    "AIRBAG",  # Generic airbag module
+    "ABG",  # Airbag (German: AirBag Gerät)
+    "MRS",  # Multiple Restraint System
+    "MRS5",  # Multiple Restraint System v5
+    "MRS6",  # Multiple Restraint System v6
+    "MRS7",  # Multiple Restraint System v7
+    "MRS8",  # Multiple Restraint System v8
+    "SRS",  # Supplemental Restraint System
 }
 
 
@@ -86,10 +86,9 @@ def request_seed(connection, ecu_addr: int) -> bytes:
         nrc = resp[2] if len(resp) > 2 else 0
         raise ConnectionError(f"SecurityAccess rejected: NRC 0x{nrc:02X}")
     if len(resp) < 2 or resp[0] != 0x67 or resp[1] != 0x01:
-        raise ConnectionError(
-            f"Unexpected security response: 0x{resp[0]:02X}"
-        )
-    return resp[2:]  # seed bytes
+        raise ConnectionError(f"Unexpected security response: 0x{resp[0]:02X}")
+    seed: bytes = resp[2:]
+    return seed  # seed bytes
 
 
 def send_key(connection, ecu_addr: int, key: bytes) -> bool:
@@ -117,7 +116,8 @@ def send_key(connection, ecu_addr: int, key: bytes) -> bool:
         nrc = resp[2] if len(resp) > 2 else 0
         logger.warning(
             "SecurityAccess key rejected for ECU 0x%02X: NRC 0x%02X",
-            ecu_addr, nrc,
+            ecu_addr,
+            nrc,
         )
     return False
 

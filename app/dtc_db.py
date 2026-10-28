@@ -161,7 +161,8 @@ class DtcDatabase:
         ).fetchone()
 
         if row:
-            return row[0] or row[1]
+            text: str | None = row[0] or row[1]
+            return text
 
         return _OBD2_CODES.get(code)
 

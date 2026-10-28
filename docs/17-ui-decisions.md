@@ -1,5 +1,9 @@
 # UI/UX Decisions to Simplify Development
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+
 > Goal: reduce widget count, state complexity, and custom code.
 > Everything here favours standard Qt patterns that DeepSeek V4 Pro
 > generates reliably.
@@ -76,6 +80,11 @@ The coding option detail (Screen 8) uses this: click "Angel Eyes Brightness"
 ---
 
 ## 4. One reusable `CarWorker` thread pattern
+
+The historical example below shadows QThread lifecycle signals and emits raw
+exceptions; it is not production guidance. Separate result/error delivery from
+thread-finished cleanup, retain worker lifetime, and implement cooperative
+cancellation. See the project PySide6 skill overlay.
 
 Every car operation (read DTCs, write coding, read service history) follows
 the exact same pattern. Build one base class, subclass per task.
@@ -191,8 +200,10 @@ scroll.setWidget(container)
 ```
 
 No QListView, no QAbstractListModel, no model/view/delegate complexity.
-Just add QWidgets to a scrollable vertical layout. For 88K DTCs or 2K coding
-options, performance is fine — Qt only paints visible widgets.
+Retain QScrollArea plus widget children as the current project convention.
+Creating thousands of widgets still consumes memory and layout time even if only
+visible widgets are painted. Use bounded/lazy population and measure real UI
+latency; do not instantiate all 88K description rows as widgets.
 
 ---
 
@@ -210,7 +221,10 @@ If the theme changes, edit one file.
 
 ---
 
-## 9. QSettings for persistence — no config file parsing
+## 9. QSettings for preferences
+
+Owner requirement: backups, intended/current status and readback records are
+versioned data files, not QSettings preferences.
 
 ```python
 settings = QSettings("BMWTool", "BMWTool")

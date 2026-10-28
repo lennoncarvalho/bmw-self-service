@@ -22,6 +22,7 @@ ediabasx/
 bimmercode_extracted/
 bimmerlink_extracted/
 coding_data/
+bimmercode_data/
 
 # Cloned repos (reference only, not shipped)
 node_modules/

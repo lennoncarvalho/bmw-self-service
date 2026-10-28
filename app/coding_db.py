@@ -128,15 +128,14 @@ class CodingDatabase:
                 data = json.loads(_decrypt_enc(cafd_path))
                 self.cafd_variants[key] = data if isinstance(data, dict) else {}
             except (json.JSONDecodeError, ValueError, KeyError) as e:
-                logger.warning(
-                    "Failed to load CAFD variant %s-%s: %s", cafd_id, variant, e
-                )
+                logger.warning("Failed to load CAFD variant %s-%s: %s", cafd_id, variant, e)
                 self.cafd_variants[key] = {}
 
         self._loaded_ecus.add(key)
         logger.info(
             "Loaded coding database for %s-%s (%d presets)",
-            cafd_id, variant,
+            cafd_id,
+            variant,
             len(self.root_indexes.get(cafd_id, [])),
         )
 
@@ -156,23 +155,25 @@ class CodingDatabase:
         presets: list[dict] = []
         for entry in root:
             key = entry.get("name", "")
-            presets.append({
-                "section": entry.get("section", ""),
-                "name": key,
-                "label": self.strings.get(key, key),
-                "description": self.strings.get(
-                    entry.get("descriptionText", ""),
-                    entry.get("descriptionText", ""),
-                ),
-                "options": [
-                    {
-                        "name": v.get("name", ""),
-                        "label": self.strings.get(v.get("name", ""), v.get("name", "")),
-                        "functions": v.get("functions", []),
-                    }
-                    for v in entry.get("values", [])
-                ],
-            })
+            presets.append(
+                {
+                    "section": entry.get("section", ""),
+                    "name": key,
+                    "label": self.strings.get(key, key),
+                    "description": self.strings.get(
+                        entry.get("descriptionText", ""),
+                        entry.get("descriptionText", ""),
+                    ),
+                    "options": [
+                        {
+                            "name": v.get("name", ""),
+                            "label": self.strings.get(v.get("name", ""), v.get("name", "")),
+                            "functions": v.get("functions", []),
+                        }
+                        for v in entry.get("values", [])
+                    ],
+                }
+            )
         return presets
 
     # ── query: current value detection ───────────────────────────────
@@ -225,7 +226,8 @@ class CodingDatabase:
                     match = False
                     break
             if match:
-                return option["name"]
+                name: str = option["name"]
+                return name
         return None
 
     # ── query: write payload construction ────────────────────────────
@@ -255,8 +257,7 @@ class CodingDatabase:
             if the selected option is not found.
         """
         option = next(
-            (o for o in preset.get("options", [])
-             if o.get("name") == selected_option_name),
+            (o for o in preset.get("options", []) if o.get("name") == selected_option_name),
             None,
         )
         if option is None:
@@ -288,9 +289,7 @@ class CodingDatabase:
 
     # ── query: CAFD metadata ─────────────────────────────────────────
 
-    def get_did_for_preset(
-        self, cafd_id: str, variant: str, function_name: str
-    ) -> int | None:
+    def get_did_for_preset(self, cafd_id: str, variant: str, function_name: str) -> int | None:
         """Look up the DID (Data Identifier) for a function.
 
         Uses the CAFD variant's dataGroup addresses as the DID for
@@ -317,9 +316,7 @@ class CodingDatabase:
                     return int(addr_str, 16)
         return None
 
-    def get_ecu_fdl_functions(
-        self, cafd_id: str, variant: str
-    ) -> list[dict]:
+    def get_ecu_fdl_functions(self, cafd_id: str, variant: str) -> list[dict]:
         """Return all FDL functions with their storage info for Advanced Coding.
 
         Args:
@@ -334,12 +331,14 @@ class CodingDatabase:
         functions: list[dict] = []
         for dg in cafd.get("dataGroups", []):
             for func in dg.get("functions", []):
-                functions.append({
-                    "name": func.get("name", ""),
-                    "did": int(dg.get("address", "0x0000"), 16),
-                    "storageInfo": func.get("storageInfo", {}),
-                    "params": func.get("params", []),
-                })
+                functions.append(
+                    {
+                        "name": func.get("name", ""),
+                        "did": int(dg.get("address", "0x0000"), 16),
+                        "storageInfo": func.get("storageInfo", {}),
+                        "params": func.get("params", []),
+                    }
+                )
         return functions
 
     # ── helpers ──────────────────────────────────────────────────────
@@ -349,7 +348,8 @@ class CodingDatabase:
         for dg in cafd.get("dataGroups", []):
             for func in dg.get("functions", []):
                 if func.get("name") == name:
-                    return func
+                    found: dict = func
+                    return found
         return None
 
     # ── infrastructure ───────────────────────────────────────────────

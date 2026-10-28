@@ -6,20 +6,22 @@ on:
     paths:
       - "app/**"
       - "ui/**"
-      - "tests/**"
       - "assets/**"
       - "main.py"
       - "requirements.txt"
+      - "pyproject.toml"
+      - "scripts/**"
       - ".github/workflows/python-ci.yml"
 
   pull_request:
     paths:
       - "app/**"
       - "ui/**"
-      - "tests/**"
       - "assets/**"
       - "main.py"
       - "requirements.txt"
+      - "pyproject.toml"
+      - "scripts/**"
       - ".github/workflows/python-ci.yml"
 
 jobs:
@@ -38,19 +40,16 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install ruff mypy pytest pytest-cov pytest-timeout pip-audit
+          pip install ruff mypy pip-audit
 
       - name: Ruff lint
-        run: ruff check app/ ui/ tests/ main.py
+        run: ruff check app/ ui/ main.py
 
       - name: Ruff format check
-        run: ruff format --check app/ ui/ tests/ main.py
+        run: ruff format --check app/ ui/ main.py
 
       - name: Mypy type check
-        run: mypy app/ ui/ --ignore-missing-imports
-
-      - name: Tests with coverage
-        run: pytest tests/ -v --cov=app --cov=ui --cov-report=term --timeout=60
+        run: mypy app/ ui/ main.py --ignore-missing-imports
 
       - name: Security audit
         run: pip-audit

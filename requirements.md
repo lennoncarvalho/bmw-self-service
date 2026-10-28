@@ -1,7 +1,8 @@
-# BMW ENET Reverse Engineering — Session Requirements (Complete)
+# BMW ENET Reverse Engineering — Historical Session Brief
 
-> All phases completed. Results in `docs/01` through `docs/18`.
-> The replacement app is built and functional.
+> Historical research brief, not a completion certificate or current execution plan.
+> See `docs/README.md`, `docs/19-audit-and-readiness.md` and `docs/20-protocol-evidence.md`.
+> Original assumptions below are preserved for provenance; do not execute them as current instructions.
 
 Prompt/plan for an unattended REA session to document how the BMW apps communicate
 with the car over an ENET (Ethernet-to-OBD2) cable.

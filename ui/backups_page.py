@@ -43,9 +43,7 @@ class BackupsPage(QWidget):
         # Title
         title = QLabel("Coding Backups")
         title.setObjectName("titleLabel")
-        title.setStyleSheet(
-            "font-size: 19px; font-weight: bold; color: #ffffff;"
-        )
+        title.setStyleSheet("font-size: 19px; font-weight: bold; color: #ffffff;")
         layout.addWidget(title)
 
         # Location info
@@ -57,9 +55,7 @@ class BackupsPage(QWidget):
         # Scrollable backup list
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         self.list_container = QWidget()
         self.list_layout = QVBoxLayout(self.list_container)
         self.list_layout.setSpacing(8)
@@ -76,7 +72,7 @@ class BackupsPage(QWidget):
             "QPushButton:hover { background: #0653B6; }"
         )
         refresh_btn.clicked.connect(self.refresh)
-        layout.addWidget(refresh_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def set_connection(self, connection: Any) -> None:
         """Store connection for rollback writes (reserved for future use)."""
@@ -104,13 +100,15 @@ class BackupsPage(QWidget):
             try:
                 with open(manifest_path) as f:
                     manifest = json.load(f)
-                results.append({
-                    "path": str(entry),
-                    "name": entry.name,
-                    "timestamp": manifest.get("timestamp", ""),
-                    "changes": manifest.get("changes", 0),
-                    "categories": manifest.get("categories", []),
-                })
+                results.append(
+                    {
+                        "path": str(entry),
+                        "name": entry.name,
+                        "timestamp": manifest.get("timestamp", ""),
+                        "changes": manifest.get("changes", 0),
+                        "categories": manifest.get("categories", []),
+                    }
+                )
             except (json.JSONDecodeError, OSError) as e:
                 logger.debug("Skipping backup %s: %s", entry.name, e)
         return results
@@ -120,16 +118,18 @@ class BackupsPage(QWidget):
         # Clear existing cards
         while self.list_layout.count() > 1:
             item = self.list_layout.takeAt(0)
-            if item and item.widget():
-                item.widget().deleteLater()
+            if item is None:
+                continue
+            child = item.widget()
+            if child is not None:
+                child.deleteLater()
 
         if not self._backups:
-            empty = QLabel("No backups found.\n\nBackups are created automatically "
-                          "before each coding write.")
-            empty.setAlignment(Qt.AlignCenter)
-            empty.setStyleSheet(
-                "font-size: 14px; color: #a0a0a0; padding: 32px;"
+            empty = QLabel(
+                "No backups found.\n\nBackups are created automatically before each coding write."
             )
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            empty.setStyleSheet("font-size: 14px; color: #a0a0a0; padding: 32px;")
             empty.setWordWrap(True)
             self.list_layout.insertWidget(self.list_layout.count() - 1, empty)
             return
@@ -153,8 +153,7 @@ class BackupsPage(QWidget):
             top_row = QHBoxLayout()
             date_lbl = QLabel(name.replace("_", " "))
             date_lbl.setStyleSheet(
-                "font-size: 14px; font-weight: bold; color: #e0e0e0; "
-                "background: transparent;"
+                "font-size: 14px; font-weight: bold; color: #e0e0e0; background: transparent;"
             )
             top_row.addWidget(date_lbl)
             top_row.addStretch()
@@ -166,16 +165,12 @@ class BackupsPage(QWidget):
                 "padding: 4px 16px; font-size: 12px; font-weight: bold; }"
                 "QPushButton:hover { background: rgba(243,156,18,0.15); }"
             )
-            rollback_btn.clicked.connect(
-                lambda checked, p=path, n=name: self._on_rollback(p, n)
-            )
+            rollback_btn.clicked.connect(lambda checked, p=path, n=name: self._on_rollback(p, n))
             top_row.addWidget(rollback_btn)
             card_layout.addLayout(top_row)
 
             info = QLabel(f"{changes} coding changes")
-            info.setStyleSheet(
-                "font-size: 12px; color: #a0a0a0; background: transparent;"
-            )
+            info.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
             card_layout.addWidget(info)
 
             self.list_layout.insertWidget(self.list_layout.count() - 1, card)
@@ -200,9 +195,7 @@ class BackupsPage(QWidget):
             # Find the CodingPage in the app and restore
             window = self.window()
             if window and hasattr(window, "coding_page"):
-                window.coding_page.restore_backup(
-                    manifest.get("categories", [])
-                )
+                window.coding_page.restore_backup(manifest.get("categories", []))
                 QMessageBox.information(
                     self,
                     "Rollback Complete",
@@ -210,6 +203,7 @@ class BackupsPage(QWidget):
                 )
         except (OSError, json.JSONDecodeError) as e:
             QMessageBox.warning(
-                self, "Rollback Failed",
+                self,
+                "Rollback Failed",
                 f"Could not restore backup: {e}",
             )

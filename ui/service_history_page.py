@@ -143,17 +143,15 @@ class ServiceHistoryPage(QWidget):
         layout.addWidget(title)
 
         # Scrollable entry list
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet(
-            "QScrollArea { border: none; background: transparent; }"
-        )
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         self.entry_container = QWidget()
         self.entry_layout = QVBoxLayout(self.entry_container)
         self.entry_layout.setSpacing(8)
         self.entry_layout.addStretch()
-        self.scroll.setWidget(self.entry_container)
-        layout.addWidget(self.scroll, stretch=1)
+        self.scroll_area.setWidget(self.entry_container)
+        layout.addWidget(self.scroll_area, stretch=1)
 
         # Add button
         self.add_btn = QPushButton("+ Add New Service Entry")
@@ -164,7 +162,7 @@ class ServiceHistoryPage(QWidget):
             "QPushButton:hover { background: #27AE60; }"
         )
         self.add_btn.clicked.connect(self._on_add_clicked)
-        layout.addWidget(self.add_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self.add_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # T-8: Erase History button
         self.erase_btn = QPushButton("Erase Service History")
@@ -177,7 +175,7 @@ class ServiceHistoryPage(QWidget):
         )
         self.erase_btn.clicked.connect(self._on_erase_clicked)
         self.erase_btn.setVisible(False)
-        layout.addWidget(self.erase_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self.erase_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Bottom bar (visible when pending writes exist)
         self._write_bar = QFrame()
@@ -197,9 +195,7 @@ class ServiceHistoryPage(QWidget):
         bar_layout.addWidget(clear_pending_btn)
 
         self._pending_label = QLabel("")
-        self._pending_label.setStyleSheet(
-            "color: #F39C12; font-size: 13px; font-weight: bold;"
-        )
+        self._pending_label.setStyleSheet("color: #F39C12; font-size: 13px; font-weight: bold;")
         bar_layout.addWidget(self._pending_label)
         bar_layout.addStretch()
 
@@ -224,9 +220,7 @@ class ServiceHistoryPage(QWidget):
 
         if hasattr(self._connection, "data") and self._connection.data:
             entries = self._connection.data.get("service_history", [])
-            self._entries = sorted(
-                entries, key=lambda e: e.get("date", ""), reverse=True
-            )
+            self._entries = sorted(entries, key=lambda e: e.get("date", ""), reverse=True)
             self._render()
             return
 
@@ -241,9 +235,7 @@ class ServiceHistoryPage(QWidget):
     def _on_history_loaded(self, entries: list[dict]) -> None:
         """Display service entries read from the car."""
         self.add_btn.setEnabled(True)
-        self._entries = sorted(
-            entries, key=lambda e: e.get("date", ""), reverse=True
-        )
+        self._entries = sorted(entries, key=lambda e: e.get("date", ""), reverse=True)
         self._render()
 
     def _on_history_error(self, msg: str) -> None:
@@ -259,15 +251,19 @@ class ServiceHistoryPage(QWidget):
         # Clear existing
         while self.entry_layout.count() > 1:
             item = self.entry_layout.takeAt(0)
+            if item is None:
+                break
             child = item.widget()
             if child is not None:
                 child.deleteLater()
-            elif item.layout() is not None:
-                self._clear_layout(item.layout())
+            else:
+                child_layout = item.layout()
+                if child_layout is not None:
+                    self._clear_layout(child_layout)
 
         if not self._entries:
             empty = QLabel("No service records found.")
-            empty.setAlignment(Qt.AlignCenter)
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("font-size: 14px; color: #a0a0a0; padding: 32px;")
             self.entry_layout.insertWidget(self.entry_layout.count() - 1, empty)
             return
@@ -280,7 +276,7 @@ class ServiceHistoryPage(QWidget):
 
             card = QFrame()
             card.setObjectName("card")
-            card.setCursor(Qt.PointingHandCursor)
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
             card.setStyleSheet(
                 "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
                 "border-radius: 8px; padding: 12px; }"
@@ -317,9 +313,9 @@ class ServiceHistoryPage(QWidget):
 
             # Summary line
             if items:
-                summary = QLabel(", ".join(items[:3]) + (
-                    f" + {len(items) - 3} more" if len(items) > 3 else ""
-                ))
+                summary = QLabel(
+                    ", ".join(items[:3]) + (f" + {len(items) - 3} more" if len(items) > 3 else "")
+                )
                 summary.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
                 summary.setWordWrap(True)
                 card_layout.addWidget(summary)
@@ -336,7 +332,9 @@ class ServiceHistoryPage(QWidget):
                 detail_layout.addWidget(dlr)
 
             full_label = QLabel("Work carried out:")
-            full_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #a0a0a0; background: transparent;")
+            full_label.setStyleSheet(
+                "font-size: 12px; font-weight: bold; color: #a0a0a0; background: transparent;"
+            )
             detail_layout.addWidget(full_label)
             for item in items:
                 bullet = QLabel(f"  \u2713 {item}")
@@ -433,7 +431,8 @@ class ServiceHistoryPage(QWidget):
         self._write_btn.setEnabled(True)
         logger.warning("Service history write failed: %s", msg)
         QMessageBox.warning(
-            self, "Write Failed",
+            self,
+            "Write Failed",
             f"Could not write service entr{'ies' if len(self._pending_writes) > 1 else 'y'}: {msg}",
         )
 
@@ -458,8 +457,7 @@ class ServiceHistoryPage(QWidget):
         reply = QMessageBox.question(
             self,
             "Erase Service History",
-            "Delete ALL service records from the vehicle?\n\n"
-            "This cannot be undone.",
+            "Delete ALL service records from the vehicle?\n\nThis cannot be undone.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -487,7 +485,8 @@ class ServiceHistoryPage(QWidget):
         self.erase_btn.setEnabled(True)
         logger.warning("Service history erase failed: %s", msg)
         QMessageBox.warning(
-            self, "Erase Failed",
+            self,
+            "Erase Failed",
             f"Could not erase service history: {msg}",
         )
 
@@ -583,9 +582,7 @@ class ServiceHistoryReadWorker(CarWorker):
             bytes([0x31, 0x01, did_high, did_low]),
         )
         if resp[0] != 0x71:
-            raise ConnectionError(
-                f"Headunit rejected service history read: 0x{resp[0]:02X}"
-            )
+            raise ConnectionError(f"Headunit rejected service history read: 0x{resp[0]:02X}")
         # Parse response: 0x71 + RID + record_count(2) + records...
         entries: list[dict] = []
         offset = 4
@@ -595,7 +592,7 @@ class ServiceHistoryReadWorker(CarWorker):
                 offset += 1
                 if offset + rec_len > len(resp):
                     break
-                record = resp[offset:offset + rec_len]
+                record = resp[offset : offset + rec_len]
                 offset += rec_len
                 entry = _parse_service_record(record)
                 if entry:
@@ -629,20 +626,14 @@ class ServiceHistoryWriteWorker(CarWorker):
             args = _build_service_args(entry)
             did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
             did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
-            payload = (
-                bytes([0x2E, did_high, did_low]) + args.encode("ascii")
-            )
+            payload = bytes([0x2E, did_high, did_low]) + args.encode("ascii")
             resp = self.connection.send_uds(self.HEADUNIT_ADDR, payload)
             if resp[0] == 0x6E:
                 continue
             if resp[0] == 0x7F:
                 nrc = resp[2] if len(resp) > 2 else 0
-                raise ConnectionError(
-                    f"Headunit rejected write: NRC 0x{nrc:02X}"
-                )
-            raise ConnectionError(
-                f"Unexpected response: 0x{resp[0]:02X}"
-            )
+                raise ConnectionError(f"Headunit rejected write: NRC 0x{nrc:02X}")
+            raise ConnectionError(f"Unexpected response: 0x{resp[0]:02X}")
         return True
 
 
@@ -667,9 +658,7 @@ class ServiceHistoryEraseWorker(CarWorker):
         if resp[0] == 0x7F:
             nrc = resp[2] if len(resp) > 2 else 0
             raise ConnectionError(f"Erase rejected: NRC 0x{nrc:02X}")
-        raise ConnectionError(
-            f"Unexpected erase response: 0x{resp[0]:02X}"
-        )
+        raise ConnectionError(f"Unexpected erase response: 0x{resp[0]:02X}")
 
 
 def _parse_service_record(data: bytes) -> dict | None:

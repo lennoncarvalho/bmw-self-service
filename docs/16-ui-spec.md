@@ -1,5 +1,10 @@
 # UI/UX Specification
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+> Wireframes are proposals; [owner decisions](21-product-decisions.md) govern write/backup/readback behavior.
+
 > **App:** BMW Diagnostic Tool  
 > **Theme:** Dark, modern, mobile-friendly  
 > **Date:** 2026-10-25  
@@ -7,6 +12,19 @@
 ---
 
 ## Global behavior
+
+### Connection and capability availability (owner-confirmed, 2026-10-28)
+
+When VIN and diagnostic communication are verified, optional mileage, battery,
+FA or ECU read failures keep the connection active. Mark unavailable fields and
+incomplete scan coverage explicitly. Enable only operations whose prerequisites
+and protocol support are established; do not show guessed or stale data as current.
+
+Identified but unverified ECU/software variants can use supported reads while
+unverified writes remain disabled with a reason. Keep the mandatory series picker
+only if review establishes that it simplifies connection behavior and initial
+loading for all pages. Selection is a hint, not proof of transport compatibility.
+See decisions D-12 through D-14 in [the register](21-product-decisions.md).
 
 ### Theme
 
@@ -27,7 +45,7 @@ status label. While loading:
   and ENET cable connection. [Retry] [Cancel]"
 
 No operation blocks the UI thread — all car I/O runs on background threads
-via `QThread` / `asyncio`.
+via `CarWorker(QThread)` subclasses and signals.
 
 ### Mobile-friendly layout
 
@@ -154,7 +172,7 @@ Quick glance after connection. Pulled from UDS 0x22 identifiers and SVT tree.
 │                                          │
 │              ✅                          │
 │     No fault codes found!                │
-│     Your BMW is healthy.                 │
+│     No faults reported by the ECUs successfully scanned.                 │
 │                                          │
 │     [Read DTCs Again]                    │
 │                                          │
@@ -218,8 +236,8 @@ Each DTC card shows:
 
 1. User enters Diagnostics tab
 2. Spinner: "Reading fault codes..."
-3. App sends UDS 0x19 02 08 to every ECU in the SVT tree (parallel, with timeout)
-4. Results aggregated, deduplicated, enriched with DtcDatabase
+3. App sends UDS 0x19 02 08 to each identified ECU through serialized transport transactions (with timeout)
+4. Results aggregated with ECU identity retained, enriched with DtcDatabase
 5. Display list or "No faults" message
 
 ### Clear flow
@@ -259,7 +277,7 @@ Each DTC card shows:
 └──────────────────────────────────────────┘
 ```
 
-Entries read from headunit via service history RIDs (see docs/12).
+Entries require a verified read-only headunit contract (unresolved; see docs/12).
 Sorted by date descending.
 
 ### Detail view (expanded from list)
@@ -322,9 +340,19 @@ Sorted by date descending.
 ```
 
 Checkboxes for common BMW service items. Date and mileage pickers.
-Writes to headunit via UDS RoutineControl (see docs/12).
+Writes require a verified headunit encoder and readback contract (unresolved; see docs/12).
 
 ---
+
+## Write integrity requirement (owner-confirmed, 2026-10-28)
+
+Coding and history mutations save a durable backup of the original vehicle data,
+retain intended state, then reread and compare before showing success. Fault
+clearing has an explicit no-saved-report exception. On reconnect after interrupted
+writes, reread/compare before user-chosen recovery; never automatically replay.
+History supports add/edit/delete/replace; CBS reads/resets are future scope.
+The historical dialogs below are proposals; do not advertise restore capability
+until a matching-identity vehicle restore and readback path exists.
 
 ## Screen 7: Coding — shared behavior
 
@@ -347,7 +375,7 @@ Both Easy and Advanced Coding share these elements:
 3. If Advanced: second warning about risks
 4. **Auto-backup** current coding data for the affected ECUs (saved to disk)
 5. Spinner: "Writing coding data..." (per ECU, sequential)
-6. Success: "3 changes written successfully"
+6. Reread the affected car state and compare with intended state; report success only on a verified match.
 7. Failure: "Failed to write [ECU_NAME]. Original coding has been backed up.
    [Rollback] [Retry]"
 
@@ -498,8 +526,8 @@ Hex-only input for raw FDL values.
 └──────────────────────────────────────────┘
 ```
 
-Backups store the raw CAFD/FDL data per ECU before writing. Rollback restores
-the exact pre-coding state via UDS WriteDataByIdentifier (0x2E).
+Backups store the raw CAFD/FDL data per ECU before writing. Rollback requires a verified per-ECU write/readback contract and matching
+vehicle/software identity; the current UI-only restore does not meet this requirement.
 
 Backup format (per directory):
 ```
@@ -560,8 +588,8 @@ backups/2026-10-25_14-22/
 |--------|--------------|--------------|
 | **Vehicle overview** | UDS 0x22 (VIN, I-Level), 0x1A (mileage) | None |
 | **Diagnostics** | UDS 0x19 02 (DTCs by status), 0x19 04/06 (snapshot) | UDS 0x14 (clear) |
-| **Service History** | UDS 0x31 (RoutineControl 0xA081 — read) | UDS 0x31 (0xA081 add, 0xA080 erase) |
-| **Easy Coding** | UDS 0x22 (read CAFD/FDL per ECU) | UDS 0x2E (WriteDataByIdentifier) or 0x3D (RoutineControl) |
+| **Service History** | Read-only contract unresolved (doc 12) | Encoder/readback unresolved (doc 12) |
+| **Easy Coding** | UDS 0x22 (read CAFD/FDL per ECU) | Verified per-ECU coding contract; no guessed service/DID fallback |
 | **Advanced Coding** | UDS 0x22 (read full SVT + FDL) | UDS 0x2E (WriteDataByIdentifier) |
 
 ---

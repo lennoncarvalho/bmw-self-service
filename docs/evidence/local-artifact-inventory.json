@@ -1,0 +1,40 @@
+{
+  "purpose": "Identity inventory only; hashing does not validate protocol interpretation",
+  "artifacts": [
+    {
+      "path": "sources/BimmerCode_v4.25.04-12743.apk",
+      "bytes": 76266654,
+      "sha256": "fc6eedeb741cbec49f46c126f8c72dac6a3dd1455f8a993c028695642459b728"
+    },
+    {
+      "path": "sources/BimmerLink_v2.36.1.apk",
+      "bytes": 50327475,
+      "sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5"
+    },
+    {
+      "path": "sources/SHM/SHM.exe",
+      "bytes": 3570480,
+      "sha256": "2d6bb52808f1754ac9334958530c5b2c60ec373fa35b674f28bdb34dc93cf92a"
+    },
+    {
+      "path": "sources/SHM/history.2026.09.24.bmwsh",
+      "bytes": 360,
+      "sha256": "5195951a79fd6e2a33c0a47e3953e5b285afc8b7c7e421f2a9693073e236a67c"
+    },
+    {
+      "path": "sources/NBT.prg",
+      "bytes": 2102041,
+      "sha256": "e94e3b4434c9f8563448ee0b89153ed62856cce3d72db61b18373b184f896415"
+    },
+    {
+      "path": "sources/CIC.prg",
+      "bytes": 2265722,
+      "sha256": "d77e5bf8dd036d58354fa560dff1403610a1e194a21d2b650066b4baaa853650"
+    },
+    {
+      "path": "dtc_descriptions.db",
+      "bytes": 19804160,
+      "sha256": "cf3b7e7a23b9d0bf6f0da6c46902a82e7674d1822deac32d35dfc9e3ccf487f8"
+    }
+  ]
+}
