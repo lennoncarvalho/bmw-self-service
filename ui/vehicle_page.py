@@ -124,7 +124,10 @@ class VehiclePage(QWidget):
         """Populate the dashboard with vehicle data from the connection.
 
         For mock connections, reads from MockConnection.data.
-        For real connections, sends UDS 0x22 requests.
+        For real connections, expects data to be passed via
+        ``populate()`` after a ``PostConnectWorker`` completes.
+        This method exists for backward compatibility with the
+        direct-connect flow (mock mode).
         """
         # Try mock data first (MockConnection has .data attribute)
         if hasattr(connection, "data") and connection.data:
@@ -172,128 +175,80 @@ class VehiclePage(QWidget):
             self._populate_ecus(ecus)
             return
 
-        # Real connection: read via UDS
-        try:
-            self._load_from_car(connection, series)
-        except Exception as e:
-            logger.warning("Failed to read vehicle data from car: %s", e)
-            self.model_label.setText("Vehicle data unavailable")
-            self.vin_label.setText("Could not read from ECU")
-
-    def _load_from_car(self, connection: Any, series: str = "") -> None:
-        """Read vehicle information via UDS from the car."""
+        # Real connection: data will be populated via populate() later.
+        # Show a placeholder until then.
         model_map = {"F": "F-series", "G": "G-series", "U": "U-series", "I": "I-series"}
-        model = model_map.get(series, "BMW")
-        vin = "Unknown"
-        ilevel = "Unknown"
-        mileage = "Unknown"
-        battery = "Unknown"
-        prod_date = "Unknown"
-        ecus: list[dict] = []
+        self.model_label.setText(model_map.get(series, "BMW"))
+        self.vin_label.setText("VIN: reading...")
+        self.mileage_label.setText("Mileage: reading...")
+        self.ilevel_label.setText("I-Level: reading...")
+        self.battery_label.setText("Battery: reading...")
+        self.ecu_count_label.setText("Scanning ECUs...")
 
-        # VIN (0xF190) — may already have been read during connect
-        try:
-            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x90]), timeout=5.0)
-            if resp[0] == 0x62:
-                vin = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
-        except Exception as e:
-            logger.debug("VIN read failed: %s", e)
+    def populate(
+        self,
+        results: dict[str, object],
+        series: str = "",
+        vin: str = "",
+    ) -> None:
+        """Populate the dashboard from pre-loaded UDS results.
 
-        # I-Level (0xF18A)
-        try:
-            resp = connection.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
-            if resp[0] == 0x62:
-                ilevel = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
-        except Exception as e:
-            logger.debug("I-Level read failed: %s", e)
+        Called by ``MainWindow`` after ``PostConnectWorker`` finishes.
+        No UDS calls are made here — this is pure display.
 
-        # T-15: Read FA (Vehicle Order) from ZGW — use bounded timeout
-        # FA DID varies: 0xF100 (F-series), 0xFC00 (some G-series).
-        # Returns XML with VIN, TypeCode, ProductionDate, SALAPA option codes.
-        fa_xml = ""
-        for fa_did in (0xF100, 0xFC00):
-            try:
-                resp = connection.send_uds(
-                    0x10,
-                    bytes([0x22, (fa_did >> 8) & 0xFF, fa_did & 0xFF]),
-                    timeout=5.0,
-                )
-                if resp[0] == 0x62:
-                    fa_xml = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
-                    break
-            except Exception:
-                pass
-        # Store FA for callers (coding_page uses it for model detection)
-        self._fa_xml = fa_xml
+        Args:
+            results: Dict with keys like ``vin``, ``i-level``,
+                     ``mileage``, ``battery``, ``svt``, ``prod_date``.
+            series: BMW series letter (F/G/U/I).
+            vin: VIN already read during connect (may be empty).
+        """
+        model_map = {"F": "F-series", "G": "G-series", "U": "U-series", "I": "I-series"}
 
-        # T-13: Extract production date from FA XML
-        # FA contains <ProductionDate>MMYY</ProductionDate> (e.g. "0317" = March 2017)
-        if fa_xml:
-            import re as _re
-            _m = _re.search(r"<ProductionDate>(\d{4})</ProductionDate>", fa_xml)
-            if _m:
-                pd = _m.group(1)
-                prod_date = f"20{pd[2:]}-{pd[:2]}"  # "0317" → "2017-03"
-            # Also extract type code for model identification
-            _tc = _re.search(r"<TypeCode>(\w+)</TypeCode>", fa_xml)
-            if _tc:
-                self._type_code = _tc.group(1)
+        # Model / VIN
+        self.model_label.setText(model_map.get(series, "BMW"))
+        self.vin_label.setText(f"VIN: {vin or results.get('vin', 'Unknown')}")
 
-        # G-1: Mileage via UDS 0x1A from KOMBI (0x60)
-        # Falls back to 0x22 0xF4xx DID if 0x1A not supported
-        try:
-            resp = connection.send_uds(0x60, bytes([0x1A, 0x00]), timeout=5.0)
-            if resp[0] == 0x5A and len(resp) >= 5:
-                mileage_raw = int.from_bytes(resp[3:7], "big")
-                mileage = f"{mileage_raw:,} km"
-        except Exception:
-            # Fallback: ReadDataByIdentifier 0xF406 (odometer DID)
-            try:
-                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x06]), timeout=5.0)
-                if resp[0] == 0x62 and len(resp) >= 7:
-                    mileage_raw = int.from_bytes(resp[3:7], "big")
-                    # BMW encodes mileage in 10s of km
-                    mileage_val = mileage_raw // 10
-                    mileage = f"{mileage_val:,} km"
-            except Exception as e:
-                logger.debug("Mileage read failed: %s", e)
+        # I-Level
+        ilevel = results.get("i_level")
+        self.ilevel_label.setText(
+            f"I-Level: {ilevel}" if ilevel else "I-Level: unavailable"
+        )
 
-        # G-3: Battery voltage via 0x22 0xF40C from DME (0x12) or ZGW
-        try:
-            resp = connection.send_uds(0x12, bytes([0x22, 0xF4, 0x0C]), timeout=5.0)
-            if resp[0] == 0x62 and len(resp) >= 5:
-                voltage_raw = int.from_bytes(resp[3:5], "big")
-                battery = f"{voltage_raw / 10.0:.1f}V"
-        except Exception:
-            try:
-                resp = connection.send_uds(0x10, bytes([0x22, 0xF4, 0x0C]), timeout=5.0)
-                if resp[0] == 0x62 and len(resp) >= 5:
-                    voltage_raw = int.from_bytes(resp[3:5], "big")
-                    battery = f"{voltage_raw / 10.0:.1f}V"
-            except Exception as e:
-                logger.debug("Battery voltage read failed: %s", e)
+        # Mileage
+        mileage = results.get("mileage")
+        self.mileage_label.setText(
+            f"Mileage: {mileage}" if mileage else "Mileage: unavailable"
+        )
 
-        # G-2: SVT ECU list from ZGW via 0x22 0xF0 0x00
-        # NOTE: Exact SVT DID varies by chassis. 0xF000 is a common placeholder;
-        # real-car testing will determine the correct DID for each series.
-        try:
-            resp = connection.send_uds(0x10, bytes([0x22, 0xF0, 0x00]))
-            if resp[0] == 0x62:
-                # Minimal parser: skip echo bytes, try to extract ECU names
-                ecus = _parse_svt_response(resp)
-        except Exception as e:
-            logger.debug("SVT read failed: %s", e)
+        # Battery voltage
+        battery = results.get("battery")
+        self.battery_label.setText(
+            f"Battery: {battery}" if battery else "Battery: unavailable"
+        )
 
-        self.model_label.setText(model)
-        self.vin_label.setText(f"VIN: {vin}")
-        self.mileage_label.setText(f"Mileage: {mileage}")
-        self.ilevel_label.setText(f"I-Level: {ilevel}")
-        self.prod_date_label.setText(f"Production Date: {prod_date}" if prod_date != "Unknown" else "")
-        self.battery_label.setText(f"Battery: {battery}" if battery != "Unknown" else "")
+        # Production date
+        prod_date = results.get("prod_date")
+        self.prod_date_label.setText(
+            f"Production Date: {prod_date}" if prod_date else ""
+        )
 
-        self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")
-        self._ecus = ecus
-        self._populate_ecus(ecus)
+        # SVT ECU list
+        ecus = results.get("svt")
+        if isinstance(ecus, list):
+            self._ecus = ecus
+            self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")
+            self._populate_ecus(ecus)
+        elif isinstance(ecus, dict):
+            ecus_list = ecus.get("ecus", [])
+            self._ecus = ecus_list
+            self.ecu_count_label.setText(f"{len(ecus_list)} ECUs detected")
+            self._populate_ecus(ecus_list)
+        else:
+            self.ecu_count_label.setText("ECU scan failed")
+
+        # Store FA / type code for coding_page
+        self._fa_xml = results.get("fa_xml", "")
+        self._type_code = results.get("type_code", "")
 
     def _populate_ecus(self, ecus: list) -> None:
         """Fill the ECU list with name + description tags."""

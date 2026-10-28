@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from app.connection import DoIPConnection, HSFZConnection
 from app.mock_connection import MockConnection
+from app.worker import PostConnectWorker
 from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
@@ -473,28 +474,229 @@ class MainWindow(QMainWindow):
         self.nav_group.button(0).setChecked(True)
         self.stack.setCurrentIndex(1)
 
-        # Load vehicle data into the dashboard
-        self.vehicle_page.load_data(connection, series)
-        # Pass connection and ECUs to diagnostics page
-        ecus: list[dict] = []
-        if hasattr(connection, "data") and connection.data:
-            ecus = connection.data.get("svt_ecus", [])
-        elif hasattr(self.vehicle_page, "_ecus"):
-            ecus = self.vehicle_page._ecus
-        self.diag_page.set_connection(connection, ecus)
-        # Pass connection to service history page
-        self.history_page.set_connection(connection)
-        self.coding_page.set_connection(connection, ecus)
-
         # Start keep-alive timers for real connections
         if not self._demo_mode:
             self._start_keepalive()
 
-        self.hide_spinner()
+        # Mock mode: load data directly from MockConnection (no UDS needed)
+        if hasattr(connection, "data") and connection.data:
+            self.vehicle_page.load_data(connection, series)
+            ecus = connection.data.get("svt_ecus", [])
+            self.diag_page.set_connection(connection, ecus)
+            self.history_page.set_connection(connection)
+            self.coding_page.set_connection(connection, ecus)
+            self.hide_spinner()
+            logger.info("Connected successfully (demo=%s)", self._demo_mode)
+            return
+
+        # Real car: start PostConnectWorker to read vehicle data
+        # sequentially (with queue progress shown in spinner).
+        self.show_spinner("Reading vehicle data...")
+        tasks = self._build_post_connect_tasks(vin)
+        self._post_connect_worker = PostConnectWorker(connection, tasks)
+        self._post_connect_worker.progress.connect(self.show_spinner)
+        self._post_connect_worker.finished.connect(
+            lambda result: self._on_post_connect_finished(result, vin, series)
+        )
+        self._post_connect_worker.error.connect(self._on_post_connect_error)
+        self._post_connect_worker.start()
+
         logger.info("Connected successfully (demo=%s)", self._demo_mode)
 
+    def _build_post_connect_tasks(
+        self, vin: str = ""
+    ) -> list[tuple[str, object]]:
+        """Build the queue of data-loading tasks for PostConnectWorker.
+
+        Each task is a ``(label, fn)`` tuple where ``fn(connection)``
+        performs one or more UDS reads and returns a parsed value.
+        Fallback logic lives inside each task function.
+        """
+        # -- I-Level (0xF18A from ZGW) ----------------------------------------
+        def _read_ilevel(conn):
+            resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
+            if resp[0] == 0x62:
+                return resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
+            raise ValueError(f"Unexpected response SID: 0x{resp[0]:02X}")
+
+        # -- FA / Vehicle Order (0xF100 then 0xFC00 fallback) -----------------
+        def _read_fa(conn):
+            """Returns a dict with fa_xml, prod_date, type_code."""
+            import re as _re
+
+            fa_xml = ""
+            for fa_did in (0xF100, 0xFC00):
+                try:
+                    resp = conn.send_uds(
+                        0x10,
+                        bytes([0x22, (fa_did >> 8) & 0xFF, fa_did & 0xFF]),
+                        timeout=5.0,
+                    )
+                    if resp[0] == 0x62:
+                        fa_xml = resp[3:].decode(
+                            "ascii", errors="ignore"
+                        ).strip("\x00 ")
+                        break
+                except Exception:
+                    pass
+
+            prod_date = ""
+            type_code = ""
+            if fa_xml:
+                m = _re.search(
+                    r"<ProductionDate>(\d{4})</ProductionDate>", fa_xml
+                )
+                if m:
+                    pd = m.group(1)
+                    prod_date = f"20{pd[2:]}-{pd[:2]}"
+                tc = _re.search(r"<TypeCode>(\w+)</TypeCode>", fa_xml)
+                if tc:
+                    type_code = tc.group(1)
+
+            return {
+                "fa_xml": fa_xml,
+                "prod_date": prod_date,
+                "type_code": type_code,
+            }
+
+        # -- Mileage: try KOMBI 0x1A, then ZGW 0x22 0xF406 --------------------
+        def _read_mileage(conn):
+            # Primary: KOMBI (0x60) via 0x1A ReadDynamicallyDefineDataIdentifier
+            try:
+                resp = conn.send_uds(0x60, bytes([0x1A, 0x00]), timeout=5.0)
+                if resp[0] == 0x5A and len(resp) >= 5:
+                    mileage_raw = int.from_bytes(resp[3:7], "big")
+                    return f"{mileage_raw:,} km"
+            except Exception:
+                pass
+
+            # Fallback: ZGW via ReadDataByIdentifier 0xF406
+            resp = conn.send_uds(
+                0x10, bytes([0x22, 0xF4, 0x06]), timeout=5.0,
+            )
+            if resp[0] == 0x62 and len(resp) >= 7:
+                mileage_raw = int.from_bytes(resp[3:7], "big")
+                # BMW encodes mileage in 10s of km
+                mileage_val = mileage_raw // 10
+                return f"{mileage_val:,} km"
+            raise ValueError(
+                f"Could not read mileage (resp SID: 0x{resp[0]:02X})"
+            )
+
+        # -- Battery voltage: try DME (0x12), then ZGW (0x10) -----------------
+        def _read_battery(conn):
+            for ecu in (0x12, 0x10):
+                try:
+                    resp = conn.send_uds(
+                        ecu, bytes([0x22, 0xF4, 0x0C]), timeout=5.0,
+                    )
+                    if resp[0] == 0x62 and len(resp) >= 5:
+                        voltage_raw = int.from_bytes(resp[3:5], "big")
+                        return f"{voltage_raw / 10.0:.1f}V"
+                except Exception:
+                    continue
+            raise ValueError("Could not read battery voltage from any ECU")
+
+        # -- SVT ECU list (0xF000 from ZGW) -----------------------------------
+        def _read_svt(conn):
+            resp = conn.send_uds(
+                0x10, bytes([0x22, 0xF0, 0x00]), timeout=10.0,
+            )
+            if resp[0] == 0x62:
+                from ui.vehicle_page import _parse_svt_response
+                return _parse_svt_response(resp)
+            raise ValueError(
+                f"Unexpected SVT response SID: 0x{resp[0]:02X}"
+            )
+
+        tasks: list[tuple[str, object]] = [
+            ("I-Level", _read_ilevel),
+            ("Vehicle Order (FA)", _read_fa),
+            ("Mileage", _read_mileage),
+            ("Battery voltage", _read_battery),
+            ("ECU list", _read_svt),
+        ]
+
+        return tasks
+
+    @Slot(object)
+    def _on_post_connect_finished(
+        self, result: dict, vin: str, series: str
+    ) -> None:
+        """Handle PostConnectWorker completion on the main thread.
+
+        Populates the vehicle page with results, reports any errors,
+        then starts the secondary workers (DTC read, service history,
+        coding load).
+        """
+        results: dict = result.get("results", {})
+        errors: dict = result.get("errors", {})
+
+        # Extract sub-results from FA dict
+        fa_data = results.get("vehicle_order_(fa)")
+        if isinstance(fa_data, dict):
+            results["prod_date"] = fa_data.get("prod_date", "")
+            results["fa_xml"] = fa_data.get("fa_xml", "")
+            results["type_code"] = fa_data.get("type_code", "")
+
+        # Populate vehicle page with all results
+        self.vehicle_page.populate(results, series, vin)
+
+        # Report any errors with a single friendly dialog
+        if errors:
+            error_lines = []
+            for label, msg in sorted(errors.items()):
+                # Make label human-readable
+                human = label.replace("_", " ").title()
+                error_lines.append(f"• {human}: {msg}")
+            error_text = "\n".join(error_lines)
+            logger.warning(
+                "Post-connect: %d errors — %s", len(errors), error_text,
+            )
+            QMessageBox.information(
+                self,
+                "Some Data Unavailable",
+                "The following items could not be read from the vehicle:\n\n"
+                f"{error_text}\n\n"
+                "Other features remain available.",
+            )
+
+        # Now start secondary workers (DTC read, service history, coding).
+        # These run on their own background threads and will queue
+        # naturally on the connection lock.
+        ecus: list[dict] = results.get("ecu_list") or results.get("svt") or []
+        if isinstance(ecus, dict):
+            ecus = ecus.get("ecus", [])
+        self.diag_page.set_connection(self._connection, ecus)
+        self.history_page.set_connection(self._connection)
+        self.coding_page.set_connection(self._connection, ecus)
+
+        self.hide_spinner()
+
+    def _on_post_connect_error(self, error_msg: str) -> None:
+        """Handle PostConnectWorker fatal error."""
+        self.hide_spinner()
+        QMessageBox.warning(
+            self,
+            "Data Load Failed",
+            f"Could not read vehicle data:\n\n{error_msg}\n\n"
+            "The connection may still be usable. Check the "
+            "Vehicle page for available information.",
+        )
+        # Still try to set up the other pages with what we have
+        self.diag_page.set_connection(self._connection, [])
+        self.history_page.set_connection(self._connection)
+        self.coding_page.set_connection(self._connection, [])
+        logger.warning("Post-connect data load failed: %s", error_msg)
+
     def _start_keepalive(self) -> None:
-        """Start HSFZ alive-check and UDS TesterPresent timers."""
+        """Start HSFZ alive-check and UDS TesterPresent timers.
+
+        Both are non-blocking: they try the connection lock and skip
+        this cycle if a ``send_uds()`` is in flight.  Missing one
+        cycle is harmless for both the transport-layer heartbeat and
+        the UDS session timer.
+        """
         conn = self._connection
         if conn is None:
             return
@@ -503,31 +705,42 @@ class MainWindow(QMainWindow):
         if hasattr(conn, "alive_check"):
             logger.debug("Starting HSFZ alive-check timer (every 2s)")
             self._alive_timer = QTimer(self)
-            self._alive_timer.timeout.connect(conn.alive_check)
+            self._alive_timer.timeout.connect(
+                lambda c=conn: self._do_alive_check(c)
+            )
             self._alive_timer.start(2000)
 
         # Application-layer: UDS TesterPresent every 2.5 seconds
-        if hasattr(conn, "send_uds"):
-            _first_tp = [True]  # mutable to capture in closure
-            _failed_tp = [0]    # T-12: consecutive failure counter
+        if hasattr(conn, "tester_present"):
+            _first_tp = [True]
 
-            def _tester_present():
-                try:
-                    conn.send_uds(0x10, bytes([0x3E, 0x00]), timeout=2.0)
-                    _failed_tp[0] = 0  # reset on success
-                    if _first_tp[0]:
-                        logger.debug("Starting TesterPresent timer (every 2.5s)")
-                        _first_tp[0] = False
-                except Exception:
-                    _failed_tp[0] += 1
-                    # T-12: After 3 consecutive failures (~7.5s), treat as lost
-                    if _failed_tp[0] >= 3:
-                        self._tester_present_timer.stop()
-                        self._on_connection_lost()
+            def _do_tester_present(c=conn):
+                if _first_tp[0]:
+                    logger.debug(
+                        "Starting TesterPresent timer (every 2.5s)"
+                    )
+                    _first_tp[0] = False
+                ok = c.tester_present()
+                if not ok and not c.alive_ok:
+                    self._tester_present_timer.stop()
+                    self._on_connection_lost()
 
             self._tester_present_timer = QTimer(self)
-            self._tester_present_timer.timeout.connect(_tester_present)
+            self._tester_present_timer.timeout.connect(_do_tester_present)
             self._tester_present_timer.start(2500)
+
+    def _do_alive_check(self, conn: object) -> None:
+        """Send transport-layer keep-alive and check connection health.
+
+        T-12: After 3 consecutive alive-check failures (~6s), treat
+        the connection as lost.
+        """
+        if hasattr(conn, "alive_check"):
+            conn.alive_check()
+            if hasattr(conn, "alive_ok") and not conn.alive_ok:
+                self._alive_timer.stop()
+                self._tester_present_timer.stop()
+                self._on_connection_lost()
 
     def _on_connection_lost(self) -> None:
         """T-12: Handle lost connection with reconnect dialog.

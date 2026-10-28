@@ -7,6 +7,11 @@ Provides:
   - HSFZConnection — HSFZ transport (F-series, TCP 6801)
   - DoIPConnection — DoIP transport (G/U/I-series, TCP 13400)
 
+All socket I/O is serialized through a threading.Lock so that
+multiple pages firing send_uds() simultaneously don't corrupt
+the TCP stream. ACK (0x0002) messages from the ZGW are handled
+transparently inside send_uds().
+
 Reference: docs/10-hsfz-protocol.md, docs/05-protocol-reference.md
 """
 
@@ -14,9 +19,12 @@ import contextlib
 import logging
 import os
 import platform
+import select
 import socket
 import struct
 import subprocess
+import threading
+import time as _time
 
 import netifaces
 
@@ -394,6 +402,16 @@ class HSFZConnection:
     Wraps UDS messages in HSFZ framing. Handles TCP connect, send,
     receive, keep-alive, and disconnect.
 
+    Thread safety: All socket I/O is serialized through ``_lock`` so
+    that multiple workers calling ``send_uds()`` concurrently don't
+    corrupt the TCP stream. Callers simply call ``send_uds()`` from
+    any thread — the lock queues them automatically.
+
+    ACK handling: The ZGW acknowledges every message with an
+    ``acknowledge_transfer`` (0x0002) frame before sending the actual
+    ``diagnostic_req_res`` (0x0001) response.  ``send_uds()`` reads
+    through the ACK transparently.
+
     Example:
         >>> conn = HSFZConnection("169.254.1.1")
         >>> conn.connect()
@@ -412,6 +430,10 @@ class HSFZConnection:
         self.host = host
         self.port = port
         self.sock: socket.socket | None = None
+        self._lock = threading.Lock()
+        self._alive_failures = 0
+
+    # ── Connection lifecycle ────────────────────────────────────────────
 
     def connect(self) -> bool:
         """Open TCP connection to the vehicle's ZGW.
@@ -426,6 +448,7 @@ class HSFZConnection:
             self.sock.settimeout(5.0)  # Connection timeout
             self.sock.connect((self.host, self.port))
             self.sock.settimeout(30.0)  # Data timeout
+            self._alive_failures = 0
             logger.info(
                 "HSFZ connected to %s:%d (TCP_NODELAY, timeout=30s)",
                 self.host, self.port,
@@ -439,31 +462,53 @@ class HSFZConnection:
             self.sock = None
             return False
 
+    def disconnect(self) -> None:
+        """Close the TCP connection to the ZGW."""
+        with self._lock:
+            if self.sock:
+                with contextlib.suppress(OSError):
+                    self.sock.shutdown(socket.SHUT_RDWR)
+                with contextlib.suppress(OSError):
+                    self.sock.close()
+                self.sock = None
+                self._alive_failures = 0
+                logger.info(
+                    "HSFZ disconnected from %s:%d", self.host, self.port
+                )
+
+    # ── UDS messaging (the core API) ─────────────────────────────────────
+
     def send_uds(
         self, ecu_addr: int, payload: bytes, timeout: float = 30.0
     ) -> bytes:
         """Send a UDS message and return the response payload.
 
-        Builds the HSFZ-framed message, sends it over TCP, reads the
-        HSFZ-framed response, and returns the UDS payload bytes.
+        Thread-safe: serialized through ``_lock`` so only one request
+        is in-flight at a time.  Blocking callers simply queue up.
+
+        The ZGW may respond with an ``acknowledge_transfer`` (0x0002)
+        frame first — this method reads through it transparently and
+        returns the actual UDS payload from the ``diagnostic_req_res``
+        (0x0001) that follows.
 
         Args:
             ecu_addr: Target ECU address (e.g. 0x63 for headunit).
             payload: UDS message payload (service byte + data).
-            timeout: Maximum seconds to wait for response.
+            timeout: Maximum seconds to wait for the complete
+                     response (ACK + UDS response).
 
         Returns:
             UDS response payload bytes (service byte + data).
 
         Raises:
-            ConnectionError: If not connected or connection lost.
-            TimeoutError: If no response within timeout.
+            ConnectionError: If not connected, connection lost, or
+                             ZGW reports a protocol error.
+            TimeoutError: If no response within *timeout* seconds.
         """
         if self.sock is None:
             raise ConnectionError("Not connected")
 
-        # Build the full HSFZ frame using app.uds.build_uds
-        # payload already contains service byte + data
+        # Build the full HSFZ frame
         service = payload[0]
         extra = payload[1:] if len(payload) > 1 else b""
         frame = build_uds(ecu_addr, service, extra)
@@ -473,81 +518,234 @@ class HSFZConnection:
             ecu_addr, len(frame), frame.hex(" "),
         )
 
-        self.sock.settimeout(timeout)
+        start = _time.monotonic()
+        with self._lock:
+            self.sock.settimeout(timeout)
+            try:
+                self.sock.sendall(frame)
+            except OSError as e:
+                raise ConnectionError(f"Send failed: {e}") from e
+
+            # Read the first HSFZ message from the ZGW.
+            # This may be an ACK (0x0002) or the actual response (0x0001).
+            elapsed = _time.monotonic() - start
+            remaining = max(timeout - elapsed, 1.0)
+            msg_type, msg_src, _msg_dst, uds_payload = self._recv_hsfz_message(
+                remaining
+            )
+
+            # If the ZGW sent an ACK first, the real UDS response follows.
+            if msg_type == TYPE_ACK_TRANSFER:
+                logger.debug(
+                    "HSFZ ACK from 0x%02X (%.0fms), reading UDS response",
+                    msg_src, (_time.monotonic() - start) * 1000,
+                )
+                elapsed = _time.monotonic() - start
+                remaining = max(timeout - elapsed, 1.0)
+                msg_type, msg_src, _msg_dst, uds_payload = (
+                    self._recv_hsfz_message(remaining)
+                )
+
+            # Now we should have the real response.
+            if msg_type == TYPE_DIAG_REQ_RES:
+                elapsed_ms = (_time.monotonic() - start) * 1000
+                logger.debug(
+                    "UDS rx ECU=0x%02X len=%d (%.0fms): %s",
+                    msg_src, len(uds_payload), elapsed_ms,
+                    uds_payload.hex(" "),
+                )
+                return uds_payload
+            elif msg_type == TYPE_ACK_TRANSFER:
+                # Two ACKs in a row — stale data in the buffer.
+                # Drain it and try once more.
+                logger.warning(
+                    "HSFZ: consecutive ACKs from 0x%02X — "
+                    "draining stale response", msg_src,
+                )
+                elapsed = _time.monotonic() - start
+                remaining = max(timeout - elapsed, 1.0)
+                msg_type, msg_src, _msg_dst, uds_payload = (
+                    self._recv_hsfz_message(remaining)
+                )
+                if msg_type == TYPE_DIAG_REQ_RES:
+                    elapsed_ms = (_time.monotonic() - start) * 1000
+                    logger.debug(
+                        "UDS rx ECU=0x%02X len=%d (%.0fms): %s",
+                        msg_src, len(uds_payload), elapsed_ms,
+                        uds_payload.hex(" "),
+                    )
+                    return uds_payload
+                else:
+                    raise ConnectionError(
+                        f"Expected UDS response after draining ACKs, "
+                        f"got HSFZ type 0x{msg_type:04X}"
+                    )
+            elif msg_type in HSFZ_ERROR_TYPES:
+                raise ConnectionError(
+                    f"ZGW error: {HSFZ_ERROR_TYPES[msg_type]} "
+                    f"(type 0x{msg_type:04X})"
+                )
+            else:
+                raise ConnectionError(
+                    f"Unexpected HSFZ response type: 0x{msg_type:04X}"
+                )
+
+    # ── Keep-alive ──────────────────────────────────────────────────────
+
+    def alive_check(self) -> bool:
+        """Send transport-layer keep-alive (HSFZ type 0x0012).
+
+        Must be called every ~2 seconds to prevent the ZGW from closing
+        the TCP connection.  Drains the expected ACK (0x0002) response
+        so it doesn't pile up and corrupt the next ``send_uds()``.
+
+        Non-blocking: if the lock is held by a ``send_uds()`` call the
+        drain is skipped — the next ``send_uds()`` will drain any stale
+        ACK first.
+
+        Returns:
+            True if the keep-alive was sent (and ACK drained if
+            possible). False if the socket is gone.
+        """
+        if self.sock is None:
+            return False
+
+        frame = struct.pack(
+            ">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR
+        )
+
+        # Send — atomic for small frames, no lock needed.
         try:
             self.sock.sendall(frame)
-        except OSError as e:
-            raise ConnectionError(f"Send failed: {e}") from e
+        except OSError:
+            self._alive_failures += 1
+            return False
 
-        # Read HSFZ response header (8 bytes)
+        # Try to drain the ACK without blocking.
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            # send_uds() is in progress — it will drain any stale
+            # ACK when it reads its own response header.
+            return True
+
+        try:
+            self.sock.settimeout(0.05)
+            try:
+                msg_type, msg_src, _dst, _payload = self._recv_hsfz_message(
+                    0.05
+                )
+                if msg_type == TYPE_ACK_TRANSFER:
+                    logger.debug(
+                        "HSFZ alive ACK drained from 0x%02X", msg_src
+                    )
+                    self._alive_failures = 0
+            except (TimeoutError, socket.timeout):
+                # No ACK arrived yet — fine, it'll be drained later.
+                pass
+            except ConnectionError:
+                self._alive_failures += 1
+        finally:
+            self._lock.release()
+
+        return True
+
+    def tester_present(self) -> bool:
+        """Send UDS TesterPresent (0x3E 0x00) — non-blocking.
+
+        Tries to acquire the lock.  If a ``send_uds()`` is in flight
+        this cycle is skipped — the UDS session timer is long enough
+        (>5 s) that missing one cycle is harmless.
+
+        Returns:
+            True if sent and ACK drained, False if skipped or failed.
+        """
+        if self.sock is None:
+            return False
+
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            return True  # skipped, not a failure
+
+        try:
+            frame = build_uds(ZGW_ADDR, 0x3E, b"\x00")
+            self.sock.settimeout(1.0)
+            self.sock.sendall(frame)
+
+            # Read through ACK + response (or timeout trying).
+            try:
+                msg_type, _src, _dst, _payload = self._recv_hsfz_message(1.0)
+                if msg_type == TYPE_ACK_TRANSFER:
+                    # Drain the ACK — real response follows.
+                    try:
+                        self._recv_hsfz_message(1.0)
+                    except (TimeoutError, socket.timeout, ConnectionError):
+                        pass
+            except (TimeoutError, socket.timeout):
+                pass
+            except ConnectionError:
+                return False
+            return True
+        except OSError:
+            return False
+        finally:
+            self._lock.release()
+
+    @property
+    def alive_ok(self) -> bool:
+        """True if the last few keep-alive attempts succeeded."""
+        return self._alive_failures < 3
+
+    # ── Internal helpers ────────────────────────────────────────────────
+
+    def _recv_hsfz_message(
+        self, timeout: float
+    ) -> tuple[int, int, int, bytes]:
+        """Read one complete HSFZ message: header + payload.
+
+        Args:
+            timeout: Socket timeout for this read.
+
+        Returns:
+            Tuple of (hsfz_type, src_addr, dst_addr, payload_bytes).
+
+        Raises:
+            TimeoutError: If no data within *timeout*.
+            ConnectionError: If socket is closed mid-read.
+        """
+        self.sock.settimeout(timeout)
         try:
             hdr = self._recv_exact(8)
         except (TimeoutError, ConnectionError) as e:
             if isinstance(e, socket.timeout):
                 raise TimeoutError(
-                    f"ECU 0x{ecu_addr:02X} did not respond within "
-                    f"{timeout:.0f}s"
+                    f"HSFZ response header timeout after {timeout:.0f}s"
                 ) from e
             raise
 
         hsfz_len, hsfz_type, hsfz_src, hsfz_dst = struct.unpack(
             ">IHBB", hdr
         )
+        payload_len = hsfz_len - 2  # subtract src/dst bytes
 
-        # Read payload (hsfz_len - 2 accounts for src/dst in header)
-        payload_len = hsfz_len - 2
         try:
-            uds_payload = self._recv_exact(payload_len)
+            payload = (
+                self._recv_exact(payload_len) if payload_len > 0 else b""
+            )
         except (TimeoutError, ConnectionError) as e:
             if isinstance(e, socket.timeout):
                 raise TimeoutError(
-                    f"ECU 0x{ecu_addr:02X} response payload timeout"
+                    f"HSFZ payload timeout ({payload_len} bytes)"
                 ) from e
             raise
 
-        if hsfz_type == TYPE_DIAG_REQ_RES:
-            logger.debug(
-                "UDS rx ECU=0x%02X len=%d: %s",
-                hsfz_src, len(uds_payload), uds_payload.hex(" "),
-            )
-            return uds_payload
-        elif hsfz_type in HSFZ_ERROR_TYPES:
-            raise ConnectionError(
-                f"ZGW error: {HSFZ_ERROR_TYPES[hsfz_type]} "
-                f"(type 0x{hsfz_type:04X})"
-            )
-        else:
-            raise ConnectionError(
-                f"Unexpected HSFZ response type: 0x{hsfz_type:04X}"
-            )
-
-    def alive_check(self) -> None:
-        """Send transport-layer keep-alive (HSFZ type 0x0012).
-
-        Must be called every ~2 seconds to prevent the ZGW from closing
-        the TCP connection.
-        """
-        if self.sock is None:
-            return
-        frame = struct.pack(">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR)
-        with contextlib.suppress(OSError):
-            self.sock.sendall(frame)
-
-    def disconnect(self) -> None:
-        """Close the TCP connection to the ZGW."""
-        if self.sock:
-            with contextlib.suppress(OSError):
-                self.sock.shutdown(socket.SHUT_RDWR)
-            with contextlib.suppress(OSError):
-                self.sock.close()
-            self.sock = None
-            logger.info("HSFZ disconnected from %s:%d", self.host, self.port)
+        return (hsfz_type, hsfz_src, hsfz_dst, payload)
 
     def _recv_exact(self, n: int) -> bytes:
-        """Receive exactly n bytes from the socket.
+        """Receive exactly *n* bytes from the socket.
 
         Raises:
-            ConnectionError: If connection is closed before n bytes received.
+            ConnectionError: If connection is closed before *n* bytes
+                             received.
         """
         data = b""
         while len(data) < n:
@@ -559,6 +757,8 @@ class HSFZConnection:
                 raise ConnectionError("Connection closed by remote")
             data += chunk
         return data
+
+    # ── Context manager ─────────────────────────────────────────────────
 
     def __enter__(self) -> "HSFZConnection":
         self.connect()
