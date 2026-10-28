@@ -55,5 +55,7 @@ semantics cannot support verified success or guaranteed rollback.
 
 Headunit-local history, CBS counters and BMW backend history are separate
 stores. Backend synchronization and CBS resets are not established here.
-Append/edit/delete/replace behavior is pending in
-[the decision register](21-product-decisions.md).
+The owner requires read/add for the initial release; edit/delete/replace remain
+later requirements. Duplicate/chronology and field rules need explicit decisions
+before affected implementation. See [owner decisions](21-product-decisions.md)
+and [Task B acceptance](26-feature-readiness-spec.md).

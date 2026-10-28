@@ -22,6 +22,11 @@ Protocol correctness is determined by reproducible evidence, not preference.
 | D-13 | Conditionally prefer retaining the mandatory series picker if it simplifies connection behavior and initial loading across pages; this benefit must be assessed, not assumed |
 | D-14 | Identified but unverified ECU/software variants may use supported reads; disable unverified writes until exact definitions and write/readback support exist |
 | D-15 | GPL-compatible app distribution is acceptable when evaluating protocol dependencies such as Scapy; the actual app license and release materials still need recording |
+| D-16 | First usable release displays faults from all ECUs and offers one Clear All button; no per-ECU or single-code clear action in the UI |
+| D-17 | All applicable easy presets from the supplied coding APK/decrypted database are required, not a selected subset; use REA to recover missing mappings/read/write behavior and match the actual model/ECU/software |
+| D-18 | Service history read and add are required first; edit/delete/replace from D-09 remain later requirements. Advanced coding is later priority than the minimum easy-coding slice |
+| D-19 | Clear All continues on reachable supported ECUs if another ECU is unreachable; report exactly which cleared, failed or were not attempted, then reread supported status |
+| D-20 | Block an exact duplicate service-history addition matching date, mileage, dealer and service items. Interrupted-add recovery still rereads/compares and never automatically replays |
 
 ## Recovered context, with provenance
 
@@ -64,8 +69,9 @@ The owner selected reread/compare before recovery, full history editing, no test
 for now and no saved report for fault clearing. CBS is explicitly future scope:
 see [the future REA task](../tasks/future-cbs-research.md).
 
-Exact MIL behavior and supported DTC-clear scope still need clarification; do not
-promise that clearing eliminates an active fault or keeps the lamp off.
+Clear scope is resolved by D-16/D-19: one Clear All action with per-ECU
+outcomes, not per-ECU clear buttons. Exact MIL presentation remains to specify;
+do not promise clearing eliminates an active fault or keeps the lamp off.
 
 ## Connection follow-up resolved on 2026-10-28
 
@@ -95,10 +101,10 @@ Ask a few related questions at a time and record answers before implementation.
 | Release coverage | Wording and capability display for supported reads and disabled unverified writes (D-14) |
 | Connection | Assess conditional picker preference (D-13); multiple cars; identity failure; connected/loading/limited status wording |
 | Network setup | App-managed address/DHCP with elevation or guided manual setup? |
-| Coding | Exact supported preset families; unknown current values; advanced hex scope; protected/new signed coding restrictions |
-| History | Local headunit only; chronology and duplicate rules; dealer fields; date/km corrections; erase confirmation; notes kept locally or in car |
+| Coding | Full applicable source easy catalog required (D-17); define unknown/custom value display and unsupported/authorized software cases; advanced hex later |
+| History | Read/add first (D-18), exact duplicates blocked (D-20); chronology/field validation and service-item identity remain to settle; edit/delete/replace later |
 | Writes | Multi-ECU partial success; cancel during a write; readback mismatch; restore eligibility; voltage preconditions |
-| DTCs | Confirmed vs pending/current/history; per-ECU clear; single-code clear only when supported; incomplete scan presentation |
+| DTCs | All-ECU fault display and one Clear All (D-16/D-19); preserve source-supported status categories and explicit incomplete scan presentation; no per-ECU/per-code clear UI |
 | Data/UI | English/Portuguese/German labels, km/miles, localization, accessibility, keyboard navigation, desired visual redesign |
 | Persistence | Backup retention/export/import, per-vehicle isolation, sensitive VIN/raw-log handling, disk-full behavior |
 | Release | Windows validation access, signing/notarization, dataset distribution rights, offline updates/search behavior |

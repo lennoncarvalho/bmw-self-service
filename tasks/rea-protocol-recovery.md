@@ -1,11 +1,23 @@
-# Source-first BMW protocol recovery plan
+# Task B — source-first BMW protocol and feature recovery
 
-Status: ready for review; investigation plan, not completed reverse engineering.
+Status: ready for source investigation; not completed reverse engineering.
+Feature acceptance: [spec 26](../docs/26-feature-readiness-spec.md).
+Source/tool/evidence routing: [doc 27](../docs/27-rea-source-guide.md).
+Separate prerequisite runtime task: [Task A](protocol-library-migration.md),
+[spec 25](../docs/25-library-migration-spec.md). Research can start before A;
+app integration targets A's merged API. Do not reimplement its libraries here.
 Created 2026-10-28 after [the first retained car session](../docs/23-first-vehicle-session.md).
 Scope: ENET support across source-supported BMW F/G/U/I gateway/ECU/software
 families; retain the existing exclusion of E-series and other adapters.
 
 ## Outcome and constraints
+
+Required first usable slice: connection and real vehicle information, all-ECU
+fault display with one Clear All action, local history reads/adds and all
+applicable easy coding reads/writes. No preset subset is accepted as catalog
+completion. History edit/delete/replace, advanced coding and CBS are later scope.
+This task includes evidence, corrected operation specs and implementation PRs,
+not research documents alone. Spec 26 defines completion and pending choices.
 
 Derive implementable protocol contracts from supplied applications and their
 data, then use recorded traffic and vehicles to validate our implementation.
@@ -21,6 +33,28 @@ No app implementation is changed by this plan. Each later implementation starts
 on a fresh `codex/` branch and new PR. Preserve no-automated-suite policy: do not
 create `tests/`, even though offline byte analysis is possible. Keep all car I/O
 in CarWorker threads and source-tool names out of shipped code/assets.
+
+## Execution packages and tracking
+
+| Package | Required deliverable | Status |
+|---------|----------------------|--------|
+| B0 | REA session/package/class/method smoke + portable Evidence | Complete for Android tooling only; doc 27 |
+| B1 | Artifact/extraction reconciliation and feature contract ledger | Pending |
+| B2 | Source-derived connection/inventory + vehicle-info contracts, then integration | Pending |
+| B3 | All-ECU faults + one Clear All, partial results, post-clear reread | Pending |
+| B4 | Shared durable baseline/intent/readback storage and recovery state design | Pending; needed before B5/B6 mutations |
+| B5 | Headunit history read/add, exact duplicate block, independent readback | Pending |
+| B6 | Every applicable easy preset: catalog accounting, live values, composed write/readback | Pending |
+| B7 | Owner-operated acceptance, source coverage matrix and platform release closure | Pending |
+
+Use [the contract ledger](../docs/evidence/feature-contract-ledger.md), source
+guide 27 and spec 26. For each package record the exact files before code, source
+and portable Evidence links, corrected spec, implementation PR and verification.
+B2/B3 research may proceed while Task A is implemented; integrate through its
+merged API. B5/B6 read research can run independently, but mutations depend on
+B4 and their own complete encoder/readback. A missing applicable easy preset is
+an open item, not an acceptable undocumented subset. Do not implement B7's
+claimed results or check completed until actually observed.
 
 ## Established starting point
 
@@ -60,9 +94,16 @@ references. Never invent an Evidence ID or commit keys, personal config, VINs
 or entire proprietary source bundles. Keep standalone runtime dependencies
 separate from research tools and reference applications.
 
-## Phase 0 — restore reproducible analysis capability
+## Phase 0 — use the now-working analysis capability
 
-Fresh checks in this investigation:
+**After owner setup/restart:** REA MCP 6.8.0 now responds; actual package/class
+inspection and method smali fallback succeeded with JADX 0.7.1. Ghidra 12.1.4
+is reported available. Exported evidence, IDs and precise limitations are in
+doc 27. Do not reinstall/reconfigure to resolve the historical findings below.
+Android smoke inspection is complete; native target analysis is unattempted.
+Continue with the actual artifact and relevant advertised tools.
+
+Historical checks before the owner completed setup:
 
 - No REA MCP tools are advertised to this session.
 - Cached public REA launcher 6.8.0 runs with bundled Node 24.22.1. `npx` is
@@ -74,7 +115,7 @@ Fresh checks in this investigation:
   a reason to duplicate it. Do not repair other clients merely because they
   appear in informational diagnostics.
 
-Execution order:
+Historical recovery procedure, only for a new observed blocker:
 
 1. Check existing configuration/provider locations without exposing unrelated
    config. Prepare REA's scoped Codex `setup --dry-run --json`; show exact
@@ -94,9 +135,9 @@ Execution order:
    observations with unknown extraction provenance. Do not discard them or
    repeatedly re-decompile whole apps to answer focused questions.
 
-Exit: a successful real analysis with retained artifact identity/evidence and
-working relevant providers, or precise remaining blockers with a supported
-fallback. Tool setup is work to perform, not claimed complete by this plan.
+Exit: working relevant analysis with retained evidence. Android meets this
+smoke criterion now. Resolve missing tools only when a selected operation needs
+them; do not claim Ghidra analyzed SHM just because it is available.
 
 ## Phase 1 — artifact and evidence reconciliation
 
@@ -143,6 +184,11 @@ Unknown addresses must never silently become `0x00`.
 
 ## Phase 3 — vehicle information and complete diagnostics (next release slice)
 
+Deliver B-CON/B-INFO/B-DTC-R/B-DTC-W from spec 26. Recover Clear All targets
+and post-clear DTC/MIL checks, retaining the no-saved-report exception. Display
+faults from all ECUs; only one Clear All button, no per-ECU/per-code clear UI.
+Static/read-only research is not authorization for automatic vehicle mutation.
+
 Follow data loaders as well as code. Concrete local seeds to verify with REA:
 
 - `bimmerlink_extracted/smali/j6/h.smali` loads `dat/ecu-variants.enc`;
@@ -176,6 +222,10 @@ fields, without promoting one vehicle's result to universal support.
 
 ## Phase 4 — history and coding reads
 
+Deliver B-HIST-R/B-CODE-R first, then required add-history/easy-coding mutation
+work in phase 5. Full applicable easy catalog is in scope; advanced editing
+must not delay it. History edit/delete/replace are later work, not this release.
+
 These can be independent research lanes once identity/variant selection exists:
 
 - **History:** trace SHM read action through libraries/PRG interpreter into every
@@ -197,8 +247,15 @@ flows and exact live state for every enabled history/coding page.
 
 ## Phase 5 — mutations, backup, readback and recovery
 
-Only after read contracts exist, recover add/edit/delete/replace history,
-coding writes and diagnostic clearing separately. Trace security/session
+Deliver B-HIST-W/B-CODE-W/B-REC from spec 26. Implement shared durable state
+and recovery dependencies before enabling either mutation family. Trace read/
+write jointly where useful; user-visible writes require complete evidence.
+Only history add is required now; do not enable destructive history editing to
+meet a legacy checklist. Preserve the full original history when adding.
+
+Only after read contracts exist, recover history add, easy coding writes and
+diagnostic Clear All separately. Record edit/delete/replace as later contracts.
+Trace security/session
 requirements and modern signed/authorized coding restrictions; do not infer
 write permission from static flags or probe keys/bypasses.
 
@@ -241,15 +298,23 @@ gaps remain explicit even when static source support is broad.
 4. Verified mutations and recovery.
 5. Broader source coverage and platform releases.
 
+Track feature contracts by B-CON/B-INFO/B-DTC-R/B-DTC-W/B-HIST-R/B-HIST-W/
+B-CODE-R/B-CODE-W/B-REC with source/evidence/spec/code/verification links.
+Each row remains pending until its spec 26 acceptance is observed. Engine
+setup is no longer the baseline blocker. No new wire mapping is established
+by the limited tooling smoke inspection.
+
 Each package ends with retained evidence, corrected specs, implementation plan,
 an isolated PR when implemented, gate results and stated validation limits.
 Do not complete a package on class-name search, UI resemblance or mock success.
 Before UI implementation, resolve only the pending owner decisions it needs:
-DTC status/clear scope, MIL semantics, multiple-car selection, history editing
-rules and recovery presentation (doc 21). No further car session is required
+MIL presentation, multiple-car selection, history field/chronology rules and
+coding partial-write recovery presentation (doc 21). Clear All scope/partial
+outcomes, full easy catalog, read/add priority and exact duplicate blocking are
+already answered (D-16–D-20). No further car session is required
 to start source analysis.
 
-## Planning verification
+## Initial planning verification (before owner REA setup)
 
 This documentation change was prepared on `codex/rea-protocol-recovery-plan`
 from merged main `c866f83`. The complete 688-line session was inspected, its
@@ -263,3 +328,24 @@ all 18 application files. Local document links and `git diff --check` passed.
 No app code, automated suite, vehicle operation, binary execution, provider
 installation or host MCP configuration change was performed. The plan's phases
 remain pending; these checks validate the planning deliverable only.
+
+## Subsequent development handoff
+
+The owner installed/configured REA and restarted; this session successfully
+called `binary_session`, `inspect_android_package`, `inspect_android_class` and
+`inspect_android_method`. The method used a declared smali fallback. Four actual
+Evidence records were exported with integrity hash; see doc 27. No source app
+was executed or car operation performed. Ghidra is available but native target
+analysis was not attempted. This supersedes the old setup blocker above.
+
+Separate Task A/spec 25 and Task B/spec 26 now define ownership, file maps,
+dependencies, completion evidence and current owner scope D-16–D-20. Root/session
+entry points route to those files and to the source/ledger guide. All feature
+protocol rows remain open; tooling smoke results are not feature acceptance.
+
+Handoff verification: all changed local Markdown links were checked (133), the
+four-record portable bundle's byte count/SHA-256 matched its index, and JSON
+indices parsed. Full `scripts/preflight.sh` passed Ruff lint, Ruff formatting
+and mypy across all 18 app files; `git diff --check` passed. App sources and
+installed dependencies were unchanged. These are documentation/tooling checks,
+not Task A migration acceptance or Task B vehicle feature acceptance.

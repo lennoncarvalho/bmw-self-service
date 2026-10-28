@@ -1,0 +1,30 @@
+# Feature contract ledger — initial open work
+
+This is a work index, not evidence that the operations work. Follow
+[spec 26](../26-feature-readiness-spec.md) and
+[source/evidence guide 27](../27-rea-source-guide.md). Record completed chains
+as versioned contracts under `docs/`, linked here, with exact variant scope.
+
+| Contract ID | Required source investigation | Implementation owners | Current state |
+|-------------|-------------------------------|-----------------------|---------------|
+| B-CON | S-01/S-02 connection, transport choice, actual ECU inventory/addresses/software | Task A adapter + controller/vehicle page | HSFZ/VIN observed; topology unresolved |
+| B-INFO | S-01/S-02 actual mileage/voltage/I-level/FA jobs and decoders | Vehicle information operations/page | Initial hardcoded reads rejected or semantically invalid |
+| B-DTC-R | S-01 full ECU inclusion, memory/status/record variants, description association | Diagnostics page/data lookup + UDS service | Gateway-only confirmed read observed; full scan unresolved |
+| B-DTC-W | S-01 Clear All target selection, request/response, post-clear faults/MIL | Diagnostics worker + one Clear All UI | Unresolved; no real clear validation |
+| B-HIST-R | S-03/S-04 genuine headunit read, records/pagination/unknown fields | History reader/page | Disabled until contract recovered |
+| B-HIST-W | S-03/S-04 add encoding and independent complete readback | History writer + durable state | Unresolved; exact duplicates must be blocked |
+| B-CODE-R | S-02/S-07 ECU/software/CAFD match and actual current coded bytes | Coding database/live reader/UI | Definitions available; live reader disabled |
+| B-CODE-W | S-02/S-07 full easy preset applicability and multi-field/block composition | Coding engine/UI + durable state | Unresolved; no arbitrary preset subset |
+| B-REC | B-HIST/B-CODE exact raw state, persistence, outcome/recovery and eligible restore | Shared state storage + backup UI | Owner requirements established; vehicle restore unverified |
+
+For every contract attach: artifact/member/version/full hash; exact class/method/
+prototype or PRG job/instruction; real Evidence IDs and portable bundle path/hash;
+sequence/bytes and decoder; endpoint/session/variant; timeouts/errors/cancel;
+known limits; corrected spec; code/PR; offline/vehicle observations. Split rows
+by variant when contracts differ. Preserve unresolved branches.
+
+All easy presets additionally need a stable source-catalog inventory with IDs,
+model/ECU/software applicability and a disposition for every applicable row.
+Definition presence is not the same as validated live read/write support.
+The tooling smoke evidence in doc 27 answers tool readiness only and must not
+be used to mark a feature row complete.

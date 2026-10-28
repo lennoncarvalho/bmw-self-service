@@ -14,6 +14,11 @@
 4. Load applicable skills from `.agents/skills/`; provenance and setup are in
    `.agents/README.md`. Skills installed in the repo are available next turn;
    their instructions can be read directly now.
+5. Development handoff is `SESSION-PROMPT.md`: Task A is library migration
+   (`tasks/protocol-library-migration.md`, spec 25); Task B is REA feature
+   recovery (`tasks/rea-protocol-recovery.md`, spec 26). Source/tool/evidence
+   routing is `docs/27-rea-source-guide.md`. REA is now connected; earlier
+   missing-engine observations are historical. Do not repeat setup blindly.
 
 The 2026-10-28 audit overrides older completion labels and contradictory protocol
 examples. Historical REA notes are evidence candidates, not authoritative wire
