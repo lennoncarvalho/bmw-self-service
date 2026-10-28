@@ -20,7 +20,11 @@ use the real OS interface identity, not an assumed enX index.
 socket transmission. The existing read services 01/19/1A/22 and default/extended
 diagnostic sessions (10 01/03) and TesterPresent (3E 00/80) are allowed. Programming
 sessions, security access, routine requests, writes, resets and fault clears are
-blocked. This boundary does not certify any BMW-specific DID or decoder. Normal
+blocked. DoIP also checks diagnostic payloads at the final TCP sender; only
+routing activation (0005) and alive responses (0008) are exempt transport control
+messages there. UDP discovery requests identify the gateway without changing
+vehicle records. HSFZ keepalive sends fixed alive-check / 3E 80 messages.
+This boundary does not certify any BMW-specific DID or decoder. Normal
 launch without this flag does not enforce the same transport allowlist.
 
 No automatic DHCP/network changes run in this validation mode. A discovery
@@ -46,7 +50,7 @@ routine probe under the label “read.”
 
 ## Logs to retain
 
-The console prints a unique path on startup:
+Unless --no-log is selected, the console prints a unique path on startup:
 
 ```text
 ~/BMW-Tool/logs/session-<UTC timestamp>-<PID>.log

@@ -52,6 +52,7 @@ class AddServiceDialog(QDialog):
     ]
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(parent)
         self.setWindowTitle("New Service Entry")
         self.setMinimumWidth(420)
@@ -124,6 +125,7 @@ class ServiceHistoryPage(QWidget):
     """Service history tab — timeline of past and upcoming maintenance."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(parent)
         self._connection: Any = None
         self._entries: list[dict] = []
@@ -594,6 +596,7 @@ class ServiceHistoryWriteWorker(CarWorker):
     HEADUNIT_ADDR = 0x63
 
     def __init__(self, connection: Any, entry_or_entries: dict | list[dict]) -> None:
+        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(connection)
         if isinstance(entry_or_entries, list):
             self.entries = entry_or_entries

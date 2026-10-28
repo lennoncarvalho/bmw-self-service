@@ -118,6 +118,7 @@ class CodingPage(QWidget):
     """Coding tab with Easy/Advanced sub-pages and shared pending-changes bar."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build coding previews with live writes and backup loading disabled until configured."""
         super().__init__(parent)
         self._connection: Any = None
         self._pending: int = 0
@@ -127,9 +128,10 @@ class CodingPage(QWidget):
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
         self._is_real = False  # True when categories come from car, not mock
-        self._live_unavailable = False
+        self._live_unavailable = True
         self._sub_stack: QStackedWidget
         self._setup_ui()
+        self._write_btn.setEnabled(False)
 
     def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -719,8 +721,8 @@ class CodingPage(QWidget):
         if not btn.isChecked():
             btn.setChecked(True)
 
-    def restore_backup(self, categories: list[dict]) -> None:
-        """Restore coding from a backup manifest.
+    def restore_backup(self, categories: list[dict]) -> bool:
+        """Load a local DEMO preview from a backup; return False when unavailable.
 
         The restored values become the active state, and any differences
         from the previous originals are counted as pending changes so
@@ -731,7 +733,7 @@ class CodingPage(QWidget):
         """
         if self._live_unavailable:
             logger.warning("Live coding backup restore blocked: verified restore unavailable")
-            return
+            return False
         # Save pre-restore originals to count differences
         prev_originals = self._originals
         self._categories.clear()
@@ -748,6 +750,7 @@ class CodingPage(QWidget):
         # Recalculate pending — differences between restored and previous originals
         self._recalc_pending()
         logger.info("Coding restored from backup (%d categories)", len(categories))
+        return True
 
     def _apply_option(self, opt: dict, idx: int, label: QLabel, checked: bool) -> None:
         if not checked:
@@ -804,6 +807,7 @@ class CodingPage(QWidget):
         logger.info("Coding changes cleared")
 
     def _on_write(self) -> None:
+        """Apply pending changes only when the active connection permits coding writes."""
         if self._live_unavailable:
             logger.warning("Live coding write blocked: exact definitions/readback unavailable")
             return
@@ -951,6 +955,7 @@ class CodingReadWorker(CarWorker):
     """Read CAFD/FDL coding data from all ECUs via UDS 0x22."""
 
     def __init__(self, connection: Any) -> None:
+        """Build coding previews with live writes and backup loading disabled until configured."""
         super().__init__(connection)
         # Common ECUs to query for coding data
         self.targets = [
@@ -1012,6 +1017,7 @@ class CodingWriteWorker(CarWorker):
         coding_meta: dict[tuple[str, str], dict] | None = None,
         originals: list[dict] | None = None,
     ) -> None:
+        """Build coding previews with live writes and backup loading disabled until configured."""
         super().__init__(connection)
         self.categories = categories
         self.coding_meta = coding_meta or {}

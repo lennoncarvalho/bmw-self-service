@@ -43,6 +43,7 @@ class DtcReadWorker(CarWorker):
     mil_status = Signal(bool, int)  # T-9: MIL on/off, DTC count
 
     def __init__(self, connection: Any, ecus: list[dict], *, coverage_known: bool = True) -> None:
+        """Initialize diagnostic state and ownership for the supplied connection or page parent."""
         super().__init__(connection)
         self.ecus = ecus
         self.coverage_known = coverage_known
@@ -67,6 +68,7 @@ class DtcReadWorker(CarWorker):
             database.conn.close()
 
     def _read_dtcs(self, database: DtcDatabase) -> dict:
+        """Read confirmed fault records with this worker-owned database and explicit coverage."""
         logger.info("DTC scan start ecus=%d coverage_known=%s", len(self.ecus), self.coverage_known)
         dtcs: list[dict] = []
         complete = self.coverage_known
@@ -152,6 +154,7 @@ class DiagnosticsPage(QWidget):
     """Diagnostics tab — read and clear fault codes from all ECUs."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize diagnostic state and ownership for the supplied connection or page parent."""
         super().__init__(parent)
         self._connection: Any = None
         self._ecus: list[dict] = []
@@ -161,6 +164,7 @@ class DiagnosticsPage(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Build diagnostic result, unknown-state and operation controls in the page."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
@@ -493,6 +497,7 @@ class DiagnosticsPage(QWidget):
         arrow.setText("▼" if detail.isVisible() else "▶")
 
     def _on_dtc_error(self, msg: str) -> None:
+        """Report an unavailable scan without leaving stale results or a healthy-car claim."""
         self.read_btn.setEnabled(True)
         self._empty_text.setText("DTC scan unavailable. See the session log for details.")
         self.empty_state.setVisible(True)
@@ -500,6 +505,7 @@ class DiagnosticsPage(QWidget):
         QMessageBox.warning(self, "DTC Read Failed", msg)
 
     def _on_clear_clicked(self) -> None:
+        """Confirm fault clearing only when the active session permits mutations."""
         if getattr(self._connection, "read_only", False):
             return
         reply = QMessageBox.question(
@@ -527,6 +533,7 @@ class DiagnosticsPage(QWidget):
         # Real car: send 0x14 FF FF FF to each ECU via background worker
         class ClearWorker(CarWorker):
             def __init__(self, conn, ecus):
+                """Initialize diagnostic state and ownership for the supplied connection or page parent."""
                 super().__init__(conn)
                 self.ecus = ecus
 

@@ -651,6 +651,7 @@ class HSFZConnection:
                 self._close_locked()
 
     def _close_locked(self) -> None:
+        """Close the owned stream and clear transaction state while holding its lock."""
         if self.sock is not None:
             logger.info(
                 "TCP closing conn=%s retained=%d pending=%s",
@@ -782,6 +783,7 @@ class HSFZConnection:
     def _keepalive(
         self, frame: bytes, receive_timeout: float, *, requires_idle: bool = False
     ) -> bool | None:
+        """Send fixed heartbeat traffic and retain fragmented replies under the stream lock."""
         if not self._lock.acquire(blocking=False):
             return None
         try:
@@ -832,6 +834,7 @@ class HSFZConnection:
         return self.sock is not None and self._alive_failures < 3
 
     def _recv_hsfz_message(self, deadline: float) -> tuple[int, int, int, bytes]:
+        """Read one bounded HSFZ frame, retaining partial bytes when the deadline expires."""
         sock = self.sock
         if sock is None:
             raise ConnectionError("Not connected")
@@ -1053,6 +1056,7 @@ class DoIPConnection:
         return self._keepalive(send_tester_present=True)
 
     def _keepalive(self, *, send_tester_present: bool) -> bool | None:
+        """Send fixed heartbeat traffic and retain fragmented replies under the stream lock."""
         if not self._lock.acquire(blocking=False):
             return None
         try:
@@ -1119,6 +1123,7 @@ class DoIPConnection:
                 self._close_locked()
 
     def _close_locked(self) -> None:
+        """Close the owned stream and clear transaction state while holding its lock."""
         if self.sock is not None:
             logger.info(
                 "TCP closing conn=%s retained=%d pending=%s",
@@ -1135,6 +1140,17 @@ class DoIPConnection:
         self._alive_failures = 3
 
     def _send_doip(self, kind: int, payload: bytes, deadline: float) -> None:
+        # Guard the final TCP send as well as the public UDS entry point.
+        # Routing activation and alive responses maintain transport only.
+        """Enforce read-only message policy before sending a DoIP frame on the owned socket."""
+        if self.read_only:
+            if kind == DOIP_DIAG_MESSAGE:
+                if len(payload) < 5:
+                    raise ValueError("DoIP diagnostic request is missing addresses or UDS payload")
+                _check_read_only(payload[4:])
+            elif kind not in (DOIP_ROUTING_ACTIVATION_REQUEST, DOIP_ALIVE_CHECK_RESPONSE):
+                logger.warning("READ ONLY blocked DoIP message type=0x%04X", kind)
+                raise PermissionError("This DoIP message is disabled in the read-only session")
         if self.sock is None:
             raise ConnectionError("Not connected")
         self.sock.settimeout(_remaining(deadline))
@@ -1162,6 +1178,7 @@ class DoIPConnection:
         return False
 
     def _recv_doip_message(self, deadline: float) -> tuple[int, bytes]:
+        """Read and validate a complete DoIP frame within the current operation deadline."""
         sock = self.sock
         if sock is None:
             raise ConnectionError("Not connected")

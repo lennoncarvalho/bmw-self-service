@@ -88,6 +88,7 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
         root.addHandler(file_handler)
 
     def log_qt(kind: QtMsgType, context: QMessageLogContext, message: str) -> None:
+        """Record Qt diagnostic messages in the active session log without calling back into Qt."""
         levels = {
             QtMsgType.QtDebugMsg: logging.DEBUG,
             QtMsgType.QtInfoMsg: logging.INFO,
@@ -104,6 +105,7 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
     def log_uncaught(
         exc_type: type[BaseException], exc: BaseException, tb: TracebackType | None
     ) -> None:
+        """Preserve uncaught Python exception tracebacks in the session handlers."""
         logging.getLogger(__name__).critical(
             "Unhandled application exception", exc_info=(exc_type, exc, tb)
         )

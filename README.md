@@ -177,7 +177,8 @@ open "dist/BMW Self Service.app"           # macOS
 .venv/bin/python3 main.py --no-log
 ```
 
-Each launch creates `~/BMW-Tool/logs/session-<UTC timestamp>-<PID>.log`.
+Each launch without `--no-log` creates
+`~/BMW-Tool/logs/session-<UTC timestamp>-<PID>.log`.
 With --debug it captures raw discovery/HSFZ/DoIP bytes (including ACKs and partial
 reads), request/connection IDs, deadlines, endpoints, workers, page navigation,
 Qt warnings and Python exceptions. Preserve the session and matching rotated
