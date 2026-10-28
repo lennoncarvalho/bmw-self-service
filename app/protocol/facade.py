@@ -284,7 +284,7 @@ class DiagnosticConnection:
     @property
     def alive_ok(self) -> bool:
         """Whether the executor remains open; not proof of ECU session health."""
-        return not self._closed.is_set()
+        return not self._closed.is_set() and not self._owner.stop_event.is_set()
 
     def disconnect(self) -> None:
         """Request asynchronous shutdown without GUI-thread socket/lock waits."""

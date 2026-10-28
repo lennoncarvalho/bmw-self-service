@@ -61,6 +61,8 @@ class DtcReadWorker(CarWorker):
 
     def _handle_timeout(self, ecu_name: str) -> str:
         """Block until the UI thread decides: skip, retry, or abort."""
+        if self.isInterruptionRequested() or not getattr(self.connection, "alive_ok", True):
+            return "abort"
         self._timeout_event.clear()
         self._timeout_action = "abort"  # default if UI never responds
         self.ecu_timeout.emit(ecu_name)
