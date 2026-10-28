@@ -42,7 +42,9 @@ message. Check response status and identity. See the
 ACK `0x8002` confirms transport acceptance, NACK `0x8003` rejects it, and a
 diagnostic response uses `0x8001`. Alive-check request/response are `0x0007` /
 `0x0008`; dispatch them during the connection lifecycle. Do not assume exactly
-one ACK followed by exactly one response. See
+one ACK followed by exactly one response. The DoIP entity initiates alive checks;
+the tester responds with its two-byte logical source address. An idle poll is not
+proof of liveness, and a skipped lock acquisition is not a failed exchange. See
 [DoIP message documentation](https://python-doipclient.readthedocs.io/en/latest/messages.html).
 
 ## UDS

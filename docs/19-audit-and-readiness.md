@@ -2,9 +2,10 @@
 
 Date: 2026-10-28. Baseline: `129d181d5ab4ca770e89de59ecb5189e6f9643a6`,
 branch `fix/hsfz-ack-handling`, clean index/worktree before this audit.
-Open [PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8) has the same
-head. No runtime code was changed by this cleanup. This is triage and preparation,
-not the full PR review or an attestation that any car operation is correct.
+At the initial audit, [PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8)
+had the same head. That documentation cleanup changed no runtime code. The later
+existing-review follow-up changed transport/worker code; see its status below.
+Neither phase attests that any car operation is correct.
 
 ## Outcome
 
@@ -21,8 +22,9 @@ ignored reference repositories were preserved.
 
 ## Findings that should drive the next review
 
-These findings were checked against the current checkout. Some predate PR #8;
-confirm introduction with the diff/history before calling them regressions.
+These findings describe the audit baseline above. Some predate PR #8; confirm
+introduction with the diff/history before calling them regressions. Consult the
+follow-up status below before treating every baseline statement as current.
 
 | ID / priority | Evidence and failure consequence | Required resolution |
 |---------------|----------------------------------|---------------------|
@@ -47,6 +49,28 @@ confirm introduction with the diff/history before calling them regressions.
 P0 means a potentially mutating or misleading recovery path, not proof that the
 operation damaged a vehicle. These issues are recorded for code review, not
 silently repaired during a documentation task.
+
+## Existing PR review follow-up (2026-10-28)
+
+[Per-comment dispositions and verification](../tasks/pr-8-review-followup.md)
+cover all 24 inline threads and two additional review-body findings. This was a
+review of the existing comments, not a complete re-audit of every application
+path. Six findings were already addressed, fifteen required repairs and five
+were non-actionable suggestions/claims.
+
+| Baseline issue | Current source status after that follow-up |
+|----------------|-------------------------------------------|
+| A-04 | Seven-byte standard routing activation is validated and invoked before DoIP identity reads; invalid/missing VIN no longer reports connected. Discovery/transport selection and addresses still need variant evidence. |
+| A-05 | Endpoint/SID and supported echo matching, pending handling and late-response ownership implemented; vehicle behavior remains unvalidated. |
+| A-06 | Six-byte base parser and persistent fragment buffers implemented; no real gateway replay/validation yet. |
+| A-07 | Complete DoIP exchanges now serialize and dispatch ACK/NACK/alive traffic; broader DoIP discovery is still open. |
+| A-08 | Keepalive I/O moved to a CarWorker with cooperative lifecycle cleanup. Coding-page I/O and other application paths remain to review. |
+| A-10 | Adapter filter duplication removed; actual wired-link detection, labels and interface-bound networking remain open. |
+
+The other audit findings remain open. In particular, these fixes do not authorize
+running the unsupported service-history/coding paths against a vehicle. The
+owner's no-automated-suite policy remains unchanged; static gates and app startup
+were checked, with no vehicle or visual DEMO acceptance claimed.
 
 ## Documentation defects corrected
 

@@ -6,10 +6,11 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 
 import logging
 from collections.abc import Callable
+from threading import Event
 from typing import Any, cast
 
-from PySide6.QtCore import QSize, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtCore import QSize, Qt, QThread, QTimer, Slot
+from PySide6.QtGui import QAction, QCloseEvent, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -28,7 +29,7 @@ from PySide6.QtWidgets import (
 
 from app.connection import DoIPConnection, HSFZConnection
 from app.mock_connection import MockConnection
-from app.worker import PostConnectWorker
+from app.worker import ConnectWorker, KeepAliveWorker, PostConnectWorker
 from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
@@ -66,9 +67,14 @@ class MainWindow(QMainWindow):
         self._demo_mode = False
         self._connection: object | None = None
         self._connected = False
-        self._worker: QThread | None = None
-        self._alive_timer: QTimer | None = None
-        self._tester_present_timer: QTimer | None = None
+        self._worker: ConnectWorker | None = None
+        self._post_connect_worker: PostConnectWorker | None = None
+        self._post_connect_context: tuple[object, str, str] | None = None
+        self._keepalive_worker: KeepAliveWorker | None = None
+        self._retired_workers: list[QThread] = []
+        self._closing = False
+        self._worker_reap_timer = QTimer(self)
+        self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
         self._apply_theme()
 
@@ -209,6 +215,7 @@ class MainWindow(QMainWindow):
             "border-radius: 8px; padding: 6px 24px; font-weight: bold; }"
             "QPushButton:hover { background: #5a5a7a; color: white; }"
         )
+        self._cancel_btn.clicked.connect(self._on_disconnect)
         layout.addWidget(self._cancel_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # G-13: Timer for showing cancel button and triggering retry
@@ -258,7 +265,6 @@ class MainWindow(QMainWindow):
         self._cancel_btn.setVisible(False)
         self._position_spinner()
         self.spinner_overlay.setVisible(True)
-        QApplication.processEvents()
         # G-13: Start timers for cancel (10s) and retry (30s)
         self._spinner_cancel_timer.start(10000)
         self._spinner_retry_timer.start(30000)
@@ -324,6 +330,9 @@ class MainWindow(QMainWindow):
     # ---- Connection flow ----
 
     def _on_connect_requested(self, series: str, interface: str) -> None:
+        if self._closing:
+            return
+        self._on_disconnect()
         if self._demo_mode:
             self._connect_demo(series)
         else:
@@ -332,7 +341,9 @@ class MainWindow(QMainWindow):
     def _connect_demo(self, series: str) -> None:
         self.show_spinner("Starting DEMO mode...")
 
-        def do_connect():
+        def do_connect(cancelled: Event) -> tuple[MockConnection, str]:
+            if cancelled.is_set():
+                raise ConnectionError("Connection cancelled")
             conn = MockConnection()
             conn.connect()
             return (conn, "")
@@ -348,11 +359,18 @@ class MainWindow(QMainWindow):
         )
         self.show_spinner(f"Searching for vehicle on {interface}...")
 
-        def do_connect():
+        def do_connect(cancelled: Event) -> tuple[HSFZConnection | DoIPConnection, str]:
             from app.connection import discover_zgw
+
+            def check_cancelled() -> None:
+                if cancelled.is_set():
+                    raise ConnectionError("Connection cancelled")
+
+            check_cancelled()
 
             logger.debug("Step 1: UDP discovery on %s", interface)
             info = discover_zgw(interface, timeout=5.0)
+            check_cancelled()
 
             if info is None:
                 logger.warning("Discovery failed, trying DHCP fallback")
@@ -360,20 +378,20 @@ class MainWindow(QMainWindow):
 
                 if start_dhcp_server(interface):
                     logger.debug("DHCP server started, waiting 10s")
-                    import time
-
-                    time.sleep(10)
+                    if cancelled.wait(10):
+                        check_cancelled()
                     info = discover_zgw(interface, timeout=5.0)
+                    check_cancelled()
                     if info is None:
                         raise ConnectionError(
                             "Vehicle not found. Check the ENET cable and ensure ignition is on."
                         )
                 else:
                     logger.debug("DHCP denied, waiting 20s for APIPA")
-                    import time
-
-                    time.sleep(20)
+                    if cancelled.wait(20):
+                        check_cancelled()
                     info = discover_zgw(interface, timeout=5.0)
+                    check_cancelled()
                     if info is None:
                         raise ConnectionError(
                             "Vehicle not found. DHCP server requires "
@@ -388,57 +406,58 @@ class MainWindow(QMainWindow):
             if not conn.connect():
                 raise ConnectionError("Failed to connect to vehicle at " + host)
 
-            logger.info("Step 3: reading vehicle identity")
-            vin = ""
-            # Extended diagnostic session on the ZGW
             try:
+                check_cancelled()
+                if isinstance(conn, DoIPConnection) and not conn.activate_routing():
+                    raise ConnectionError("Vehicle declined diagnostic routing activation")
+                check_cancelled()
+                logger.info("Step 3: reading vehicle identity")
                 conn.send_uds(0x10, bytes([0x10, 0x03]))
+                check_cancelled()
                 resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
-                if len(resp) >= 4 and resp[0] == 0x62:
-                    vin_bytes = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
-                    vin = vin_bytes
-            except Exception as exc:
-                logger.warning("VIN/DSC read failed in worker: %s", exc)
-
-            return (conn, vin)
+                check_cancelled()
+                if len(resp) != 20 or resp[:3] != b"\x62\xf1\x90":
+                    raise ConnectionError("Vehicle did not return a valid VIN response")
+                vin = resp[3:].decode("ascii")
+                if len(vin) != 17 or not vin.isalnum():
+                    raise ConnectionError("Vehicle returned an invalid VIN")
+                return (conn, vin)
+            except Exception:
+                conn.disconnect()
+                raise
 
         self._async_connect(do_connect, series)
 
-    def _async_connect(self, connect_fn, series: str) -> None:
+    def _async_connect(self, connect_fn: Callable[[Event], object], series: str) -> None:
+        worker = ConnectWorker(connect_fn, series)
+        self._worker = worker
+        worker.finished.connect(self._on_worker_result)
+        worker.error.connect(self._on_connect_error)
+        worker.progress.connect(self._on_connection_progress)
+        worker.start()
 
-        class ConnectWorker(QThread):
-            result_signal = Signal(object)
-            error_signal = Signal(str)
-            progress_signal = Signal(str)
-
-            def __init__(self, fn: Callable[[], object]) -> None:
-                super().__init__()
-                self.fn = fn
-                self._connect_series: str = ""
-
-            def run(self) -> None:
-                try:
-                    result = self.fn()
-                    self.result_signal.emit(result)
-                except Exception as e:
-                    self.error_signal.emit(str(e))
-
-        self._worker = ConnectWorker(connect_fn)
-        self._worker._connect_series = series  # captured for slot
-        self._worker.result_signal.connect(self._on_worker_result)
-        self._worker.error_signal.connect(self._on_connect_error)
-        self._worker.progress_signal.connect(self.show_spinner)
-        self._worker.start()
+    @Slot(str)
+    def _on_connection_progress(self, message: str) -> None:
+        if not self._closing and self.sender() in (self._worker, self._post_connect_worker):
+            self.show_spinner(message)
 
     @Slot(object)
     def _on_worker_result(self, result: object) -> None:
-        """Handle worker result — runs on the main thread."""
-        conn: Any
-        vin: str
+        """Reject late/cancelled results before changing the active connection."""
+        worker = self.sender()
         assert isinstance(result, tuple), "connect fn must return (conn, vin)"
-        conn, vin = result  # (connection, vin_str) tuple
-        series = getattr(self._worker, "_connect_series", "")
-        self._on_connect_success(conn, vin, series)
+        conn, vin = result
+        if (
+            not isinstance(worker, ConnectWorker)
+            or worker is not self._worker
+            or worker.cancelled
+            or self._closing
+        ):
+            conn.disconnect()
+            return
+        self._worker = None
+        self._retire_worker(worker)
+        self._on_connect_success(conn, vin, worker.series)
 
     def _on_connect_success(self, connection: Any, vin: str, series: str) -> None:
         self._connection = connection
@@ -468,7 +487,7 @@ class MainWindow(QMainWindow):
         self.nav_group.button(0).setChecked(True)
         self.stack.setCurrentIndex(1)
 
-        # Start keep-alive timers for real connections
+        # Start the keepalive worker for real connections
         if not self._demo_mode:
             self._start_keepalive()
 
@@ -488,18 +507,37 @@ class MainWindow(QMainWindow):
         self.show_spinner("Reading vehicle data...")
         tasks = self._build_post_connect_tasks(vin)
         self._post_connect_worker = PostConnectWorker(connection, tasks)
-        self._post_connect_worker.progress.connect(self.show_spinner)
-        self._post_connect_worker.finished.connect(
-            lambda result, conn=connection: self._on_post_connect_finished(
-                result, conn, vin, series
-            )
-        )
-        self._post_connect_worker.error.connect(
-            lambda msg, conn=connection: self._on_post_connect_error(msg, conn)
-        )
+        self._post_connect_context = (connection, vin, series)
+        self._post_connect_worker.progress.connect(self._on_connection_progress)
+        self._post_connect_worker.finished.connect(self._on_post_connect_result)
+        self._post_connect_worker.error.connect(self._on_post_connect_worker_error)
         self._post_connect_worker.start()
 
         logger.info("Connected successfully (demo=%s)", self._demo_mode)
+
+    @Slot(object)
+    def _on_post_connect_result(self, result: dict) -> None:
+        worker = self.sender()
+        if worker is not self._post_connect_worker or self._post_connect_context is None:
+            return
+        connection, vin, series = self._post_connect_context
+        self._post_connect_worker = None
+        self._post_connect_context = None
+        assert isinstance(worker, QThread)
+        self._retire_worker(worker)
+        self._on_post_connect_finished(result, connection, vin, series)
+
+    @Slot(str)
+    def _on_post_connect_worker_error(self, message: str) -> None:
+        worker = self.sender()
+        if worker is not self._post_connect_worker or self._post_connect_context is None:
+            return
+        connection, _vin, _series = self._post_connect_context
+        self._post_connect_worker = None
+        self._post_connect_context = None
+        assert isinstance(worker, QThread)
+        self._retire_worker(worker)
+        self._on_post_connect_error(message, connection)
 
     def _build_post_connect_tasks(self, vin: str = "") -> list[tuple[str, Callable[[Any], object]]]:
         """Build the queue of data-loading tasks for PostConnectWorker.
@@ -665,6 +703,9 @@ class MainWindow(QMainWindow):
                 "Other features remain available.",
             )
 
+        if self._connection is not connection or self._closing:
+            return  # A modal message can deliver disconnect/reconnect events.
+
         # Now start secondary workers (DTC read, service history, coding).
         # These run on their own background threads and will queue
         # naturally on the connection lock.
@@ -693,6 +734,8 @@ class MainWindow(QMainWindow):
             "The connection may still be usable. Check the "
             "Vehicle page for available information.",
         )
+        if self._connection is not connection or self._closing:
+            return
         # Still try to set up the other pages with what we have
         self.diag_page.set_connection(self._connection, [])
         self.history_page.set_connection(self._connection)
@@ -700,56 +743,28 @@ class MainWindow(QMainWindow):
         logger.warning("Post-connect data load failed: %s", error_msg)
 
     def _start_keepalive(self) -> None:
-        """Start HSFZ alive-check and UDS TesterPresent timers.
-
-        Both are non-blocking: they try the connection lock and skip
-        this cycle if a ``send_uds()`` is in flight.  Missing one
-        cycle is harmless for both the transport-layer heartbeat and
-        the UDS session timer.
-        """
+        """Run scheduled transport and session I/O on a background worker."""
+        self._stop_keepalive()
         conn = self._connection
-        if conn is None:
-            return
+        if not isinstance(conn, (HSFZConnection, DoIPConnection)):
+            return  # DEMO has no socket or heartbeat lifecycle.
+        worker = KeepAliveWorker(conn)
+        self._keepalive_worker = worker
+        worker.connection_lost.connect(self._on_keepalive_lost)
+        worker.error.connect(self._on_keepalive_error)
+        worker.start()
 
-        # Transport-layer: HSFZ alive check every 2 seconds
-        if hasattr(conn, "alive_check"):
-            logger.debug("Starting HSFZ alive-check timer (every 2s)")
-            self._alive_timer = QTimer(self)
-            self._alive_timer.timeout.connect(lambda c=conn: self._do_alive_check(c))
-            self._alive_timer.start(2000)
+    @Slot(object)
+    def _on_keepalive_lost(self, connection: object) -> None:
+        if not self._closing and self._connection is connection:
+            self._on_connection_lost()
 
-        # Application-layer: UDS TesterPresent every 2.5 seconds
-        if hasattr(conn, "tester_present"):
-            _first_tp = [True]
-
-            def _do_tester_present(c=conn):
-                if _first_tp[0]:
-                    logger.debug("Starting TesterPresent timer (every 2.5s)")
-                    _first_tp[0] = False
-                ok = c.tester_present()
-                if not ok and not c.alive_ok:
-                    if self._tester_present_timer is not None:
-                        self._tester_present_timer.stop()
-                    self._on_connection_lost()
-
-            self._tester_present_timer = QTimer(self)
-            self._tester_present_timer.timeout.connect(_do_tester_present)
-            self._tester_present_timer.start(2500)
-
-    def _do_alive_check(self, conn: object) -> None:
-        """Send transport-layer keep-alive and check connection health.
-
-        T-12: After 3 consecutive alive-check failures (~6s), treat
-        the connection as lost.
-        """
-        if hasattr(conn, "alive_check"):
-            conn.alive_check()
-            if hasattr(conn, "alive_ok") and not conn.alive_ok:
-                if self._alive_timer is not None:
-                    self._alive_timer.stop()
-                if self._tester_present_timer is not None:
-                    self._tester_present_timer.stop()
-                self._on_connection_lost()
+    @Slot(str)
+    def _on_keepalive_error(self, message: str) -> None:
+        worker = self.sender()
+        if worker is self._keepalive_worker and isinstance(worker, KeepAliveWorker):
+            logger.warning("Keepalive worker stopped unexpectedly: %s", message)
+            self._on_keepalive_lost(worker.connection)
 
     def _on_connection_lost(self) -> None:
         """T-12: Handle lost connection with reconnect dialog.
@@ -777,15 +792,37 @@ class MainWindow(QMainWindow):
             self._on_disconnect()
 
     def _stop_keepalive(self) -> None:
-        """Stop all keep-alive timers."""
-        for timer in (self._alive_timer, self._tester_present_timer):
-            if timer is not None:
-                timer.stop()
-                timer.deleteLater()
-        self._alive_timer = None
-        self._tester_present_timer = None
+        """Request worker shutdown and retain it until its thread actually exits."""
+        worker = self._keepalive_worker
+        self._keepalive_worker = None
+        if worker is not None:
+            self._retire_worker(worker)
 
+    def _retire_worker(self, worker: QThread) -> None:
+        if isinstance(worker, (KeepAliveWorker, ConnectWorker)):
+            worker.stop()
+        else:
+            worker.requestInterruption()
+        if worker not in self._retired_workers:
+            self._retired_workers.append(worker)
+        self._worker_reap_timer.start(100)
+
+    def _reap_workers(self) -> None:
+        for worker in self._retired_workers[:]:
+            if not worker.isRunning():
+                self._retired_workers.remove(worker)
+                worker.deleteLater()
+        if not self._retired_workers:
+            self._worker_reap_timer.stop()
+
+    @Slot(str)
     def _on_connect_error(self, error_msg: str) -> None:
+        worker = self.sender()
+        if worker is not self._worker or self._closing:
+            return
+        self._worker = None
+        if isinstance(worker, QThread):
+            self._retire_worker(worker)
         self.hide_spinner()
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Disconnected")
@@ -815,16 +852,35 @@ class MainWindow(QMainWindow):
 
     def _on_retry_connect(self) -> None:
         """G-13: Re-attempt connection after timeout retry."""
-        if self._connection:
-            # Re-use last known settings
-            pass
-        self.stack.setCurrentIndex(0)
+        self._on_disconnect()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Keep worker objects alive while cooperative shutdown completes."""
+        if not self._closing:
+            self._closing = True
+            self._on_disconnect()
+            for page in (self.diag_page, self.history_page, self.coding_page):
+                worker = getattr(page, "_worker", None)
+                if isinstance(worker, QThread):
+                    self._retire_worker(worker)
+        self._reap_workers()
+        if self._retired_workers:
+            event.ignore()
+            QTimer.singleShot(100, self.close)
+        else:
+            super().closeEvent(event)
 
     # ---- Disconnect ----
 
     def _on_disconnect(self) -> None:
         logger.info("Disconnecting from vehicle...")
         self._stop_keepalive()
+        for worker in (self._worker, self._post_connect_worker):
+            if worker is not None:
+                self._retire_worker(worker)
+        self._worker = None
+        self._post_connect_worker = None
+        self._post_connect_context = None
         if self._connection:
             try:
                 if hasattr(self._connection, "disconnect"):

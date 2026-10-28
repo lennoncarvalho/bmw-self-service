@@ -24,6 +24,7 @@ import struct
 import subprocess
 import threading
 import time as _time
+from dataclasses import dataclass
 
 import netifaces
 
@@ -52,7 +53,7 @@ HSFZ_ERROR_TYPES: dict[int, str] = {
     0x0042: "Incorrect format",
     0x0043: "Incorrect destination address",
     0x0044: "Message too large",
-    0x0045: "Diagostic application not ready",
+    0x0045: "Diagnostic application not ready",
     0x00FF: "ZGW out of memory",
 }
 
@@ -65,6 +66,7 @@ DOIP_ROUTING_ACTIVATION_REQUEST = 0x0005
 DOIP_ROUTING_ACTIVATION_RESPONSE = 0x0006
 DOIP_DIAG_MESSAGE = 0x8001
 DOIP_DIAG_MESSAGE_ACK = 0x8002
+DOIP_DIAG_MESSAGE_NACK = 0x8003
 DOIP_ALIVE_CHECK_REQUEST = 0x0007
 DOIP_ALIVE_CHECK_RESPONSE = 0x0008
 
@@ -92,95 +94,21 @@ def list_interfaces() -> list[str]:
         >>> ifaces = list_interfaces()
         >>> [i for i in ifaces if i.startswith('en') or i.startswith('eth')]
     """
-    ethernet_adapters = []
-
-    for iface in netifaces.interfaces():
-        # Skip loopback
-        if iface.startswith("lo"):
-            continue
-
-        addrs = netifaces.ifaddresses(iface)
-
-        # Must have a link-layer address (real hardware)
-        if netifaces.AF_LINK not in addrs:
-            continue
-
-        link_addr = addrs[netifaces.AF_LINK][0].get("addr", "")
-        if not link_addr or link_addr == "00:00:00:00:00:00":
-            continue
-
-        if platform.system() == "Darwin":
-            # macOS: skip virtual/tunnel/bridge interfaces
-            virtual_prefixes = (
-                "bridge",
-                "gif",
-                "stf",
-                "utun",
-                "ap",
-                "awdl",
-                "llw",
-                "pdp_ip",
-                "anpi",
-                "vmnet",
-                "fw",
-            )
-            if any(iface.startswith(p) for p in virtual_prefixes):
-                continue
-            if not iface.startswith("en"):
-                continue
-
-        elif platform.system() == "Linux":
-            if not (iface.startswith("en") or iface.startswith("eth")):
-                continue
-
-        # Windows: accept anything with a MAC address (netifaces returns
-        # descriptive names like "Ethernet" on Windows)
-
-        ethernet_adapters.append(iface)
-
-    return sorted(ethernet_adapters)
+    return sorted(info.name for info in list_interfaces_detailed())
 
 
 # ── Rich interface info for UI ────────────────────────────────────────────
 
 
-# dataclass imported lazily to avoid top-level dep for pure CLI use
-def _import_dataclass():
-    from dataclasses import dataclass as _dc
-
-    return _dc
-
-
+@dataclass(slots=True)
 class _InterfaceInfo:
-    """Rich network interface descriptor for the welcome-page dropdown.
+    """Adapter candidate; an assigned IPv4 address does not prove physical link."""
 
-    Attributes:
-        name: System name (e.g. ``"en15"``).
-        ip: IPv4 address string, or ``""`` if none assigned.
-        mac: MAC address string (lowercase hex pairs).
-        connected: ``True`` if the interface has an assigned IPv4 address.
-        description: Human-readable label derived from the interface name
-                     and platform heuristics (e.g. ``"USB Ethernet"``).
-
-    This is a plain class, not a dataclass, so it works at import time
-    without a top-level dataclasses dependency.
-    """
-
-    __slots__ = ("name", "ip", "mac", "connected", "description")
-
-    def __init__(
-        self,
-        name: str,
-        ip: str,
-        mac: str,
-        connected: bool,
-        description: str,
-    ) -> None:
-        self.name = name
-        self.ip = ip
-        self.mac = mac
-        self.connected = connected
-        self.description = description
+    name: str
+    ip: str
+    mac: str
+    connected: bool
+    description: str
 
     def display_text(self) -> str:
         """Rich one-line label for use in a QComboBox."""
@@ -577,351 +505,257 @@ def _start_dhcp_linux(interface: str) -> bool:
         return False
 
 
-# ── HSFZ Connection (T-5) ────────────────────────────────────────────────────
+# ── Stream helpers ───────────────────────────────────────────────────────────
+
+MAX_FRAME_BODY = 16 * 1024 * 1024
+
+
+class _DeadlineExpired(TimeoutError):
+    """Budget elapsed before initiating the next socket operation."""
+
+
+def _remaining(deadline: float) -> float:
+    """Return the remaining operation budget without extending its deadline."""
+    remaining = deadline - _time.monotonic()
+    if remaining <= 0:
+        raise _DeadlineExpired("Vehicle operation timed out")
+    return remaining
+
+
+def _fill_receive_buffer(
+    sock: socket.socket, buffer: bytearray, size: int, deadline: float
+) -> None:
+    """Retain every received fragment, including when a short poll times out."""
+    while len(buffer) < size:
+        sock.settimeout(_remaining(deadline))
+        chunk = sock.recv(size - len(buffer))
+        if not chunk:
+            raise ConnectionError("Connection closed by vehicle")
+        buffer.extend(chunk)
+
+
+def _matches_uds(request: bytes, response: bytes) -> bool:
+    """Match standard response identity; leave ECU-specific body decoding to callers."""
+    if not response:
+        return False
+    if response[0] == 0x7F:
+        return len(response) >= 3 and response[1] == request[0]
+    if response[0] != request[0] + 0x40:
+        return False
+    if request[0] in (0x22, 0x2E):
+        return len(response) >= 3 and response[1:3] == request[1:3]
+    if request[0] == 0x31:
+        return (
+            len(request) >= 4
+            and len(response) >= 4
+            and response[1] == request[1] & 0x7F
+            and response[2:4] == request[2:4]
+        )
+    if request[0] == 0x01:
+        return len(request) >= 2 and len(response) >= 2 and response[1] == request[1]
+    if request[0] in (0x10, 0x19, 0x27, 0x3E):
+        return len(request) >= 2 and len(response) >= 2 and response[1] == request[1] & 0x7F
+    return True
+
+
+# ── HSFZ transport ───────────────────────────────────────────────────────────
 
 
 class HSFZConnection:
-    """HSFZ transport for F-series BMW vehicles (TCP port 6801).
+    """Serialized HSFZ transactions with buffered control-frame handling.
 
-    Wraps UDS messages in HSFZ framing. Handles TCP connect, send,
-    receive, keep-alive, and disconnect.
-
-    Thread safety: All socket I/O is serialized through ``_lock`` so
-    that multiple workers calling ``send_uds()`` concurrently don't
-    corrupt the TCP stream. Callers simply call ``send_uds()`` from
-    any thread — the lock queues them automatically.
-
-    ACK handling: The ZGW acknowledges every message with an
-    ``acknowledge_transfer`` (0x0002) frame before sending the actual
-    ``diagnostic_req_res`` (0x0001) response.  ``send_uds()`` reads
-    through the ACK transparently.
-
-    Example:
-        >>> conn = HSFZConnection("169.254.1.1")
-        >>> conn.connect()
-        True
-        >>> resp = conn.send_uds(0x63, bytes([0x22, 0xF1, 0x90]))
-        >>> conn.disconnect()
+    Keepalive results are True for a completed send/drain, None when another
+    transaction owns the stream, and False for an actual transport failure.
+    These results do not certify ECU session state or vehicle write success.
     """
 
     def __init__(self, host: str, port: int = HSFZ_DATA_PORT) -> None:
-        """Create an HSFZ connection.
-
-        Args:
-            host: Car IP address (e.g. "169.254.1.1").
-            port: TCP data port (default 6801).
-        """
+        """Create a transport for the selected gateway."""
         self.host = host
         self.port = port
         self.sock: socket.socket | None = None
         self._lock = threading.Lock()
         self._alive_failures = 0
-
-    # ── Connection lifecycle ────────────────────────────────────────────
+        self._receive_buffer = bytearray()
+        self._pending_request: tuple[int, bytes] | None = None
 
     def connect(self) -> bool:
-        """Open TCP connection to the vehicle's ZGW.
-
-        Returns:
-            True if connected successfully, False on failure.
-        """
-        logger.debug("HSFZ: connecting to %s:%d ...", self.host, self.port)
+        """Connect to the gateway, releasing the socket on failure."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            self.sock.settimeout(5.0)  # Connection timeout
-            self.sock.connect((self.host, self.port))
-            self.sock.settimeout(30.0)  # Data timeout
-            self._alive_failures = 0
-            logger.info(
-                "HSFZ connected to %s:%d (TCP_NODELAY, timeout=30s)",
-                self.host,
-                self.port,
-            )
-            return True
-        except (TimeoutError, ConnectionRefusedError, OSError) as e:
-            logger.warning(
-                "HSFZ connect to %s:%d failed: %s",
-                self.host,
-                self.port,
-                e,
-            )
-            self.sock = None
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            sock.settimeout(5.0)
+            sock.connect((self.host, self.port))
+        except OSError:
+            sock.close()
+            logger.warning("HSFZ connect failed: %s:%d", self.host, self.port, exc_info=True)
             return False
+        self.sock = sock
+        self._receive_buffer.clear()
+        self._pending_request = None
+        self._alive_failures = 0
+        return True
 
     def disconnect(self) -> None:
-        """Close the TCP connection to the ZGW.
-
-        Calls ``shutdown()`` before acquiring the lock to avoid
-        blocking while a ``send_uds()`` is stuck in ``recv()``.
-        Then acquires the lock to close and clear the socket.
-        """
+        """Interrupt in-flight I/O before locking to release the captured socket."""
         sock = self.sock
         if sock is not None:
             with contextlib.suppress(OSError):
                 sock.shutdown(socket.SHUT_RDWR)
         with self._lock:
-            if self.sock is sock and sock is not None:
-                with contextlib.suppress(OSError):
-                    sock.close()
-                self.sock = None
-                self._alive_failures = 0
-                logger.info("HSFZ disconnected from %s:%d", self.host, self.port)
+            if self.sock is sock:
+                self._close_locked()
 
-    # ── UDS messaging (the core API) ─────────────────────────────────────
+    def _close_locked(self) -> None:
+        if self.sock is not None:
+            with contextlib.suppress(OSError):
+                self.sock.close()
+            self.sock = None
+        self._receive_buffer.clear()
+        self._pending_request = None
+        self._alive_failures = 3
 
     def send_uds(self, ecu_addr: int, payload: bytes, timeout: float = 30.0) -> bytes:
-        """Send a UDS message and return the response payload.
+        """Return a matching UDS reply within one queue/send/receive deadline.
 
-        Thread-safe: serialized through ``_lock`` so only one request
-        is in-flight at a time.  Blocking callers simply queue up.
-
-        The ZGW may respond with an ``acknowledge_transfer`` (0x0002)
-        frame first — this method reads through it transparently and
-        returns the actual UDS payload from the ``diagnostic_req_res``
-        (0x0001) that follows.
-
-        Args:
-            ecu_addr: Target ECU address (e.g. 0x63 for headunit).
-            payload: UDS message payload (service byte + data).
-            timeout: Maximum seconds to wait for the complete
-                     response (ACK + UDS response).
-
-        Returns:
-            UDS response payload bytes (service byte + data).
-
-        Raises:
-            ConnectionError: If not connected, connection lost, or
-                             ZGW reports a protocol error.
-            TimeoutError: If no response within *timeout* seconds.
+        A receive timeout preserves the socket and outstanding request. Before
+        another request is sent, its late reply must be consumed within the next
+        operation's budget. Requests are never replayed automatically. A transport
+        error invalidates the stream; well-framed negative replies do not.
         """
-        if self.sock is None:
-            raise ConnectionError("Not connected")
-
-        # Build the full HSFZ frame
-        service = payload[0]
-        extra = payload[1:] if len(payload) > 1 else b""
-        frame = build_uds(ecu_addr, service, extra)
-
-        logger.debug(
-            "UDS tx ECU=0x%02X len=%d: %s",
-            ecu_addr,
-            len(frame),
-            frame.hex(" "),
-        )
-
+        if not payload:
+            raise ValueError("UDS request cannot be empty")
         deadline = _time.monotonic() + timeout
-        with self._lock:
-            # Re-check after acquiring the lock — disconnect() may have
-            # run between the check above and the lock acquisition.
+        frame = build_uds(ecu_addr, payload[0], payload[1:])
+        if not self._lock.acquire(timeout=_remaining(deadline)):
+            raise TimeoutError("Vehicle operation timed out waiting for transport")
+        try:
             if self.sock is None:
                 raise ConnectionError("Not connected")
-
-            remaining = deadline - _time.monotonic()
-            if remaining <= 0:
-                raise TimeoutError(f"ECU 0x{ecu_addr:02X} timeout before send")
-            self.sock.settimeout(max(remaining, 1.0))
             try:
-                self.sock.sendall(frame)
-            except OSError as e:
-                raise ConnectionError(f"Send failed: {e}") from e
-
-            # Read HSFZ messages until we get the real UDS response.
-            # The ZGW may send acknowledge_transfer (0x0002) or alive
-            # check frames before the diagnostic_req_res (0x0001).
-            while True:
-                remaining = deadline - _time.monotonic()
-                if remaining <= 0:
-                    raise TimeoutError(
-                        f"ECU 0x{ecu_addr:02X} did not respond within {timeout:.0f}s"
-                    )
-                msg_type, msg_src, _msg_dst, uds_payload = self._recv_hsfz_message(
-                    max(remaining, 1.0)
-                )
-
-                if msg_type == TYPE_DIAG_REQ_RES:
-                    elapsed_ms = (_time.monotonic() - (deadline - timeout)) * 1000
-                    logger.debug(
-                        "UDS rx ECU=0x%02X len=%d (%.0fms): %s",
-                        msg_src,
-                        len(uds_payload),
-                        elapsed_ms,
-                        uds_payload.hex(" "),
-                    )
-                    return uds_payload
-
-                if msg_type == TYPE_ACK_TRANSFER:
-                    logger.debug(
-                        "HSFZ ACK from 0x%02X (%.0fms), reading next",
-                        msg_src,
-                        (_time.monotonic() - (deadline - timeout)) * 1000,
-                    )
-                    continue  # read next frame
-
-                if msg_type == TYPE_ALIVE_CHECK:
-                    logger.debug(
-                        "HSFZ alive check from 0x%02X, skipping",
-                        msg_src,
-                    )
-                    continue  # read next frame
-
-                if msg_type in HSFZ_ERROR_TYPES:
-                    raise ConnectionError(
-                        f"ZGW error: {HSFZ_ERROR_TYPES[msg_type]} (type 0x{msg_type:04X})"
-                    )
-
-                raise ConnectionError(f"Unexpected HSFZ response type: 0x{msg_type:04X}")
-
-    # ── Keep-alive ──────────────────────────────────────────────────────
-
-    def alive_check(self) -> bool:
-        """Send transport-layer keep-alive (HSFZ type 0x0012).
-
-        Must be called every ~2 seconds to prevent the ZGW from closing
-        the TCP connection.  Both send and ACK drain happen under the
-        lock so alive-check traffic cannot interleave with ``send_uds()``.
-
-        Non-blocking: if the lock is held the entire cycle is skipped.
-        The UDS session timer is long enough (>5 s) that missing one
-        cycle is harmless.
-
-        Returns:
-            True if keep-alive was sent and ACK drained, False if
-            skipped or socket is gone.
-        """
-        if self.sock is None:
-            return False
-
-        acquired = self._lock.acquire(blocking=False)
-        if not acquired:
-            return True  # skipped, not a failure
-
-        try:
-            frame = struct.pack(">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR)
-            self.sock.settimeout(2.0)
-            self.sock.sendall(frame)
-
-            # Drain the expected ACK
-            with contextlib.suppress(TimeoutError, socket.timeout, ConnectionError):
-                msg_type, msg_src, _dst, _payload = self._recv_hsfz_message(0.05)
-                if msg_type == TYPE_ACK_TRANSFER:
-                    logger.debug("HSFZ alive ACK drained from 0x%02X", msg_src)
-            self._alive_failures = 0
-            return True
-        except (OSError, ConnectionError):
-            self._alive_failures += 1
-            return False
+                if self._pending_request is not None:
+                    self._read_response(*self._pending_request, deadline)
+                try:
+                    self.sock.settimeout(_remaining(deadline))
+                    self.sock.sendall(frame)
+                except _DeadlineExpired:
+                    raise
+                except OSError:
+                    self._close_locked()  # A partial send cannot safely be retried.
+                    raise
+                self._pending_request = (ecu_addr, payload)
+                logger.debug("UDS tx ECU=0x%02X: %s", ecu_addr, payload.hex(" "))
+                return self._read_response(ecu_addr, payload, deadline)
+            except TimeoutError:
+                raise  # Retain buffered bytes and the outstanding request.
+            except OSError:
+                self._close_locked()
+                raise
         finally:
             self._lock.release()
 
-    def tester_present(self) -> bool:
-        """Send UDS TesterPresent (0x3E 0x80) — non-blocking.
+    def _read_response(self, ecu_addr: int, request: bytes, deadline: float) -> bytes:
+        while True:
+            msg_type, src, dst, response = self._recv_hsfz_message(deadline)
+            if msg_type in (TYPE_ACK_TRANSFER, TYPE_ALIVE_CHECK):
+                continue
+            if msg_type in HSFZ_ERROR_TYPES:
+                raise ConnectionError(f"Gateway error: {HSFZ_ERROR_TYPES[msg_type]}")
+            if msg_type != TYPE_DIAG_REQ_RES:
+                raise ConnectionError(f"Unexpected HSFZ control word: 0x{msg_type:04X}")
+            if src != ecu_addr or dst != TESTER_ADDR or not _matches_uds(request, response):
+                logger.debug("Ignoring unrelated HSFZ diagnostic reply from 0x%02X", src)
+                continue
+            logger.debug("UDS rx ECU=0x%02X: %s", src, response.hex(" "))
+            if response[:3] == bytes((0x7F, request[0], 0x78)):
+                continue
+            self._pending_request = None
+            self._alive_failures = 0
+            return response
 
-        Uses the suppress-positive-response bit (0x80) so the ECU
-        doesn't waste bus time sending a ``7E 00`` response.  Only
-        a negative response (``7F 3E xx``) may arrive — we drain it.
+    def alive_check(self) -> bool | None:
+        """Run the existing HSFZ heartbeat under the stream lock, off the GUI.
 
-        Tries to acquire the lock.  If a ``send_uds()`` is in flight
-        this cycle is skipped — the UDS session timer is long enough
-        (>5 s) that missing one cycle is harmless.
-
-        Returns:
-            True if sent and response drained, False if skipped or
-            failed.
+        Its vehicle-specific initiation/timing still needs capture validation.
         """
-        if self.sock is None:
-            return False
+        frame = struct.pack(">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR)
+        return self._keepalive(frame, 0.05)
 
-        acquired = self._lock.acquire(blocking=False)
-        if not acquired:
-            return True  # skipped, not a failure
+    def tester_present(self) -> bool | None:
+        """Send suppressed-positive TesterPresent and drain optional replies."""
+        return self._keepalive(build_uds(ZGW_ADDR, 0x3E, b"\x80"), 1.0, requires_idle=True)
 
+    def _keepalive(
+        self, frame: bytes, receive_timeout: float, *, requires_idle: bool = False
+    ) -> bool | None:
+        if not self._lock.acquire(blocking=False):
+            return None
         try:
-            frame = build_uds(ZGW_ADDR, 0x3E, b"\x80")
-            self.sock.settimeout(1.0)
-            self.sock.sendall(frame)
-
-            # Drain any ACK + possible negative UDS response.
-            with contextlib.suppress(
-                TimeoutError,
-                socket.timeout,
-                ConnectionError,
-            ):
-                msg_type, _src, _dst, _payload = self._recv_hsfz_message(1.0)
-                if msg_type == TYPE_ACK_TRANSFER:
-                    with contextlib.suppress(
-                        TimeoutError,
-                        socket.timeout,
-                        ConnectionError,
-                    ):
-                        self._recv_hsfz_message(1.0)
-            return True
-        except OSError:
-            return False
+            if self.sock is None:
+                return False
+            if requires_idle and self._pending_request is not None:
+                return None
+            sent = False
+            try:
+                self.sock.settimeout(1.0)
+                self.sock.sendall(frame)
+                sent = True
+                deadline = _time.monotonic() + receive_timeout
+                while True:
+                    msg_type, src, dst, payload = self._recv_hsfz_message(deadline)
+                    if msg_type in HSFZ_ERROR_TYPES:
+                        raise ConnectionError(f"Gateway error: {HSFZ_ERROR_TYPES[msg_type]}")
+                    if msg_type == TYPE_DIAG_REQ_RES:
+                        pending = self._pending_request
+                        if (
+                            pending is not None
+                            and src == pending[0]
+                            and dst == TESTER_ADDR
+                            and _matches_uds(pending[1], payload)
+                            and payload[:3] != bytes((0x7F, pending[1][0], 0x78))
+                        ):
+                            self._pending_request = None
+                        logger.debug("Keepalive UDS reply: %s", payload.hex(" "))
+            except TimeoutError:
+                # Suppressed positive responses may be absent. Partial frame
+                # bytes remain buffered for the next reader under this lock.
+                if sent:
+                    self._alive_failures = 0
+                else:
+                    self._alive_failures += 1
+                return sent
+            except OSError:
+                self._alive_failures += 1
+                logger.debug("HSFZ keepalive failed", exc_info=True)
+                return False
         finally:
             self._lock.release()
 
     @property
     def alive_ok(self) -> bool:
-        """True if the last few keep-alive attempts succeeded."""
-        return self._alive_failures < 3
+        """Whether the socket remains usable without repeated keepalive failures."""
+        return self.sock is not None and self._alive_failures < 3
 
-    # ── Internal helpers ────────────────────────────────────────────────
-
-    def _recv_hsfz_message(self, timeout: float) -> tuple[int, int, int, bytes]:
-        """Read one complete HSFZ message: header + payload.
-
-        Args:
-            timeout: Socket timeout for this read.
-
-        Returns:
-            Tuple of (hsfz_type, src_addr, dst_addr, payload_bytes).
-
-        Raises:
-            TimeoutError: If no data within *timeout*.
-            ConnectionError: If socket is closed mid-read.
-        """
-        assert self.sock is not None, "caller must check self.sock"
-        self.sock.settimeout(timeout)
-        try:
-            hdr = self._recv_exact(8)
-        except (TimeoutError, ConnectionError) as e:
-            if isinstance(e, socket.timeout):
-                raise TimeoutError(f"HSFZ response header timeout after {timeout:.0f}s") from e
-            raise
-
-        hsfz_len, hsfz_type, hsfz_src, hsfz_dst = struct.unpack(">IHBB", hdr)
-        payload_len = hsfz_len - 2  # subtract src/dst bytes
-
-        try:
-            payload = self._recv_exact(payload_len) if payload_len > 0 else b""
-        except (TimeoutError, ConnectionError) as e:
-            if isinstance(e, socket.timeout):
-                raise TimeoutError(f"HSFZ payload timeout ({payload_len} bytes)") from e
-            raise
-
-        return (hsfz_type, hsfz_src, hsfz_dst, payload)
-
-    def _recv_exact(self, n: int) -> bytes:
-        """Receive exactly *n* bytes from the socket.
-
-        Raises:
-            ConnectionError: If connection is closed before *n* bytes
-                             received.
-        """
-        assert self.sock is not None, "caller must check self.sock"
-        data = b""
-        while len(data) < n:
-            try:
-                chunk = self.sock.recv(n - len(data))
-            except TimeoutError:
-                raise
-            if not chunk:
-                raise ConnectionError("Connection closed by remote")
-            data += chunk
-        return data
-
-    # ── Context manager ─────────────────────────────────────────────────
+    def _recv_hsfz_message(self, deadline: float) -> tuple[int, int, int, bytes]:
+        sock = self.sock
+        if sock is None:
+            raise ConnectionError("Not connected")
+        buffer = self._receive_buffer
+        _fill_receive_buffer(sock, buffer, 6, deadline)
+        length, control = struct.unpack(">IH", buffer[:6])
+        if length > MAX_FRAME_BODY:
+            raise ConnectionError("HSFZ frame exceeds supported size")
+        addressed = control in (TYPE_DIAG_REQ_RES, TYPE_ACK_TRANSFER) or (
+            control == TYPE_ALIVE_CHECK and length == 2
+        )
+        if addressed and length < 2:
+            raise ConnectionError("HSFZ address fields are truncated")
+        _fill_receive_buffer(sock, buffer, 6 + length, deadline)
+        body = bytes(buffer[6 : 6 + length])
+        del buffer[: 6 + length]
+        if addressed:
+            return control, body[0], body[1], body[2:]
+        return control, 0, 0, body
 
     def __enter__(self) -> "HSFZConnection":
         self.connect()
@@ -931,251 +765,255 @@ class HSFZConnection:
         self.disconnect()
 
 
-# ── DoIP Connection (T-6) ────────────────────────────────────────────────────
+# ── DoIP transport ───────────────────────────────────────────────────────────
 
 
 class DoIPConnection:
-    """DoIP transport for G/U/I-series BMW vehicles (TCP port 13400).
-
-    Implements ISO 13400 DoIP with routing activation.
-    Shares the same send_uds() interface as HSFZConnection.
-
-    Example:
-        >>> conn = DoIPConnection("169.254.1.1")
-        >>> conn.connect()
-        True
-        >>> conn.activate_routing(0x0E00)
-        True
-        >>> resp = conn.send_uds(0x63, bytes([0x22, 0xF1, 0x90]))
-        >>> conn.disconnect()
-    """
+    """Serialized DoIP control/diagnostic exchanges with explicit health results."""
 
     def __init__(self, host: str, port: int = DOIP_DATA_PORT) -> None:
-        """Create a DoIP connection.
-
-        Args:
-            host: Car IP address.
-            port: TCP data port (default 13400).
-        """
+        """Create a transport for the selected DoIP entity."""
         self.host = host
         self.port = port
         self.sock: socket.socket | None = None
-        self.source_addr: int = DOIP_TESTER_LOGICAL_ADDR
-        self.activated: bool = False
+        self.source_addr = DOIP_TESTER_LOGICAL_ADDR
+        self.activated = False
         self._lock = threading.Lock()
+        self._alive_failures = 0
+        self._receive_buffer = bytearray()
+        self._pending_request: tuple[int, bytes] | None = None
 
     def connect(self) -> bool:
-        """Open TCP connection for DoIP.
-
-        Returns:
-            True if connected successfully.
-        """
+        """Connect TCP; routing activation is required before diagnostic sends."""
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            self.sock.settimeout(5.0)
-            self.sock.connect((self.host, self.port))
-            self.sock.settimeout(30.0)
-            logger.info("DoIP connected to %s:%d", self.host, self.port)
-            return True
-        except (TimeoutError, ConnectionRefusedError, OSError) as e:
-            logger.warning(
-                "DoIP connect to %s:%d failed: %s",
-                self.host,
-                self.port,
-                e,
-            )
-            self.sock = None
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            sock.settimeout(5.0)
+            sock.connect((self.host, self.port))
+        except OSError:
+            sock.close()
+            logger.warning("DoIP connect failed: %s:%d", self.host, self.port, exc_info=True)
             return False
+        self.sock = sock
+        self.activated = False
+        self._receive_buffer.clear()
+        self._pending_request = None
+        self._alive_failures = 0
+        return True
 
     def activate_routing(
-        self,
-        source_addr: int = DOIP_TESTER_LOGICAL_ADDR,
-        activation_type: int = 0x00,  # Default diagnostic
+        self, source_addr: int = DOIP_TESTER_LOGICAL_ADDR, activation_type: int = 0x00
     ) -> bool:
-        """Send routing activation request to the DoIP gateway.
-
-        Required before sending diagnostic messages over DoIP.
-
-        Args:
-            source_addr: Tester logical address (default 0x0E00).
-            activation_type: 0x00=default, 0x01=WWH-OBD, etc.
-
-        Returns:
-            True if activation accepted.
-        """
-        if self.sock is None:
-            raise ConnectionError("Not connected")
-
-        # DoIP routing activation request
-        # Payload type 0x0005, then source_addr(2) + activation_type(1)
-        payload = struct.pack(">HB", source_addr, activation_type)
-        # Pad to 4 byte alignment if needed
-        payload += b"\x00" * (4 - len(payload) % 4) if len(payload) % 4 else b""
-
-        doip_header = _build_doip_header(DOIP_ROUTING_ACTIVATION_REQUEST, payload)
-        self.sock.sendall(doip_header)
-
-        # Read response
-        resp = self._recv_doip_message()
-        if resp is None:
-            return False
-
-        resp_type, resp_payload = resp
-        if resp_type != DOIP_ROUTING_ACTIVATION_RESPONSE:
-            logger.warning("Expected routing activation response, got 0x%04X", resp_type)
-            return False
-
-        # Parse response: tester_addr(2) + entity_addr(2) + code(1)
-        if len(resp_payload) >= 5:
-            _, entity_addr, code = struct.unpack(">HHB", resp_payload[:5])
+        """Activate routing with the seven-byte standard request payload."""
+        deadline = _time.monotonic() + 5.0
+        if not self._lock.acquire(timeout=_remaining(deadline)):
+            raise TimeoutError("Routing activation timed out waiting for transport")
+        try:
+            if self.sock is None:
+                raise ConnectionError("Not connected")
+            self.activated = False
             self.source_addr = source_addr
-            self.activated = code == 0x10  # 0x10 = activation successful
-            if self.activated:
-                logger.info(
-                    "DoIP routing activated: source=0x%04X, entity=0x%04X",
-                    source_addr,
-                    entity_addr,
-                )
-            else:
-                logger.warning("DoIP routing activation denied: code=0x%02X", code)
-            return self.activated
-
-        return False
+            self._send_doip(
+                DOIP_ROUTING_ACTIVATION_REQUEST,
+                struct.pack(">HBI", source_addr, activation_type, 0),
+                deadline,
+            )
+            while True:
+                kind, payload = self._recv_doip_message(deadline)
+                if self._handle_control(kind, payload, deadline):
+                    continue
+                if kind != DOIP_ROUTING_ACTIVATION_RESPONSE or len(payload) < 9:
+                    raise ConnectionError("Invalid DoIP routing activation response")
+                tester, _entity, code = struct.unpack(">HHB", payload[:5])
+                self.activated = tester == source_addr and code == 0x10
+                return self.activated
+        except OSError:
+            self._close_locked()
+            raise
+        finally:
+            self._lock.release()
 
     def send_uds(self, ecu_addr: int, payload: bytes, timeout: float = 30.0) -> bytes:
-        """Send a UDS message over DoIP and return the response.
+        """Read through control frames until a correlated diagnostic reply arrives."""
+        if not payload:
+            raise ValueError("UDS request cannot be empty")
+        deadline = _time.monotonic() + timeout
+        if not self._lock.acquire(timeout=_remaining(deadline)):
+            raise TimeoutError("Vehicle operation timed out waiting for transport")
+        try:
+            if self.sock is None or not self.activated:
+                raise ConnectionError("DoIP routing is not active")
+            try:
+                if self._pending_request is not None:
+                    self._read_response(*self._pending_request, deadline)
+                try:
+                    self._send_doip(
+                        DOIP_DIAG_MESSAGE,
+                        struct.pack(">HH", self.source_addr, ecu_addr) + payload,
+                        deadline,
+                    )
+                except _DeadlineExpired:
+                    raise
+                except OSError:
+                    self._close_locked()
+                    raise
+                self._pending_request = (ecu_addr, payload)
+                logger.debug("UDS tx ECU=0x%04X: %s", ecu_addr, payload.hex(" "))
+                return self._read_response(ecu_addr, payload, deadline)
+            except TimeoutError:
+                raise
+            except OSError:
+                self._close_locked()
+                raise
+        finally:
+            self._lock.release()
 
-        Args:
-            ecu_addr: Target ECU logical address (e.g. 0x0063 for headunit).
-            payload: UDS message payload (service byte + data).
-            timeout: Maximum seconds to wait for response.
+    def _read_response(self, ecu_addr: int, request: bytes, deadline: float) -> bytes:
+        while True:
+            kind, body = self._recv_doip_message(deadline)
+            if self._handle_control(kind, body, deadline):
+                continue
+            if kind != DOIP_DIAG_MESSAGE or len(body) < 5:
+                raise ConnectionError("Invalid DoIP diagnostic response")
+            src, dst = struct.unpack(">HH", body[:4])
+            response = body[4:]
+            if src != ecu_addr or dst != self.source_addr or not _matches_uds(request, response):
+                logger.debug("Ignoring unrelated DoIP diagnostic reply from 0x%04X", src)
+                continue
+            logger.debug("UDS rx ECU=0x%04X: %s", src, response.hex(" "))
+            if response[:3] == bytes((0x7F, request[0], 0x78)):
+                continue
+            self._pending_request = None
+            self._alive_failures = 0
+            return response
 
-        Returns:
-            UDS response payload bytes.
+    def alive_check(self) -> bool | None:
+        """Poll gateway control traffic and answer its alive-check requests.
 
-        Raises:
-            ConnectionError: If not connected.
-            TimeoutError: If no response within timeout.
+        None means idle or skipped; an idle poll alone is not proof of liveness.
         """
-        if self.sock is None:
-            raise ConnectionError("Not connected")
+        return self._keepalive(send_tester_present=False)
 
-        # DoIP diagnostic message: source_addr(2) + target_addr(2) + UDS payload
-        diag_payload = struct.pack(">HH", self.source_addr, ecu_addr) + payload
+    def tester_present(self) -> bool | None:
+        """Send suppressed-positive TesterPresent and consume its transport ACK."""
+        return self._keepalive(send_tester_present=True)
 
-        doip_header = _build_doip_header(DOIP_DIAG_MESSAGE, diag_payload)
-
-        self.sock.settimeout(timeout)
+    def _keepalive(self, *, send_tester_present: bool) -> bool | None:
+        if not self._lock.acquire(blocking=False):
+            return None
         try:
-            self.sock.sendall(doip_header)
-        except OSError as e:
-            raise ConnectionError(f"Send failed: {e}") from e
-
-        # Read DoIP ACK (0x8002) — acknowledgement the gateway accepted the message
-        ack = self._recv_doip_message()
-        if ack is None or ack[0] != DOIP_DIAG_MESSAGE_ACK:
-            logger.warning("No DoIP ACK received")
-
-        # Read DoIP diagnostic response (0x8001) containing the UDS response
-        resp = self._recv_doip_message()
-        if resp is None:
-            raise TimeoutError(f"ECU 0x{ecu_addr:04X} did not respond within {timeout:.0f}s")
-
-        resp_type, resp_payload = resp
-        if resp_type == DOIP_DIAG_MESSAGE:
-            # Payload format: source(2) + target(2) + UDS response
-            if len(resp_payload) >= 4:
-                uds_payload = resp_payload[4:]
-                return uds_payload
-            return resp_payload
-
-        raise ConnectionError(f"Unexpected DoIP response type: 0x{resp_type:04X}")
-
-    def alive_check(self) -> None:
-        """Send DoIP alive check request."""
-        if self.sock is None:
-            return
-        try:
-            header = _build_doip_header(DOIP_ALIVE_CHECK_REQUEST, b"")
-            self.sock.sendall(header)
-        except OSError:
-            pass
-
-    def tester_present(self) -> bool:
-        """Send UDS TesterPresent (0x3E 0x80) over DoIP.
-
-        Uses the suppress-positive-response bit (0x80).  Non-blocking:
-        acquires the connection lock briefly to build and send the
-        frame.  If ``send_uds()`` is in flight the lock acquisition
-        fails and this cycle is skipped.
-
-        Returns:
-            True if sent, False if skipped or socket is gone.
-        """
-        if self.sock is None:
-            return False
-
-        acquired = self._lock.acquire(blocking=False)
-        if not acquired:
-            return True  # skipped
-
-        try:
-            payload = struct.pack(">HH", self.source_addr, ZGW_ADDR)
-            payload += bytes([0x3E, 0x80])
-            header = _build_doip_header(DOIP_DIAG_MESSAGE, payload)
-            self.sock.sendall(header)
-            return True
-        except OSError:
-            return False
+            if self.sock is None or not self.activated:
+                return False
+            if send_tester_present and self._pending_request is not None:
+                return None
+            sent = False
+            deadline = _time.monotonic() + (1.0 if send_tester_present else 0.05)
+            try:
+                if send_tester_present:
+                    body = struct.pack(">HH", self.source_addr, ZGW_ADDR) + b"\x3e\x80"
+                    self._send_doip(DOIP_DIAG_MESSAGE, body, deadline)
+                    sent = True
+                while True:
+                    try:
+                        kind, body = self._recv_doip_message(deadline)
+                    except TimeoutError:
+                        if not sent:
+                            return None  # Idle polls are not failed transmissions.
+                        self._alive_failures += 1
+                        return False
+                    if self._handle_control(kind, body, deadline):
+                        self._alive_failures = 0
+                        if sent and kind == DOIP_DIAG_MESSAGE_ACK:
+                            self._alive_failures = 0
+                            return True
+                        continue
+                    if kind != DOIP_DIAG_MESSAGE or len(body) < 5:
+                        raise ConnectionError("Unexpected DoIP keepalive frame")
+                    src, dst = struct.unpack(">HH", body[:4])
+                    response = body[4:]
+                    pending = self._pending_request
+                    if (
+                        pending is not None
+                        and src == pending[0]
+                        and dst == self.source_addr
+                        and _matches_uds(pending[1], response)
+                        and response[:3] != bytes((0x7F, pending[1][0], 0x78))
+                    ):
+                        self._pending_request = None
+                    self._alive_failures = 0
+                    logger.debug("Keepalive UDS reply: %s", response.hex(" "))
+            except OSError:
+                self._alive_failures += 1
+                logger.debug("DoIP keepalive failed", exc_info=True)
+                return False
         finally:
             self._lock.release()
 
     @property
     def alive_ok(self) -> bool:
-        """True unless the socket is gone."""
-        return self.sock is not None
+        """Whether transport operations have avoided repeated actual failures."""
+        return self.sock is not None and self._alive_failures < 3
 
     def disconnect(self) -> None:
-        """Close the DoIP connection."""
-        if self.sock:
+        """Unblock I/O before taking ownership of socket cleanup."""
+        sock = self.sock
+        if sock is not None:
             with contextlib.suppress(OSError):
-                self.sock.shutdown(socket.SHUT_RDWR)
+                sock.shutdown(socket.SHUT_RDWR)
+        with self._lock:
+            if self.sock is sock:
+                self._close_locked()
+
+    def _close_locked(self) -> None:
+        if self.sock is not None:
             with contextlib.suppress(OSError):
                 self.sock.close()
             self.sock = None
-            self.activated = False
-            logger.info("DoIP disconnected from %s:%d", self.host, self.port)
+        self.activated = False
+        self._receive_buffer.clear()
+        self._pending_request = None
+        self._alive_failures = 3
 
-    def _recv_doip_message(self) -> tuple[int, bytes] | None:
-        """Receive a single DoIP message.
-
-        Returns:
-            Tuple of (payload_type, payload_bytes) or None on error.
-        """
+    def _send_doip(self, kind: int, payload: bytes, deadline: float) -> None:
         if self.sock is None:
-            return None
+            raise ConnectionError("Not connected")
+        self.sock.settimeout(_remaining(deadline))
+        self.sock.sendall(_build_doip_header(kind, payload))
 
-        try:
-            # DoIP header: version(1) + inv_version(1) + type(2) + length(4) = 8 bytes
-            hdr = self._recv_exact(8)
-            version, inv_version, ptype, length = struct.unpack(">BBHI", hdr)
-            payload = self._recv_exact(length) if length > 0 else b""
-            return (ptype, payload)
-        except (TimeoutError, ConnectionError, struct.error) as e:
-            logger.warning("DoIP receive error: %s", e)
-            return None
+    def _handle_control(self, kind: int, body: bytes, deadline: float) -> bool:
+        if kind == DOIP_ALIVE_CHECK_REQUEST:
+            if body:
+                raise ConnectionError("Invalid DoIP alive-check request")
+            self._send_doip(
+                DOIP_ALIVE_CHECK_RESPONSE, struct.pack(">H", self.source_addr), deadline
+            )
+            return True
+        if kind in (DOIP_DIAG_MESSAGE_ACK, DOIP_DIAG_MESSAGE_NACK):
+            if len(body) < 5:
+                raise ConnectionError("Truncated DoIP diagnostic acknowledgement")
+            _source, target, code = struct.unpack(">HHB", body[:5])
+            if target != self.source_addr or kind == DOIP_DIAG_MESSAGE_NACK or code != 0:
+                raise ConnectionError(f"DoIP diagnostic acknowledgement rejected: 0x{code:02X}")
+            return True
+        if kind == 0x0000:
+            raise ConnectionError("DoIP header rejected by vehicle")
+        return False
 
-    def _recv_exact(self, n: int) -> bytes:
-        """Receive exactly n bytes."""
-        assert self.sock is not None, "caller must check self.sock"
-        data = b""
-        while len(data) < n:
-            chunk = self.sock.recv(n - len(data))
-            if not chunk:
-                raise ConnectionError("Connection closed by remote")
-            data += chunk
-        return data
+    def _recv_doip_message(self, deadline: float) -> tuple[int, bytes]:
+        sock = self.sock
+        if sock is None:
+            raise ConnectionError("Not connected")
+        buffer = self._receive_buffer
+        _fill_receive_buffer(sock, buffer, 8, deadline)
+        version, inverse, kind, length = struct.unpack(">BBHI", buffer[:8])
+        if version != DOIP_PROTOCOL_VERSION or inverse != version ^ 0xFF:
+            raise ConnectionError("Invalid DoIP protocol version")
+        if length > MAX_FRAME_BODY:
+            raise ConnectionError("DoIP frame exceeds supported size")
+        _fill_receive_buffer(sock, buffer, 8 + length, deadline)
+        body = bytes(buffer[8 : 8 + length])
+        del buffer[: 8 + length]
+        return kind, body
 
     def __enter__(self) -> "DoIPConnection":
         self.connect()

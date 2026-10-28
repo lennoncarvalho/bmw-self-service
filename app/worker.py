@@ -7,10 +7,14 @@ Reference: docs/17-ui-decisions.md (Decision #4: one reusable CarWorker pattern)
 """
 
 import logging
+import time
 from collections.abc import Callable
+from threading import Event
 from typing import Any
 
 from PySide6.QtCore import QThread, Signal
+
+from app.connection import DoIPConnection, HSFZConnection
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +153,8 @@ class PostConnectWorker(CarWorker):
         errors: dict[str, object] = {}
 
         for i, (label, task_fn) in enumerate(self.tasks, start=1):
+            if self.isInterruptionRequested():
+                break
             self.progress.emit(f"Reading {label}... ({i}/{total})")
 
             try:
@@ -190,3 +196,66 @@ class PostConnectWorker(CarWorker):
             )
 
         return {"results": results, "errors": errors}
+
+
+class ConnectWorker(CarWorker):
+    """Run connection setup with an interruptible wait/cancellation token."""
+
+    def __init__(self, fn: Callable[[Event], object], series: str) -> None:
+        """Retain setup work and the selected series for result delivery."""
+        super().__init__(None)
+        self.fn = fn
+        self.series = series
+        self._cancelled = Event()
+
+    @property
+    def cancelled(self) -> bool:
+        """Whether this attempt was cancelled by disconnect, retry or shutdown."""
+        return self._cancelled.is_set()
+
+    def stop(self) -> None:
+        """Wake connection waits and request cancellation at the next boundary."""
+        self._cancelled.set()
+        self.requestInterruption()
+
+    def do_work(self) -> object:
+        """Execute the connection attempt with the cancellation event."""
+        return self.fn(self._cancelled)
+
+
+class KeepAliveWorker(CarWorker):
+    """Maintain a real transport off the GUI without treating skipped work as failure."""
+
+    connection_lost = Signal(object)
+
+    def __init__(self, connection: HSFZConnection | DoIPConnection) -> None:
+        """Keep the transport alive until explicitly stopped or actually failed."""
+        super().__init__(connection)
+        self._stopped = Event()
+
+    def stop(self) -> None:
+        """Wake the interval wait without blocking the GUI thread."""
+        self._stopped.set()
+
+    def do_work(self) -> None:
+        """Serialize scheduled heartbeat work and signal loss for the same connection."""
+        next_alive = time.monotonic() + 2.0
+        next_tester = time.monotonic() + 2.5
+        while not self._stopped.is_set():
+            now = time.monotonic()
+            if now >= next_alive:
+                result = self.connection.alive_check()
+                if result is None:
+                    logger.debug("Transport heartbeat idle or skipped while stream is busy")
+                next_alive = time.monotonic() + 2.0
+            if self._stopped.is_set():
+                break
+            if time.monotonic() >= next_tester:
+                result = self.connection.tester_present()
+                if result is None:
+                    logger.debug("TesterPresent skipped while stream is busy")
+                next_tester = time.monotonic() + 2.5
+            if not self._stopped.is_set() and not self.connection.alive_ok:
+                self.connection_lost.emit(self.connection)
+                break
+            self._stopped.wait(max(0.0, min(next_alive, next_tester) - time.monotonic()))

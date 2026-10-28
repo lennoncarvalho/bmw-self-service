@@ -51,7 +51,13 @@ frames until a correlated application response or bounded failure occurs.
 - Resolve late responses after timeout/cancel before reuse. Prevent stale workers
   from acting on replacement connections. Hiding a spinner is not cancellation.
 
-These are acceptance criteria; current code is not certified against them.
+The [PR review follow-up](../tasks/pr-8-review-followup.md) implements the
+six-byte parser, persistent fragments, request matching, pending handling and
+one operation deadline in source. Receive timeouts retain outstanding-request
+ownership; its completion must be consumed before the next diagnostic send.
+There is no automatic request replay. A never-completing response requires
+reconnect before further diagnostics. Transport errors close the stream.
+Static gates passed; real gateway behavior is not yet certified.
 
 ## Keepalive uncertainty
 
