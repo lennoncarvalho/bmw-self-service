@@ -191,3 +191,23 @@ gates and GitHub quality/CodeQL checks passed. Subsequent local review corrected
 gateway fallback addressing, distinct request trace IDs and closed-owner retry
 behavior. The optional Robin review of the opening revision was still processing
 at this handoff update; it is separate from the completed local code review.
+
+## PR #12 automated review disposition
+
+Robin's agent mode stalled upstream and used a fallback diff-only review of the
+opening revision. All 13 reported items were compared with the actual source;
+the workflow's success status alone is not an approval certificate.
+
+| Reported items | Disposition / evidence |
+|----------------|------------------------|
+| Six high-priority frozen OperationContext mutations | Non-actionable: OperationContext is declared `@dataclass`, not frozen. The frozen decorators belong to other DTOs. Python 3.13 dataclass metadata and actual context mutations, plus full-facade exercises, confirm this premise is false. |
+| Idle maintenance failure | Partly actionable and fixed: a fully correlated final TesterPresent NRC now disables maintenance for that ECU, records its unavailable reason and leaves the connection usable. Both transport facades passed a synthetic rejected-TesterPresent-then-read exercise. Timeout/EOF/ambiguous failures still invalidate ownership; swallowing those would permit late-response contamination. |
+| Keepalive can delay queued operations | Bounded/intentional: serialization includes keepalive, and submission-time deadlines include that queue wait. The proposed competing I/O thread violates the single-owner contract. The loop uses a bounded per-session budget and cancellation polling, not GUI-thread I/O. |
+| Strict ASCII I-level decode | Keep strict validation; discarding bytes would fabricate a value from an unverified binary field. Added a friendly unavailable reason for UnicodeDecodeError, preserving the original traceback in logs. |
+| Two private _pack_doip API reports | Accepted pinned boundary: exact doipclient 1.2.2 wheel/source hash is retained and both discovery/diagnostic framing are verified. A future version change requires explicit revalidation; an exact pin cannot silently become another patch release. No additional hand-copied header implementation was added. |
+| Local time import | Moved to module-level imports. |
+| Add an automated suite | Not adopted: explicit owner policy forbids it. One-off offline byte/socket checks and the full required gate remain the authorized verification. |
+
+The externally reported findings are now either repaired or explicitly resolved
+against evidence/policy. No independent second socket reader, lossy ASCII decode
+or unnecessary dataclass workaround was introduced to satisfy a mistaken report.

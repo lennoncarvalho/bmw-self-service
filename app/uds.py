@@ -76,6 +76,8 @@ class UdsServices:
         self.bridge = bridge
         self._definitions: dict[int, tuple[str, str]] = {}
         self.session = 1
+        self.keepalive_enabled = False
+        self.session_unavailable_reason: str | None = None
         self.last_activity = time.monotonic()
         self.client = Client(
             bridge,
@@ -164,6 +166,8 @@ class UdsServices:
             self.last_activity = time.monotonic()
             if sid == 0x10:
                 self.session = payload[1]
+                self.keepalive_enabled = self.session != 1
+                self.session_unavailable_reason = None
             return bytes(response.original_payload)
         except NegativeResponseException as exc:
             self.bridge.waiting = False

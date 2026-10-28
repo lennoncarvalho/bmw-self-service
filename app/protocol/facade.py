@@ -15,6 +15,7 @@ from app.protocol.contracts import (
     FailureKind,
     OperationContext,
     OperationOutcome,
+    ProtocolFailure,
     TransportKind,
 )
 from app.protocol.doip import DoipAdapter
@@ -274,9 +275,23 @@ class DiagnosticConnection:
         if self.adapter is None:
             return
         for services in list(self._services.values()):
-            if services.session != 1 and time.monotonic() - services.last_activity >= 2.5:
+            if services.keepalive_enabled and time.monotonic() - services.last_activity >= 2.5:
                 ctx = self.context(1.0, self._owner.stop_event)
-                services.tester_present(ctx)
+                try:
+                    services.tester_present(ctx)
+                except ProtocolFailure as exc:
+                    if exc.kind != FailureKind.NEGATIVE or exc.reconnect:
+                        raise
+                    # A correlated final rejection leaves no ambiguous reply.
+                    # Stop claiming this ECU's session is maintained, while
+                    # preserving supported reads on the rest of the connection.
+                    services.keepalive_enabled = False
+                    services.session_unavailable_reason = "ECU rejected session maintenance"
+                    logger.warning(
+                        "Session maintenance unavailable ecu=0x%04X conn=%s",
+                        services.bridge.ecu.address,
+                        self.trace_id,
+                    )
         # Preserve fragments across idle poll expiry.
         with contextlib.suppress(TimeoutError):
             self.adapter.poll(self.context(0.02, self._owner.stop_event))

@@ -548,7 +548,10 @@ class MainWindow(QMainWindow):
         def _read_ilevel(conn):
             resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
             if resp[0] == 0x62:
-                value = resp[3:].decode("ascii").strip("\x00 ")
+                try:
+                    value = resp[3:].decode("ascii").strip("\x00 ")
+                except UnicodeDecodeError as exc:
+                    raise ValueError("Vehicle software level has no verified text decoder") from exc
                 if not value or not value.isprintable():
                     raise ValueError("Vehicle software level has no verified text decoder")
                 return value

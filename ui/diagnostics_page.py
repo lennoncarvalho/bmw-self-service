@@ -7,6 +7,7 @@ Reference: docs/16-ui-spec.md Screen 5, docs/14-dtc-database.md
 """
 
 import logging
+import time
 from threading import Event
 from typing import Any
 
@@ -67,7 +68,6 @@ class DtcReadWorker(CarWorker):
         self._timeout_action = "abort"  # default if UI never responds
         self.ecu_timeout.emit(ecu_name)
         # Wait up to 60s for UI response — if UI never responds, abort
-        import time
 
         deadline = time.monotonic() + 60.0
         while not self._timeout_event.wait(0.05):
