@@ -21,6 +21,7 @@ Protocol correctness is determined by reproducible evidence, not preference.
 | D-12 | Once VIN and diagnostic communication are verified, optional read failures do not disconnect the car; explicitly mark unavailable fields and incomplete ECU coverage |
 | D-13 | Conditionally prefer retaining the mandatory series picker if it simplifies connection behavior and initial loading across pages; this benefit must be assessed, not assumed |
 | D-14 | Identified but unverified ECU/software variants may use supported reads; disable unverified writes until exact definitions and write/readback support exist |
+| D-15 | GPL-compatible app distribution is acceptable when evaluating protocol dependencies such as Scapy; the actual app license and release materials still need recording |
 
 ## Recovered context, with provenance
 

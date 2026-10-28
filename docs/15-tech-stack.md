@@ -24,6 +24,10 @@ and [release metadata](https://pypi.org/project/pycryptodome/4.2.0/).
 
 Use Widgets, QSS, QThread/signals, sockets and SQLite. The app does not use asyncio.
 
+Standard protocol reuse is planned, not yet installed: see
+[the library evaluation](24-protocol-library-evaluation.md) for udsoncan,
+doipclient and Scapy HSFZ, plus the Gallia alternative and adapter requirements.
+
 ## Network contract
 
 Diagnostics use ordinary UDP/TCP sockets. Identify the wired adapter, physical

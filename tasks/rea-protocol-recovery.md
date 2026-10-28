@@ -10,6 +10,10 @@ families; retain the existing exclusion of E-series and other adapters.
 Derive implementable protocol contracts from supplied applications and their
 data, then use recorded traffic and vehicles to validate our implementation.
 The owner's car is not the source from which we invent universal mappings.
+Reuse standard protocol libraries rather than maintaining duplicate stacks;
+[the released-library evaluation](../docs/24-protocol-library-evaluation.md)
+recommends udsoncan, evaluates doipclient and prioritizes Scapy HSFZ integration,
+with Gallia as an alternative. BMW-specific contracts remain REA work.
 “Any BMW” remains the coverage objective, measured against the reference apps'
 actual supported branches and restrictions, not a promise based on model year.
 
@@ -230,6 +234,8 @@ gaps remain explicit even when static source support is broad.
 ## Delivery order and acceptance
 
 1. Analysis capability + evidence inventory.
+   In parallel, design the selected-library adapter and verify lifecycle
+   compatibility per doc 24; do not rewrite standard transports during REA.
 2. ECU discovery/identity, then vehicle information + complete DTC reads.
 3. History and coding reads, so all requested pages can load real data.
 4. Verified mutations and recovery.

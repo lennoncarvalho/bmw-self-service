@@ -17,6 +17,9 @@ successful HSFZ/VIN exchanges, rejected optional reads and gateway-only DTC
 coverage. [The source-first REA plan](../tasks/rea-protocol-recovery.md) defines
 the evidence and implementation sequence to close those gaps.
 
+[Protocol library evaluation](24-protocol-library-evaluation.md) records the
+UDS/DoIP/HSFZ reuse recommendation, released-source review and migration gates.
+
 ## Original documents reviewed
 
 | Document | Current standing / correction |

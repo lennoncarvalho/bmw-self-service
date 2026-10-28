@@ -1,0 +1,90 @@
+{
+  "checked_on": "2026-10-28",
+  "purpose": "Released artifact and selected source identity; static inspection only, no installation, imports, runtime or vehicle validation",
+  "artifacts": [
+    {
+      "project": "udsoncan",
+      "version": "1.26.1",
+      "release_url": "https://pypi.org/project/udsoncan/1.26.1/",
+      "filename": "udsoncan-1.26.1-py3-none-any.whl",
+      "download_url": "https://files.pythonhosted.org/packages/9b/99/5c79ce34af274fe20c4511ecf792ed2d868ad64a2406351f20df7f2b33fd/udsoncan-1.26.1-py3-none-any.whl",
+      "bytes": 120636,
+      "sha256": "c1bd6cc54d6c1124c0eafeff2ffaab48bfeb7d0d2576959f21840c37e96dfb9a",
+      "uploaded": "2026-06-25T20:43:12.998432Z",
+      "requires_python": ">=3.7",
+      "license_metadata": "MIT",
+      "selected_sources": [
+        {
+          "path": "udsoncan/client.py",
+          "sha256": "8da14b0757fb7fe6fc134030689a4219a38403e08d8adc585907a16f52ea951a"
+        },
+        {
+          "path": "udsoncan/connections.py",
+          "sha256": "0828361c00f06f87b6234e9d62bf5c720abef11edba8a1804c088973cc258133"
+        }
+      ]
+    },
+    {
+      "project": "doipclient",
+      "version": "1.2.2",
+      "release_url": "https://pypi.org/project/doipclient/1.2.2/",
+      "filename": "doipclient-1.2.2-py3-none-any.whl",
+      "download_url": "https://files.pythonhosted.org/packages/e3/dc/4fca0581c24c0ec0446af8b53c229bf74ab756c17f0db430fa76249c25c7/doipclient-1.2.2-py3-none-any.whl",
+      "bytes": 20460,
+      "sha256": "5169b732434f5c949d585b354c048ecbfdbad7a51e32192a852d1c451deac90f",
+      "uploaded": "2026-08-23T23:39:35.193061Z",
+      "requires_python": ">=3.6",
+      "license_metadata": "MIT",
+      "selected_sources": [
+        {
+          "path": "doipclient/client.py",
+          "sha256": "86c3955a48bafeae6498f6ef4a9c0e49b0b4713e94dcc3120d3ce2a77e78467f"
+        },
+        {
+          "path": "doipclient/connectors.py",
+          "sha256": "8ffdd8e22305fa3d969e1284976acb0751c414d8294f23c8ab2a0b30141b27e1"
+        }
+      ]
+    },
+    {
+      "project": "scapy",
+      "version": "2.8.0",
+      "release_url": "https://pypi.org/project/scapy/2.8.0/",
+      "filename": "scapy-2.8.0-py3-none-any.whl",
+      "download_url": "https://files.pythonhosted.org/packages/b9/1e/f07107ed79e69a659f1ab65ee7894d71fc1cf15108cf475782d3979a480d/scapy-2.8.0-py3-none-any.whl",
+      "bytes": 2762122,
+      "sha256": "abf855145ee829a42b2eb28983cd6a0a52b12a31d3f861cb7be36791195ed9aa",
+      "uploaded": "2026-10-02T16:25:17.260071Z",
+      "requires_python": "<4,>=3.7",
+      "license_metadata": "GPL-2.0-only",
+      "selected_sources": [
+        {
+          "path": "scapy/contrib/automotive/bmw/hsfz.py",
+          "sha256": "9edf8ec9b1d26a0ee8bc57b80e3ab353e5948c6b668a51b891724e8d0f05c2ab"
+        }
+      ]
+    },
+    {
+      "project": "gallia",
+      "version": "2.2.0",
+      "release_url": "https://pypi.org/project/gallia/2.2.0/",
+      "filename": "gallia-2.2.0-py3-none-any.whl",
+      "download_url": "https://files.pythonhosted.org/packages/c5/61/dbf6a9e0f74a599052954dfe4e213fffaf87b48dfbcd44025aa1339e6923/gallia-2.2.0-py3-none-any.whl",
+      "bytes": 231786,
+      "sha256": "9e188e837392e2f193c974dfd330225b04a27de5e959763b6638ae85a1b6e44c",
+      "uploaded": "2026-10-13T15:02:14.415788Z",
+      "requires_python": "<3.16,>=3.12",
+      "license_metadata": "Apache-2.0",
+      "selected_sources": [
+        {
+          "path": "gallia/transports/hsfz.py",
+          "sha256": "0531351eb02e5b6b7fc533869c0e945edf1b45cc59622d984c0b7ce4cb342bbf"
+        },
+        {
+          "path": "gallia/transports/doip.py",
+          "sha256": "43fa4953306714396723e6361431b23013912918dd8f9a2fd513cf806335bada"
+        }
+      ]
+    }
+  ]
+}
