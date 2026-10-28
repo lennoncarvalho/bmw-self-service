@@ -51,6 +51,7 @@ class UdsConnection(BaseConnection):
             raise ConnectionError("No active diagnostic operation")
         self.context.remaining()
         self.context.request_id = uuid.uuid4().hex
+        self.context.ecu = self.ecu
         logger.debug(
             "UDS TX conn=%s operation=%s request=%s ecu=0x%04X data=%s",
             self.context.generation,

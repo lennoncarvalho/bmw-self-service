@@ -117,7 +117,12 @@ class ProtocolOwner:
         )
         handle.completion.set_result(
             OperationOutcome(
-                context.operation_id, context.generation, failure=failure, sent=context.sent
+                context.operation_id,
+                context.generation,
+                failure=failure,
+                sent=context.sent,
+                ecu=context.ecu,
+                request_id=context.request_id,
             )
         )
 
@@ -164,6 +169,8 @@ class ProtocolOwner:
                             context.generation,
                             payload=payload,
                             sent=context.sent,
+                            ecu=context.ecu,
+                            request_id=context.request_id,
                         )
                     )
                 except ProtocolFailure as exc:
@@ -187,6 +194,8 @@ class ProtocolOwner:
                                 else exc.kind
                             ),
                             sent=context.sent,
+                            ecu=context.ecu,
+                            request_id=context.request_id,
                         )
                     )
                 except PermissionError:

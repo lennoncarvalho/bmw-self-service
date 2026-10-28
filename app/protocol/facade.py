@@ -197,6 +197,7 @@ class DiagnosticConnection:
             finally:
                 self._active = None
 
+        context.ecu = EcuIdentity(self.trace_id, self.kind, ecu)
         return self._owner.submit(execute, context)
 
     def run_operation(
@@ -215,6 +216,7 @@ class DiagnosticConnection:
             finally:
                 self._active = None
 
+        context.ecu = EcuIdentity(self.trace_id, self.kind, ecu)
         return self._call(execute, context)
 
     def register_ecu(self, identity: EcuIdentity, *, context: OperationContext) -> None:

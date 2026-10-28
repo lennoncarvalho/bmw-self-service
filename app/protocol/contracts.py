@@ -94,6 +94,7 @@ class OperationContext:
     mutation: bool = False
     created_at: float = field(default_factory=time.monotonic)
     request_id: str = field(default_factory=lambda: uuid.uuid4().hex)
+    ecu: EcuIdentity | None = None
 
     def __post_init__(self) -> None:
         if not self.generation or not math.isfinite(self.deadline):
@@ -142,6 +143,15 @@ class OperationOutcome:
     payload: bytes | None = None
     failure: FailureKind | None = None
     sent: bool = False
+    ecu: EcuIdentity | None = None
+    request_id: str | None = None
+
+    @property
+    def nrc(self) -> int | None:
+        """Expose an already validated final negative response's code."""
+        if self.failure == FailureKind.NEGATIVE and self.payload and len(self.payload) >= 3:
+            return self.payload[2]
+        return None
 
 
 class TransportAdapter(Protocol):
