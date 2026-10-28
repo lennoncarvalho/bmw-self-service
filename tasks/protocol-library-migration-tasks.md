@@ -203,7 +203,7 @@ Files: task/verification records, docs 15/24/25/26, `SESSION-PROMPT.md`.
   mypy separately and rerun all three after any fixes. Do not create `tests/`.
 - [x] Rebase/integrate current main as needed and repeat affected validation;
   keep meaningful reviewable commits referencing spec 25.
-- [ ] Before every push or gh pr operation, use
+- [x] Before every push or gh pr operation, use
   `gh auth switch --user lennoncarvalho`; open the implementation's own PR.
   Include selected/rejected candidates, API/ownership design, evidence and
   pending runtime/hardware/platform/license items. Never merge without instruction.
@@ -218,6 +218,7 @@ Done when: reviewable implementation delivered with green full static gates,
 accurate acceptance status and a concrete Task B integration handoff.
 
 Open boxes above include pending physical/platform/license/PR-merge actions.
+The implementation is delivered in [PR #12](https://github.com/lennoncarvalho/bmw-self-service/pull/12).
 The arm64/target-runtime portions are verified; unavailable platforms and a new
 physical run are not marked complete. Exact deviations/refinements (including
 codec/parser reuse, network fallback and keepalive) are in the verification record.

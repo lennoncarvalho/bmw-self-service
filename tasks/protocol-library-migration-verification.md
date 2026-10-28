@@ -1,5 +1,10 @@
 # Task A implementation verification
 
+Current status: code implementation and local review complete in
+[PR #12](https://github.com/lennoncarvalho/bmw-self-service/pull/12).
+The current library integration record below supersedes the retained A1-only
+entry. Fresh vehicle, remaining-platform and release acceptance are still pending.
+
 2026-10-28; implementation branch `codex/task-a-protocol-owner`, based on
 main `4898b0a8586aa1e41236775356895c6375096a2b` with planning commit carried
 forward. Owner authorization to proceed supersedes the plan's wait for a
@@ -180,3 +185,9 @@ made available. Legacy single-code clear UI/send path was removed per D-16.
   actual network reconfiguration, scanner runs or DHCP/elevation actions occurred.
 - GPL-compatible direction is accepted; exact application license and complete
   release source materials still need owner/release disposition before distribution.
+
+Delivery: PR #12 is open on `codex/task-a-library-integration`; local/full-target
+gates and GitHub quality/CodeQL checks passed. Subsequent local review corrected
+gateway fallback addressing, distinct request trace IDs and closed-owner retry
+behavior. The optional Robin review of the opening revision was still processing
+at this handoff update; it is separate from the completed local code review.
