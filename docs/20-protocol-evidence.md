@@ -109,12 +109,20 @@ owned cleanup; it must not kill unrelated host services. See doc 15.
 
 ## Next evidence collection
 
+The [first retained session](23-first-vehicle-session.md) now establishes the
+F48 setup's HSFZ/VIN baseline. It also records negative responses to the fixed
+FA/mileage/voltage/topology requests, an invalid I-level decode and gateway-only
+DTC coverage. Follow [the staged REA plan](../tasks/rea-protocol-recovery.md)
+for source-derived replacements. The earlier collection recommendation below
+describes the pre-session starting point.
+
 Start with F48/NBT read-only identity and complete HSFZ frame dispatch. Preserve
 fresh logs before rotation and record adapter/route/runtime. Next trace the
 reference app's F/G/U/I connection selection and exact vehicle identity reads;
 only then specify data availability and feature support by variant.
 
-REA guidance is installed, but its engines/live MCP are not configured here.
-CLI 6.8.0 responds; `doctor` reports missing JDK/JADX/native provider setup.
-Ordinary APK inventory and local source inspection remain possible. Never claim
-a new decompilation or fabricate an evidence ID when those tools are absent.
+The earlier missing-engine observation is superseded: owner setup/restart now
+provides REA MCP 6.8.0 and successful JADX package/class/method-smali inspection.
+Ghidra 12.1.4 is reported available, not yet exercised on a native target here.
+See [source guide and retained Evidence](27-rea-source-guide.md). Tool readiness
+does not establish any missing BMW operation contract above.

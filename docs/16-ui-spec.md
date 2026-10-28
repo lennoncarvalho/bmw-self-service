@@ -5,6 +5,13 @@
 > Completion labels and code examples below are not validated vehicle contracts.
 > Wireframes are proposals; [owner decisions](21-product-decisions.md) govern write/backup/readback behavior.
 
+> **Current release profile:** [spec 26](26-feature-readiness-spec.md) overrides
+> older controls/scope below: faults from all ECUs, one Clear All button with
+> partial outcomes, history read/add with exact duplicate blocking, and every
+> applicable easy preset. Per-code/per-ECU clear controls, history editing and
+> advanced coding are not first-release requirements. Use [spec 25](25-library-migration-spec.md)
+> for protocol ownership and [doc 27](27-rea-source-guide.md) for source answers.
+
 > **App:** BMW Diagnostic Tool  
 > **Theme:** Dark, modern, mobile-friendly  
 > **Date:** 2026-10-25  

@@ -2,6 +2,9 @@
 
 Updated 2026-10-28. Existing implementation requires review, not rebuilding from
 scratch. Earlier checked criteria and “39 tests” references were unsupported.
+Current separate development contracts are [Task A/spec 25](docs/25-library-migration-spec.md)
+and [Task B/spec 26](docs/26-feature-readiness-spec.md); use
+[the source/REA guide](docs/27-rea-source-guide.md) for protocol answers.
 See [audit findings](docs/19-audit-and-readiness.md),
 [protocol corrections](docs/20-protocol-evidence.md) and
 [owner decisions](docs/21-product-decisions.md).

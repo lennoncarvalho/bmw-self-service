@@ -12,6 +12,29 @@ static checks do not validate vehicle behavior.
 [Read-only vehicle validation and log collection](22-read-only-validation.md)
 describes the current source launch and explicit unavailable page states.
 
+[First retained vehicle session](23-first-vehicle-session.md) establishes two
+successful HSFZ/VIN exchanges, rejected optional reads and gateway-only DTC
+coverage. [The source-first REA plan](../tasks/rea-protocol-recovery.md) defines
+the evidence and implementation sequence to close those gaps.
+
+[Protocol library evaluation](24-protocol-library-evaluation.md) records the
+UDS/DoIP/HSFZ reuse recommendation, released-source review and migration gates.
+
+## Current development entry points
+
+| Work | Task | Specification / answers |
+|------|------|-------------------------|
+| A — migrate protocol libraries | [task A](../tasks/protocol-library-migration.md) | [spec 25](25-library-migration-spec.md), [evaluation 24](24-protocol-library-evaluation.md) |
+| B — REA and functional feature recovery | [task B](../tasks/rea-protocol-recovery.md) | [spec 26](26-feature-readiness-spec.md), [source/REA guide 27](27-rea-source-guide.md) |
+
+Start another session with [SESSION-PROMPT.md](../SESSION-PROMPT.md). Task A
+is ready for implementation planning. Task B is ready for source investigation;
+protocol facts and explicitly pending product decisions gate affected code.
+The first usable slice is connection/vehicle info, all-ECU fault display with
+one Clear All action, local history read/add and all applicable easy presets.
+History editing, advanced coding and CBS are later scope. REA now works for
+Android inspection; doc 27 records actual evidence and per-tool limits.
+
 ## Original documents reviewed
 
 | Document | Current standing / correction |
@@ -43,7 +66,7 @@ describes the current source launch and explicit unavailable page states.
 | [README.md](../README.md) | Honest setup/current status; build examples remain unverified |
 | [CAPABILITY-MAP.md](../CAPABILITY-MAP.md) | Target capabilities with evidence limitations |
 | [SPEC-INFRASTRUCTURE.md](../SPEC-INFRASTRUCTURE.md) | Current readiness/acceptance contract, not a completion certificate |
-| [SESSION-PROMPT.md](../SESSION-PROMPT.md) | Resume current review instead of rebuilding finished modules |
+| [SESSION-PROMPT.md](../SESSION-PROMPT.md) | Current two-task development handoff; source and evidence routes |
 | [requirements.md](../requirements.md) | Historical REA brief; instructions are not active unattended execution authorization |
 | [plan](../tasks/plan.md) / [todo](../tasks/todo.md) | Historical infrastructure plan/checklist |
 | [feature gaps](../tasks/feature-gaps.md) | Historical contradictory completion claims; audit supersedes status |

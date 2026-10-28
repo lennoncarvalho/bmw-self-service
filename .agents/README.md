@@ -61,6 +61,12 @@ Skill helper scripts are references, not automatically executed hooks.
 
 ## REA readiness and limitations
 
+**Current after owner setup/restart:** REA MCP 6.8.0 is connected; JADX package,
+class and method-smali inspection succeeded on the supplied APK. Ghidra 12.1.4
+is reported available. See [the source guide](../docs/27-rea-source-guide.md)
+for retained Evidence, local bundle and per-tool limitations. Observations below
+describe the earlier pre-setup audit; do not repeat setup because of them.
+
 The official [REA project](https://github.com/morluto/rea) distinguishes skill
 instructions from runtime registration and analysis engines. Installed skill
 metadata is version **49**, pinned to the `rea-agents-6.8.0` release commit and

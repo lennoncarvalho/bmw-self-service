@@ -1,0 +1,56 @@
+{
+  "checked_on": "2026-10-28",
+  "scope": "Tooling smoke inspection only; no BMW feature protocol or native analysis validated",
+  "server": {
+    "name": "rea",
+    "version": "6.8.0",
+    "catalog_tools": 229,
+    "catalog_digest": "a98940ba69acd9c1781d180cee362d4ddab18f77eefdd3e3216f10e1bf98e5e9"
+  },
+  "native_provider": {
+    "id": "ghidra",
+    "version": "12.1.4",
+    "status": "reported available; no target analysis performed"
+  },
+  "android": {
+    "artifact": "sources/BimmerLink_v2.36.1.apk",
+    "sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5",
+    "engine": {
+      "name": "jadx-headless-mcp",
+      "version": "0.7.1",
+      "artifact_sha256": "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75",
+      "source_revision": "5844800a486d2248fa949b74c9896285f5b54de2",
+      "worker_count": 1,
+      "heap_limit_mib": 6144
+    },
+    "package_name": "io.sgsoftware.bimmerlink",
+    "version_name": "2.36.1-6731",
+    "package_parent_evidence_id": "ev_8285b431469d6cac36ad916bc9f025558093ea23133ebb14cb9c3caf44fb6441",
+    "package_summary_evidence_id": "ev_5537a7129e6afc364c7526cf960428b69a6ac310cd242406b64b522bcb0101e9",
+    "class_name": "io.sgsoftware.bimmerlink.models.BMWSensorValueDeserializer",
+    "class_evidence_id": "ev_8fc84dd5dbd04bc4366b234d52ad43af314c8e99d767064a4514698fbeb15f99",
+    "method_name": "b",
+    "method_evidence_id": "ev_b10c7ef384a119b89f87b025f8007438bd1397a3a85baa79e3b8351d94bc5976",
+    "method_representation": "smali",
+    "method_fell_back": true,
+    "limitations": [
+      "Static decompiler observations do not establish runtime behavior; the APK is never executed.",
+      "Method signatures use provider display types; DEX prototypes come from frozen JADX metadata. Display names may be aliases, and overload indices are local to this engine and artifact.",
+      "Class inventories use parsed metadata before code generation, including synthetic members that may be omitted from decompiled source. Source positions remain unknown.",
+      "Incoming reference totals count JADX using nodes. Direct invoke entries within a using method report raw DEX code-unit offsets and method indexes, but coverage is limited to those nodes and directly matched invokes; it does not establish every possible dynamic or reflective call site.",
+      "Manifest summaries are parsed once by REA's bridge from the exact root AndroidManifest.xml resource, using namespace-aware XML attributes; decoded XML is retained. APK signatures, split APKs, native libraries and Android runtime capture are not verified by this provider."
+    ]
+  },
+  "bundle": {
+    "path": "/Users/lennon/BMW-Tool/investigations/rea-handoff-20261028/evidence.json",
+    "bytes": 102675,
+    "records": 4,
+    "sha256": "7db5b9b3ae459eb3eba53342cd0a4f6863067be7e6ddc42a029129f798741654"
+  },
+  "remaining_limits": [
+    "apktool resource decode launcher unavailable",
+    "Ghidra actual native target analysis unattempted",
+    "No app executed or car operation performed",
+    "No feature contract completed by these inspections"
+  ]
+}

@@ -9,10 +9,18 @@ Neither phase attests that any car operation is correct.
 
 ## Outcome
 
-The app is **not production ready**. The owner has not achieved a successful
-end-to-end connection. A historical PR excerpt reports real gateway/UDS traffic,
-including a VIN response; the full local log is now empty. Thus “no network
-contact” and “fully working connection” are both inaccurate descriptions.
+**Later vehicle evidence:** the first retained read-only session now confirms
+HSFZ discovery/TCP/session/VIN on the owner's setup. Optional reads were rejected
+and DTC coverage was gateway-only. See [the session report](23-first-vehicle-session.md)
+and [REA recovery plan](../tasks/rea-protocol-recovery.md). The audit baseline
+and earlier unvalidated-fix statements below are historical, not current claims
+that no VIN connection has worked.
+
+The app is **not production ready**. At the initial audit, no successful
+end-to-end connection had been established. A historical PR excerpt reported
+gateway/UDS traffic including VIN, but the original `uds.log` was empty. The
+later session above now supplies retained traffic. Both “no network contact”
+and “all vehicle reads work” remain inaccurate descriptions.
 
 All 28 original project-owned Markdown files were read. Fifty ignored reference
 Markdown files were inventoried and screened, with focused reading of relevant
@@ -114,6 +122,12 @@ implied by these changes or the static gate.
 
 ## Skills and tooling
 
+**Later setup:** the owner configured REA and restarted. The live MCP now
+responds and actual JADX package/class/method-smali inspection succeeded;
+Ghidra 12.1.4 is reported available. [Doc 27](27-rea-source-guide.md) records
+the exported Evidence and remaining limits. Missing-engine observations below
+are historical. Tool availability does not close protocol gaps.
+
 `.agents/skills` was absent. Three reviewed upstream skills were installed using
 `npx skills@1.7.4` with pinned Git references: PySide6 reviewer, Python error
 handling and REA. Project skills cover spec/evidence workflow, Python correctness,
@@ -143,7 +157,11 @@ UI acceptance session or platform release build was performed. No push, PR
 modification, merge or message to another chat was made. PR #8 was attached
 for the next review.
 
-## Recommended next work, after remaining behavior decisions
+## Historical next-work recommendation
+
+Superseded by [Task A](../tasks/protocol-library-migration.md) and
+[Task B](../tasks/rea-protocol-recovery.md), specs 25/26 and doc 27's source
+guide. PRs #8/#9 are merged and the first HSFZ/VIN session is retained.
 
 1. Review PR #8 against its base, separating new regressions from older app
    defects. Capture exact findings and only then make scoped fixes.

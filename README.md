@@ -4,11 +4,13 @@ Cross-platform Python desktop app under development for BMW diagnostics, coding,
 and service history over ENET. F/G/U/I coverage is a goal, not a verified
 compatibility claim.
 
-**Current status:** [PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8)
-is merged; real-car connection validation remains outstanding. Use the
-[read-only debug launch](docs/22-read-only-validation.md) for the next vehicle
-session. Live history/coding reads remain unavailable pending verified contracts;
-writes and rollback are not production validated.
+**Current status:** PRs #8/#9 are merged. The retained owner session confirms
+HSFZ connection/session/VIN, but optional reads failed and DTC coverage was
+gateway-only ([diagnosis](docs/23-first-vehicle-session.md)). Live history/coding
+remain unavailable; writes and rollback are not production validated.
+Next development is split into [library migration](tasks/protocol-library-migration.md)
+and [REA feature recovery](tasks/rea-protocol-recovery.md), with separate specs.
+Use [the session handoff](SESSION-PROMPT.md) and [source guide](docs/27-rea-source-guide.md).
 Start with [the documentation index](docs/README.md),
 [readiness audit](docs/19-audit-and-readiness.md) and
 [owner decisions](docs/21-product-decisions.md).
@@ -93,7 +95,7 @@ bmw-self-service/
 ├── dtc_descriptions.db         # Read-only DTC database (18.9 MB)
 ├── scripts/
 │   └── preflight.sh            # Quality gate: ruff check + format + mypy
-└── docs/                       # Protocol specs and research (18 docs)
+└── docs/                       # Specifications, research, evidence and handoff guides
 ```
 
 ## Before you push
@@ -190,7 +192,8 @@ The [validation guide](docs/22-read-only-validation.md) defines per-page limits.
 Confirm the wired link, selected adapter’s IPv4/netmask and route, then collect
 fresh `--debug` logs. Distinguish discovery failure, TCP failure, routing
 activation, UDS response correlation and optional-data failures. The current
-local log was empty during the audit; retain new logs before retry/rotation.
+old `uds.log` was empty during the initial audit. A newer session and preserved
+local copy are now indexed in doc 23; retain new logs before retry/rotation.
 
 Do not force a particular host IP, disable unrelated networking, start DHCP or
 run the entire GUI as root based on the older troubleshooting table. Network
