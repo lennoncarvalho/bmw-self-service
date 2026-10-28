@@ -1,5 +1,6 @@
 """udsoncan's split send/receive connection with the outer operation budget."""
 
+import logging
 import time
 import uuid
 
@@ -7,6 +8,8 @@ from udsoncan.connections import BaseConnection
 from udsoncan.exceptions import TimeoutException
 
 from app.protocol.contracts import EcuIdentity, OperationContext, TransportAdapter
+
+logger = logging.getLogger(__name__)
 
 
 class UdsConnection(BaseConnection):
@@ -48,6 +51,14 @@ class UdsConnection(BaseConnection):
             raise ConnectionError("No active diagnostic operation")
         self.context.remaining()
         self.context.request_id = uuid.uuid4().hex
+        logger.debug(
+            "UDS TX conn=%s operation=%s request=%s ecu=0x%04X data=%s",
+            self.context.generation,
+            self.context.operation_id,
+            self.context.request_id,
+            self.ecu.address,
+            payload.hex(" "),
+        )
         self.adapter.send_diagnostic(self.ecu, payload, self.context)
         self.waiting = True
 
@@ -62,6 +73,15 @@ class UdsConnection(BaseConnection):
         receive = OperationContext(ctx.generation, deadline, ctx.operation_id, ctx.cancelled)
         receive.request_id = ctx.request_id
         try:
-            return self.adapter.receive_diagnostic(self.ecu, receive)
+            payload = self.adapter.receive_diagnostic(self.ecu, receive)
+            logger.debug(
+                "UDS RX conn=%s operation=%s request=%s ecu=0x%04X data=%s",
+                ctx.generation,
+                ctx.operation_id,
+                ctx.request_id,
+                self.ecu.address,
+                payload.hex(" "),
+            )
+            return payload
         except TimeoutError as exc:
             raise TimeoutException("Vehicle diagnostic response timed out") from exc

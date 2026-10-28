@@ -189,8 +189,8 @@ made available. Legacy single-code clear UI/send path was removed per D-16.
 Delivery: PR #12 is open on `codex/task-a-library-integration`; local/full-target
 gates and GitHub quality/CodeQL checks passed. Subsequent local review corrected
 gateway fallback addressing, distinct request trace IDs and closed-owner retry
-behavior. The optional Robin review of the opening revision was still processing
-at this handoff update; it is separate from the completed local code review.
+behavior. Robin later completed using a diff-only fallback; its findings and evidence-backed
+dispositions are recorded below.
 
 ## PR #12 automated review disposition
 
