@@ -1,6 +1,7 @@
 # Task A — development tasks
 
-Status: planned, 2026-10-28. All implementation/acceptance boxes are open.
+Status: A1 foundation in progress, 2026-10-28. Acceptance boxes remain open
+until each full criterion is verified; see the [slice verification](protocol-library-migration-verification.md).
 Specification: [doc 25](../docs/25-library-migration-spec.md).
 Design, exact paths, APIs and candidate gates: [implementation plan](protocol-library-migration.md).
 

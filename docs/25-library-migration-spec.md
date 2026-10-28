@@ -1,6 +1,6 @@
 # Task A specification — standard protocol library migration
 
-Status: implementation plan recorded; implementation and acceptance pending.
+Status: owner/context foundation implemented; library integration and acceptance pending.
 This task changes protocol plumbing; it does not supply the missing BMW
 operation definitions. Companion task:
 [implementation plan](../tasks/protocol-library-migration.md) and

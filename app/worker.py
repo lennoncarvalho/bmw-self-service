@@ -15,6 +15,7 @@ from typing import Any
 from PySide6.QtCore import QThread, Signal
 
 from app.connection import DoIPConnection, HSFZConnection
+from app.protocol.owner import ProtocolOwner
 
 logger = logging.getLogger(__name__)
 
@@ -23,25 +24,25 @@ class CarWorker(QThread):
     """Base class for all car I/O operations.
 
     Subclass and override do_work(). The worker automatically handles
-    started/progress/finished/error signal emission and TimeoutError handling.
+    started/progress/result_ready/error signal emission and TimeoutError handling.
 
     Signals:
         started: Emitted when the thread begins execution.
         progress: Emitted with a status message for the UI spinner.
-        finished: Emitted with the result of do_work() on success.
+        result_ready: Emitted with the result of do_work() on success.
         error: Emitted with a user-friendly error message on failure.
 
     Example:
         >>> worker = DtcReadWorker(connection, ecus)
         >>> worker.progress.connect(spinner.set_label)
-        >>> worker.finished.connect(show_dtc_list)
+        >>> worker.result_ready.connect(show_dtc_list)
         >>> worker.error.connect(show_error)
         >>> worker.start()
     """
 
     started = Signal()
     progress = Signal(str)
-    finished = Signal(object)
+    result_ready = Signal(object)
     error = Signal(str)
 
     def __init__(self, connection: Any) -> None:
@@ -56,7 +57,7 @@ class CarWorker(QThread):
     def run(self) -> None:
         """Execute the worker on the background thread.
 
-        Emits started, then calls do_work(). On success emits finished(result).
+        Emits started, then calls do_work(). On success emits result_ready(result).
         On TimeoutError emits a friendly error message.
         On any other exception emits the error string.
         """
@@ -69,7 +70,7 @@ class CarWorker(QThread):
         )
         try:
             result = self.do_work()
-            self.finished.emit(result)
+            self.result_ready.emit(result)
         except TimeoutError as e:
             msg = str(e) if str(e) else "Car operation timed out"
             logger.warning("CarWorker timeout: %s", msg)
@@ -274,3 +275,20 @@ class KeepAliveWorker(CarWorker):
                 self.connection_lost.emit(self.connection)
                 break
             self._stopped.wait(max(0.0, min(next_alive, next_tester) - time.monotonic()))
+
+
+class ProtocolWorker(CarWorker):
+    """Host the staged protocol owner on a QThread without opening a transport."""
+
+    def __init__(self, owner: ProtocolOwner) -> None:
+        """Bind one owner; callers retain the worker until native finished()."""
+        super().__init__(None)
+        self.owner = owner
+
+    def do_work(self) -> None:
+        """Run all queued operations and resource cleanup on this thread."""
+        self.owner.run()
+
+    def stop(self) -> None:
+        """Request cooperative shutdown without waiting on the GUI thread."""
+        self.owner.request_close()

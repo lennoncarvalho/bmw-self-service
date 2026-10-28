@@ -1,6 +1,7 @@
 # Task A — migrate standard protocols to libraries
 
-Status: implementation plan recorded on 2026-10-28; migration has not started.
+Status: A1 owner/context foundation implemented on 2026-10-28; live migration pending.
+See [implementation verification](protocol-library-migration-verification.md) for exact scope.
 Spec: [doc 25](../docs/25-library-migration-spec.md).
 Evaluation and artifact hashes: [doc 24](../docs/24-protocol-library-evaluation.md).
 Next task: [Task B — REA feature recovery](rea-protocol-recovery.md).

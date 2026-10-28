@@ -847,7 +847,7 @@ class CodingPage(QWidget):
             getattr(self, "_coding_meta", {}),
             self._originals,
         )
-        self._coding_writer.finished.connect(self._on_write_complete)
+        self._coding_writer.result_ready.connect(self._on_write_complete)
         self._coding_writer.error.connect(self._on_write_error)
         self._coding_writer.start()
 
