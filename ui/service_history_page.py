@@ -143,15 +143,15 @@ class ServiceHistoryPage(QWidget):
         layout.addWidget(title)
 
         # Scrollable entry list
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         self.entry_container = QWidget()
         self.entry_layout = QVBoxLayout(self.entry_container)
         self.entry_layout.setSpacing(8)
         self.entry_layout.addStretch()
-        self.scroll.setWidget(self.entry_container)
-        layout.addWidget(self.scroll, stretch=1)
+        self.scroll_area.setWidget(self.entry_container)
+        layout.addWidget(self.scroll_area, stretch=1)
 
         # Add button
         self.add_btn = QPushButton("+ Add New Service Entry")
@@ -162,7 +162,7 @@ class ServiceHistoryPage(QWidget):
             "QPushButton:hover { background: #27AE60; }"
         )
         self.add_btn.clicked.connect(self._on_add_clicked)
-        layout.addWidget(self.add_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self.add_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # T-8: Erase History button
         self.erase_btn = QPushButton("Erase Service History")
@@ -175,7 +175,7 @@ class ServiceHistoryPage(QWidget):
         )
         self.erase_btn.clicked.connect(self._on_erase_clicked)
         self.erase_btn.setVisible(False)
-        layout.addWidget(self.erase_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self.erase_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Bottom bar (visible when pending writes exist)
         self._write_bar = QFrame()
@@ -251,15 +251,19 @@ class ServiceHistoryPage(QWidget):
         # Clear existing
         while self.entry_layout.count() > 1:
             item = self.entry_layout.takeAt(0)
+            if item is None:
+                break
             child = item.widget()
             if child is not None:
                 child.deleteLater()
-            elif item.layout() is not None:
-                self._clear_layout(item.layout())
+            else:
+                child_layout = item.layout()
+                if child_layout is not None:
+                    self._clear_layout(child_layout)
 
         if not self._entries:
             empty = QLabel("No service records found.")
-            empty.setAlignment(Qt.AlignCenter)
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("font-size: 14px; color: #a0a0a0; padding: 32px;")
             self.entry_layout.insertWidget(self.entry_layout.count() - 1, empty)
             return
@@ -272,7 +276,7 @@ class ServiceHistoryPage(QWidget):
 
             card = QFrame()
             card.setObjectName("card")
-            card.setCursor(Qt.PointingHandCursor)
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
             card.setStyleSheet(
                 "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
                 "border-radius: 8px; padding: 12px; }"

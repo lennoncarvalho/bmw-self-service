@@ -250,7 +250,7 @@ class DiagnosticsPage(QWidget):
         self._ecus: list[dict] = []
         self._ecu_lookup: dict[str, str] = {}
         self._dtcs: list[dict] = []
-        self._worker: DtcReadWorker | None = None
+        self._worker: CarWorker | None = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -295,13 +295,13 @@ class DiagnosticsPage(QWidget):
         # Empty state
         self.empty_state = QWidget()
         empty_layout = QVBoxLayout(self.empty_state)
-        empty_layout.setAlignment(Qt.AlignCenter)
+        empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_icon = QLabel(chr(0x2705))
-        empty_icon.setAlignment(Qt.AlignCenter)
+        empty_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_icon.setStyleSheet("font-size: 48px; background: transparent;")
         empty_layout.addWidget(empty_icon)
         empty_text = QLabel("No fault codes found!\nYour BMW is healthy.")
-        empty_text.setAlignment(Qt.AlignCenter)
+        empty_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_text.setStyleSheet("font-size: 16px; color: #a0a0a0;")
         empty_layout.addWidget(empty_text)
         layout.addWidget(self.empty_state)
@@ -333,7 +333,7 @@ class DiagnosticsPage(QWidget):
         )
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         self.clear_btn.setVisible(False)
-        list_layout.addWidget(self.clear_btn, alignment=Qt.AlignCenter)
+        list_layout.addWidget(self.clear_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(self.list_container)
 
@@ -367,20 +367,18 @@ class DiagnosticsPage(QWidget):
 
         # Real car: use CarWorker
         ecus = self._ecus if self._ecus else [{"name": "ZGW", "addr": "0x10"}]
-        self._worker = DtcReadWorker(self._connection, ecus)
-        self._worker.started.connect(lambda: self.read_btn.setEnabled(False))
-        self._worker.finished.connect(self._on_dtcs_loaded)
-        self._worker.error.connect(self._on_dtc_error)
+        worker = DtcReadWorker(self._connection, ecus)
+        self._worker = worker
+        worker.started.connect(lambda: self.read_btn.setEnabled(False))
+        worker.finished.connect(self._on_dtcs_loaded)
+        worker.error.connect(self._on_dtc_error)
         # Capture worker ref at connect time so timeout handler always
         # references the correct DtcReadWorker, even if clear starts mid-read.
-        _captured_worker = self._worker
-        self._worker.ecu_timeout.connect(
-            lambda name, w=_captured_worker: self._on_ecu_timeout(name, w)
-        )
-        self._worker.mil_status.connect(self._update_mil)
-        self._worker.start()
+        worker.ecu_timeout.connect(lambda name, w=worker: self._on_ecu_timeout(name, w))
+        worker.mil_status.connect(self._update_mil)
+        worker.start()
 
-    def _on_ecu_timeout(self, ecu_name: str, worker: object = None) -> None:
+    def _on_ecu_timeout(self, ecu_name: str, worker: "DtcReadWorker | None" = None) -> None:
         """T-14: Handle ECU timeout — show Skip/Retry/Abort dialog.
 
         Runs on the main thread. Sets the worker's _timeout_action and
@@ -424,15 +422,18 @@ class DiagnosticsPage(QWidget):
         # Clean existing cards
         while self.dtc_list_layout.count() > 1:
             item = self.dtc_list_layout.takeAt(0)
-            if item and item.widget():
-                item.widget().deleteLater()
+            if item is None:
+                continue
+            child = item.widget()
+            if child is not None:
+                child.deleteLater()
 
         if not dtcs:
             if not complete:
                 # Scan was aborted before all ECUs were read — don't claim healthy
                 self.empty_state.setVisible(False)
                 aborted_lbl = QLabel("DTC scan aborted.\nSome ECUs were not checked.")
-                aborted_lbl.setAlignment(Qt.AlignCenter)
+                aborted_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 aborted_lbl.setStyleSheet("font-size: 14px; color: #F39C12; padding: 24px;")
                 self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, aborted_lbl)
                 self.list_container.setVisible(True)
@@ -466,7 +467,7 @@ class DiagnosticsPage(QWidget):
             # Summary row
             card = QFrame()
             card.setObjectName("card")
-            card.setCursor(Qt.PointingHandCursor)
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
             card.setStyleSheet(
                 "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
                 "border-radius: 8px; padding: 12px; }"
@@ -562,7 +563,14 @@ class DiagnosticsPage(QWidget):
             card_layout.addWidget(detail)
 
             # Click card to toggle detail
-            card.mousePressEvent = lambda e, d=detail, a=expand_arrow: self._toggle_detail(d, a)
+            def _toggle_on_click(
+                event: object,
+                d: QWidget = detail,
+                a: QLabel = expand_arrow,
+            ) -> None:
+                self._toggle_detail(d, a)
+
+            card.mousePressEvent = _toggle_on_click  # type: ignore[method-assign]
 
             self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, card)
 
@@ -623,10 +631,11 @@ class DiagnosticsPage(QWidget):
                         failed.append(name)
                 return {"cleared": cleared, "failed": failed}
 
-        self._worker = ClearWorker(self._connection, self._ecus)
-        self._worker.finished.connect(self._on_clear_complete)
-        self._worker.error.connect(self._on_dtc_error)
-        self._worker.start()
+        clear_worker = ClearWorker(self._connection, self._ecus)
+        self._worker = clear_worker
+        clear_worker.finished.connect(self._on_clear_complete)
+        clear_worker.error.connect(self._on_dtc_error)
+        clear_worker.start()
 
     def _on_clear_complete(self, result: dict | None = None) -> None:
         """Re-read DTCs after a successful clear, report per-ECU results."""

@@ -146,7 +146,7 @@ class PostConnectWorker(CarWorker):
         """
         total = len(self.tasks)
         results: dict[str, object] = {}
-        errors: dict[str, str] = {}
+        errors: dict[str, object] = {}
 
         for i, (label, task_fn) in enumerate(self.tasks, start=1):
             self.progress.emit(f"Reading {label}... ({i}/{total})")

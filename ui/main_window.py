@@ -5,7 +5,8 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 """
 
 import logging
-from typing import Any
+from collections.abc import Callable
+from typing import Any, cast
 
 from PySide6.QtCore import QSize, Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtGui import QAction, QIcon
@@ -177,9 +178,9 @@ class MainWindow(QMainWindow):
     def _make_placeholder(title_text: str) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setAlignment(Qt.AlignCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label = QLabel(f"{title_text}\n\nConnect to a vehicle to begin")
-        label.setAlignment(Qt.AlignCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label.setStyleSheet("font-size: 18px; color: #a0a0a0;")
         layout.addWidget(label)
         return page
@@ -191,12 +192,12 @@ class MainWindow(QMainWindow):
         overlay.setVisible(False)
 
         layout = QVBoxLayout(overlay)
-        layout.setAlignment(Qt.AlignCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(12)
 
         self.spinner_text = QLabel("Working...")
         self.spinner_text.setObjectName("spinnerText")
-        self.spinner_text.setAlignment(Qt.AlignCenter)
+        self.spinner_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.spinner_text.setWordWrap(True)
         layout.addWidget(self.spinner_text)
 
@@ -208,7 +209,7 @@ class MainWindow(QMainWindow):
             "border-radius: 8px; padding: 6px 24px; font-weight: bold; }"
             "QPushButton:hover { background: #5a5a7a; color: white; }"
         )
-        layout.addWidget(self._cancel_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self._cancel_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # G-13: Timer for showing cancel button and triggering retry
         self._spinner_cancel_timer = QTimer(self)
@@ -304,7 +305,7 @@ class MainWindow(QMainWindow):
         menu.addAction(exit_action)
 
         sender = self.sender()
-        if hasattr(sender, "mapToGlobal"):
+        if isinstance(sender, QWidget):
             gear_pos = sender.mapToGlobal(sender.rect().bottomLeft())
             menu.exec(gear_pos)
         else:
@@ -410,11 +411,12 @@ class MainWindow(QMainWindow):
             error_signal = Signal(str)
             progress_signal = Signal(str)
 
-            def __init__(self, fn):
+            def __init__(self, fn: Callable[[], object]) -> None:
                 super().__init__()
                 self.fn = fn
+                self._connect_series: str = ""
 
-            def run(self):
+            def run(self) -> None:
                 try:
                     result = self.fn()
                     self.result_signal.emit(result)
@@ -433,6 +435,7 @@ class MainWindow(QMainWindow):
         """Handle worker result — runs on the main thread."""
         conn: Any
         vin: str
+        assert isinstance(result, tuple), "connect fn must return (conn, vin)"
         conn, vin = result  # (connection, vin_str) tuple
         series = getattr(self._worker, "_connect_series", "")
         self._on_connect_success(conn, vin, series)
@@ -498,7 +501,7 @@ class MainWindow(QMainWindow):
 
         logger.info("Connected successfully (demo=%s)", self._demo_mode)
 
-    def _build_post_connect_tasks(self, vin: str = "") -> list[tuple[str, object]]:
+    def _build_post_connect_tasks(self, vin: str = "") -> list[tuple[str, Callable[[Any], object]]]:
         """Build the queue of data-loading tasks for PostConnectWorker.
 
         Each task is a ``(label, fn)`` tuple where ``fn(connection)``
@@ -609,8 +612,7 @@ class MainWindow(QMainWindow):
             ("Battery voltage", _read_battery),
             ("ECU list", _read_svt),
         ]
-
-        return tasks
+        return cast("list[tuple[str, Callable[[Any], object]]]", tasks)
 
     @Slot(object)
     def _on_post_connect_finished(
@@ -726,7 +728,8 @@ class MainWindow(QMainWindow):
                     _first_tp[0] = False
                 ok = c.tester_present()
                 if not ok and not c.alive_ok:
-                    self._tester_present_timer.stop()
+                    if self._tester_present_timer is not None:
+                        self._tester_present_timer.stop()
                     self._on_connection_lost()
 
             self._tester_present_timer = QTimer(self)
@@ -742,8 +745,10 @@ class MainWindow(QMainWindow):
         if hasattr(conn, "alive_check"):
             conn.alive_check()
             if hasattr(conn, "alive_ok") and not conn.alive_ok:
-                self._alive_timer.stop()
-                self._tester_present_timer.stop()
+                if self._alive_timer is not None:
+                    self._alive_timer.stop()
+                if self._tester_present_timer is not None:
+                    self._tester_present_timer.stop()
                 self._on_connection_lost()
 
     def _on_connection_lost(self) -> None:
@@ -879,4 +884,6 @@ class MainWindow(QMainWindow):
     def _apply_theme(self) -> None:
         from app.theme import apply_theme
 
-        apply_theme(QApplication.instance())
+        app = QApplication.instance()
+        if isinstance(app, QApplication):
+            apply_theme(app)

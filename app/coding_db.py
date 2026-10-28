@@ -226,7 +226,8 @@ class CodingDatabase:
                     match = False
                     break
             if match:
-                return option["name"]
+                name: str = option["name"]
+                return name
         return None
 
     # ── query: write payload construction ────────────────────────────
@@ -347,7 +348,8 @@ class CodingDatabase:
         for dg in cafd.get("dataGroups", []):
             for func in dg.get("functions", []):
                 if func.get("name") == name:
-                    return func
+                    found: dict = func
+                    return found
         return None
 
     # ── infrastructure ───────────────────────────────────────────────

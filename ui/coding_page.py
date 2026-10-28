@@ -127,6 +127,7 @@ class CodingPage(QWidget):
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
         self._is_real = False  # True when categories come from car, not mock
+        self._sub_stack: QStackedWidget
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -236,7 +237,7 @@ class CodingPage(QWidget):
         for cat in self._categories:
             card = QFrame()
             card.setObjectName("card")
-            card.setCursor(Qt.PointingHandCursor)
+            card.setCursor(Qt.CursorShape.PointingHandCursor)
             card.setStyleSheet(
                 "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
                 "border-radius: 8px; padding: 12px; }"
@@ -506,7 +507,8 @@ class CodingPage(QWidget):
     def _get_svt_ecus(self) -> list[dict]:
         """Get the SVT ECU list from connection data or return default."""
         if self._connection and hasattr(self._connection, "data") and self._connection.data:
-            return self._connection.data.get("svt_ecus", [])
+            svt: list[dict] = self._connection.data.get("svt_ecus", [])
+            return svt
         # Fallback demo ECUs
         return [
             {"name": "DME", "description": "Digital Motor Electronics"},
@@ -714,8 +716,9 @@ class CodingPage(QWidget):
         self._originals = prev_originals  # keep old originals so diff is correct
         # Rebuild easy page
         old_page = self._sub_stack.widget(0)
-        self._sub_stack.removeWidget(old_page)
-        old_page.deleteLater()
+        if old_page is not None:
+            self._sub_stack.removeWidget(old_page)
+            old_page.deleteLater()
         self._sub_stack.insertWidget(0, self._build_easy_page())
         self._sub_stack.setCurrentIndex(0)
         self._easy_tab.setChecked(True)
@@ -769,8 +772,9 @@ class CodingPage(QWidget):
         self._categories.extend(copy.deepcopy(self._originals))
         # Rebuild the easy page to reflect restored values
         old_page = self._sub_stack.widget(0)
-        self._sub_stack.removeWidget(old_page)
-        old_page.deleteLater()
+        if old_page is not None:
+            self._sub_stack.removeWidget(old_page)
+            old_page.deleteLater()
         self._sub_stack.insertWidget(0, self._build_easy_page())
         self._sub_stack.setCurrentIndex(0)
         self._easy_tab.setChecked(True)
@@ -905,8 +909,9 @@ class CodingPage(QWidget):
             self._is_real = True
             # Rebuild easy page
             old_page = self._sub_stack.widget(0)
-            self._sub_stack.removeWidget(old_page)
-            old_page.deleteLater()
+            if old_page is not None:
+                self._sub_stack.removeWidget(old_page)
+                old_page.deleteLater()
             self._sub_stack.insertWidget(0, self._build_easy_page())
             self._sub_stack.setCurrentIndex(0)
             self._easy_tab.setChecked(True)

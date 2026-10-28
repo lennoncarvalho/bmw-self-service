@@ -87,7 +87,8 @@ def request_seed(connection, ecu_addr: int) -> bytes:
         raise ConnectionError(f"SecurityAccess rejected: NRC 0x{nrc:02X}")
     if len(resp) < 2 or resp[0] != 0x67 or resp[1] != 0x01:
         raise ConnectionError(f"Unexpected security response: 0x{resp[0]:02X}")
-    return resp[2:]  # seed bytes
+    seed: bytes = resp[2:]
+    return seed  # seed bytes
 
 
 def send_key(connection, ecu_addr: int, key: bytes) -> bool:

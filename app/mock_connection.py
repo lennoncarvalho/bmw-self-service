@@ -122,7 +122,7 @@ class MockConnection:
         # VIN: DID 0xF190
         if did_high == 0xF1 and did_low == 0x90:
             vin = self.data.get("vehicle", {}).get("vin", "")
-            vin_bytes = vin.encode("ascii", errors="ignore")
+            vin_bytes: bytes = vin.encode("ascii", errors="ignore")
             return bytes([0x62, 0xF1, 0x90]) + vin_bytes
 
         # I-Level: DID 0xF18A

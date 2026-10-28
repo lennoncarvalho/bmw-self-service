@@ -881,6 +881,7 @@ class HSFZConnection:
             TimeoutError: If no data within *timeout*.
             ConnectionError: If socket is closed mid-read.
         """
+        assert self.sock is not None, "caller must check self.sock"
         self.sock.settimeout(timeout)
         try:
             hdr = self._recv_exact(8)
@@ -908,6 +909,7 @@ class HSFZConnection:
             ConnectionError: If connection is closed before *n* bytes
                              received.
         """
+        assert self.sock is not None, "caller must check self.sock"
         data = b""
         while len(data) < n:
             try:
@@ -1166,6 +1168,7 @@ class DoIPConnection:
 
     def _recv_exact(self, n: int) -> bytes:
         """Receive exactly n bytes."""
+        assert self.sock is not None, "caller must check self.sock"
         data = b""
         while len(data) < n:
             chunk = self.sock.recv(n - len(data))

@@ -72,7 +72,7 @@ class BackupsPage(QWidget):
             "QPushButton:hover { background: #0653B6; }"
         )
         refresh_btn.clicked.connect(self.refresh)
-        layout.addWidget(refresh_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(refresh_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def set_connection(self, connection: Any) -> None:
         """Store connection for rollback writes (reserved for future use)."""
@@ -118,14 +118,17 @@ class BackupsPage(QWidget):
         # Clear existing cards
         while self.list_layout.count() > 1:
             item = self.list_layout.takeAt(0)
-            if item and item.widget():
-                item.widget().deleteLater()
+            if item is None:
+                continue
+            child = item.widget()
+            if child is not None:
+                child.deleteLater()
 
         if not self._backups:
             empty = QLabel(
                 "No backups found.\n\nBackups are created automatically before each coding write."
             )
-            empty.setAlignment(Qt.AlignCenter)
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("font-size: 14px; color: #a0a0a0; padding: 32px;")
             empty.setWordWrap(True)
             self.list_layout.insertWidget(self.list_layout.count() - 1, empty)

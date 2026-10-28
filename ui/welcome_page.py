@@ -53,12 +53,12 @@ class WelcomePage(QWidget):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setAlignment(Qt.AlignCenter)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(16)
 
         # BMW logo
         logo = QLabel("\U0001f697")
-        logo.setAlignment(Qt.AlignCenter)
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         logo.setStyleSheet("font-size: 80px; color: #1C69D4; background: transparent;")
         layout.addWidget(logo)
         layout.addSpacing(8)
@@ -66,7 +66,7 @@ class WelcomePage(QWidget):
         # Title
         title = QLabel("BMW Self Service")
         title.setObjectName("titleLabel")
-        title.setAlignment(Qt.AlignCenter)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         layout.addSpacing(20)
 
@@ -106,7 +106,7 @@ class WelcomePage(QWidget):
         self.connect_btn.setMinimumWidth(320)
         self.connect_btn.setEnabled(False)
         self.connect_btn.clicked.connect(self._on_connect_clicked)
-        layout.addWidget(self.connect_btn, alignment=Qt.AlignCenter)
+        layout.addWidget(self.connect_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addSpacing(32)
 
         # Instructions
