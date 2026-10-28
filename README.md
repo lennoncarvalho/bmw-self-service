@@ -4,9 +4,11 @@ Cross-platform Python desktop app under development for BMW diagnostics, coding,
 and service history over ENET. F/G/U/I coverage is a goal, not a verified
 compatibility claim.
 
-**Current status:** real-car connection remains under investigation in
-[PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8). Coding writes,
-service-history operations and vehicle rollback are not production validated.
+**Current status:** [PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8)
+is merged; real-car connection validation remains outstanding. Use the
+[read-only debug launch](docs/22-read-only-validation.md) for the next vehicle
+session. Live history/coding reads remain unavailable pending verified contracts;
+writes and rollback are not production validated.
 Start with [the documentation index](docs/README.md),
 [readiness audit](docs/19-audit-and-readiness.md) and
 [owner decisions](docs/21-product-decisions.md).
@@ -35,7 +37,7 @@ source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 
 # Install dependencies
-python3 -m pip install -r requirements.txt pycryptodome
+python3 -m pip install -r requirements.txt
 
 # Run the app
 python3 main.py
@@ -46,7 +48,7 @@ python3 main.py
 1. Plug the ENET cable into your laptop's Ethernet port and the car's OBD2 port
 2. Put the vehicle in the ignition/diagnostic state appropriate to its model;
    the previous universal button sequence has not been validated across models
-3. Launch the app: `python3 main.py`
+3. For vehicle validation, launch: `.venv/bin/python3 main.py --debug --read-only`
 4. Select your BMW series from the dropdown
 5. Pick your Ethernet adapter from the interface dropdown (e.g. `en7` on macOS)
 6. Click **Connect to your BMW**
@@ -165,26 +167,23 @@ open "dist/BMW Self Service.app"           # macOS
 ## Logs & debugging
 
 ```bash
-# Normal mode — logs errors only
-python3 main.py
+# Read-only vehicle validation, including detailed persistent logs
+.venv/bin/python3 main.py --debug --read-only
 
-# Verbose mode — logs all UDS traffic, connection steps, and diagnostics
-python3 main.py --debug
+# Normal mode (persistent log contains warnings/errors)
+.venv/bin/python3 main.py
 
-# No log file — console only
-python3 main.py --no-log
+# Console only; do not use for vehicle validation
+.venv/bin/python3 main.py --no-log
 ```
 
-When `--debug` is active, the log file at `~/BMW-Tool/logs/uds.log` records:
-
-- Startup: Python version, platform, available Ethernet interfaces, theme load
-- Discovery: broadcast address, timeout, response data (IP, VIN, MAC)
-- Connection: TCP connect attempt, HSFZ/DoIP handshake, success/failure reason
-- Diagnostics: every UDS request/response in hex with ECU address and length
-- Keep-alive: timer start/stop for HSFZ alive-check and UDS TesterPresent
-- Disconnect: clean shutdown sequence
-
-The log rotates at 5 MB with 3 backup files. All timestamps are ISO 8601.
+Each launch without `--no-log` creates
+`~/BMW-Tool/logs/session-<UTC timestamp>-<PID>.log`.
+With --debug it captures raw discovery/HSFZ/DoIP bytes (including ACKs and partial
+reads), request/connection IDs, deadlines, endpoints, workers, page navigation,
+Qt warnings and Python exceptions. Preserve the session and matching rotated
+segments (.1 through .5); segments are 10 MiB. Earlier sessions are not overwritten.
+The [validation guide](docs/22-read-only-validation.md) defines per-page limits.
 
 ## Troubleshooting and next validation
 

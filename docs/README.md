@@ -9,6 +9,9 @@ protocol facts. Earlier “complete,” “verified,” “resolved” and check
 are historical claims unless supported by retained evidence. DEMO data and
 static checks do not validate vehicle behavior.
 
+[Read-only vehicle validation and log collection](22-read-only-validation.md)
+describes the current source launch and explicit unavailable page states.
+
 ## Original documents reviewed
 
 | Document | Current standing / correction |

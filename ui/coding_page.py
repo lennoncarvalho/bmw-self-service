@@ -118,6 +118,7 @@ class CodingPage(QWidget):
     """Coding tab with Easy/Advanced sub-pages and shared pending-changes bar."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build coding previews with live writes and backup loading disabled until configured."""
         super().__init__(parent)
         self._connection: Any = None
         self._pending: int = 0
@@ -127,8 +128,10 @@ class CodingPage(QWidget):
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
         self._is_real = False  # True when categories come from car, not mock
+        self._live_unavailable = True
         self._sub_stack: QStackedWidget
         self._setup_ui()
+        self._write_btn.setEnabled(False)
 
     def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -534,22 +537,41 @@ class CodingPage(QWidget):
             ecus: Optional SVT ECU list from vehicle connection.
         """
         self._connection = connection
+        is_demo = bool(getattr(connection, "data", None))
+        self._live_unavailable = not is_demo
+        self._pending = 0
+        self._categories = copy.deepcopy(MOCK_CATEGORIES) if is_demo else []
+        self._originals = copy.deepcopy(self._categories)
+        self._is_real = False
+        self._update_pending_label()
+        self._write_btn.setEnabled(is_demo)
+        while self._sub_stack.count():
+            old_page = self._sub_stack.widget(0)
+            if old_page is None:
+                break
+            self._sub_stack.removeWidget(old_page)
+            old_page.deleteLater()
+        if is_demo:
+            self._sub_stack.addWidget(self._build_easy_page())
+            self._sub_stack.addWidget(self._build_advanced_page())
+            if ecus:
+                self._load_coding_presets(ecus)
+            return
 
-        # T-2: Try loading real coding presets from ECU list
-        if ecus:
-            self._load_coding_presets(ecus)
-
-        # G-8: For demo mode, skip; for real cars, try reading via UDS
-        if not (hasattr(connection, "data") and connection.data):
-            self._write_btn.setEnabled(False)
-            self._coding_reader = CodingReadWorker(connection)
-            self._coding_reader.progress.connect(lambda msg: logger.debug("Coding read: %s", msg))
-            self._coding_reader.finished.connect(self._on_coding_read)
-            self._coding_reader.error.connect(
-                lambda msg: logger.warning("Coding read failed: %s", msg)
+        # A first-directory CAFD variant and a generic DID are not a live coding
+        # definition. Keep both tabs navigable without mock values or ECU probes.
+        for mode in ("Easy", "Advanced"):
+            page = QWidget()
+            layout = QVBoxLayout(page)
+            message = QLabel(
+                f"{mode} coding values unavailable. Exact ECU/software definitions "
+                "and a verified vehicle read operation are required."
             )
-            self._coding_reader.finished.connect(lambda _: self._write_btn.setEnabled(True))
-            self._coding_reader.start()
+            message.setWordWrap(True)
+            layout.addWidget(message)
+            layout.addStretch()
+            self._sub_stack.addWidget(page)
+        logger.warning("Coding live read skipped: exact definitions and reader unverified")
 
     def _load_coding_presets(self, ecus: list[dict]) -> None:
         """T-2/T-3/T-4: Load coding presets from database for discovered ECUs.
@@ -699,8 +721,8 @@ class CodingPage(QWidget):
         if not btn.isChecked():
             btn.setChecked(True)
 
-    def restore_backup(self, categories: list[dict]) -> None:
-        """Restore coding from a backup manifest.
+    def restore_backup(self, categories: list[dict]) -> bool:
+        """Load a local DEMO preview from a backup; return False when unavailable.
 
         The restored values become the active state, and any differences
         from the previous originals are counted as pending changes so
@@ -709,6 +731,9 @@ class CodingPage(QWidget):
         Args:
             categories: List of category dicts from a backup manifest.json.
         """
+        if self._live_unavailable:
+            logger.warning("Live coding backup restore blocked: verified restore unavailable")
+            return False
         # Save pre-restore originals to count differences
         prev_originals = self._originals
         self._categories.clear()
@@ -725,6 +750,7 @@ class CodingPage(QWidget):
         # Recalculate pending — differences between restored and previous originals
         self._recalc_pending()
         logger.info("Coding restored from backup (%d categories)", len(categories))
+        return True
 
     def _apply_option(self, opt: dict, idx: int, label: QLabel, checked: bool) -> None:
         if not checked:
@@ -781,6 +807,10 @@ class CodingPage(QWidget):
         logger.info("Coding changes cleared")
 
     def _on_write(self) -> None:
+        """Apply pending changes only when the active connection permits coding writes."""
+        if self._live_unavailable:
+            logger.warning("Live coding write blocked: exact definitions/readback unavailable")
+            return
         reply = QMessageBox.question(
             self,
             "Write to Car",
@@ -925,6 +955,7 @@ class CodingReadWorker(CarWorker):
     """Read CAFD/FDL coding data from all ECUs via UDS 0x22."""
 
     def __init__(self, connection: Any) -> None:
+        """Build coding previews with live writes and backup loading disabled until configured."""
         super().__init__(connection)
         # Common ECUs to query for coding data
         self.targets = [
@@ -986,6 +1017,7 @@ class CodingWriteWorker(CarWorker):
         coding_meta: dict[tuple[str, str], dict] | None = None,
         originals: list[dict] | None = None,
     ) -> None:
+        """Build coding previews with live writes and backup loading disabled until configured."""
         super().__init__(connection)
         self.categories = categories
         self.coding_meta = coding_meta or {}

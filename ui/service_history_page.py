@@ -52,6 +52,7 @@ class AddServiceDialog(QDialog):
     ]
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(parent)
         self.setWindowTitle("New Service Entry")
         self.setMinimumWidth(420)
@@ -124,10 +125,12 @@ class ServiceHistoryPage(QWidget):
     """Service history tab — timeline of past and upcoming maintenance."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(parent)
         self._connection: Any = None
         self._entries: list[dict] = []
         self._pending_writes: list[dict] = []
+        self._unavailable_reason = ""
         self._worker: CarWorker | None = None
         self._setup_ui()
 
@@ -219,18 +222,27 @@ class ServiceHistoryPage(QWidget):
         entries: list[dict] = []
 
         if hasattr(self._connection, "data") and self._connection.data:
+            self._unavailable_reason = ""
+            self.add_btn.setEnabled(True)
+            self._write_btn.setEnabled(True)
             entries = self._connection.data.get("service_history", [])
             self._entries = sorted(entries, key=lambda e: e.get("date", ""), reverse=True)
             self._render()
             return
 
-        # G-6: Real car — read via UDS 0x31 RoutineControl RID 0xA081 from headunit
+        # No evidenced live read contract exists. In particular, the old
+        # 31 01 A0 81 request may start an add routine; never send it as a read.
+        self._unavailable_reason = (
+            "Service history unavailable: the vehicle read operation has not been verified."
+        )
+        self._entries = []
+        self._pending_writes = []
         self.add_btn.setEnabled(False)
-        self._worker = ServiceHistoryReadWorker(self._connection)
-        self._worker.progress.connect(lambda msg: logger.debug("Service: %s", msg))
-        self._worker.finished.connect(self._on_history_loaded)
-        self._worker.error.connect(self._on_history_error)
-        self._worker.start()
+        self.erase_btn.setVisible(False)
+        self._write_btn.setEnabled(False)
+        self._write_bar.setVisible(False)
+        logger.warning("History live read skipped: verified read protocol unavailable")
+        self._render()
 
     def _on_history_loaded(self, entries: list[dict]) -> None:
         """Display service entries read from the car."""
@@ -262,7 +274,8 @@ class ServiceHistoryPage(QWidget):
                     self._clear_layout(child_layout)
 
         if not self._entries:
-            empty = QLabel("No service records found.")
+            empty = QLabel(self._unavailable_reason or "No service records found.")
+            empty.setWordWrap(True)
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("font-size: 14px; color: #a0a0a0; padding: 32px;")
             self.entry_layout.insertWidget(self.entry_layout.count() - 1, empty)
@@ -566,40 +579,11 @@ def _build_service_args(entry: dict) -> str:
 
 
 class ServiceHistoryReadWorker(CarWorker):
-    """Read service history from headunit via UDS 0x31 RoutineControl RID 0xA081.
-
-    T-7: Uses 0x31 for reading (per docs/16 data flow table).
-    The write path uses 0x2E; the read path remains 0x31.
-    """
-
-    HEADUNIT_ADDR = 0x63
+    """Reserved for a separately evidenced, read-only headunit history contract."""
 
     def do_work(self) -> list[dict]:
-        did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
-        did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
-        resp = self.connection.send_uds(
-            self.HEADUNIT_ADDR,
-            bytes([0x31, 0x01, did_high, did_low]),
-        )
-        if resp[0] != 0x71:
-            raise ConnectionError(f"Headunit rejected service history read: 0x{resp[0]:02X}")
-        # Parse response: 0x71 + RID + record_count(2) + records...
-        entries: list[dict] = []
-        offset = 4
-        try:
-            while offset < len(resp):
-                rec_len = resp[offset]
-                offset += 1
-                if offset + rec_len > len(resp):
-                    break
-                record = resp[offset : offset + rec_len]
-                offset += rec_len
-                entry = _parse_service_record(record)
-                if entry:
-                    entries.append(entry)
-        except (IndexError, ValueError) as e:
-            logger.debug("Service record parse error: %s", e)
-        return entries
+        """Fail closed without sending the former unverified add-routine request."""
+        raise NotImplementedError("Vehicle service-history reading is not verified yet")
 
 
 class ServiceHistoryWriteWorker(CarWorker):
@@ -612,6 +596,7 @@ class ServiceHistoryWriteWorker(CarWorker):
     HEADUNIT_ADDR = 0x63
 
     def __init__(self, connection: Any, entry_or_entries: dict | list[dict]) -> None:
+        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(connection)
         if isinstance(entry_or_entries, list):
             self.entries = entry_or_entries

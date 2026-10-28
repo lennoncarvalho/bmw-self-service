@@ -24,6 +24,7 @@ import struct
 import subprocess
 import threading
 import time as _time
+import uuid
 from dataclasses import dataclass
 
 import netifaces
@@ -300,6 +301,7 @@ def discover_zgw(interface: str, timeout: float = 5.0) -> dict[str, str] | None:
     try:
         request = struct.pack(">IH", 0, TYPE_VEHICLE_IDENT)
         disc_sock.sendto(request, (HSFZ_DISCOVERY_BROADCAST, HSFZ_DISCOVERY_PORT))
+        logger.debug("Discovery TX local=%s data=%s", disc_sock.getsockname(), request.hex(" "))
 
         try:
             data, addr = disc_sock.recvfrom(1024)
@@ -307,6 +309,7 @@ def discover_zgw(interface: str, timeout: float = 5.0) -> dict[str, str] | None:
             logger.debug("Vehicle discovery timed out after %.1fs", timeout)
             return None
 
+        logger.debug("Discovery RX peer=%s bytes=%d data=%s", addr, len(data), data.hex(" "))
         if len(data) < 6:
             logger.warning("Discovery response too short: %d bytes", len(data))
             return None
@@ -514,6 +517,24 @@ class _DeadlineExpired(TimeoutError):
     """Budget elapsed before initiating the next socket operation."""
 
 
+def _check_read_only(payload: bytes) -> None:
+    """Allow existing read services plus default/extended session maintenance.
+
+    This is a service boundary, not evidence that a BMW-specific DID/decoder is
+    supported. RoutineControl, security access, writes, reset and clears fail
+    closed before any socket activity.
+    """
+    sid = payload[0]
+    allowed = sid in (0x01, 0x19, 0x1A, 0x22)
+    if sid == 0x10:
+        allowed = len(payload) == 2 and payload[1] in (0x01, 0x03)
+    elif sid == 0x3E:
+        allowed = len(payload) == 2 and payload[1] in (0x00, 0x80)
+    if not allowed:
+        logger.warning("READ ONLY blocked request before send: %s", payload.hex(" "))
+        raise PermissionError("This operation is disabled in the read-only session")
+
+
 def _remaining(deadline: float) -> float:
     """Return the remaining operation budget without extending its deadline."""
     remaining = deadline - _time.monotonic()
@@ -523,12 +544,26 @@ def _remaining(deadline: float) -> float:
 
 
 def _fill_receive_buffer(
-    sock: socket.socket, buffer: bytearray, size: int, deadline: float
+    sock: socket.socket, buffer: bytearray, size: int, deadline: float, trace_id: str
 ) -> None:
     """Retain every received fragment, including when a short poll times out."""
     while len(buffer) < size:
         sock.settimeout(_remaining(deadline))
-        chunk = sock.recv(size - len(buffer))
+        try:
+            chunk = sock.recv(size - len(buffer))
+        except TimeoutError:
+            logger.debug(
+                "RX poll/deadline conn=%s retained=%d target=%d", trace_id, len(buffer), size
+            )
+            raise
+        logger.debug(
+            "RX fragment conn=%s bytes=%d retained=%d target=%d data=%s",
+            trace_id,
+            len(chunk),
+            len(buffer) + len(chunk),
+            size,
+            chunk.hex(" "),
+        )
         if not chunk:
             raise ConnectionError("Connection closed by vehicle")
         buffer.extend(chunk)
@@ -569,10 +604,12 @@ class HSFZConnection:
     These results do not certify ECU session state or vehicle write success.
     """
 
-    def __init__(self, host: str, port: int = HSFZ_DATA_PORT) -> None:
+    def __init__(self, host: str, port: int = HSFZ_DATA_PORT, *, read_only: bool = False) -> None:
         """Create a transport for the selected gateway."""
         self.host = host
         self.port = port
+        self.read_only = read_only
+        self.trace_id = uuid.uuid4().hex[:12]
         self.sock: socket.socket | None = None
         self._lock = threading.Lock()
         self._alive_failures = 0
@@ -590,6 +627,13 @@ class HSFZConnection:
             sock.close()
             logger.warning("HSFZ connect failed: %s:%d", self.host, self.port, exc_info=True)
             return False
+        logger.info(
+            "TCP connected transport=HSFZ conn=%s local=%s peer=%s read_only=%s",
+            self.trace_id,
+            sock.getsockname(),
+            sock.getpeername(),
+            self.read_only,
+        )
         self.sock = sock
         self._receive_buffer.clear()
         self._pending_request = None
@@ -607,7 +651,14 @@ class HSFZConnection:
                 self._close_locked()
 
     def _close_locked(self) -> None:
+        """Close the owned stream and clear transaction state while holding its lock."""
         if self.sock is not None:
+            logger.info(
+                "TCP closing conn=%s retained=%d pending=%s",
+                self.trace_id,
+                len(self._receive_buffer),
+                self._pending_request,
+            )
             with contextlib.suppress(OSError):
                 self.sock.close()
             self.sock = None
@@ -625,19 +676,45 @@ class HSFZConnection:
         """
         if not payload:
             raise ValueError("UDS request cannot be empty")
-        deadline = _time.monotonic() + timeout
+        if self.read_only:
+            _check_read_only(payload)
+        request_id = uuid.uuid4().hex[:12]
+        started = _time.monotonic()
+        logger.debug(
+            "UDS request begin conn=%s request=%s ecu=0x%04X budget=%.3fs data=%s",
+            self.trace_id,
+            request_id,
+            ecu_addr,
+            timeout,
+            payload.hex(" "),
+        )
+        deadline = started + timeout
         frame = build_uds(ecu_addr, payload[0], payload[1:])
         if not self._lock.acquire(timeout=_remaining(deadline)):
+            logger.warning(
+                "UDS queue timeout conn=%s request=%s budget=%.3fs",
+                self.trace_id,
+                request_id,
+                timeout,
+            )
             raise TimeoutError("Vehicle operation timed out waiting for transport")
         try:
             if self.sock is None:
                 raise ConnectionError("Not connected")
             try:
                 if self._pending_request is not None:
+                    logger.debug(
+                        "Consume outstanding reply before send conn=%s request=%s old=%s retained=%d",
+                        self.trace_id,
+                        request_id,
+                        self._pending_request,
+                        len(self._receive_buffer),
+                    )
                     self._read_response(*self._pending_request, deadline)
                 try:
                     self.sock.settimeout(_remaining(deadline))
                     self.sock.sendall(frame)
+                    logger.debug("HSFZ TX conn=%s frame=%s", self.trace_id, frame.hex(" "))
                 except _DeadlineExpired:
                     raise
                 except OSError:
@@ -647,11 +724,29 @@ class HSFZConnection:
                 logger.debug("UDS tx ECU=0x%02X: %s", ecu_addr, payload.hex(" "))
                 return self._read_response(ecu_addr, payload, deadline)
             except TimeoutError:
+                logger.warning(
+                    "UDS timeout conn=%s request=%s retained=%d pending=%s",
+                    self.trace_id,
+                    request_id,
+                    len(self._receive_buffer),
+                    self._pending_request,
+                    exc_info=True,
+                )
                 raise  # Retain buffered bytes and the outstanding request.
             except OSError:
+                logger.exception(
+                    "UDS transport failure conn=%s request=%s", self.trace_id, request_id
+                )
                 self._close_locked()
                 raise
         finally:
+            logger.debug(
+                "UDS request end conn=%s request=%s elapsed=%.3fs pending=%s",
+                self.trace_id,
+                request_id,
+                _time.monotonic() - started,
+                self._pending_request,
+            )
             self._lock.release()
 
     def _read_response(self, ecu_addr: int, request: bytes, deadline: float) -> bytes:
@@ -688,6 +783,7 @@ class HSFZConnection:
     def _keepalive(
         self, frame: bytes, receive_timeout: float, *, requires_idle: bool = False
     ) -> bool | None:
+        """Send fixed heartbeat traffic and retain fragmented replies under the stream lock."""
         if not self._lock.acquire(blocking=False):
             return None
         try:
@@ -699,6 +795,7 @@ class HSFZConnection:
             try:
                 self.sock.settimeout(1.0)
                 self.sock.sendall(frame)
+                logger.debug("HSFZ keepalive TX conn=%s frame=%s", self.trace_id, frame.hex(" "))
                 sent = True
                 deadline = _time.monotonic() + receive_timeout
                 while True:
@@ -737,11 +834,12 @@ class HSFZConnection:
         return self.sock is not None and self._alive_failures < 3
 
     def _recv_hsfz_message(self, deadline: float) -> tuple[int, int, int, bytes]:
+        """Read one bounded HSFZ frame, retaining partial bytes when the deadline expires."""
         sock = self.sock
         if sock is None:
             raise ConnectionError("Not connected")
         buffer = self._receive_buffer
-        _fill_receive_buffer(sock, buffer, 6, deadline)
+        _fill_receive_buffer(sock, buffer, 6, deadline, self.trace_id)
         length, control = struct.unpack(">IH", buffer[:6])
         if length > MAX_FRAME_BODY:
             raise ConnectionError("HSFZ frame exceeds supported size")
@@ -750,7 +848,14 @@ class HSFZConnection:
         )
         if addressed and length < 2:
             raise ConnectionError("HSFZ address fields are truncated")
-        _fill_receive_buffer(sock, buffer, 6 + length, deadline)
+        _fill_receive_buffer(sock, buffer, 6 + length, deadline, self.trace_id)
+        logger.debug(
+            "HSFZ RX conn=%s control=0x%04X length=%d frame=%s",
+            self.trace_id,
+            control,
+            length,
+            buffer[: 6 + length].hex(" "),
+        )
         body = bytes(buffer[6 : 6 + length])
         del buffer[: 6 + length]
         if addressed:
@@ -771,10 +876,12 @@ class HSFZConnection:
 class DoIPConnection:
     """Serialized DoIP control/diagnostic exchanges with explicit health results."""
 
-    def __init__(self, host: str, port: int = DOIP_DATA_PORT) -> None:
+    def __init__(self, host: str, port: int = DOIP_DATA_PORT, *, read_only: bool = False) -> None:
         """Create a transport for the selected DoIP entity."""
         self.host = host
         self.port = port
+        self.read_only = read_only
+        self.trace_id = uuid.uuid4().hex[:12]
         self.sock: socket.socket | None = None
         self.source_addr = DOIP_TESTER_LOGICAL_ADDR
         self.activated = False
@@ -794,6 +901,13 @@ class DoIPConnection:
             sock.close()
             logger.warning("DoIP connect failed: %s:%d", self.host, self.port, exc_info=True)
             return False
+        logger.info(
+            "TCP connected transport=DoIP conn=%s local=%s peer=%s read_only=%s",
+            self.trace_id,
+            sock.getsockname(),
+            sock.getpeername(),
+            self.read_only,
+        )
         self.sock = sock
         self.activated = False
         self._receive_buffer.clear()
@@ -837,14 +951,39 @@ class DoIPConnection:
         """Read through control frames until a correlated diagnostic reply arrives."""
         if not payload:
             raise ValueError("UDS request cannot be empty")
-        deadline = _time.monotonic() + timeout
+        if self.read_only:
+            _check_read_only(payload)
+        request_id = uuid.uuid4().hex[:12]
+        started = _time.monotonic()
+        logger.debug(
+            "UDS request begin conn=%s request=%s ecu=0x%04X budget=%.3fs data=%s",
+            self.trace_id,
+            request_id,
+            ecu_addr,
+            timeout,
+            payload.hex(" "),
+        )
+        deadline = started + timeout
         if not self._lock.acquire(timeout=_remaining(deadline)):
+            logger.warning(
+                "UDS queue timeout conn=%s request=%s budget=%.3fs",
+                self.trace_id,
+                request_id,
+                timeout,
+            )
             raise TimeoutError("Vehicle operation timed out waiting for transport")
         try:
             if self.sock is None or not self.activated:
                 raise ConnectionError("DoIP routing is not active")
             try:
                 if self._pending_request is not None:
+                    logger.debug(
+                        "Consume outstanding reply before send conn=%s request=%s old=%s retained=%d",
+                        self.trace_id,
+                        request_id,
+                        self._pending_request,
+                        len(self._receive_buffer),
+                    )
                     self._read_response(*self._pending_request, deadline)
                 try:
                     self._send_doip(
@@ -861,11 +1000,29 @@ class DoIPConnection:
                 logger.debug("UDS tx ECU=0x%04X: %s", ecu_addr, payload.hex(" "))
                 return self._read_response(ecu_addr, payload, deadline)
             except TimeoutError:
+                logger.warning(
+                    "UDS timeout conn=%s request=%s retained=%d pending=%s",
+                    self.trace_id,
+                    request_id,
+                    len(self._receive_buffer),
+                    self._pending_request,
+                    exc_info=True,
+                )
                 raise
             except OSError:
+                logger.exception(
+                    "UDS transport failure conn=%s request=%s", self.trace_id, request_id
+                )
                 self._close_locked()
                 raise
         finally:
+            logger.debug(
+                "UDS request end conn=%s request=%s elapsed=%.3fs pending=%s",
+                self.trace_id,
+                request_id,
+                _time.monotonic() - started,
+                self._pending_request,
+            )
             self._lock.release()
 
     def _read_response(self, ecu_addr: int, request: bytes, deadline: float) -> bytes:
@@ -899,6 +1056,7 @@ class DoIPConnection:
         return self._keepalive(send_tester_present=True)
 
     def _keepalive(self, *, send_tester_present: bool) -> bool | None:
+        """Send fixed heartbeat traffic and retain fragmented replies under the stream lock."""
         if not self._lock.acquire(blocking=False):
             return None
         try:
@@ -965,7 +1123,14 @@ class DoIPConnection:
                 self._close_locked()
 
     def _close_locked(self) -> None:
+        """Close the owned stream and clear transaction state while holding its lock."""
         if self.sock is not None:
+            logger.info(
+                "TCP closing conn=%s retained=%d pending=%s",
+                self.trace_id,
+                len(self._receive_buffer),
+                self._pending_request,
+            )
             with contextlib.suppress(OSError):
                 self.sock.close()
             self.sock = None
@@ -975,10 +1140,23 @@ class DoIPConnection:
         self._alive_failures = 3
 
     def _send_doip(self, kind: int, payload: bytes, deadline: float) -> None:
+        # Guard the final TCP send as well as the public UDS entry point.
+        # Routing activation and alive responses maintain transport only.
+        """Enforce read-only message policy before sending a DoIP frame on the owned socket."""
+        if self.read_only:
+            if kind == DOIP_DIAG_MESSAGE:
+                if len(payload) < 5:
+                    raise ValueError("DoIP diagnostic request is missing addresses or UDS payload")
+                _check_read_only(payload[4:])
+            elif kind not in (DOIP_ROUTING_ACTIVATION_REQUEST, DOIP_ALIVE_CHECK_RESPONSE):
+                logger.warning("READ ONLY blocked DoIP message type=0x%04X", kind)
+                raise PermissionError("This DoIP message is disabled in the read-only session")
         if self.sock is None:
             raise ConnectionError("Not connected")
         self.sock.settimeout(_remaining(deadline))
-        self.sock.sendall(_build_doip_header(kind, payload))
+        frame = _build_doip_header(kind, payload)
+        self.sock.sendall(frame)
+        logger.debug("DoIP TX conn=%s type=0x%04X frame=%s", self.trace_id, kind, frame.hex(" "))
 
     def _handle_control(self, kind: int, body: bytes, deadline: float) -> bool:
         if kind == DOIP_ALIVE_CHECK_REQUEST:
@@ -1000,17 +1178,25 @@ class DoIPConnection:
         return False
 
     def _recv_doip_message(self, deadline: float) -> tuple[int, bytes]:
+        """Read and validate a complete DoIP frame within the current operation deadline."""
         sock = self.sock
         if sock is None:
             raise ConnectionError("Not connected")
         buffer = self._receive_buffer
-        _fill_receive_buffer(sock, buffer, 8, deadline)
+        _fill_receive_buffer(sock, buffer, 8, deadline, self.trace_id)
         version, inverse, kind, length = struct.unpack(">BBHI", buffer[:8])
         if version != DOIP_PROTOCOL_VERSION or inverse != version ^ 0xFF:
             raise ConnectionError("Invalid DoIP protocol version")
         if length > MAX_FRAME_BODY:
             raise ConnectionError("DoIP frame exceeds supported size")
-        _fill_receive_buffer(sock, buffer, 8 + length, deadline)
+        _fill_receive_buffer(sock, buffer, 8 + length, deadline, self.trace_id)
+        logger.debug(
+            "DoIP RX conn=%s type=0x%04X length=%d frame=%s",
+            self.trace_id,
+            kind,
+            length,
+            buffer[: 8 + length].hex(" "),
+        )
         body = bytes(buffer[8 : 8 + length])
         del buffer[: 8 + length]
         return kind, body

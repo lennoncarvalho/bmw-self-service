@@ -61,6 +61,12 @@ class CarWorker(QThread):
         On any other exception emits the error string.
         """
         self.started.emit()
+        started = time.monotonic()
+        logger.info(
+            "Worker start operation=%s conn=%s",
+            type(self).__name__,
+            getattr(self.connection, "trace_id", "demo/setup"),
+        )
         try:
             result = self.do_work()
             self.finished.emit(result)
@@ -72,6 +78,13 @@ class CarWorker(QThread):
             msg = str(e) if str(e) else "An unexpected error occurred"
             logger.error("CarWorker error: %s", e, exc_info=True)
             self.error.emit(msg)
+        finally:
+            logger.info(
+                "Worker end operation=%s conn=%s elapsed=%.3fs",
+                type(self).__name__,
+                getattr(self.connection, "trace_id", "demo/setup"),
+                time.monotonic() - started,
+            )
 
     def do_work(self) -> Any:
         """Override in subclasses — performs the actual car I/O.
@@ -160,6 +173,7 @@ class PostConnectWorker(CarWorker):
             try:
                 value = task_fn(self.connection)
                 results[label.lower().replace(" ", "_")] = value
+                logger.debug("PostConnect result label=%s value=%r", label, value)
                 logger.debug(
                     "PostConnect: %s OK (%d/%d)",
                     label,
@@ -179,6 +193,7 @@ class PostConnectWorker(CarWorker):
                     "PostConnect: %s — %s",
                     label,
                     e,
+                    exc_info=True,
                 )
                 errors[label.lower().replace(" ", "_")] = str(e)
 

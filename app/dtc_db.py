@@ -1,6 +1,6 @@
 """DTC (Diagnostic Trouble Code) description database.
 
-Read-only SQLite singleton. 88,580 entries, O(1) indexed lookup.
+Read-only SQLite descriptions. 88,580 rows with indexed code lookup.
 English preferred, German fallback.
 
 Reference: docs/14-dtc-database.md
@@ -101,10 +101,11 @@ _OBD2_CODES: dict[str, str] = {
 
 
 class DtcDatabase:
-    """Read-only, thread-safe DTC description lookup. O(1) indexed per code.
+    """Read-only DTC descriptions with connection ownership by constructing thread.
 
-    Load the database once at startup, reuse the singleton connection.
-    Use read-only mode (uri=True, mode=ro) for safety and concurrent reads.
+    The UI uses its module-level instance. A diagnostic worker constructs and
+    closes a separate instance on its own thread; mode=ro does not remove
+    SQLite thread affinity. Code lookup uses the database index.
 
     Example:
         >>> db = DtcDatabase("dtc_descriptions.db")
@@ -165,6 +166,21 @@ class DtcDatabase:
             return text
 
         return _OBD2_CODES.get(code)
+
+    def describe_for_ecu(self, code: str, ecu: str) -> str | None:
+        """Return a fault-location text only for an exact stored ECU name.
+
+        Do not substitute a fault-type/measurement dictionary entry or another
+        ECU's text. Missing aliases and extraction collisions stay unresolved.
+        """
+        if self._missing:
+            return None
+        row = self.conn.execute(
+            "SELECT text_en, text_de FROM dtc_descriptions "
+            "WHERE code = ? AND table_type = 'FORTTEXTE' AND UPPER(ecu) = ?",
+            (code.upper().removeprefix("0X"), ecu.upper()),
+        ).fetchone()
+        return (row[0] or row[1]) if row else None
 
     def describe_with_ecu(self, code: str) -> tuple[str, str] | None:
         """Return (description, ecu_name) tuple or None if not found.

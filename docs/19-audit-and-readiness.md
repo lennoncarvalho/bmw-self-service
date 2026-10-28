@@ -73,6 +73,28 @@ running the unsupported service-history/coding paths against a vehicle. The
 owner's no-automated-suite policy remains unchanged; static gates and app startup
 were checked, with no vehicle or visual DEMO acceptance claimed.
 
+## Read-only capture preparation (after PR #8 merge)
+
+See [the validation contract](22-read-only-validation.md) and
+[implementation record](../tasks/read-only-car-capture.md). A-01's potentially
+mutating automatic history read is disabled at the page and worker boundary.
+Live coding now reports unavailable instead of selecting a guessed variant,
+probing on the GUI thread or showing mock values; its underlying read/write
+contract (A-02/A-03/A-09/A-14) is not implemented by this guard.
+
+An explicit --read-only launch enforces allowed read/session requests at both
+transports and disables automatic DHCP fallback. This constrains the validation
+run; general networking (A-10/A-11), packaging and default-mode write validation
+remain open. Debug logging now preserves control frames, fragments, transaction
+and worker context in unique session files.
+
+For A-13, 59 02 records now start at offset 3 with echo/alignment validation,
+incomplete results remain incomplete and the unsupported MIL/snapshot codecs
+are removed from live reads. DTC descriptions use a separate worker-owned SQLite
+connection and require an exact ECU/table match; aliases/extraction collisions
+and complete fleet coverage remain unresolved (A-16). No vehicle validation is
+implied by these changes or the static gate.
+
 ## Documentation defects corrected
 
 - Removed blind “all specs authoritative” handling; evidence and owner decisions

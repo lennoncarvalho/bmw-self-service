@@ -179,9 +179,9 @@ class BackupsPage(QWidget):
         """Restore a backup to the coding page."""
         reply = QMessageBox.question(
             self,
-            "Rollback Coding",
-            f"Restore coding from backup '{name}'?\n\n"
-            "This will overwrite all current coding values.",
+            "Load Coding Backup",
+            f"Load backup '{name}' into the Coding page?\n\n"
+            "This replaces the local preview. It does not restore vehicle data.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -194,12 +194,23 @@ class BackupsPage(QWidget):
                 manifest = json.load(f)
             # Find the CodingPage in the app and restore
             window = self.window()
-            if window and hasattr(window, "coding_page"):
-                window.coding_page.restore_backup(manifest.get("categories", []))
+            restored = bool(
+                window
+                and hasattr(window, "coding_page")
+                and window.coding_page.restore_backup(manifest.get("categories", []))
+            )
+            if restored:
                 QMessageBox.information(
                     self,
-                    "Rollback Complete",
-                    f"Restored coding from backup '{name}'.",
+                    "Backup Loaded",
+                    f"Loaded backup '{name}' into the Coding page. No vehicle data was written.",
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Backup Not Loaded",
+                    "Verified restoration is unavailable for the current connection. "
+                    "The backup was not loaded and no vehicle data was written.",
                 )
         except (OSError, json.JSONDecodeError) as e:
             QMessageBox.warning(

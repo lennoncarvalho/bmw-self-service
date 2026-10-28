@@ -60,9 +60,11 @@ class MainWindow(QMainWindow):
         ("History", CLIPBOARD_ICON),
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, *, read_only: bool = False) -> None:
+        """Build the application shell with the selected session policy and worker ownership."""
         super().__init__()
-        self.setWindowTitle("BMW Self Service")
+        self._read_only = read_only
+        self.setWindowTitle("BMW Self Service" + (" — READ ONLY" if read_only else ""))
         self.setMinimumSize(800, 600)
         self._demo_mode = False
         self._connection: object | None = None
@@ -325,6 +327,13 @@ class MainWindow(QMainWindow):
     # ---- Navigation ----
 
     def _on_nav_clicked(self, index: int) -> None:
+        """Record navigation and show the selected connected-vehicle page."""
+        logger.info(
+            "Navigation page=%s conn=%s read_only=%s",
+            self.NAV_ITEMS[index][0],
+            getattr(self._connection, "trace_id", "demo/disconnected"),
+            self._read_only,
+        )
         self.stack.setCurrentIndex(index + 1)
 
     # ---- Connection flow ----
@@ -342,6 +351,7 @@ class MainWindow(QMainWindow):
         self.show_spinner("Starting DEMO mode...")
 
         def do_connect(cancelled: Event) -> tuple[MockConnection, str]:
+            """Establish the selected connection with cancellation checks between bounded operations."""
             if cancelled.is_set():
                 raise ConnectionError("Connection cancelled")
             conn = MockConnection()
@@ -351,6 +361,7 @@ class MainWindow(QMainWindow):
         self._async_connect(do_connect, series)
 
     def _connect_real(self, series: str, interface: str) -> None:
+        """Discover and identify the vehicle using a cancellable background connection attempt."""
         logger.info(
             "Connecting: series=%s interface=%s proto=%s",
             series,
@@ -358,8 +369,10 @@ class MainWindow(QMainWindow):
             {chr(70): "HSFZ", chr(71): "DoIP", chr(85): "DoIP", chr(73): "DoIP"}.get(series, "?"),
         )
         self.show_spinner(f"Searching for vehicle on {interface}...")
+        read_only = self._read_only
 
         def do_connect(cancelled: Event) -> tuple[HSFZConnection | DoIPConnection, str]:
+            """Establish the selected connection with cancellation checks between bounded operations."""
             from app.connection import discover_zgw
 
             def check_cancelled() -> None:
@@ -373,6 +386,11 @@ class MainWindow(QMainWindow):
             check_cancelled()
 
             if info is None:
+                if read_only:
+                    raise ConnectionError(
+                        "Vehicle not found. Check the cable, ignition and Ethernet IPv4 settings. "
+                        "Automatic DHCP/network changes are disabled in this read-only session."
+                    )
                 logger.warning("Discovery failed, trying DHCP fallback")
                 from app.connection import start_dhcp_server
 
@@ -401,7 +419,11 @@ class MainWindow(QMainWindow):
 
             host = info["ip"]
             logger.info("Step 2: TCP connect to %s", host)
-            conn = HSFZConnection(host) if series == "F" else DoIPConnection(host)
+            conn = (
+                HSFZConnection(host, read_only=read_only)
+                if series == "F"
+                else DoIPConnection(host, read_only=read_only)
+            )
 
             if not conn.connect():
                 raise ConnectionError("Failed to connect to vehicle at " + host)
@@ -460,8 +482,14 @@ class MainWindow(QMainWindow):
         self._on_connect_success(conn, vin, worker.series)
 
     def _on_connect_success(self, connection: Any, vin: str, series: str) -> None:
+        """Configure page capabilities before exposing navigation and loading optional data."""
         self._connection = connection
         self._connected = True
+        if not getattr(connection, "data", None):
+            # Clear DEMO/default page state before navigation can expose it.
+            # These live setters only display unavailable capabilities; no I/O.
+            self.history_page.set_connection(connection)
+            self.coding_page.set_connection(connection, [])
 
         model = ""
         if vin:
@@ -475,7 +503,7 @@ class MainWindow(QMainWindow):
             if not vin:
                 vin = vehicle.get("vin", "")
 
-        prefix = "[DEMO] " if self._demo_mode else ""
+        prefix = "[DEMO] " if self._demo_mode else ("[READ ONLY] " if self._read_only else "")
         self.status_dot.setText(ORANGE_DOT if self._demo_mode else GREEN_DOT)
         self.status_dot.setToolTip("[DEMO] Demo Mode" if self._demo_mode else "Connected")
         self.car_label.setText(f"{prefix}{model or f'BMW {series}-series'}")
@@ -817,6 +845,7 @@ class MainWindow(QMainWindow):
 
     @Slot(str)
     def _on_connect_error(self, error_msg: str) -> None:
+        """Report an active connection failure while preserving read-only network guidance."""
         worker = self.sender()
         if worker is not self._worker or self._closing:
             return
@@ -829,7 +858,12 @@ class MainWindow(QMainWindow):
 
         # G-14: Map error messages to user-friendly dialogs
         friendly = error_msg
-        if "admin" in error_msg.lower() or "root" in error_msg.lower():
+        if self._read_only and "vehicle not found" in error_msg.lower():
+            friendly = (
+                "Vehicle not found. Check the ENET cable, ignition and Ethernet IPv4 settings.\n\n"
+                "Automatic DHCP and network changes are disabled in this read-only session."
+            )
+        elif "admin" in error_msg.lower() or "root" in error_msg.lower():
             friendly = (
                 "DHCP server requires administrator privileges.\n\n"
                 "Please run the application with elevated permissions "

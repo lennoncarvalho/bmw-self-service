@@ -265,6 +265,10 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 
 ## GitHub CLI (pushing to this repo)
 
+Every new code change starts on its own branch and is delivered through a new
+pull request. Do not commit directly to main or reuse a merged PR branch.
+The owner confirmed this workflow after merging PR #8 on 2026-10-28.
+
 This machine has two GitHub accounts: `lennoncarvalho` (personal, for this repo)
 and `lcarvalho-tns` (work, for other repos). This repo must always use
 `lennoncarvalho`.
