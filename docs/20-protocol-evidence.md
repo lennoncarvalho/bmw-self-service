@@ -109,6 +109,13 @@ owned cleanup; it must not kill unrelated host services. See doc 15.
 
 ## Next evidence collection
 
+The [first retained session](23-first-vehicle-session.md) now establishes the
+F48 setup's HSFZ/VIN baseline. It also records negative responses to the fixed
+FA/mileage/voltage/topology requests, an invalid I-level decode and gateway-only
+DTC coverage. Follow [the staged REA plan](../tasks/rea-protocol-recovery.md)
+for source-derived replacements. The earlier collection recommendation below
+describes the pre-session starting point.
+
 Start with F48/NBT read-only identity and complete HSFZ frame dispatch. Preserve
 fresh logs before rotation and record adapter/route/runtime. Next trace the
 reference app's F/G/U/I connection selection and exact vehicle identity reads;

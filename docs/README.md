@@ -12,6 +12,11 @@ static checks do not validate vehicle behavior.
 [Read-only vehicle validation and log collection](22-read-only-validation.md)
 describes the current source launch and explicit unavailable page states.
 
+[First retained vehicle session](23-first-vehicle-session.md) establishes two
+successful HSFZ/VIN exchanges, rejected optional reads and gateway-only DTC
+coverage. [The source-first REA plan](../tasks/rea-protocol-recovery.md) defines
+the evidence and implementation sequence to close those gaps.
+
 ## Original documents reviewed
 
 | Document | Current standing / correction |

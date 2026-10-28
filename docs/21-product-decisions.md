@@ -37,9 +37,11 @@ The owner describes ACK interference and an existing proposed fix. Checkout is
 no staged changes at that time; the proposed fix was already committed. Preserve
 this work and review it before adding runtime changes.
 
-OS/Ethernet-adapter/cable details and a fresh connection log remain unrecorded.
-The recovered Windows success establishes a useful reference workflow, not
-proof of the same laptop/network setup.
+The first retained session now records macOS arm64, USB Ethernet `en15`,
+link-local addressing and HSFZ/VIN success; see
+[the session report](23-first-vehicle-session.md). Exact cable/adapter product
+identity remains unrecorded. The recovered Windows success establishes a useful
+reference workflow, not proof of the same laptop/network setup.
 
 ## Backup/write acceptance derived from D-04/D-05
 

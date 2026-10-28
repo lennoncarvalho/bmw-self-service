@@ -19,7 +19,9 @@ The 2026-10-28 audit overrides older completion labels and contradictory protoco
 examples. Historical REA notes are evidence candidates, not authoritative wire
 contracts. Correct a disproven spec before implementing it; ask the owner about
 product decisions that remain unclear. Do not infer vehicle support from year
-or chassis letter alone. No successful end-to-end connection is established.
+or chassis letter alone. The first retained session establishes HSFZ/VIN on the
+owner's setup, with failed optional reads and incomplete DTC coverage; see
+`docs/23-first-vehicle-session.md` and `tasks/rea-protocol-recovery.md`.
 
 ## Project identity
 

@@ -9,10 +9,18 @@ Neither phase attests that any car operation is correct.
 
 ## Outcome
 
-The app is **not production ready**. The owner has not achieved a successful
-end-to-end connection. A historical PR excerpt reports real gateway/UDS traffic,
-including a VIN response; the full local log is now empty. Thus “no network
-contact” and “fully working connection” are both inaccurate descriptions.
+**Later vehicle evidence:** the first retained read-only session now confirms
+HSFZ discovery/TCP/session/VIN on the owner's setup. Optional reads were rejected
+and DTC coverage was gateway-only. See [the session report](23-first-vehicle-session.md)
+and [REA recovery plan](../tasks/rea-protocol-recovery.md). The audit baseline
+and earlier unvalidated-fix statements below are historical, not current claims
+that no VIN connection has worked.
+
+The app is **not production ready**. At the initial audit, no successful
+end-to-end connection had been established. A historical PR excerpt reported
+gateway/UDS traffic including VIN, but the original `uds.log` was empty. The
+later session above now supplies retained traffic. Both “no network contact”
+and “all vehicle reads work” remain inaccurate descriptions.
 
 All 28 original project-owned Markdown files were read. Fifty ignored reference
 Markdown files were inventoried and screened, with focused reading of relevant
