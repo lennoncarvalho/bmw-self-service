@@ -28,7 +28,8 @@ def parse_args() -> argparse.Namespace:
         description="BMW Self Service — BMW diagnostics via ENET cable",
     )
     parser.add_argument(
-        "--debug", "-d",
+        "--debug",
+        "-d",
         action="store_true",
         help="Enable verbose debug logging (UDS traffic, connection details)",
     )
@@ -53,10 +54,12 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> None:
     # Console handler
     console = logging.StreamHandler()
     console.setLevel(logging.DEBUG if debug else logging.INFO)
-    console.setFormatter(logging.Formatter(
-        "%(asctime)s %(levelname)-7s %(name)s: %(message)s",
-        datefmt="%H:%M:%S",
-    ))
+    console.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+            datefmt="%H:%M:%S",
+        )
+    )
     root.addHandler(console)
 
     # File handler
@@ -70,31 +73,37 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> None:
             backupCount=3,
         )
         file_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
-        file_handler.setFormatter(logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        ))
+        file_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                datefmt="%Y-%m-%d %H:%M:%S",
+            )
+        )
         root.addHandler(file_handler)
 
 
 def log_startup(log: logging.Logger) -> None:
     """Emit startup diagnostics at INFO level."""
     log.info("=== BMW Self Service starting ===")
-    log.info("Python %s on %s %s",
-             platform_module.python_version(),
-             platform_module.system(),
-             platform_module.release())
+    log.info(
+        "Python %s on %s %s",
+        platform_module.python_version(),
+        platform_module.system(),
+        platform_module.release(),
+    )
     log.info("Platform: %s", platform_module.platform())
 
     try:
         import PySide6
         from PySide6.QtCore import qVersion
+
         log.info("PySide6 %s / Qt %s", PySide6.__version__, qVersion())
     except ImportError:
         log.warning("PySide6 version unknown")
 
     try:
         from app.connection import list_interfaces
+
         ifaces = list_interfaces()
         log.info("Ethernet interfaces: %s", ", ".join(ifaces) if ifaces else "(none)")
     except Exception as e:

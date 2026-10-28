@@ -115,13 +115,9 @@ def get_negative_code(data: bytes) -> int:
         49
     """
     if len(data) < 3:
-        raise ValueError(
-            f"Negative response too short: expected 3 bytes, got {len(data)}"
-        )
+        raise ValueError(f"Negative response too short: expected 3 bytes, got {len(data)}")
     if data[0] != UDS_NEGATIVE_RESPONSE:
-        raise ValueError(
-            f"Not a negative response: first byte is 0x{data[0]:02X}, expected 0x7F"
-        )
+        raise ValueError(f"Not a negative response: first byte is 0x{data[0]:02X}, expected 0x7F")
     return data[2]
 
 

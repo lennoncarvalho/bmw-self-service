@@ -50,9 +50,7 @@ def _find_theme_qss() -> Path:
                 return resolved
         except (OSError, FileNotFoundError):
             pass
-    raise FileNotFoundError(
-        f"Cannot find theme.qss. Searched from module_dir={module_dir}"
-    )
+    raise FileNotFoundError(f"Cannot find theme.qss. Searched from module_dir={module_dir}")
 
 
 def load_theme() -> str:

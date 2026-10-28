@@ -74,9 +74,7 @@ class MockConnection:
         except OSError as e:
             logger.warning("Failed to save mock data: %s", e)
 
-    def send_uds(
-        self, ecu_addr: int, payload: bytes, timeout: float = 30.0
-    ) -> bytes:
+    def send_uds(self, ecu_addr: int, payload: bytes, timeout: float = 30.0) -> bytes:
         service = payload[0] if payload else 0
 
         if service == self.SID_DIAG_SESSION_CONTROL:
@@ -112,9 +110,7 @@ class MockConnection:
             return bytes([0x63]) + bytes(4)
 
         # Unknown service: negative response
-        return bytes([
-            UDS_NEGATIVE_RESPONSE, service, self.NRC_SERVICE_NOT_SUPPORTED
-        ])
+        return bytes([UDS_NEGATIVE_RESPONSE, service, self.NRC_SERVICE_NOT_SUPPORTED])
 
     def _handle_read_data_by_id(self, ecu_addr: int, payload: bytes) -> bytes:
         if len(payload) < 3:
@@ -155,17 +151,23 @@ class MockConnection:
             return bytes([0x62, did_high, did_low]) + mileage_bytes
 
         # Unknown DID
-        return bytes([
-            UDS_NEGATIVE_RESPONSE, self.SID_READ_DATA_BY_ID,
-            self.NRC_REQUEST_OUT_OF_RANGE,
-        ])
+        return bytes(
+            [
+                UDS_NEGATIVE_RESPONSE,
+                self.SID_READ_DATA_BY_ID,
+                self.NRC_REQUEST_OUT_OF_RANGE,
+            ]
+        )
 
     def _handle_read_dtc(self, ecu_addr: int, payload: bytes) -> bytes:
         if len(payload) < 2:
-            return bytes([
-                UDS_NEGATIVE_RESPONSE, self.SID_READ_DTC,
-                self.NRC_SUB_FUNCTION_NOT_SUPPORTED,
-            ])
+            return bytes(
+                [
+                    UDS_NEGATIVE_RESPONSE,
+                    self.SID_READ_DTC,
+                    self.NRC_SUB_FUNCTION_NOT_SUPPORTED,
+                ]
+            )
 
         sub_function = payload[1]
 
@@ -191,10 +193,13 @@ class MockConnection:
             return bytes([0x59, 0x01, status_mask, 0x01, count >> 8, count & 0xFF])
 
         else:
-            return bytes([
-                UDS_NEGATIVE_RESPONSE, self.SID_READ_DTC,
-                self.NRC_SUB_FUNCTION_NOT_SUPPORTED,
-            ])
+            return bytes(
+                [
+                    UDS_NEGATIVE_RESPONSE,
+                    self.SID_READ_DTC,
+                    self.NRC_SUB_FUNCTION_NOT_SUPPORTED,
+                ]
+            )
 
     def _handle_read_dynamic_data(self, ecu_addr: int, payload: bytes) -> bytes:
         """Handle 0x1A (ReadDynamicallyDefineDataIdentifier) — mock mileage."""

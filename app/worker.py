@@ -89,8 +89,8 @@ class CarWorker(QThread):
 # and returns the parsed value.  The callable may send multiple UDS
 # requests internally (e.g. try KOMBI for mileage, then fall back to ZGW).
 PostConnectTask = tuple[
-    str,                       # label for progress (e.g. "VIN")
-    Callable[[Any], object],   # fn(connection) -> parsed value
+    str,  # label for progress (e.g. "VIN")
+    Callable[[Any], object],  # fn(connection) -> parsed value
 ]
 
 
@@ -155,7 +155,10 @@ class PostConnectWorker(CarWorker):
                 value = task_fn(self.connection)
                 results[label.lower().replace(" ", "_")] = value
                 logger.debug(
-                    "PostConnect: %s OK (%d/%d)", label, i, total,
+                    "PostConnect: %s OK (%d/%d)",
+                    label,
+                    i,
+                    total,
                 )
             except TimeoutError as e:
                 msg = str(e) if str(e) else f"{label} timed out"
@@ -167,18 +170,23 @@ class PostConnectWorker(CarWorker):
                 errors[label.lower().replace(" ", "_")] = msg
             except Exception as e:
                 logger.warning(
-                    "PostConnect: %s — %s", label, e,
+                    "PostConnect: %s — %s",
+                    label,
+                    e,
                 )
                 errors[label.lower().replace(" ", "_")] = str(e)
 
         if errors:
             logger.info(
                 "PostConnect done: %d/%d succeeded, %d errors",
-                len(results), total, len(errors),
+                len(results),
+                total,
+                len(errors),
             )
         else:
             logger.info(
-                "PostConnect done: all %d requests succeeded", total,
+                "PostConnect done: all %d requests succeeded",
+                total,
             )
 
         return {"results": results, "errors": errors}

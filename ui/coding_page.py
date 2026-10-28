@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 _CAFD_MAP: dict[str, tuple[str, str]] = {}
 try:
     import json as _json
+
     _infos = _json.loads(_decrypt_enc("coding_data/coding-ecu-infos.enc"))
     for _e in _infos:
         _name = _e.get("shortName", "")
@@ -61,10 +62,16 @@ MOCK_CATEGORIES = [
         "icon": "L",
         "description": "Angel eyes brightness, welcome lights, DRL behavior",
         "options": [
-            {"name": "Angel Eyes Brightness",
-             "values": ["4%", "8%", "12%", "16%", "20%"], "current": 1},
-            {"name": "Welcome Lights Duration",
-             "values": ["10s", "20s", "30s", "40s"], "current": 2},
+            {
+                "name": "Angel Eyes Brightness",
+                "values": ["4%", "8%", "12%", "16%", "20%"],
+                "current": 1,
+            },
+            {
+                "name": "Welcome Lights Duration",
+                "values": ["10s", "20s", "30s", "40s"],
+                "current": 2,
+            },
             {"name": "DRL Rear Lights", "values": ["Off", "On"], "current": 0},
         ],
     },
@@ -73,10 +80,16 @@ MOCK_CATEGORIES = [
         "icon": "C",
         "description": "Fold mirrors, window control, seat heating memory",
         "options": [
-            {"name": "Fold Mirrors on Lock",
-             "values": ["Off", "On (hold)", "On (instant)"], "current": 1},
-            {"name": "Window Control after Ignition Off",
-             "values": ["Disabled", "30s", "60s", "Unlimited"], "current": 2},
+            {
+                "name": "Fold Mirrors on Lock",
+                "values": ["Off", "On (hold)", "On (instant)"],
+                "current": 1,
+            },
+            {
+                "name": "Window Control after Ignition Off",
+                "values": ["Disabled", "30s", "60s", "Unlimited"],
+                "current": 2,
+            },
         ],
     },
     {
@@ -164,9 +177,7 @@ class CodingPage(QWidget):
 
         # Pending changes counter
         self._pending_label = QLabel("")
-        self._pending_label.setStyleSheet(
-            "color: #F39C12; font-size: 13px; font-weight: bold;"
-        )
+        self._pending_label.setStyleSheet("color: #F39C12; font-size: 13px; font-weight: bold;")
         tab_bar.addWidget(self._pending_label)
         layout.addLayout(tab_bar)
 
@@ -247,9 +258,7 @@ class CodingPage(QWidget):
             card_layout.addLayout(top)
 
             desc = QLabel(cat["description"])
-            desc.setStyleSheet(
-                "font-size: 12px; color: #a0a0a0; background: transparent;"
-            )
+            desc.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
             card_layout.addWidget(desc)
 
             # Options expandable section
@@ -260,12 +269,8 @@ class CodingPage(QWidget):
 
             for opt in cat["options"]:
                 current_val = opt["values"][opt["current"]]
-                opt_lbl = QLabel(
-                    f"{opt['name']}: {current_val}"
-                )
-                opt_lbl.setStyleSheet(
-                    "font-size: 13px; color: #e0e0e0; background: transparent;"
-                )
+                opt_lbl = QLabel(f"{opt['name']}: {current_val}")
+                opt_lbl.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
                 opt_lbl.setWordWrap(True)
                 opts_layout.addWidget(opt_lbl)
 
@@ -283,10 +288,8 @@ class CodingPage(QWidget):
                     # does not fire toggled and increment _pending
                     rb.setChecked(v_i == opt["current"])
                     rb.toggled.connect(
-                        lambda checked, lbl=opt_lbl, o=opt,
-                               vi=v_i: (
-                            self._apply_option(o, vi, lbl, checked)
-                            if checked else None
+                        lambda checked, lbl=opt_lbl, o=opt, vi=v_i: (
+                            self._apply_option(o, vi, lbl, checked) if checked else None
                         )
                     )
                     opts_layout.addWidget(rb)
@@ -307,13 +310,16 @@ class CodingPage(QWidget):
                     # Update via closure: set b reference on first click
                 )
             )
+
             # Use a single-shot approach — rebuild the connection to capture btn
             def _make_toggle(ow: QWidget, btn: QPushButton):
                 def _toggle():
                     visible = not ow.isVisible()
                     ow.setVisible(visible)
                     btn.setText("\u25b2 Collapse" if visible else "\u25bc Expand")
+
                 return _toggle
+
             toggle_btn.clicked.disconnect()
             toggle_btn.clicked.connect(_make_toggle(opts_widget, toggle_btn))
             card_layout.addWidget(toggle_btn)
@@ -337,9 +343,7 @@ class CodingPage(QWidget):
         layout.setSpacing(12)
 
         # Warning banner
-        warning = QLabel(
-            "\u26A0  Advanced Coding \u2014 use with caution"
-        )
+        warning = QLabel("\u26a0  Advanced Coding \u2014 use with caution")
         warning.setStyleSheet(
             "font-size: 14px; font-weight: bold; color: #F39C12;"
             "background: rgba(243,156,18,0.1); border: 1px solid #F39C12;"
@@ -348,9 +352,7 @@ class CodingPage(QWidget):
         warning.setWordWrap(True)
         layout.addWidget(warning)
 
-        sub = QLabel(
-            "Incorrect values may cause malfunctions. Always back up first."
-        )
+        sub = QLabel("Incorrect values may cause malfunctions. Always back up first.")
         sub.setStyleSheet("font-size: 12px; color: #a0a0a0;")
         sub.setWordWrap(True)
         layout.addWidget(sub)
@@ -358,9 +360,7 @@ class CodingPage(QWidget):
         # ECU tree
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet(
-            "QScrollArea { border: none; background: transparent; }"
-        )
+        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         container = QWidget()
         self._adv_ecu_layout = QVBoxLayout(container)
         self._adv_ecu_layout.setSpacing(6)
@@ -380,8 +380,15 @@ class CodingPage(QWidget):
         ecus = self._get_svt_ecus()
         # Blocked ECUs (safety-critical)
         blocked = {
-            "ACSM", "DME", "DSC", "SAS", "ZGW",
-            "AIRBAG", "ABG", "MRS", "SRS",
+            "ACSM",
+            "DME",
+            "DSC",
+            "SAS",
+            "ZGW",
+            "AIRBAG",
+            "ABG",
+            "MRS",
+            "SRS",
         }
 
         for ecu in ecus:
@@ -396,14 +403,15 @@ class CodingPage(QWidget):
                 "border-radius: 8px; padding: 12px; }"
                 + (" border-color: #E30B1F; " if is_blocked else "")
                 + "QFrame#card:hover { border-color: "
-                + ("#E30B1F" if is_blocked else "#1C69D4") + "; }"
+                + ("#E30B1F" if is_blocked else "#1C69D4")
+                + "; }"
             )
 
             card_layout = QVBoxLayout(card)
             card_layout.setSpacing(4)
 
             top = QHBoxLayout()
-            name_lbl = QLabel(f"\u26A0 {name}" if is_blocked else name)
+            name_lbl = QLabel(f"\u26a0 {name}" if is_blocked else name)
             name_lbl.setStyleSheet(
                 f"font-size: 14px; font-weight: bold; "
                 f"color: {'#E30B1F' if is_blocked else '#e0e0e0'}; "
@@ -412,9 +420,7 @@ class CodingPage(QWidget):
             top.addWidget(name_lbl)
             if desc:
                 d_lbl = QLabel(desc)
-                d_lbl.setStyleSheet(
-                    "font-size: 11px; color: #a0a0a0; background: transparent;"
-                )
+                d_lbl.setStyleSheet("font-size: 11px; color: #a0a0a0; background: transparent;")
                 top.addWidget(d_lbl)
             top.addStretch()
 
@@ -437,12 +443,8 @@ class CodingPage(QWidget):
             detail_layout.setSpacing(6)
 
             if is_blocked:
-                block_warn = QLabel(
-                    "\u26A0 Safety-critical ECU — coding blocked"
-                )
-                block_warn.setStyleSheet(
-                    "font-size: 12px; color: #E30B1F; font-weight: bold;"
-                )
+                block_warn = QLabel("\u26a0 Safety-critical ECU — coding blocked")
+                block_warn.setStyleSheet("font-size: 12px; color: #E30B1F; font-weight: bold;")
                 detail_layout.addWidget(block_warn)
             else:
                 # T-5: Real FDL parameters from coding database
@@ -452,19 +454,16 @@ class CodingPage(QWidget):
                     try:
                         cafd_id, variant = cafd_entry
                         coding_db.load_ecu(cafd_id, variant)
-                        fdl_funcs = coding_db.get_ecu_fdl_functions(
-                            cafd_id, variant
-                        )[:50]  # limit to 50 for performance
+                        fdl_funcs = coding_db.get_ecu_fdl_functions(cafd_id, variant)[
+                            :50
+                        ]  # limit to 50 for performance
                     except Exception:
                         pass
 
                 if fdl_funcs:
                     for func in fdl_funcs:
                         si = func.get("storageInfo", {})
-                        func_type = (
-                            f"byte {si.get('start', '?')}"
-                            f"  mask {si.get('mask', '?')}"
-                        )
+                        func_type = f"byte {si.get('start', '?')}  mask {si.get('mask', '?')}"
                         func_card = QFrame()
                         func_card.setStyleSheet(
                             "background: #1a1a3e; border: 1px solid #2a2a4a; "
@@ -480,22 +479,16 @@ class CodingPage(QWidget):
                         )
                         func_layout.addWidget(fn)
 
-                        ft_lbl = QLabel(
-                            f"DID: 0x{func['did']:04X}  |  {func_type}"
-                        )
+                        ft_lbl = QLabel(f"DID: 0x{func['did']:04X}  |  {func_type}")
                         ft_lbl.setStyleSheet(
-                            "font-size: 11px; color: #a0a0a0; "
-                            "background: transparent;"
+                            "font-size: 11px; color: #a0a0a0; background: transparent;"
                         )
                         func_layout.addWidget(ft_lbl)
 
                         detail_layout.addWidget(func_card)
                 else:
                     no_data = QLabel("No FDL data available for this ECU")
-                    no_data.setStyleSheet(
-                        "font-size: 11px; color: #a0a0a0; "
-                        "font-style: italic;"
-                    )
+                    no_data.setStyleSheet("font-size: 11px; color: #a0a0a0; font-style: italic;")
                     detail_layout.addWidget(no_data)
 
             card_layout.addWidget(detail)
@@ -512,8 +505,7 @@ class CodingPage(QWidget):
 
     def _get_svt_ecus(self) -> list[dict]:
         """Get the SVT ECU list from connection data or return default."""
-        if self._connection and hasattr(self._connection, "data") \
-                and self._connection.data:
+        if self._connection and hasattr(self._connection, "data") and self._connection.data:
             return self._connection.data.get("svt_ecus", [])
         # Fallback demo ECUs
         return [
@@ -549,16 +541,12 @@ class CodingPage(QWidget):
         if not (hasattr(connection, "data") and connection.data):
             self._write_btn.setEnabled(False)
             self._coding_reader = CodingReadWorker(connection)
-            self._coding_reader.progress.connect(
-                lambda msg: logger.debug("Coding read: %s", msg)
-            )
+            self._coding_reader.progress.connect(lambda msg: logger.debug("Coding read: %s", msg))
             self._coding_reader.finished.connect(self._on_coding_read)
             self._coding_reader.error.connect(
                 lambda msg: logger.warning("Coding read failed: %s", msg)
             )
-            self._coding_reader.finished.connect(
-                lambda _: self._write_btn.setEnabled(True)
-            )
+            self._coding_reader.finished.connect(lambda _: self._write_btn.setEnabled(True))
             self._coding_reader.start()
 
     def _load_coding_presets(self, ecus: list[dict]) -> None:
@@ -625,7 +613,9 @@ class CodingPage(QWidget):
                 if cafd_bytes:
                     logger.debug(
                         "Read %d CAFD bytes from %s (0x%02X)",
-                        len(cafd_bytes), name, ecu_addr,
+                        len(cafd_bytes),
+                        name,
+                        ecu_addr,
                     )
 
             # Build presets grouped by section
@@ -641,9 +631,7 @@ class CodingPage(QWidget):
                     "current": 0,  # Will be updated when CAFD bytes are read
                 }
                 # Check if this option already exists in section
-                existing_names = [
-                    o["name"] for o in presets_by_section[section]
-                ]
+                existing_names = [o["name"] for o in presets_by_section[section]]
                 if opt_entry["name"] not in existing_names:
                     presets_by_section[section].append(opt_entry)
                     # T-4: Store metadata for write path
@@ -651,9 +639,7 @@ class CodingPage(QWidget):
                     did = 0x3000  # default
                     for option in preset.get("options", []):
                         for func in option.get("functions", []):
-                            d = coding_db.get_did_for_preset(
-                                cafd_id, variant, func.get("name", "")
-                            )
+                            d = coding_db.get_did_for_preset(cafd_id, variant, func.get("name", ""))
                             if d is not None:
                                 did = d
                                 break
@@ -689,18 +675,21 @@ class CodingPage(QWidget):
         categories: list[dict] = []
         for section, options in presets_by_section.items():
             icon_text = section.split("_")[0][:1] if "_" in section else section[:1]
-            categories.append({
-                "name": section.replace("_", " ").title(),
-                "icon": icon_text,
-                "description": f"{len(options)} coding options",
-                "options": sorted(options, key=lambda o: o["name"]),
-            })
+            categories.append(
+                {
+                    "name": section.replace("_", " ").title(),
+                    "icon": icon_text,
+                    "description": f"{len(options)} coding options",
+                    "options": sorted(options, key=lambda o: o["name"]),
+                }
+            )
 
         if categories:
             self._on_coding_read(categories)
             logger.info(
                 "Loaded coding presets: %d categories from %d ECUs",
-                len(categories), loaded_ecus,
+                len(categories),
+                loaded_ecus,
             )
 
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
@@ -734,9 +723,7 @@ class CodingPage(QWidget):
         self._recalc_pending()
         logger.info("Coding restored from backup (%d categories)", len(categories))
 
-    def _apply_option(
-        self, opt: dict, idx: int, label: QLabel, checked: bool
-    ) -> None:
+    def _apply_option(self, opt: dict, idx: int, label: QLabel, checked: bool) -> None:
         if not checked:
             return
         opt["current"] = idx
@@ -804,7 +791,8 @@ class CodingPage(QWidget):
         # G-9: Auto-backup before write
         if not self._save_backup():
             QMessageBox.warning(
-                self, "Write Aborted",
+                self,
+                "Write Aborted",
                 "Cannot proceed without a backup. Free up disk space and try again.",
             )
             return
@@ -820,8 +808,9 @@ class CodingPage(QWidget):
         # G-9: Real car — write via UDS 0x2E WriteDataByIdentifier
         self._write_btn.setEnabled(False)
         self._coding_writer = CodingWriteWorker(
-            self._connection, self._categories,
-            getattr(self, '_coding_meta', {}),
+            self._connection,
+            self._categories,
+            getattr(self, "_coding_meta", {}),
             self._originals,
         )
         self._coding_writer.finished.connect(self._on_write_complete)
@@ -838,8 +827,7 @@ class CodingPage(QWidget):
         QMessageBox.information(
             self,
             "Coding Written",
-            "Coding changes saved to vehicle.\n"
-            "Backup stored in ~/BMW-Tool/backups/.",
+            "Coding changes saved to vehicle.\nBackup stored in ~/BMW-Tool/backups/.",
         )
         logger.info("Coding changes written")
 
@@ -870,7 +858,9 @@ class CodingPage(QWidget):
         from datetime import datetime
 
         backup_dir = os.path.join(
-            os.path.expanduser("~"), "BMW-Tool", "backups",
+            os.path.expanduser("~"),
+            "BMW-Tool",
+            "backups",
             datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         )
         try:
@@ -879,8 +869,7 @@ class CodingPage(QWidget):
             QMessageBox.warning(
                 self,
                 "Backup Failed",
-                "Cannot save backup — disk is full.\n"
-                "Free up space and try again.",
+                "Cannot save backup — disk is full.\nFree up space and try again.",
             )
             return False
 
@@ -898,8 +887,7 @@ class CodingPage(QWidget):
             QMessageBox.warning(
                 self,
                 "Backup Failed",
-                "Cannot save backup — disk is full.\n"
-                "Free up space and try again.",
+                "Cannot save backup — disk is full.\nFree up space and try again.",
             )
             return False
 
@@ -927,6 +915,7 @@ class CodingPage(QWidget):
 
 # ---- Coding Workers ----
 
+
 class CodingReadWorker(CarWorker):
     """Read CAFD/FDL coding data from all ECUs via UDS 0x22."""
 
@@ -934,8 +923,12 @@ class CodingReadWorker(CarWorker):
         super().__init__(connection)
         # Common ECUs to query for coding data
         self.targets = [
-            (0x40, "FEM"), (0x50, "REM"), (0x60, "KOMBI"),
-            (0x63, "HU_NBT"), (0x78, "IHKA"), (0x72, "ASD"),
+            (0x40, "FEM"),
+            (0x50, "REM"),
+            (0x60, "KOMBI"),
+            (0x63, "HU_NBT"),
+            (0x78, "IHKA"),
+            (0x72, "ASD"),
         ]
 
     def do_work(self) -> list[dict]:
@@ -950,7 +943,9 @@ class CodingReadWorker(CarWorker):
                 if resp[0] == 0x62:
                     logger.debug(
                         "Coding data from %s (0x%02X): %d bytes",
-                        name, addr, len(resp),
+                        name,
+                        addr,
+                        len(resp),
                     )
             except Exception as e:
                 logger.debug("Coding read skip %s (0x%02X): %s", name, addr, e)
@@ -1022,7 +1017,12 @@ class CodingWriteWorker(CarWorker):
                     cafd_bytes = meta.get("cafd_bytes", b"")
                     if cafd_bytes:
                         preset = meta.get("preset", {})
-                        selected_name = opt.get("values", [])[opt.get("current", 0)] if opt.get("values") and opt.get("current", 0) < len(opt.get("values", [])) else ""
+                        selected_name = (
+                            opt.get("values", [])[opt.get("current", 0)]
+                            if opt.get("values")
+                            and opt.get("current", 0) < len(opt.get("values", []))
+                            else ""
+                        )
                         # Map UI value label back to preset option name
                         selected_opt_name = ""
                         for o in preset.get("options", []):
@@ -1031,8 +1031,11 @@ class CodingWriteWorker(CarWorker):
                                 break
                         if selected_opt_name:
                             payload = coding_db.build_write_payload(
-                                preset, selected_opt_name, cafd_bytes,
-                                meta["cafd_id"], meta["variant"],
+                                preset,
+                                selected_opt_name,
+                                cafd_bytes,
+                                meta["cafd_id"],
+                                meta["variant"],
                             )
                             if payload:
                                 did_high = (did >> 8) & 0xFF
@@ -1053,15 +1056,14 @@ class CodingWriteWorker(CarWorker):
                     try:
                         self.connection.send_uds(ecu_addr, payload)
                     except Exception as e:
-                        raise ConnectionError(
-                            f"Write failed for {opt_name}: {e}"
-                        ) from e
+                        raise ConnectionError(f"Write failed for {opt_name}: {e}") from e
                 else:
                     # No CAFD metadata — skip with warning. Writing without
                     # correct DID and ECU address is unsafe.
                     logger.warning(
                         "Skipping %s/%s: no CAFD metadata. "
                         "Use Easy Coding with a real ECU connection.",
-                        cat_name, opt_name,
+                        cat_name,
+                        opt_name,
                     )
         return True

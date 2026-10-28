@@ -121,9 +121,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.status_dot)
 
         self.car_label = QLabel("Not connected")
-        self.car_label.setStyleSheet(
-            "font-size: 13px; font-weight: bold; color: #e0e0e0;"
-        )
+        self.car_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #e0e0e0;")
         layout.addWidget(self.car_label)
         layout.addSpacing(8)
 
@@ -168,9 +166,7 @@ class MainWindow(QMainWindow):
             btn.setObjectName("navButton")
             btn.setCheckable(True)
             btn.setEnabled(False)
-            btn.setSizePolicy(
-                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
-            )
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             self.nav_group.addButton(btn, i)
             layout.addWidget(btn)
 
@@ -235,9 +231,7 @@ class MainWindow(QMainWindow):
         reply = QMessageBox.question(
             self,
             "Vehicle Not Responding",
-            "The car is not responding.\n"
-            "Check ignition and ENET cable connection.\n\n"
-            "Retry?",
+            "The car is not responding.\nCheck ignition and ENET cable connection.\n\nRetry?",
             QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Cancel,
             QMessageBox.StandardButton.Retry,
         )
@@ -347,7 +341,8 @@ class MainWindow(QMainWindow):
     def _connect_real(self, series: str, interface: str) -> None:
         logger.info(
             "Connecting: series=%s interface=%s proto=%s",
-            series, interface,
+            series,
+            interface,
             {chr(70): "HSFZ", chr(71): "DoIP", chr(85): "DoIP", chr(73): "DoIP"}.get(series, "?"),
         )
         self.show_spinner(f"Searching for vehicle on {interface}...")
@@ -361,19 +356,21 @@ class MainWindow(QMainWindow):
             if info is None:
                 logger.warning("Discovery failed, trying DHCP fallback")
                 from app.connection import start_dhcp_server
+
                 if start_dhcp_server(interface):
                     logger.debug("DHCP server started, waiting 10s")
                     import time
+
                     time.sleep(10)
                     info = discover_zgw(interface, timeout=5.0)
                     if info is None:
                         raise ConnectionError(
-                            "Vehicle not found. Check the ENET cable "
-                            "and ensure ignition is on."
+                            "Vehicle not found. Check the ENET cable and ensure ignition is on."
                         )
                 else:
                     logger.debug("DHCP denied, waiting 20s for APIPA")
                     import time
+
                     time.sleep(20)
                     info = discover_zgw(interface, timeout=5.0)
                     if info is None:
@@ -388,9 +385,7 @@ class MainWindow(QMainWindow):
             conn = HSFZConnection(host) if series == "F" else DoIPConnection(host)
 
             if not conn.connect():
-                raise ConnectionError(
-                    "Failed to connect to vehicle at " + host
-                )
+                raise ConnectionError("Failed to connect to vehicle at " + host)
 
             logger.info("Step 3: reading vehicle identity")
             vin = ""
@@ -460,12 +455,8 @@ class MainWindow(QMainWindow):
 
         prefix = "[DEMO] " if self._demo_mode else ""
         self.status_dot.setText(ORANGE_DOT if self._demo_mode else GREEN_DOT)
-        self.status_dot.setToolTip(
-            "[DEMO] Demo Mode" if self._demo_mode else "Connected"
-        )
-        self.car_label.setText(
-            f"{prefix}{model or f'BMW {series}-series'}"
-        )
+        self.status_dot.setToolTip("[DEMO] Demo Mode" if self._demo_mode else "Connected")
+        self.car_label.setText(f"{prefix}{model or f'BMW {series}-series'}")
         self.vin_label.setText(f"VIN: {vin}" if vin else "")
 
         for btn in self.nav_group.buttons():
@@ -507,15 +498,14 @@ class MainWindow(QMainWindow):
 
         logger.info("Connected successfully (demo=%s)", self._demo_mode)
 
-    def _build_post_connect_tasks(
-        self, vin: str = ""
-    ) -> list[tuple[str, object]]:
+    def _build_post_connect_tasks(self, vin: str = "") -> list[tuple[str, object]]:
         """Build the queue of data-loading tasks for PostConnectWorker.
 
         Each task is a ``(label, fn)`` tuple where ``fn(connection)``
         performs one or more UDS reads and returns a parsed value.
         Fallback logic lives inside each task function.
         """
+
         # -- I-Level (0xF18A from ZGW) ----------------------------------------
         def _read_ilevel(conn):
             resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
@@ -537,9 +527,7 @@ class MainWindow(QMainWindow):
                         timeout=5.0,
                     )
                     if resp[0] == 0x62:
-                        fa_xml = resp[3:].decode(
-                            "ascii", errors="ignore"
-                        ).strip("\x00 ")
+                        fa_xml = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
                         break
                 except Exception:
                     pass
@@ -547,9 +535,7 @@ class MainWindow(QMainWindow):
             prod_date = ""
             type_code = ""
             if fa_xml:
-                m = _re.search(
-                    r"<ProductionDate>(\d{4})</ProductionDate>", fa_xml
-                )
+                m = _re.search(r"<ProductionDate>(\d{4})</ProductionDate>", fa_xml)
                 if m:
                     pd = m.group(1)
                     prod_date = f"20{pd[2:]}-{pd[:2]}"
@@ -576,23 +562,25 @@ class MainWindow(QMainWindow):
 
             # Fallback: ZGW via ReadDataByIdentifier 0xF406
             resp = conn.send_uds(
-                0x10, bytes([0x22, 0xF4, 0x06]), timeout=5.0,
+                0x10,
+                bytes([0x22, 0xF4, 0x06]),
+                timeout=5.0,
             )
             if resp[0] == 0x62 and len(resp) >= 7:
                 mileage_raw = int.from_bytes(resp[3:7], "big")
                 # BMW encodes mileage in 10s of km
                 mileage_val = mileage_raw // 10
                 return f"{mileage_val:,} km"
-            raise ValueError(
-                f"Could not read mileage (resp SID: 0x{resp[0]:02X})"
-            )
+            raise ValueError(f"Could not read mileage (resp SID: 0x{resp[0]:02X})")
 
         # -- Battery voltage: try DME (0x12), then ZGW (0x10) -----------------
         def _read_battery(conn):
             for ecu in (0x12, 0x10):
                 try:
                     resp = conn.send_uds(
-                        ecu, bytes([0x22, 0xF4, 0x0C]), timeout=5.0,
+                        ecu,
+                        bytes([0x22, 0xF4, 0x0C]),
+                        timeout=5.0,
                     )
                     if resp[0] == 0x62 and len(resp) >= 5:
                         voltage_raw = int.from_bytes(resp[3:5], "big")
@@ -604,14 +592,15 @@ class MainWindow(QMainWindow):
         # -- SVT ECU list (0xF000 from ZGW) -----------------------------------
         def _read_svt(conn):
             resp = conn.send_uds(
-                0x10, bytes([0x22, 0xF0, 0x00]), timeout=10.0,
+                0x10,
+                bytes([0x22, 0xF0, 0x00]),
+                timeout=10.0,
             )
             if resp[0] == 0x62:
                 from ui.vehicle_page import _parse_svt_response
+
                 return _parse_svt_response(resp)
-            raise ValueError(
-                f"Unexpected SVT response SID: 0x{resp[0]:02X}"
-            )
+            raise ValueError(f"Unexpected SVT response SID: 0x{resp[0]:02X}")
 
         tasks: list[tuple[str, object]] = [
             ("I-Level", _read_ilevel),
@@ -662,7 +651,9 @@ class MainWindow(QMainWindow):
                 error_lines.append(f"• {human}: {msg}")
             error_text = "\n".join(error_lines)
             logger.warning(
-                "Post-connect: %d errors — %s", len(errors), error_text,
+                "Post-connect: %d errors — %s",
+                len(errors),
+                error_text,
             )
             QMessageBox.information(
                 self,
@@ -684,9 +675,7 @@ class MainWindow(QMainWindow):
 
         self.hide_spinner()
 
-    def _on_post_connect_error(
-        self, error_msg: str, connection: object = None
-    ) -> None:
+    def _on_post_connect_error(self, error_msg: str, connection: object = None) -> None:
         """Handle PostConnectWorker fatal error.
 
         If the active connection has changed since the worker started,
@@ -724,9 +713,7 @@ class MainWindow(QMainWindow):
         if hasattr(conn, "alive_check"):
             logger.debug("Starting HSFZ alive-check timer (every 2s)")
             self._alive_timer = QTimer(self)
-            self._alive_timer.timeout.connect(
-                lambda c=conn: self._do_alive_check(c)
-            )
+            self._alive_timer.timeout.connect(lambda c=conn: self._do_alive_check(c))
             self._alive_timer.start(2000)
 
         # Application-layer: UDS TesterPresent every 2.5 seconds
@@ -735,9 +722,7 @@ class MainWindow(QMainWindow):
 
             def _do_tester_present(c=conn):
                 if _first_tp[0]:
-                    logger.debug(
-                        "Starting TesterPresent timer (every 2.5s)"
-                    )
+                    logger.debug("Starting TesterPresent timer (every 2.5s)")
                     _first_tp[0] = False
                 ok = c.tester_present()
                 if not ok and not c.alive_ok:
@@ -881,9 +866,7 @@ class MainWindow(QMainWindow):
     # ---- Public API ----
 
     def set_connected(self, vin: str, model: str) -> None:
-        self.status_dot.setText(
-            ORANGE_DOT if self._demo_mode else GREEN_DOT
-        )
+        self.status_dot.setText(ORANGE_DOT if self._demo_mode else GREEN_DOT)
         self.car_label.setText(model)
         self.vin_label.setText(f"VIN: {vin}")
         for btn in self.nav_group.buttons():
@@ -895,4 +878,5 @@ class MainWindow(QMainWindow):
 
     def _apply_theme(self) -> None:
         from app.theme import apply_theme
+
         apply_theme(QApplication.instance())

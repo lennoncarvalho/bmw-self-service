@@ -40,8 +40,9 @@ def _parse_svt_response(resp: bytes) -> list[dict]:
         text = payload.decode("ascii", errors="ignore")
         # Try to find ECU short-name patterns (2-8 uppercase alphanumeric)
         import re
+
         seen: set[str] = set()
-        for match in re.finditer(r'\b([A-Z]{2,8}(?:_[A-Z0-9]{1,4})?)\b', text):
+        for match in re.finditer(r"\b([A-Z]{2,8}(?:_[A-Z0-9]{1,4})?)\b", text):
             name = match.group(1)
             if name not in seen and len(name) >= 2:
                 seen.add(name)
@@ -103,7 +104,9 @@ class VehiclePage(QWidget):
 
         # ECU list
         ecu_title = QLabel("Connected ECUs")
-        ecu_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #e0e0e0; margin-top: 8px;")
+        ecu_title.setStyleSheet(
+            "font-size: 16px; font-weight: bold; color: #e0e0e0; margin-top: 8px;"
+        )
         layout.addWidget(ecu_title)
 
         self.ecu_count_label = QLabel("")
@@ -135,15 +138,9 @@ class VehiclePage(QWidget):
             ecus = connection.data.get("svt_ecus", [])
             self._ecus = ecus
 
-            self.model_label.setText(
-                vehicle.get("model", "Unknown model")
-            )
-            self.vin_label.setText(
-                f"VIN: {vehicle.get('vin', 'Unknown')}"
-            )
-            self.mileage_label.setText(
-                f"Mileage: {vehicle.get('mileage_km', 0):,} km"
-            )
+            self.model_label.setText(vehicle.get("model", "Unknown model"))
+            self.vin_label.setText(f"VIN: {vehicle.get('vin', 'Unknown')}")
+            self.mileage_label.setText(f"Mileage: {vehicle.get('mileage_km', 0):,} km")
             self.prod_date_label.setText(
                 f"Production Date: {vehicle.get('production_date', 'Unknown')}"
             )
@@ -211,27 +208,19 @@ class VehiclePage(QWidget):
 
         # I-Level
         ilevel = results.get("i-level")
-        self.ilevel_label.setText(
-            f"I-Level: {ilevel}" if ilevel else "I-Level: unavailable"
-        )
+        self.ilevel_label.setText(f"I-Level: {ilevel}" if ilevel else "I-Level: unavailable")
 
         # Mileage
         mileage = results.get("mileage")
-        self.mileage_label.setText(
-            f"Mileage: {mileage}" if mileage else "Mileage: unavailable"
-        )
+        self.mileage_label.setText(f"Mileage: {mileage}" if mileage else "Mileage: unavailable")
 
         # Battery voltage
         battery = results.get("battery_voltage")
-        self.battery_label.setText(
-            f"Battery: {battery}" if battery else "Battery: unavailable"
-        )
+        self.battery_label.setText(f"Battery: {battery}" if battery else "Battery: unavailable")
 
         # Production date
         prod_date = results.get("prod_date")
-        self.prod_date_label.setText(
-            f"Production Date: {prod_date}" if prod_date else ""
-        )
+        self.prod_date_label.setText(f"Production Date: {prod_date}" if prod_date else "")
 
         # SVT ECU list
         ecus = results.get("ecu_list")

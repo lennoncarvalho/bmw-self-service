@@ -112,8 +112,16 @@ def list_interfaces() -> list[str]:
         if platform.system() == "Darwin":
             # macOS: skip virtual/tunnel/bridge interfaces
             virtual_prefixes = (
-                "bridge", "gif", "stf", "utun", "ap",
-                "awdl", "llw", "pdp_ip", "anpi", "vmnet",
+                "bridge",
+                "gif",
+                "stf",
+                "utun",
+                "ap",
+                "awdl",
+                "llw",
+                "pdp_ip",
+                "anpi",
+                "vmnet",
                 "fw",
             )
             if any(iface.startswith(p) for p in virtual_prefixes):
@@ -139,6 +147,7 @@ def list_interfaces() -> list[str]:
 # dataclass imported lazily to avoid top-level dep for pure CLI use
 def _import_dataclass():
     from dataclasses import dataclass as _dc
+
     return _dc
 
 
@@ -219,8 +228,16 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
 
         if platform.system() == "Darwin":
             virtual_prefixes = (
-                "bridge", "gif", "stf", "utun", "ap",
-                "awdl", "llw", "pdp_ip", "anpi", "vmnet",
+                "bridge",
+                "gif",
+                "stf",
+                "utun",
+                "ap",
+                "awdl",
+                "llw",
+                "pdp_ip",
+                "anpi",
+                "vmnet",
                 "fw",
             )
             if any(iface.startswith(p) for p in virtual_prefixes):
@@ -246,13 +263,15 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
         # Build human-readable description
         description = _describe_interface(iface)
 
-        results.append(_InterfaceInfo(
-            name=iface,
-            ip=ip,
-            mac=link_addr.lower(),
-            connected=connected,
-            description=description,
-        ))
+        results.append(
+            _InterfaceInfo(
+                name=iface,
+                ip=ip,
+                mac=link_addr.lower(),
+                connected=connected,
+                description=description,
+            )
+        )
 
     results.sort(key=lambda i: i.sort_key())
     return results
@@ -320,9 +339,7 @@ def _bind_to_interface(sock: socket.socket, interface: str) -> None:
 # ── Vehicle Discovery (T-4) ──────────────────────────────────────────────────
 
 
-def discover_zgw(
-    interface: str, timeout: float = 5.0
-) -> dict[str, str] | None:
+def discover_zgw(interface: str, timeout: float = 5.0) -> dict[str, str] | None:
     """Discover a BMW ZGW on the ENET network via UDP broadcast.
 
     Sends a vehicle_ident_data request to 169.254.255.255:6811.
@@ -346,14 +363,15 @@ def discover_zgw(
 
     logger.debug(
         "Discovery: broadcasting on %s -> %s:%d (timeout %.1fs)",
-        interface, HSFZ_DISCOVERY_BROADCAST, HSFZ_DISCOVERY_PORT, timeout,
+        interface,
+        HSFZ_DISCOVERY_BROADCAST,
+        HSFZ_DISCOVERY_PORT,
+        timeout,
     )
 
     try:
         request = struct.pack(">IH", 0, TYPE_VEHICLE_IDENT)
-        disc_sock.sendto(
-            request, (HSFZ_DISCOVERY_BROADCAST, HSFZ_DISCOVERY_PORT)
-        )
+        disc_sock.sendto(request, (HSFZ_DISCOVERY_BROADCAST, HSFZ_DISCOVERY_PORT))
 
         try:
             data, addr = disc_sock.recvfrom(1024)
@@ -362,9 +380,7 @@ def discover_zgw(
             return None
 
         if len(data) < 6:
-            logger.warning(
-                "Discovery response too short: %d bytes", len(data)
-            )
+            logger.warning("Discovery response too short: %d bytes", len(data))
             return None
 
         # Response body starts after 6-byte header
@@ -384,7 +400,9 @@ def discover_zgw(
 
         logger.info(
             "Vehicle found at %s: VIN=%s, MAC=%s",
-            addr[0], vin or "unknown", mac or "unknown",
+            addr[0],
+            vin or "unknown",
+            mac or "unknown",
         )
 
         result: dict[str, str] = {"ip": addr[0]}
@@ -434,17 +452,20 @@ def stop_dhcp_server() -> bool:
         if system == "Darwin":
             subprocess.run(
                 ["sudo", "killall", "bootpd"],
-                capture_output=True, timeout=5,
+                capture_output=True,
+                timeout=5,
             )
         elif system == "Windows":
             subprocess.run(
                 ["taskkill", "/F", "/IM", "simple-dhcp-server.exe"],
-                capture_output=True, timeout=5,
+                capture_output=True,
+                timeout=5,
             )
         elif system == "Linux":
             subprocess.run(
                 ["sudo", "pkill", "dnsmasq"],
-                capture_output=True, timeout=5,
+                capture_output=True,
+                timeout=5,
             )
         return True
     except subprocess.TimeoutExpired:
@@ -460,7 +481,10 @@ def _start_dhcp_macos(interface: str) -> bool:
     try:
         # Verify bootpd exists
         result = subprocess.run(
-            ["which", "bootpd"], capture_output=True, text=True, timeout=2,
+            ["which", "bootpd"],
+            capture_output=True,
+            text=True,
+            timeout=2,
         )
         if result.returncode != 0:
             logger.warning("bootpd not found on macOS")
@@ -468,7 +492,8 @@ def _start_dhcp_macos(interface: str) -> bool:
 
         subprocess.run(
             ["sudo", "bootpd", "-i", interface],
-            capture_output=True, timeout=5,
+            capture_output=True,
+            timeout=5,
         )
         logger.info("DHCP server (bootpd) started on %s", interface)
         return True
@@ -496,14 +521,11 @@ def _start_dhcp_windows(interface: str) -> bool:
             importlib.import_module("simple_dhcp_server")
         except ImportError:
             logger.warning(
-                "simple-dhcp-server not installed. "
-                "Install with: pip install simple-dhcp-server"
+                "simple-dhcp-server not installed. Install with: pip install simple-dhcp-server"
             )
             return False
 
-        temp_dir = os.path.join(
-            os.path.expanduser("~"), "BMW-Tool", "dhcp"
-        )
+        temp_dir = os.path.join(os.path.expanduser("~"), "BMW-Tool", "dhcp")
         os.makedirs(temp_dir, exist_ok=True)
 
         config_path = os.path.join(temp_dir, "dhcpd.conf")
@@ -527,9 +549,7 @@ def _start_dhcp_windows(interface: str) -> bool:
         return False
 
     except Exception as e:
-        logger.warning(
-            "Failed to configure DHCP server on Windows: %s", e
-        )
+        logger.warning("Failed to configure DHCP server on Windows: %s", e)
         return False
 
 
@@ -538,12 +558,14 @@ def _start_dhcp_linux(interface: str) -> bool:
     try:
         subprocess.run(
             [
-                "sudo", "dnsmasq",
+                "sudo",
+                "dnsmasq",
                 "--interface=" + interface,
                 "--dhcp-range=169.254.1.10,169.254.1.250,255.255.0.0,24h",
                 "--port=0",  # Disable DNS, DHCP only
             ],
-            capture_output=True, timeout=5,
+            capture_output=True,
+            timeout=5,
         )
         logger.info("DHCP server (dnsmasq) started on %s", interface)
         return True
@@ -613,13 +635,16 @@ class HSFZConnection:
             self._alive_failures = 0
             logger.info(
                 "HSFZ connected to %s:%d (TCP_NODELAY, timeout=30s)",
-                self.host, self.port,
+                self.host,
+                self.port,
             )
             return True
         except (TimeoutError, ConnectionRefusedError, OSError) as e:
             logger.warning(
                 "HSFZ connect to %s:%d failed: %s",
-                self.host, self.port, e,
+                self.host,
+                self.port,
+                e,
             )
             self.sock = None
             return False
@@ -641,15 +666,11 @@ class HSFZConnection:
                     sock.close()
                 self.sock = None
                 self._alive_failures = 0
-                logger.info(
-                    "HSFZ disconnected from %s:%d", self.host, self.port
-                )
+                logger.info("HSFZ disconnected from %s:%d", self.host, self.port)
 
     # ── UDS messaging (the core API) ─────────────────────────────────────
 
-    def send_uds(
-        self, ecu_addr: int, payload: bytes, timeout: float = 30.0
-    ) -> bytes:
+    def send_uds(self, ecu_addr: int, payload: bytes, timeout: float = 30.0) -> bytes:
         """Send a UDS message and return the response payload.
 
         Thread-safe: serialized through ``_lock`` so only one request
@@ -684,7 +705,9 @@ class HSFZConnection:
 
         logger.debug(
             "UDS tx ECU=0x%02X len=%d: %s",
-            ecu_addr, len(frame), frame.hex(" "),
+            ecu_addr,
+            len(frame),
+            frame.hex(" "),
         )
 
         deadline = _time.monotonic() + timeout
@@ -696,9 +719,7 @@ class HSFZConnection:
 
             remaining = deadline - _time.monotonic()
             if remaining <= 0:
-                raise TimeoutError(
-                    f"ECU 0x{ecu_addr:02X} timeout before send"
-                )
+                raise TimeoutError(f"ECU 0x{ecu_addr:02X} timeout before send")
             self.sock.settimeout(max(remaining, 1.0))
             try:
                 self.sock.sendall(frame)
@@ -712,20 +733,19 @@ class HSFZConnection:
                 remaining = deadline - _time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError(
-                        f"ECU 0x{ecu_addr:02X} did not respond "
-                        f"within {timeout:.0f}s"
+                        f"ECU 0x{ecu_addr:02X} did not respond within {timeout:.0f}s"
                     )
-                msg_type, msg_src, _msg_dst, uds_payload = (
-                    self._recv_hsfz_message(max(remaining, 1.0))
+                msg_type, msg_src, _msg_dst, uds_payload = self._recv_hsfz_message(
+                    max(remaining, 1.0)
                 )
 
                 if msg_type == TYPE_DIAG_REQ_RES:
-                    elapsed_ms = (
-                        _time.monotonic() - (deadline - timeout)
-                    ) * 1000
+                    elapsed_ms = (_time.monotonic() - (deadline - timeout)) * 1000
                     logger.debug(
                         "UDS rx ECU=0x%02X len=%d (%.0fms): %s",
-                        msg_src, len(uds_payload), elapsed_ms,
+                        msg_src,
+                        len(uds_payload),
+                        elapsed_ms,
                         uds_payload.hex(" "),
                     )
                     return uds_payload
@@ -747,13 +767,10 @@ class HSFZConnection:
 
                 if msg_type in HSFZ_ERROR_TYPES:
                     raise ConnectionError(
-                        f"ZGW error: {HSFZ_ERROR_TYPES[msg_type]} "
-                        f"(type 0x{msg_type:04X})"
+                        f"ZGW error: {HSFZ_ERROR_TYPES[msg_type]} (type 0x{msg_type:04X})"
                     )
 
-                raise ConnectionError(
-                    f"Unexpected HSFZ response type: 0x{msg_type:04X}"
-                )
+                raise ConnectionError(f"Unexpected HSFZ response type: 0x{msg_type:04X}")
 
     # ── Keep-alive ──────────────────────────────────────────────────────
 
@@ -780,9 +797,7 @@ class HSFZConnection:
             return True  # skipped, not a failure
 
         try:
-            frame = struct.pack(
-                ">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR
-            )
+            frame = struct.pack(">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR)
             self.sock.settimeout(2.0)
             self.sock.sendall(frame)
 
@@ -790,9 +805,7 @@ class HSFZConnection:
             with contextlib.suppress(TimeoutError, socket.timeout, ConnectionError):
                 msg_type, msg_src, _dst, _payload = self._recv_hsfz_message(0.05)
                 if msg_type == TYPE_ACK_TRANSFER:
-                    logger.debug(
-                        "HSFZ alive ACK drained from 0x%02X", msg_src
-                    )
+                    logger.debug("HSFZ alive ACK drained from 0x%02X", msg_src)
             self._alive_failures = 0
             return True
         except (OSError, ConnectionError):
@@ -830,12 +843,16 @@ class HSFZConnection:
 
             # Drain any ACK + possible negative UDS response.
             with contextlib.suppress(
-                TimeoutError, socket.timeout, ConnectionError,
+                TimeoutError,
+                socket.timeout,
+                ConnectionError,
             ):
                 msg_type, _src, _dst, _payload = self._recv_hsfz_message(1.0)
                 if msg_type == TYPE_ACK_TRANSFER:
                     with contextlib.suppress(
-                        TimeoutError, socket.timeout, ConnectionError,
+                        TimeoutError,
+                        socket.timeout,
+                        ConnectionError,
                     ):
                         self._recv_hsfz_message(1.0)
             return True
@@ -851,9 +868,7 @@ class HSFZConnection:
 
     # ── Internal helpers ────────────────────────────────────────────────
 
-    def _recv_hsfz_message(
-        self, timeout: float
-    ) -> tuple[int, int, int, bytes]:
+    def _recv_hsfz_message(self, timeout: float) -> tuple[int, int, int, bytes]:
         """Read one complete HSFZ message: header + payload.
 
         Args:
@@ -871,25 +886,17 @@ class HSFZConnection:
             hdr = self._recv_exact(8)
         except (TimeoutError, ConnectionError) as e:
             if isinstance(e, socket.timeout):
-                raise TimeoutError(
-                    f"HSFZ response header timeout after {timeout:.0f}s"
-                ) from e
+                raise TimeoutError(f"HSFZ response header timeout after {timeout:.0f}s") from e
             raise
 
-        hsfz_len, hsfz_type, hsfz_src, hsfz_dst = struct.unpack(
-            ">IHBB", hdr
-        )
+        hsfz_len, hsfz_type, hsfz_src, hsfz_dst = struct.unpack(">IHBB", hdr)
         payload_len = hsfz_len - 2  # subtract src/dst bytes
 
         try:
-            payload = (
-                self._recv_exact(payload_len) if payload_len > 0 else b""
-            )
+            payload = self._recv_exact(payload_len) if payload_len > 0 else b""
         except (TimeoutError, ConnectionError) as e:
             if isinstance(e, socket.timeout):
-                raise TimeoutError(
-                    f"HSFZ payload timeout ({payload_len} bytes)"
-                ) from e
+                raise TimeoutError(f"HSFZ payload timeout ({payload_len} bytes)") from e
             raise
 
         return (hsfz_type, hsfz_src, hsfz_dst, payload)
@@ -967,14 +974,14 @@ class DoIPConnection:
             self.sock.settimeout(5.0)
             self.sock.connect((self.host, self.port))
             self.sock.settimeout(30.0)
-            logger.info(
-                "DoIP connected to %s:%d", self.host, self.port
-            )
+            logger.info("DoIP connected to %s:%d", self.host, self.port)
             return True
         except (TimeoutError, ConnectionRefusedError, OSError) as e:
             logger.warning(
                 "DoIP connect to %s:%d failed: %s",
-                self.host, self.port, e,
+                self.host,
+                self.port,
+                e,
             )
             self.sock = None
             return False
@@ -1014,9 +1021,7 @@ class DoIPConnection:
 
         resp_type, resp_payload = resp
         if resp_type != DOIP_ROUTING_ACTIVATION_RESPONSE:
-            logger.warning(
-                "Expected routing activation response, got 0x%04X", resp_type
-            )
+            logger.warning("Expected routing activation response, got 0x%04X", resp_type)
             return False
 
         # Parse response: tester_addr(2) + entity_addr(2) + code(1)
@@ -1027,19 +1032,16 @@ class DoIPConnection:
             if self.activated:
                 logger.info(
                     "DoIP routing activated: source=0x%04X, entity=0x%04X",
-                    source_addr, entity_addr,
+                    source_addr,
+                    entity_addr,
                 )
             else:
-                logger.warning(
-                    "DoIP routing activation denied: code=0x%02X", code
-                )
+                logger.warning("DoIP routing activation denied: code=0x%02X", code)
             return self.activated
 
         return False
 
-    def send_uds(
-        self, ecu_addr: int, payload: bytes, timeout: float = 30.0
-    ) -> bytes:
+    def send_uds(self, ecu_addr: int, payload: bytes, timeout: float = 30.0) -> bytes:
         """Send a UDS message over DoIP and return the response.
 
         Args:
@@ -1058,9 +1060,7 @@ class DoIPConnection:
             raise ConnectionError("Not connected")
 
         # DoIP diagnostic message: source_addr(2) + target_addr(2) + UDS payload
-        diag_payload = struct.pack(
-            ">HH", self.source_addr, ecu_addr
-        ) + payload
+        diag_payload = struct.pack(">HH", self.source_addr, ecu_addr) + payload
 
         doip_header = _build_doip_header(DOIP_DIAG_MESSAGE, diag_payload)
 
@@ -1078,9 +1078,7 @@ class DoIPConnection:
         # Read DoIP diagnostic response (0x8001) containing the UDS response
         resp = self._recv_doip_message()
         if resp is None:
-            raise TimeoutError(
-                f"ECU 0x{ecu_addr:04X} did not respond within {timeout:.0f}s"
-            )
+            raise TimeoutError(f"ECU 0x{ecu_addr:04X} did not respond within {timeout:.0f}s")
 
         resp_type, resp_payload = resp
         if resp_type == DOIP_DIAG_MESSAGE:
@@ -1090,9 +1088,7 @@ class DoIPConnection:
                 return uds_payload
             return resp_payload
 
-        raise ConnectionError(
-            f"Unexpected DoIP response type: 0x{resp_type:04X}"
-        )
+        raise ConnectionError(f"Unexpected DoIP response type: 0x{resp_type:04X}")
 
     def alive_check(self) -> None:
         """Send DoIP alive check request."""
@@ -1161,9 +1157,7 @@ class DoIPConnection:
         try:
             # DoIP header: version(1) + inv_version(1) + type(2) + length(4) = 8 bytes
             hdr = self._recv_exact(8)
-            version, inv_version, ptype, length = struct.unpack(
-                ">BBHI", hdr
-            )
+            version, inv_version, ptype, length = struct.unpack(">BBHI", hdr)
             payload = self._recv_exact(length) if length > 0 else b""
             return (ptype, payload)
         except (TimeoutError, ConnectionError, struct.error) as e:
@@ -1203,21 +1197,22 @@ def _build_doip_header(payload_type: int, payload: bytes) -> bytes:
 
     Total header: 8 bytes.
     """
-    return struct.pack(
-        ">BBHI",
-        DOIP_PROTOCOL_VERSION,
-        DOIP_PROTOCOL_VERSION ^ 0xFF,
-        payload_type,
-        len(payload),
-    ) + payload
+    return (
+        struct.pack(
+            ">BBHI",
+            DOIP_PROTOCOL_VERSION,
+            DOIP_PROTOCOL_VERSION ^ 0xFF,
+            payload_type,
+            len(payload),
+        )
+        + payload
+    )
 
 
 # ── Discovery for DoIP (T-6) ─────────────────────────────────────────────────
 
 
-def discover_doip_vehicle(
-    interface: str, timeout: float = 5.0
-) -> dict[str, str] | None:
+def discover_doip_vehicle(interface: str, timeout: float = 5.0) -> dict[str, str] | None:
     """Discover a DoIP-capable vehicle via UDP broadcast on port 13400.
 
     Used for G/U/I-series vehicles. Sends a Vehicle Identification Request
@@ -1237,9 +1232,7 @@ def discover_doip_vehicle(
     try:
         # DoIP Vehicle Identification Request
         request = _build_doip_header(DOIP_VEHICLE_ID_REQUEST, b"")
-        disc_sock.sendto(
-            request, (HSFZ_DISCOVERY_BROADCAST, DOIP_DISCOVERY_PORT)
-        )
+        disc_sock.sendto(request, (HSFZ_DISCOVERY_BROADCAST, DOIP_DISCOVERY_PORT))
 
         try:
             data, addr = disc_sock.recvfrom(4096)
@@ -1251,12 +1244,10 @@ def discover_doip_vehicle(
 
         _, _, ptype, plen = struct.unpack(">BBHI", data[:8])
         if ptype != DOIP_VEHICLE_ID_RESPONSE:
-            logger.warning(
-                "Expected DoIP vehicle ID response, got 0x%04X", ptype
-            )
+            logger.warning("Expected DoIP vehicle ID response, got 0x%04X", ptype)
             return None
 
-        payload = data[8:8 + plen]
+        payload = data[8 : 8 + plen]
         result = {"ip": addr[0]}
 
         # Parse VIN (17 chars at payload start)
@@ -1267,7 +1258,8 @@ def discover_doip_vehicle(
 
         logger.info(
             "DoIP vehicle found at %s: VIN=%s",
-            addr[0], result.get("vin", "unknown"),
+            addr[0],
+            result.get("vin", "unknown"),
         )
         return result
 

@@ -57,7 +57,7 @@ class WelcomePage(QWidget):
         layout.setSpacing(16)
 
         # BMW logo
-        logo = QLabel("\U0001F697")
+        logo = QLabel("\U0001f697")
         logo.setAlignment(Qt.AlignCenter)
         logo.setStyleSheet("font-size: 80px; color: #1C69D4; background: transparent;")
         layout.addWidget(logo)
@@ -135,19 +135,13 @@ class WelcomePage(QWidget):
             disconnected = [a for a in adapters if not a.connected]
 
             for adapter in connected:
-                self.interface_combo.addItem(
-                    adapter.display_text(), adapter.name
-                )
+                self.interface_combo.addItem(adapter.display_text(), adapter.name)
 
             if connected and disconnected:
-                self.interface_combo.insertSeparator(
-                    self.interface_combo.count()
-                )
+                self.interface_combo.insertSeparator(self.interface_combo.count())
 
             for adapter in disconnected:
-                self.interface_combo.addItem(
-                    adapter.display_text(), adapter.name
-                )
+                self.interface_combo.addItem(adapter.display_text(), adapter.name)
         except Exception:
             # Fallback to bare names if detailed detection fails
             try:

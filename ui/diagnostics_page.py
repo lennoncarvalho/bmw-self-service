@@ -87,16 +87,18 @@ class DtcReadWorker(CarWorker):
                 # Parse: 0x59 + status_mask + [3-byte DTC + 1-byte status]*
                 offset = 2
                 while offset + 4 <= len(resp):
-                    code = resp[offset:offset + 3].hex().upper()
+                    code = resp[offset : offset + 3].hex().upper()
                     status = resp[offset + 3]
                     description = dtc_db.describe(code) or "(no description)"
-                    dtcs.append({
-                        "code": code,
-                        "status_byte": status,
-                        "description": description,
-                        "ecu_name": name,
-                        "ecu_addr": addr,
-                    })
+                    dtcs.append(
+                        {
+                            "code": code,
+                            "status_byte": status,
+                            "description": description,
+                            "ecu_name": name,
+                            "ecu_addr": addr,
+                        }
+                    )
                     offset += 4
                 i += 1
                 retries.pop(name, None)
@@ -107,7 +109,10 @@ class DtcReadWorker(CarWorker):
                     for snap in snapshots:
                         snap_code = snap.get("code", "")
                         for dtc_entry in dtcs:
-                            if dtc_entry.get("code") == snap_code and dtc_entry.get("ecu_addr") == addr:
+                            if (
+                                dtc_entry.get("code") == snap_code
+                                and dtc_entry.get("ecu_addr") == addr
+                            ):
                                 dtc_entry.update(snap)
                                 break
                 except Exception:
@@ -172,7 +177,7 @@ class DtcReadWorker(CarWorker):
             offset = 2
             records_to_fetch: list[tuple[str, int]] = []
             while offset + 5 <= len(resp):
-                code = resp[offset:offset + 3].hex().upper()
+                code = resp[offset : offset + 3].hex().upper()
                 offset += 3  # status byte skipped
                 record_count = resp[offset + 1]
                 offset += 2
@@ -184,7 +189,7 @@ class DtcReadWorker(CarWorker):
                 try:
                     dtc_bytes = bytes.fromhex(code)
                     if len(dtc_bytes) < 3:
-                        dtc_bytes = dtc_bytes.rjust(3, b'\x00')
+                        dtc_bytes = dtc_bytes.rjust(3, b"\x00")
                     snap_resp = self.connection.send_uds(
                         addr,
                         bytes([0x19, 0x04]) + dtc_bytes[:3] + bytes([rec_num]),
@@ -209,17 +214,18 @@ class DtcReadWorker(CarWorker):
                         if did == 0x0202:  # Odometer (km × 10, 4 bytes)
                             if snap_offset + 4 <= len(snap_resp):
                                 km_raw = int.from_bytes(
-                                    snap_resp[snap_offset:snap_offset + 4], "big"
+                                    snap_resp[snap_offset : snap_offset + 4], "big"
                                 )
                                 snap_entry["first_mileage_km"] = km_raw // 10
                                 snap_offset += 4
                         elif did == 0x0101:  # Timestamp (seconds since 2000-01-01)
                             if snap_offset + 4 <= len(snap_resp):
                                 ts_raw = int.from_bytes(
-                                    snap_resp[snap_offset:snap_offset + 4], "big"
+                                    snap_resp[snap_offset : snap_offset + 4], "big"
                                 )
                                 if ts_raw > 0:
                                     from datetime import datetime, timedelta
+
                                     ts = datetime(2000, 1, 1) + timedelta(seconds=ts_raw)
                                     snap_entry["first_seen"] = ts.strftime("%Y-%m-%d %H:%M")
                                 snap_offset += 4
@@ -274,14 +280,10 @@ class DiagnosticsPage(QWidget):
         # T-9: MIL (Check Engine) status indicator
         mil_row = QHBoxLayout()
         self._mil_indicator = QLabel("")
-        self._mil_indicator.setStyleSheet(
-            "font-size: 32px; background: transparent;"
-        )
+        self._mil_indicator.setStyleSheet("font-size: 32px; background: transparent;")
         mil_row.addWidget(self._mil_indicator)
         self._mil_label = QLabel("MIL status unknown — read DTCs to check")
-        self._mil_label.setStyleSheet(
-            "font-size: 13px; color: #a0a0a0; background: transparent;"
-        )
+        self._mil_label.setStyleSheet("font-size: 13px; color: #a0a0a0; background: transparent;")
         mil_row.addWidget(self._mil_label)
         mil_row.addStretch()
         layout.addLayout(mil_row)
@@ -431,12 +433,8 @@ class DiagnosticsPage(QWidget):
                 self.empty_state.setVisible(False)
                 aborted_lbl = QLabel("DTC scan aborted.\nSome ECUs were not checked.")
                 aborted_lbl.setAlignment(Qt.AlignCenter)
-                aborted_lbl.setStyleSheet(
-                    "font-size: 14px; color: #F39C12; padding: 24px;"
-                )
-                self.dtc_list_layout.insertWidget(
-                    self.dtc_list_layout.count() - 1, aborted_lbl
-                )
+                aborted_lbl.setStyleSheet("font-size: 14px; color: #F39C12; padding: 24px;")
+                self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, aborted_lbl)
                 self.list_container.setVisible(True)
             else:
                 self.empty_state.setVisible(True)
@@ -449,8 +447,7 @@ class DiagnosticsPage(QWidget):
 
         if not complete:
             warn = QLabel(
-                "\u26A0 DTC scan aborted — showing partial results. "
-                "Some ECUs were not checked."
+                "\u26a0 DTC scan aborted — showing partial results. Some ECUs were not checked."
             )
             warn.setStyleSheet(
                 "font-size: 12px; color: #F39C12; background: "
@@ -458,9 +455,7 @@ class DiagnosticsPage(QWidget):
                 "border-radius: 6px; padding: 6px 12px;"
             )
             warn.setWordWrap(True)
-            self.dtc_list_layout.insertWidget(
-                self.dtc_list_layout.count() - 1, warn
-            )
+            self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, warn)
 
         for dtc in dtcs:
             code = dtc.get("code", "???")
@@ -513,35 +508,27 @@ class DiagnosticsPage(QWidget):
             # G-10: Full description
             full_desc = QLabel(dtc_db.describe(code) or desc)
             full_desc.setWordWrap(True)
-            full_desc.setStyleSheet(
-                "font-size: 13px; color: #e0e0e0; background: transparent;"
-            )
+            full_desc.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
             detail_layout.addWidget(full_desc)
 
             # G-10: Status byte decoded
             status_text = _decode_dtc_status(status)
             status_lbl = QLabel(f"Status: 0x{status:02X} — {status_text}")
-            status_lbl.setStyleSheet(
-                "font-size: 12px; color: #F39C12; background: transparent;"
-            )
+            status_lbl.setStyleSheet("font-size: 12px; color: #F39C12; background: transparent;")
             detail_layout.addWidget(status_lbl)
 
             # G-10: Fault type from database
             ft = dtc_db.fault_type(f"{status:02X}")
             if ft:
                 ft_lbl = QLabel(f"Fault type: {ft}")
-                ft_lbl.setStyleSheet(
-                    "font-size: 12px; color: #a0a0a0; background: transparent;"
-                )
+                ft_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
                 detail_layout.addWidget(ft_lbl)
 
             # G-10: ECU full name if available
             ecu_full = self._ecu_lookup.get(ecu, ecu)
             if ecu_full and ecu_full != ecu:
                 ecu_lbl = QLabel(f"ECU: {ecu_full}")
-                ecu_lbl.setStyleSheet(
-                    "font-size: 12px; color: #a0a0a0; background: transparent;"
-                )
+                ecu_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
                 detail_layout.addWidget(ecu_lbl)
 
             # Buttons row
@@ -554,9 +541,7 @@ class DiagnosticsPage(QWidget):
                 "border-radius: 6px; padding: 4px 12px; font-size: 11px; }"
                 "QPushButton:hover { background: rgba(28,105,212,0.15); }"
             )
-            search_btn.clicked.connect(
-                lambda checked, c=code: self._open_search(checked, c)
-            )
+            search_btn.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
             btn_row.addWidget(search_btn)
 
             # G-10: Per-DTC clear button
@@ -569,9 +554,7 @@ class DiagnosticsPage(QWidget):
             )
             clear_btn_addr = dtc.get("ecu_addr", 0x10)  # capture before lambda
             clear_one_btn.clicked.connect(
-                lambda checked, c=code, a=clear_btn_addr: (
-                    self._on_clear_single(c, a)
-                )
+                lambda checked, c=code, a=clear_btn_addr: self._on_clear_single(c, a)
             )
             btn_row.addWidget(clear_one_btn)
             btn_row.addStretch()
@@ -630,9 +613,7 @@ class DiagnosticsPage(QWidget):
                     name = ecu.get("name", "ECU")
                     self.progress.emit(f"Clearing {name}...")
                     try:
-                        resp = self.connection.send_uds(
-                            addr, bytes([0x14, 0xFF, 0xFF, 0xFF])
-                        )
+                        resp = self.connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
                         # Check for negative response (0x7F)
                         if resp and resp[0] == 0x7F:
                             failed.append(name)
@@ -657,14 +638,14 @@ class DiagnosticsPage(QWidget):
                 QMessageBox.information(
                     self,
                     "Clear DTCs",
-                    f"Cleared: {len(cleared)} ECUs\n"
-                    f"Failed: {len(failed)} ({', '.join(failed)})",
+                    f"Cleared: {len(cleared)} ECUs\nFailed: {len(failed)} ({', '.join(failed)})",
                 )
         self._read_dtcs()
 
     @staticmethod
     def _open_search(checked: bool, code: str) -> None:
         import webbrowser
+
         webbrowser.open(f"https://www.google.com/search?q={code}+BMW")
 
     # ── T-9: MIL status (updated from DtcReadWorker.mil_status signal) ─
@@ -673,12 +654,9 @@ class DiagnosticsPage(QWidget):
         """Update the MIL indicator on the UI thread."""
         if mil_on:
             self._mil_indicator.setText(chr(0x1F6A8))  # 🚨
-            self._mil_label.setText(
-                f"Check Engine Light ON — {dtc_count} code(s) stored"
-            )
+            self._mil_label.setText(f"Check Engine Light ON — {dtc_count} code(s) stored")
             self._mil_label.setStyleSheet(
-                "font-size: 13px; color: #E30B1F; font-weight: bold; "
-                "background: transparent;"
+                "font-size: 13px; color: #E30B1F; font-weight: bold; background: transparent;"
             )
         else:
             self._mil_indicator.setText(chr(0x2705))  # ✅
@@ -694,8 +672,7 @@ class DiagnosticsPage(QWidget):
         duplicate codes across different ECUs (e.g. B7F805 on HU_NBT vs FEM).
         """
         dtc = next(
-            (d for d in self._dtcs
-             if d.get("code") == code and d.get("ecu_addr") == ecu_addr),
+            (d for d in self._dtcs if d.get("code") == code and d.get("ecu_addr") == ecu_addr),
             None,
         )
         if dtc is None or self._connection is None:
@@ -722,7 +699,7 @@ class DiagnosticsPage(QWidget):
                     code_clean = "0" + code_clean  # pad odd-length (e.g. P0300)
                 dtc_bytes = bytes.fromhex(code_clean)
                 if len(dtc_bytes) < 3:
-                    dtc_bytes = dtc_bytes.rjust(3, b'\x00')
+                    dtc_bytes = dtc_bytes.rjust(3, b"\x00")
                 self._connection.send_uds(addr, bytes([0x14]) + dtc_bytes[:3])
             except Exception as e:
                 QMessageBox.warning(self, "Clear Failed", str(e))
@@ -730,6 +707,7 @@ class DiagnosticsPage(QWidget):
 
 
 # ---- Helpers ----
+
 
 def _decode_dtc_status(status: int) -> str:
     """Decode a UDS DTC status byte into human-readable text."""
