@@ -9,6 +9,8 @@ on:
       - "assets/**"
       - "main.py"
       - "requirements.txt"
+      - "pyproject.toml"
+      - "scripts/**"
       - ".github/workflows/python-ci.yml"
 
   pull_request:
@@ -18,6 +20,8 @@ on:
       - "assets/**"
       - "main.py"
       - "requirements.txt"
+      - "pyproject.toml"
+      - "scripts/**"
       - ".github/workflows/python-ci.yml"
 
 jobs:
@@ -45,7 +49,7 @@ jobs:
         run: ruff format --check app/ ui/ main.py
 
       - name: Mypy type check
-        run: mypy app/ ui/ --ignore-missing-imports
+        run: mypy app/ ui/ main.py --ignore-missing-imports
 
       - name: Security audit
         run: pip-audit

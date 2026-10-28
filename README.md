@@ -70,8 +70,33 @@ bmw-self-service/
 ├── mock_data/
 │   └── f48_x1.json             # Canned car data for DEMO mode
 ├── dtc_descriptions.db         # Read-only DTC database (18.9 MB)
+├── scripts/
+│   └── preflight.sh            # Quality gate: ruff check + format + mypy
 └── docs/                       # Protocol specs and research (18 docs)
 ```
+
+## Before you push
+
+Every push must pass the same three checks CI runs, over the full app code
+(`app/`, `ui/`, `main.py`). One command does all of it:
+
+```bash
+scripts/preflight.sh          # ruff check + ruff format --check + mypy
+scripts/preflight.sh --fix    # apply ruff fixes/formatting, then gate
+```
+
+| Gate | Command | Catches |
+|------|---------|---------|
+| Lint | `ruff check app/ ui/ main.py` | unused imports, import order, bugbear, simplify |
+| Format | `ruff format --check app/ ui/ main.py` | formatting |
+| Types | `mypy app/ ui/ main.py --ignore-missing-imports` | static type errors |
+
+`ruff check` and `ruff format` are **separate** commands — passing one says
+nothing about the other. Do not push with any gate red, and never run the
+gate over a subset of the files.
+
+There is no `tests/` directory; the gate is the only automated verification
+at this stage.
 
 ## Building a standalone app (production)
 

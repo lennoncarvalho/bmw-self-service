@@ -48,7 +48,8 @@ This project follows spec-first development. Before writing any code:
    data flow is documented.
 2. **Plan the implementation** — list files to create/modify, order of work.
 3. **Implement one module at a time** — verify against the spec before moving on.
-4. **Commit** with descriptive messages referencing the spec doc.
+4. **Run the quality gate** — `scripts/preflight.sh` must be green (see below).
+5. **Commit** with descriptive messages referencing the spec doc.
 
 All 16 specification docs are authoritative. If a doc and your understanding
 conflict, the doc wins. If the doc is unclear, ask before coding.
@@ -57,9 +58,67 @@ conflict, the doc wins. If the doc is unclear, ask before coding.
 
 | Change size | Pipeline |
 |-------------|----------|
-| > 3 files OR new module OR architecture change | SPEC → PLAN → IMPLEMENT → VERIFY |
-| 1-3 files, clear intent, no new deps | Brief plan → implement → verify |
-| Typo/comment/formatting | Just fix it |
+| > 3 files OR new module OR architecture change | SPEC → PLAN → IMPLEMENT → VERIFY → GATE |
+| 1-3 files, clear intent, no new deps | Brief plan → implement → verify → GATE |
+| Typo/comment/formatting | Just fix it → GATE |
+
+---
+
+## Quality gate — mandatory before every push
+
+**No push leaves this machine without a green `ruff` and `mypy` run over the
+full app code.** CI runs exactly these three commands; skipping them locally
+does not make the failure go away, it only moves it to GitHub and burns a
+review cycle.
+
+```bash
+scripts/preflight.sh          # all three gates, mirrors CI exactly
+scripts/preflight.sh --fix    # apply ruff fixes + formatting first, then gate
+```
+
+The gates, always over `app/`, `ui/` and `main.py` — never a subset:
+
+| # | Command | Catches |
+|---|---------|---------|
+| 1 | `ruff check app/ ui/ main.py` | pycodestyle, pyflakes, isort, bugbear, comprehensions, pyupgrade, simplify |
+| 2 | `ruff format --check app/ ui/ main.py` | formatting |
+| 3 | `mypy app/ ui/ main.py --ignore-missing-imports` | static type errors |
+
+### `ruff check` is not `ruff format`
+
+Two separate commands; a green run of one proves nothing about the other.
+Lint passing does **not** mean formatting passes, and formatting passing does
+**not** mean types pass. All three must be green before a push. Reporting
+"lint is clean" without having run `ruff format --check` and `mypy` is wrong.
+
+### Tooling on this machine
+
+- `ruff` is not installed globally — use `.venv/bin/ruff` or `pipx run ruff`.
+- `mypy` lives in the project venv — `.venv/bin/python3 -m mypy app/ ui/ main.py`.
+- `python` is not a command; use `python3`.
+- `scripts/preflight.sh` resolves all of the above, so prefer it over
+  retyping commands by hand.
+
+### Fixing gate failures
+
+- **`ruff check`** — apply only fixes that cannot change behaviour. Never
+  silence a rule that is hiding a real defect.
+- **`ruff format`** — run `ruff format`; the resulting diff is cosmetic.
+- **`mypy`** — fix the type properly: add a `None` guard, an explicit local
+  annotation, or a `cast`. Reserve `# type: ignore[...]` for cases where the
+  third-party stub is genuinely wrong, and always name the error code.
+- **Re-run all three gates after every fix** — fixing one can break another.
+
+### Never
+
+- Push with any gate red, even when the failure looks pre-existing.
+- Run the gate over a subset (e.g. only the file you touched).
+- Assume a green gate means the change is correct — the gate proves it
+  compiles, imports and type-checks, not that the vehicle logic is right.
+- Recreate a `tests/` directory or point any tool at one; it does not exist
+  and is not wanted at this stage.
+
+---
 
 ## Skills to load
 
@@ -122,6 +181,11 @@ DTC normalisation, VIN parsing) are exercised indirectly through the
 app's real-car and DEMO-mode flows.  When the communication layer
 stabilises across more vehicle variants, a focused test suite for
 the pure-function modules may be reintroduced.
+
+The quality gate above (`ruff check`, `ruff format --check`, `mypy`) is
+therefore the **only** automated verification required before a push.
+There is no `tests/` directory — do not recreate one, and do not add
+`tests/` to any command or CI path.
 
 ## Build & packaging
 

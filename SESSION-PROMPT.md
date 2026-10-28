@@ -29,6 +29,11 @@ Build the **Infrastructure Layer** of a BMW diagnostic desktop app. All specs, p
 - Disconnect returns to welcome screen. Window opens maximized.
 - UDS logs to rotating file `~/BMW-Tool/logs/uds.log` (5MB × 3 files).
 - Type hints on all functions. Google-style docstrings. 100-char lines.
+- **No push without a green quality gate.** Before every push, run
+  `scripts/preflight.sh` — it runs `ruff check`, `ruff format --check` and
+  `mypy` over `app/`, `ui/` and `main.py`, exactly like CI. `ruff check` and
+  `ruff format` are different commands: passing one proves nothing about the
+  other. Never report "lint is clean" without having run all three.
 
 ## Key files to reference
 
