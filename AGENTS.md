@@ -238,6 +238,11 @@ pyinstaller --onedir --windowed --name "BMW Self Service" \
     --add-data "mock_data:mock_data" \
     --add-data "assets/theme.qss:assets" \
     --add-data "assets/gear.svg:assets" \
+    --add-data "licenses:licenses" \
+    --add-data "THIRD_PARTY_NOTICES.md:." \
+    --collect-submodules udsoncan.services \
+    --hidden-import scapy.contrib.automotive.bmw.hsfz \
+    --hidden-import doipclient.messages \
     --osx-bundle-identifier "com.bmwtool.app" \
     --hidden-import PySide6.QtSvg \
     main.py
@@ -249,6 +254,11 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
     --add-data "mock_data;mock_data" \
     --add-data "assets/theme.qss;assets" \
     --add-data "assets/gear.svg;assets" \
+    --add-data "licenses;licenses" \
+    --add-data "THIRD_PARTY_NOTICES.md;." \
+    --collect-submodules udsoncan.services \
+    --hidden-import scapy.contrib.automotive.bmw.hsfz \
+    --hidden-import doipclient.messages \
     --hidden-import PySide6.QtSvg \
     main.py
 ```

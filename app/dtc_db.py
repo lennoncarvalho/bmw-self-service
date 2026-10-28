@@ -8,6 +8,9 @@ Reference: docs/14-dtc-database.md
 
 import logging
 import sqlite3
+from pathlib import Path
+
+from app.resources import resource_path
 
 # Standard OBD-II P-code fallback (SAE J2012 / ISO 15031-6)
 _OBD2_CODES: dict[str, str] = {
@@ -127,7 +130,7 @@ class DtcDatabase:
         """
         self._missing = False
         try:
-            self.conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+            self.conn = sqlite3.connect(f"{Path(db_path).resolve().as_uri()}?mode=ro", uri=True)
         except sqlite3.OperationalError:
             self.conn = sqlite3.connect(":memory:")
             self._missing = True
@@ -237,4 +240,4 @@ class DtcDatabase:
 
 # Module-level singleton — loaded once at app startup.
 # Usage: from app.dtc_db import dtc_db
-dtc_db = DtcDatabase()
+dtc_db = DtcDatabase(str(resource_path("dtc_descriptions.db")))

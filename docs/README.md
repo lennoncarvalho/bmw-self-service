@@ -30,7 +30,8 @@ UDS/DoIP/HSFZ reuse recommendation, released-source review and migration gates.
 Start another session with [SESSION-PROMPT.md](../SESSION-PROMPT.md). Task A
 has an [implementation plan](../tasks/protocol-library-migration.md) and
 [ordered development tasks](../tasks/protocol-library-migration-tasks.md);
-implementation and acceptance remain pending. Task B is ready for source
+code implementation and local review are complete, with remaining physical/platform/release
+acceptance recorded in the [verification record](../tasks/protocol-library-migration-verification.md). Task B is ready for source
 investigation; protocol facts and explicitly pending product decisions gate affected code.
 The first usable slice is connection/vehicle info, all-ECU fault display with
 one Clear All action, local history read/add and all applicable easy presets.

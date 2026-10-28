@@ -22,7 +22,11 @@
           "path": "udsoncan/connections.py",
           "sha256": "0828361c00f06f87b6234e9d62bf5c720abef11edba8a1804c088973cc258133"
         }
-      ]
+      ],
+      "integration": {
+        "selected": true,
+        "scope": "standard Client, codecs, services and BaseConnection"
+      }
     },
     {
       "project": "doipclient",
@@ -44,7 +48,11 @@
           "path": "doipclient/connectors.py",
           "sha256": "8ffdd8e22305fa3d969e1284976acb0751c414d8294f23c8ab2a0b30141b27e1"
         }
-      ]
+      ],
+      "integration": {
+        "selected": true,
+        "scope": "Parser/messages/_pack_doip; high-level socket client not instantiated"
+      }
     },
     {
       "project": "scapy",
@@ -62,7 +70,11 @@
           "path": "scapy/contrib/automotive/bmw/hsfz.py",
           "sha256": "9edf8ec9b1d26a0ee8bc57b80e3ab353e5948c6b668a51b891724e8d0f05c2ab"
         }
-      ]
+      ],
+      "integration": {
+        "selected": true,
+        "scope": "HSFZ packet definitions/serialization; socket wrappers not used"
+      }
     },
     {
       "project": "gallia",

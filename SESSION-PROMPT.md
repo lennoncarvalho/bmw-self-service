@@ -8,7 +8,10 @@ Read `AGENTS.md`, `.agents/skills/spec-driven-development/SKILL.md`,
 | A — library migration | `tasks/protocol-library-migration.md` | `docs/25-library-migration-spec.md` | One protocol owner/API using udsoncan and selected Scapy HSFZ/doipclient adapters |
 | B — close feature gaps with REA | `tasks/rea-protocol-recovery.md` | `docs/26-feature-readiness-spec.md` | Real vehicle info, all-ECU fault display/single Clear All, history read/add and all applicable easy coding |
 
-Task A is intended for the next implementation session. Task B research can run
+Task A code is implemented and locally reviewed on `codex/task-a-library-integration`;
+see `tasks/protocol-library-migration-verification.md` for the API, exact library
+boundary and pending owner-car/platform/release acceptance. Task B should consume
+that API after its PR merges. Task B research can run
 independently; B integration uses A's merged API. Do not invent BMW constants
 inside A or declare the release functional merely because libraries work.
 History edit/delete/replace and advanced coding are later priority; CBS is

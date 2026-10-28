@@ -2,3 +2,7 @@ pyside6==6.12.0
 pyinstaller==6.22.3
 netifaces==0.11.0
 pycryptodome==4.2.0
+
+udsoncan==1.26.1
+scapy==2.8.0
+doipclient==1.2.2

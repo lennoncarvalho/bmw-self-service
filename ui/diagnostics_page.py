@@ -23,6 +23,9 @@ from PySide6.QtWidgets import (
 )
 
 from app.dtc_db import DtcDatabase
+from app.protocol.contracts import OperationContext
+from app.resources import resource_path
+from app.uds import UdsServices, decode_dtc_records
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -50,18 +53,29 @@ class DtcReadWorker(CarWorker):
         self._timeout_event = Event()
         self._timeout_action = "abort"
 
+    def requestInterruption(self) -> None:
+        """Wake an ECU timeout prompt wait as well as any bounded socket read."""
+        self._timeout_action = "abort"
+        self._timeout_event.set()
+        super().requestInterruption()
+
     def _handle_timeout(self, ecu_name: str) -> str:
         """Block until the UI thread decides: skip, retry, or abort."""
         self._timeout_event.clear()
         self._timeout_action = "abort"  # default if UI never responds
         self.ecu_timeout.emit(ecu_name)
         # Wait up to 60s for UI response — if UI never responds, abort
-        self._timeout_event.wait(60.0)
+        import time
+
+        deadline = time.monotonic() + 60.0
+        while not self._timeout_event.wait(0.05):
+            if self.isInterruptionRequested() or time.monotonic() >= deadline:
+                return "abort"
         return self._timeout_action
 
     def do_work(self) -> dict:
         """Own and close description lookups on this background thread."""
-        database = DtcDatabase()
+        database = DtcDatabase(str(resource_path("dtc_descriptions.db")))
         try:
             return self._read_dtcs(database)
         finally:
@@ -87,10 +101,18 @@ class DtcReadWorker(CarWorker):
             self.progress.emit(f"Reading {name}... ({i + 1}/{total})")
 
             try:
-                # Extended diagnostic session
-                self.connection.send_uds(addr, bytes([0x10, 0x03]))
-                # Read confirmed DTCs by status mask
-                resp = self.connection.send_uds(addr, bytes([0x19, 0x02, 0x08]))
+                if hasattr(self.connection, "run_operation"):
+
+                    def read_ecu(services: UdsServices, ctx: OperationContext) -> bytes:
+                        services.change_session(3, ctx)
+                        return services.read_dtcs(0x08, ctx)
+
+                    resp = self.connection.run_operation(
+                        addr, read_ecu, context=self.connection.context(30.0)
+                    )
+                else:
+                    self.connection.send_uds(addr, b"\x10\x03")
+                    resp = self.connection.send_uds(addr, b"\x19\x02\x08")
 
                 if len(resp) < 3 or resp[:2] != b"\x59\x02" or (len(resp) - 3) % 4:
                     raise ValueError("Invalid or negative ReadDTCInformation response")
@@ -98,10 +120,8 @@ class DtcReadWorker(CarWorker):
                 if not resp[2] & 0x08:
                     raise ValueError("ECU does not support the requested confirmed-DTC status")
                 # 59 02 availability-mask, then [DTC:3, status:1] records.
-                offset = 3
-                while offset + 4 <= len(resp):
-                    code = resp[offset : offset + 3].hex().upper()
-                    status = resp[offset + 3]
+                for code_id, status in decode_dtc_records(resp):
+                    code = f"{code_id:06X}"
                     description = (
                         database.describe_for_ecu(code, name) or "(description unavailable)"
                     )
@@ -114,7 +134,6 @@ class DtcReadWorker(CarWorker):
                             "ecu_addr": addr,
                         }
                     )
-                    offset += 4
                 i += 1
                 retries.pop(name, None)
 
@@ -303,7 +322,11 @@ class DiagnosticsPage(QWidget):
         The worker parameter is captured at connect time to avoid
         reading self._worker which may have changed (e.g. clear started).
         """
-        if worker is None:
+        if (
+            worker is None
+            or worker.connection is not self._connection
+            or worker.isInterruptionRequested()
+        ):
             return
         msg = QMessageBox(self)
         msg.setWindowTitle("ECU Timeout")
@@ -326,6 +349,9 @@ class DiagnosticsPage(QWidget):
 
     def _on_dtcs_loaded(self, result: object) -> None:
         """Display the DTC list after reading."""
+        sender = self.sender()
+        if isinstance(sender, CarWorker) and sender.connection is not self._connection:
+            return
         # Handle both legacy list format and new dict format
         if isinstance(result, dict):
             dtcs = result.get("dtcs", [])
@@ -461,20 +487,6 @@ class DiagnosticsPage(QWidget):
             search_btn.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
             btn_row.addWidget(search_btn)
 
-            # G-10: Per-DTC clear button
-            clear_one_btn = QPushButton(f"Clear {code}")
-            clear_one_btn.setStyleSheet(
-                "QPushButton { background: transparent; color: #E30B1F; "
-                "border: 1px solid #E30B1F; border-radius: 6px; "
-                "padding: 4px 12px; font-size: 11px; }"
-                "QPushButton:hover { background: rgba(227,11,31,0.15); }"
-            )
-            clear_one_btn.setEnabled(not getattr(self._connection, "read_only", False))
-            clear_btn_addr = dtc.get("ecu_addr", 0x10)  # capture before lambda
-            clear_one_btn.clicked.connect(
-                lambda checked, c=code, a=clear_btn_addr: self._on_clear_single(c, a)
-            )
-            btn_row.addWidget(clear_one_btn)
             btn_row.addStretch()
             detail_layout.addLayout(btn_row)
             card_layout.addWidget(detail)
@@ -498,6 +510,9 @@ class DiagnosticsPage(QWidget):
 
     def _on_dtc_error(self, msg: str) -> None:
         """Report an unavailable scan without leaving stale results or a healthy-car claim."""
+        sender = self.sender()
+        if isinstance(sender, CarWorker) and sender.connection is not self._connection:
+            return
         self.read_btn.setEnabled(True)
         self._empty_text.setText("DTC scan unavailable. See the session log for details.")
         self.empty_state.setVisible(True)
@@ -548,10 +563,10 @@ class DiagnosticsPage(QWidget):
                     try:
                         resp = self.connection.send_uds(addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
                         # Check for negative response (0x7F)
-                        if resp and resp[0] == 0x7F:
-                            failed.append(name)
-                        else:
+                        if resp == b"\x54":
                             cleared.append(name)
+                        else:
+                            failed.append(name)
                     except Exception:
                         failed.append(name)
                 return {"cleared": cleared, "failed": failed}
@@ -564,6 +579,9 @@ class DiagnosticsPage(QWidget):
 
     def _on_clear_complete(self, result: dict | None = None) -> None:
         """Re-read DTCs after a successful clear, report per-ECU results."""
+        sender = self.sender()
+        if isinstance(sender, CarWorker) and sender.connection is not self._connection:
+            return
         self.clear_btn.setEnabled(True)
         if result:
             cleared = result.get("cleared", [])
@@ -572,7 +590,7 @@ class DiagnosticsPage(QWidget):
                 QMessageBox.information(
                     self,
                     "Clear DTCs",
-                    f"Cleared: {len(cleared)} ECUs\nFailed: {len(failed)} ({', '.join(failed)})",
+                    f"Clear requests accepted: {len(cleared)} ECUs\nFailed: {len(failed)} ({', '.join(failed)})",
                 )
         self._read_dtcs()
 
@@ -598,48 +616,6 @@ class DiagnosticsPage(QWidget):
             self._mil_label.setStyleSheet(
                 "font-size: 13px; color: #2ECC71; background: transparent;"
             )
-
-    def _on_clear_single(self, code: str, ecu_addr: int = 0x10) -> None:
-        """Clear a single DTC from its ECU.
-
-        Matches by both DTC code and ECU address to distinguish
-        duplicate codes across different ECUs (e.g. B7F805 on HU_NBT vs FEM).
-        """
-        if getattr(self._connection, "read_only", False):
-            return
-        dtc = next(
-            (d for d in self._dtcs if d.get("code") == code and d.get("ecu_addr") == ecu_addr),
-            None,
-        )
-        if dtc is None or self._connection is None:
-            return
-        addr = dtc.get("ecu_addr", 0x10)
-        reply = QMessageBox.question(
-            self,
-            f"Clear {code}",
-            f"Clear fault code {code} from {dtc.get('ecu_name', 'ECU')}?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-        if hasattr(self._connection, "data") and self._connection.data:
-            self._connection.data["dtcs"] = [
-                d for d in self._connection.data.get("dtcs", []) if d.get("code") != code
-            ]
-        else:
-            try:
-                # Clear the specific DTC: 0x14 + 3-byte DTC code
-                code_clean = code.upper().replace("0X", "").replace("0x", "")
-                if len(code_clean) % 2 != 0:
-                    code_clean = "0" + code_clean  # pad odd-length (e.g. P0300)
-                dtc_bytes = bytes.fromhex(code_clean)
-                if len(dtc_bytes) < 3:
-                    dtc_bytes = dtc_bytes.rjust(3, b"\x00")
-                self._connection.send_uds(addr, bytes([0x14]) + dtc_bytes[:3])
-            except Exception as e:
-                QMessageBox.warning(self, "Clear Failed", str(e))
-        self._read_dtcs()
 
 
 # ---- Helpers ----

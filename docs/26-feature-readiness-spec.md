@@ -153,3 +153,10 @@ owner-operated car reads and separately agreed mutation validation. Do not
 create an automated suite. Run all full-app static gates before push. Record
 actual local runtime, Python 3.13/platform packaging checks and absent hardware
 coverage. A fully green gate or one successful car does not certify every row.
+
+## Task A integration handoff
+
+The implemented owner/service API and identity-keyed codec registration pattern
+are recorded in [Task A verification](../tasks/protocol-library-migration-verification.md).
+Use that API once the integration PR merges; no feature creates another socket
+consumer. Task A local library checks do not complete any B feature acceptance.

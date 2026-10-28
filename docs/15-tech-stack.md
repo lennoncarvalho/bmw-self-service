@@ -24,7 +24,10 @@ and [release metadata](https://pypi.org/project/pycryptodome/4.2.0/).
 
 Use Widgets, QSS, QThread/signals, sockets and SQLite. The app does not use asyncio.
 
-Standard protocol reuse is planned, not yet installed: see
+Standard protocol reuse is implemented with udsoncan 1.26.1, Scapy 2.8.0 and
+doipclient 1.2.2. Fresh Python 3.13.18 imports/type checks and a macOS arm64
+bundle/startup were verified; Windows/Intel and hardware acceptance remain pending.
+See [the integration record](../tasks/protocol-library-migration-verification.md) and
 [the library evaluation](24-protocol-library-evaluation.md) for udsoncan,
 doipclient and Scapy HSFZ, plus the Gallia alternative and adapter requirements.
 

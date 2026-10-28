@@ -1,5 +1,6 @@
 """Transport-independent contracts for the spec 25 protocol migration."""
 
+import ipaddress
 import math
 import time
 import uuid
@@ -45,6 +46,24 @@ class DiscoveryResult:
 
 
 @dataclass(frozen=True)
+class ConnectionConfig:
+    """Validated TCP endpoints carried from a selected discovery result."""
+
+    transport: TransportKind
+    host: str
+    local_ipv4: str
+    port: int
+    entity: int
+
+    def __post_init__(self) -> None:
+        ipaddress.IPv4Address(self.host)
+        local = ipaddress.IPv4Address(self.local_ipv4)
+        if local.is_unspecified or local.is_multicast or not 1 <= self.port <= 65535:
+            raise ValueError("Invalid selected transport endpoint")
+        EcuIdentity("config", self.transport, self.entity)
+
+
+@dataclass(frozen=True)
 class EcuSession:
     """Immutable snapshot of one ECU's negotiated timing and session."""
 
@@ -73,6 +92,7 @@ class OperationContext:
     cancelled: Event = field(default_factory=Event)
     sent: bool = False
     mutation: bool = False
+    created_at: float = field(default_factory=time.monotonic)
 
     def __post_init__(self) -> None:
         if not self.generation or not math.isfinite(self.deadline):
@@ -103,6 +123,13 @@ class FailureKind(StrEnum):
     CLOSED = "connection-closed"
     FAILED = "failed"
     UNCERTAIN = "outcome-uncertain"
+    NEGATIVE = "negative-response"
+    INVALID = "invalid-response"
+    UNEXPECTED = "unexpected-response"
+    POLICY = "policy-blocked"
+    UNSUPPORTED = "unsupported"
+    TRANSPORT_REJECTED = "transport-rejected"
+    CONNECTION_LOST = "connection-lost"
 
 
 @dataclass(frozen=True)
@@ -127,6 +154,20 @@ class TransportAdapter(Protocol):
         """Dispatch controls and return an addressed diagnostic payload."""
         ...
 
+    def prepare(self, context: OperationContext) -> None:
+        """Reconcile available controls and reject unowned diagnostic responses."""
+        ...
+
     def close(self) -> None:
         """Release resources on the owning worker."""
         ...
+
+
+class ProtocolFailure(Exception):
+    """Classified service failure with preserved raw response and recovery need."""
+
+    def __init__(self, kind: FailureKind, raw: bytes = b"", reconnect: bool = True) -> None:
+        super().__init__(kind.value)
+        self.kind = kind
+        self.raw = raw
+        self.reconnect = reconnect

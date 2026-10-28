@@ -9,12 +9,13 @@ Reference: docs/17-ui-decisions.md (Decision #4: one reusable CarWorker pattern)
 import logging
 import time
 from collections.abc import Callable
+from contextlib import nullcontext
 from threading import Event
 from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from app.connection import DoIPConnection, HSFZConnection
+from app.protocol.contracts import OperationCancelled
 from app.protocol.owner import ProtocolOwner
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,7 @@ class CarWorker(QThread):
         """
         super().__init__()
         self.connection = connection
+        self._cancelled = Event()
 
     def run(self) -> None:
         """Execute the worker on the background thread.
@@ -69,6 +71,8 @@ class CarWorker(QThread):
             getattr(self.connection, "trace_id", "demo/setup"),
         )
         try:
+            if hasattr(self.connection, "set_caller_cancel"):
+                self.connection.set_caller_cancel(self._cancelled)
             result = self.do_work()
             self.result_ready.emit(result)
         except TimeoutError as e:
@@ -87,11 +91,16 @@ class CarWorker(QThread):
                 time.monotonic() - started,
             )
 
+    def requestInterruption(self) -> None:
+        """Propagate interruption into bounded live transport operations."""
+        self._cancelled.set()
+        super().requestInterruption()
+
     def do_work(self) -> Any:
         """Override in subclasses — performs the actual car I/O.
 
         Returns:
-            Any result data that will be passed to the finished signal.
+            Any result data delivered by result_ready; native finished marks thread exit.
 
         Raises:
             TimeoutError: Raised by connection on 30s timeout.
@@ -172,7 +181,13 @@ class PostConnectWorker(CarWorker):
             self.progress.emit(f"Reading {label}... ({i}/{total})")
 
             try:
-                value = task_fn(self.connection)
+                scope = (
+                    self.connection.operation_scope(30.0)
+                    if hasattr(self.connection, "operation_scope")
+                    else nullcontext()
+                )
+                with scope:
+                    value = task_fn(self.connection)
                 results[label.lower().replace(" ", "_")] = value
                 logger.debug("PostConnect result label=%s value=%r", label, value)
                 logger.debug(
@@ -239,44 +254,6 @@ class ConnectWorker(CarWorker):
         return self.fn(self._cancelled)
 
 
-class KeepAliveWorker(CarWorker):
-    """Maintain a real transport off the GUI without treating skipped work as failure."""
-
-    connection_lost = Signal(object)
-
-    def __init__(self, connection: HSFZConnection | DoIPConnection) -> None:
-        """Keep the transport alive until explicitly stopped or actually failed."""
-        super().__init__(connection)
-        self._stopped = Event()
-
-    def stop(self) -> None:
-        """Wake the interval wait without blocking the GUI thread."""
-        self._stopped.set()
-
-    def do_work(self) -> None:
-        """Serialize scheduled heartbeat work and signal loss for the same connection."""
-        next_alive = time.monotonic() + 2.0
-        next_tester = time.monotonic() + 2.5
-        while not self._stopped.is_set():
-            now = time.monotonic()
-            if now >= next_alive:
-                result = self.connection.alive_check()
-                if result is None:
-                    logger.debug("Transport heartbeat idle or skipped while stream is busy")
-                next_alive = time.monotonic() + 2.0
-            if self._stopped.is_set():
-                break
-            if time.monotonic() >= next_tester:
-                result = self.connection.tester_present()
-                if result is None:
-                    logger.debug("TesterPresent skipped while stream is busy")
-                next_tester = time.monotonic() + 2.5
-            if not self._stopped.is_set() and not self.connection.alive_ok:
-                self.connection_lost.emit(self.connection)
-                break
-            self._stopped.wait(max(0.0, min(next_alive, next_tester) - time.monotonic()))
-
-
 class ProtocolWorker(CarWorker):
     """Host the staged protocol owner on a QThread without opening a transport."""
 
@@ -287,7 +264,16 @@ class ProtocolWorker(CarWorker):
 
     def do_work(self) -> None:
         """Run all queued operations and resource cleanup on this thread."""
-        self.owner.run()
+        try:
+            self.owner.run()
+        except OperationCancelled:
+            if not self.owner.stop_event.is_set():
+                raise
+        except Exception as exc:
+            logger.debug("Protocol owner stopped", exc_info=True)
+            raise ConnectionError(
+                "Vehicle connection lost. Check the cable and reconnect."
+            ) from exc
 
     def stop(self) -> None:
         """Request cooperative shutdown without waiting on the GUI thread."""

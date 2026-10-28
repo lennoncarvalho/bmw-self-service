@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.coding_db import CodingDatabase, _decrypt_enc
+from app.resources import resource_path
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -37,14 +38,14 @@ _CAFD_MAP: dict[str, tuple[str, str]] = {}
 try:
     import json as _json
 
-    _infos = _json.loads(_decrypt_enc("coding_data/coding-ecu-infos.enc"))
+    _infos = _json.loads(_decrypt_enc(str(resource_path("coding_data/coding-ecu-infos.enc"))))
     for _e in _infos:
         _name = _e.get("shortName", "")
         _cafd = _e.get("identifier", "")
         if _name and _cafd:
             # Find first available variant file
             _var = None
-            for _f in os.listdir("coding_data"):
+            for _f in os.listdir(resource_path("coding_data")):
                 if _f.startswith(f"{_cafd}-") and _f.endswith(".enc"):
                     _var = _f[len(_cafd) + 1 : -4]
                     break
@@ -54,7 +55,7 @@ except (FileNotFoundError, _json.JSONDecodeError, ValueError) as _e:
     logger.warning("Failed to load CAFD map: %s", _e)
 
 # Singleton coding database instance
-coding_db = CodingDatabase("coding_data")
+coding_db = CodingDatabase(str(resource_path("coding_data")))
 
 MOCK_CATEGORIES = [
     {
