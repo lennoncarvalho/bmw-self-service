@@ -302,7 +302,11 @@ class DiagnosticsPage(QWidget):
         # so it runs on the background thread, not the UI thread.
 
         # Real car: use CarWorker
-        ecus = self._ecus if self._ecus else [{"name": "ZGW", "addr": "0x10"}]
+        ecus = (
+            self._ecus
+            if self._ecus
+            else [{"name": "Gateway", "addr": hex(getattr(self._connection, "entity", 0x10))}]
+        )
         worker = DtcReadWorker(self._connection, ecus, coverage_known=bool(self._ecus))
         self._worker = worker
         worker.started.connect(lambda: self.read_btn.setEnabled(False))

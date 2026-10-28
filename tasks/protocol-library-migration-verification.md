@@ -149,7 +149,8 @@ Reviewed ownership/import graph and all old send/keepalive/cancel callers.
 Resolved caller-context leakage across threads, native result/lifecycle signal
 separation, unowned/partial receive cleanup before send, timeout/cancel stream
 invalidation, main-window observation of clean owner termination, late-result
-filtering, shutdown during connection setup, cancellation of ECU prompt waits,
+filtering, diagnostic fallback to the actual discovered gateway address,
+shutdown during connection setup, cancellation of ECU prompt waits,
 opaque optional-field failures and resource paths independent of working directory.
 SQLite changes only resolve/escape the read-only asset path; queries/schema and
 worker connection ownership are unchanged. Live history/coding guards remain.
