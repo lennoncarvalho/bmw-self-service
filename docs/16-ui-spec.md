@@ -13,6 +13,19 @@
 
 ## Global behavior
 
+### Connection and capability availability (owner-confirmed, 2026-10-28)
+
+When VIN and diagnostic communication are verified, optional mileage, battery,
+FA or ECU read failures keep the connection active. Mark unavailable fields and
+incomplete scan coverage explicitly. Enable only operations whose prerequisites
+and protocol support are established; do not show guessed or stale data as current.
+
+Identified but unverified ECU/software variants can use supported reads while
+unverified writes remain disabled with a reason. Keep the mandatory series picker
+only if review establishes that it simplifies connection behavior and initial
+loading for all pages. Selection is a hint, not proof of transport compatibility.
+See decisions D-12 through D-14 in [the register](21-product-decisions.md).
+
 ### Theme
 
 - Dark background throughout (`#1a1a2e` or Qt dark palette)

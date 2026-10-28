@@ -18,10 +18,17 @@ and skills; it does not certify or alter runtime vehicle behavior.
   or adapter naming with vehicle connectivity.
 - Discover and validate the endpoint on the selected adapter; negotiate evidenced
   HSFZ/DoIP behavior rather than relying solely on a chassis selector.
+- Assess retaining the mandatory series picker against the owner's condition:
+  it must simplify connection behavior and initial loading across pages. Do not
+  assume that benefit or redesign the selector before resolving it (D-13).
 - Serialize transport ownership; handle control/ACK/NACK/pending/fragmented/late
   frames with correlated responses and bounded overall deadlines.
 - Establish valid vehicle identity before showing verified connected status.
-  Optional read failures remain visible as unavailable/incomplete data.
+  Once VIN and diagnostic communication are verified, keep the connection despite
+  optional read failures and show unavailable fields/incomplete ECU coverage (D-12).
+- Permit supported reads on identified but unverified ECU/software variants;
+  disable unverified writes until their exact definitions and write/readback flow
+  are supported. Missing prerequisites disable dependent operations (D-14).
 - Keep every car I/O operation off the GUI thread, including keepalive and
   recovery. Cancellation/disconnect must actually settle outstanding work and
   prevent stale updates after reconnect.

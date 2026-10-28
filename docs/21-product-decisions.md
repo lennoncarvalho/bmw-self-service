@@ -18,6 +18,9 @@ Protocol correctness is determined by reproducible evidence, not preference.
 | D-09 | Service history supports add, edit, delete and replace; CBS reads/resets are future scope |
 | D-10 | No automated tests for now; retain the existing no-suite policy |
 | D-11 | No saved backup/report is required before clearing faults |
+| D-12 | Once VIN and diagnostic communication are verified, optional read failures do not disconnect the car; explicitly mark unavailable fields and incomplete ECU coverage |
+| D-13 | Conditionally prefer retaining the mandatory series picker if it simplifies connection behavior and initial loading across pages; this benefit must be assessed, not assumed |
+| D-14 | Identified but unverified ECU/software variants may use supported reads; disable unverified writes until exact definitions and write/readback support exist |
 
 ## Recovered context, with provenance
 
@@ -61,14 +64,24 @@ see [the future REA task](../tasks/future-cbs-research.md).
 Exact MIL behavior and supported DTC-clear scope still need clarification; do not
 promise that clearing eliminates an active fault or keeps the lamp off.
 
-## Connection decisions now asked, awaiting answers
+## Connection follow-up resolved on 2026-10-28
 
-- Keep a verified connection with explicitly unavailable optional fields, or fail
-  connection if any optional read fails?
-- Auto-discover vehicle/transport with manual override, or retain mandatory series
-  selection?
-- Permit supported read-only diagnostics on an identified unverified variant while
-  disabling unsupported writes, or reject that vehicle entirely?
+Keep the connection when identity and diagnostic communication work but optional
+reads fail. Show each unavailable field and incomplete ECU coverage explicitly;
+do not replace missing data with guessed values or present a partial scan as clean.
+Only expose operations whose required data and protocol support are established.
+
+The owner selected the mandatory series picker **only if it simplifies behavior
+and initial loading for all pages**. This is a conditional preference, not an
+unconditional UI decision or approval of automatic discovery. During the PR/design
+review, assess the picker's concrete effect on connection and page initialization.
+If it provides no simplification, bring that finding back before redesigning the
+flow. Series selection remains a hint; it cannot prove transport or ECU support.
+
+An identified but unverified ECU/software variant does not require rejecting the
+entire vehicle. Allow evidenced read operations and disable unverified writes
+with an explicit reason. This does not authorize guessed read requests, routine
+calls labeled as reads, or writes based on the selected series alone.
 
 ## Next interview rounds
 
@@ -76,8 +89,8 @@ Ask a few related questions at a time and record answers before implementation.
 
 | Area | Concrete behavior to settle |
 |------|-----------------------------|
-| Release coverage | How should identified but unverified/unsupported variants be shown? Is read-only partial support acceptable? |
-| Connection | Auto-detection vs selector hint; multiple cars; partial VIN/ECU failures; connected vs loading vs limited status |
+| Release coverage | Wording and capability display for supported reads and disabled unverified writes (D-14) |
+| Connection | Assess conditional picker preference (D-13); multiple cars; identity failure; connected/loading/limited status wording |
 | Network setup | App-managed address/DHCP with elevation or guided manual setup? |
 | Coding | Exact supported preset families; unknown current values; advanced hex scope; protected/new signed coding restrictions |
 | History | Local headunit only; chronology and duplicate rules; dealer fields; date/km corrections; erase confirmation; notes kept locally or in car |
