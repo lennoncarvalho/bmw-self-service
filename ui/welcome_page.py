@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.connection import list_interfaces
+from app.connection import list_interfaces, list_interfaces_detailed
 
 
 class WelcomePage(QWidget):
@@ -123,15 +123,39 @@ class WelcomePage(QWidget):
         layout.addStretch()
 
     def _populate_interfaces(self):
+        """Fill the interface dropdown with connected-first adapter info."""
         self.interface_combo.clear()
         self.interface_combo.addItem("-- Select interface --", "")
+
         try:
-            ifaces = list_interfaces()
-            for iface in ifaces:
-                self.interface_combo.addItem(iface, iface)
+            adapters = list_interfaces_detailed()
+
+            # Split into connected / disconnected groups
+            connected = [a for a in adapters if a.connected]
+            disconnected = [a for a in adapters if not a.connected]
+
+            for adapter in connected:
+                self.interface_combo.addItem(
+                    adapter.display_text(), adapter.name
+                )
+
+            if connected and disconnected:
+                self.interface_combo.insertSeparator(
+                    self.interface_combo.count()
+                )
+
+            for adapter in disconnected:
+                self.interface_combo.addItem(
+                    adapter.display_text(), adapter.name
+                )
         except Exception:
-            self.interface_combo.addItem("en0", "en0")
-            self.interface_combo.addItem("en7", "en7")
+            # Fallback to bare names if detailed detection fails
+            try:
+                for iface in list_interfaces():
+                    self.interface_combo.addItem(iface, iface)
+            except Exception:
+                self.interface_combo.addItem("en0", "en0")
+                self.interface_combo.addItem("en7", "en7")
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled

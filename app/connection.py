@@ -133,6 +133,169 @@ def list_interfaces() -> list[str]:
     return sorted(ethernet_adapters)
 
 
+# ── Rich interface info for UI ────────────────────────────────────────────
+
+
+# dataclass imported lazily to avoid top-level dep for pure CLI use
+def _import_dataclass():
+    from dataclasses import dataclass as _dc
+    return _dc
+
+
+class _InterfaceInfo:
+    """Rich network interface descriptor for the welcome-page dropdown.
+
+    Attributes:
+        name: System name (e.g. ``"en15"``).
+        ip: IPv4 address string, or ``""`` if none assigned.
+        mac: MAC address string (lowercase hex pairs).
+        connected: ``True`` if the interface has an assigned IPv4 address.
+        description: Human-readable label derived from the interface name
+                     and platform heuristics (e.g. ``"USB Ethernet"``).
+
+    This is a plain class, not a dataclass, so it works at import time
+    without a top-level dataclasses dependency.
+    """
+
+    __slots__ = ("name", "ip", "mac", "connected", "description")
+
+    def __init__(
+        self,
+        name: str,
+        ip: str,
+        mac: str,
+        connected: bool,
+        description: str,
+    ) -> None:
+        self.name = name
+        self.ip = ip
+        self.mac = mac
+        self.connected = connected
+        self.description = description
+
+    def display_text(self) -> str:
+        """Rich one-line label for use in a QComboBox."""
+        if self.connected:
+            return f"{self.name} — {self.ip}  ({self.description})"
+        return f"{self.name} — disconnected  ({self.description})"
+
+    def sort_key(self) -> tuple[int, str]:
+        """Sort key: connected first, then by name."""
+        return (0 if self.connected else 1, self.name)
+
+
+def list_interfaces_detailed() -> list[_InterfaceInfo]:
+    """Return all Ethernet adapters with IP, MAC, and connected status.
+
+    Uses ``netifaces`` to enumerate every adapter, then enriches each
+    entry with the assigned IPv4 address and a human-readable
+    description.  Connected adapters appear first in the result.
+
+    Returns:
+        List of ``_InterfaceInfo``, connected-first.
+
+    Example:
+        >>> for info in list_interfaces_detailed():
+        ...     print(info.display_text())
+        en15 — 169.254.244.220  (USB Ethernet Adapter)
+        en0 — disconnected  (Built-in Ethernet)
+    """
+    results: list[_InterfaceInfo] = []
+
+    for iface in netifaces.interfaces():
+        # Skip loopback
+        if iface.startswith("lo"):
+            continue
+
+        addrs = netifaces.ifaddresses(iface)
+
+        # Must have a link-layer address (real hardware)
+        if netifaces.AF_LINK not in addrs:
+            continue
+
+        link_addr = addrs[netifaces.AF_LINK][0].get("addr", "")
+        if not link_addr or link_addr == "00:00:00:00:00:00":
+            continue
+
+        if platform.system() == "Darwin":
+            virtual_prefixes = (
+                "bridge", "gif", "stf", "utun", "ap",
+                "awdl", "llw", "pdp_ip", "anpi", "vmnet",
+                "fw",
+            )
+            if any(iface.startswith(p) for p in virtual_prefixes):
+                continue
+            if not iface.startswith("en"):
+                continue
+
+        elif platform.system() == "Linux":
+            if not (iface.startswith("en") or iface.startswith("eth")):
+                continue
+
+        # Extract IPv4 address
+        ip = ""
+        connected = False
+        if netifaces.AF_INET in addrs:
+            for entry in addrs[netifaces.AF_INET]:
+                addr = entry.get("addr", "")
+                if addr and addr != "0.0.0.0" and not addr.startswith("127."):
+                    ip = addr
+                    connected = True
+                    break
+
+        # Build human-readable description
+        description = _describe_interface(iface)
+
+        results.append(_InterfaceInfo(
+            name=iface,
+            ip=ip,
+            mac=link_addr.lower(),
+            connected=connected,
+            description=description,
+        ))
+
+    results.sort(key=lambda i: i.sort_key())
+    return results
+
+
+def _describe_interface(name: str) -> str:
+    """Return a human-readable label for an interface name.
+
+    Uses platform heuristics and common naming patterns.
+    """
+    system = platform.system()
+
+    if system == "Darwin":
+        # en0/en1 are typically built-in (Wi-Fi or Ethernet)
+        # en2+ are often Thunderbolt or USB adapters
+        num = 0
+        for ch in name:
+            if ch.isdigit():
+                num = num * 10 + int(ch)
+            elif num > 0:
+                break
+
+        if num <= 1:
+            return "Built-in Ethernet"
+        elif num <= 5:
+            return "Thunderbolt Bridge"
+        else:
+            return "USB Ethernet Adapter"
+
+    if system == "Linux":
+        if name.startswith("enp") or name.startswith("ens"):
+            return "PCI Ethernet"
+        if name.startswith("eth"):
+            return "Built-in Ethernet"
+        return "Network Adapter"
+
+    if system == "Windows":
+        # Windows netifaces names are already descriptive (e.g. "Ethernet 2")
+        return ""
+
+    return "Network Adapter"
+
+
 def _bind_to_interface(sock: socket.socket, interface: str) -> None:
     """Bind a UDP socket to a specific network interface.
 
