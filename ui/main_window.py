@@ -60,9 +60,10 @@ class MainWindow(QMainWindow):
         ("History", CLIPBOARD_ICON),
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, *, read_only: bool = False) -> None:
         super().__init__()
-        self.setWindowTitle("BMW Self Service")
+        self._read_only = read_only
+        self.setWindowTitle("BMW Self Service" + (" — READ ONLY" if read_only else ""))
         self.setMinimumSize(800, 600)
         self._demo_mode = False
         self._connection: object | None = None
@@ -325,6 +326,12 @@ class MainWindow(QMainWindow):
     # ---- Navigation ----
 
     def _on_nav_clicked(self, index: int) -> None:
+        logger.info(
+            "Navigation page=%s conn=%s read_only=%s",
+            self.NAV_ITEMS[index][0],
+            getattr(self._connection, "trace_id", "demo/disconnected"),
+            self._read_only,
+        )
         self.stack.setCurrentIndex(index + 1)
 
     # ---- Connection flow ----
@@ -358,6 +365,7 @@ class MainWindow(QMainWindow):
             {chr(70): "HSFZ", chr(71): "DoIP", chr(85): "DoIP", chr(73): "DoIP"}.get(series, "?"),
         )
         self.show_spinner(f"Searching for vehicle on {interface}...")
+        read_only = self._read_only
 
         def do_connect(cancelled: Event) -> tuple[HSFZConnection | DoIPConnection, str]:
             from app.connection import discover_zgw
@@ -373,6 +381,11 @@ class MainWindow(QMainWindow):
             check_cancelled()
 
             if info is None:
+                if read_only:
+                    raise ConnectionError(
+                        "Vehicle not found. Check the cable, ignition and Ethernet IPv4 settings. "
+                        "Automatic DHCP/network changes are disabled in this read-only session."
+                    )
                 logger.warning("Discovery failed, trying DHCP fallback")
                 from app.connection import start_dhcp_server
 
@@ -401,7 +414,11 @@ class MainWindow(QMainWindow):
 
             host = info["ip"]
             logger.info("Step 2: TCP connect to %s", host)
-            conn = HSFZConnection(host) if series == "F" else DoIPConnection(host)
+            conn = (
+                HSFZConnection(host, read_only=read_only)
+                if series == "F"
+                else DoIPConnection(host, read_only=read_only)
+            )
 
             if not conn.connect():
                 raise ConnectionError("Failed to connect to vehicle at " + host)
@@ -475,7 +492,7 @@ class MainWindow(QMainWindow):
             if not vin:
                 vin = vehicle.get("vin", "")
 
-        prefix = "[DEMO] " if self._demo_mode else ""
+        prefix = "[DEMO] " if self._demo_mode else ("[READ ONLY] " if self._read_only else "")
         self.status_dot.setText(ORANGE_DOT if self._demo_mode else GREEN_DOT)
         self.status_dot.setToolTip("[DEMO] Demo Mode" if self._demo_mode else "Connected")
         self.car_label.setText(f"{prefix}{model or f'BMW {series}-series'}")

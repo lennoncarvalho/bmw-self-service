@@ -127,6 +127,7 @@ class CodingPage(QWidget):
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
         self._is_real = False  # True when categories come from car, not mock
+        self._live_unavailable = False
         self._sub_stack: QStackedWidget
         self._setup_ui()
 
@@ -534,22 +535,41 @@ class CodingPage(QWidget):
             ecus: Optional SVT ECU list from vehicle connection.
         """
         self._connection = connection
+        is_demo = bool(getattr(connection, "data", None))
+        self._live_unavailable = not is_demo
+        self._pending = 0
+        self._categories = copy.deepcopy(MOCK_CATEGORIES) if is_demo else []
+        self._originals = copy.deepcopy(self._categories)
+        self._is_real = False
+        self._update_pending_label()
+        self._write_btn.setEnabled(is_demo)
+        while self._sub_stack.count():
+            old_page = self._sub_stack.widget(0)
+            if old_page is None:
+                break
+            self._sub_stack.removeWidget(old_page)
+            old_page.deleteLater()
+        if is_demo:
+            self._sub_stack.addWidget(self._build_easy_page())
+            self._sub_stack.addWidget(self._build_advanced_page())
+            if ecus:
+                self._load_coding_presets(ecus)
+            return
 
-        # T-2: Try loading real coding presets from ECU list
-        if ecus:
-            self._load_coding_presets(ecus)
-
-        # G-8: For demo mode, skip; for real cars, try reading via UDS
-        if not (hasattr(connection, "data") and connection.data):
-            self._write_btn.setEnabled(False)
-            self._coding_reader = CodingReadWorker(connection)
-            self._coding_reader.progress.connect(lambda msg: logger.debug("Coding read: %s", msg))
-            self._coding_reader.finished.connect(self._on_coding_read)
-            self._coding_reader.error.connect(
-                lambda msg: logger.warning("Coding read failed: %s", msg)
+        # A first-directory CAFD variant and a generic DID are not a live coding
+        # definition. Keep both tabs navigable without mock values or ECU probes.
+        for mode in ("Easy", "Advanced"):
+            page = QWidget()
+            layout = QVBoxLayout(page)
+            message = QLabel(
+                f"{mode} coding values unavailable. Exact ECU/software definitions "
+                "and a verified vehicle read operation are required."
             )
-            self._coding_reader.finished.connect(lambda _: self._write_btn.setEnabled(True))
-            self._coding_reader.start()
+            message.setWordWrap(True)
+            layout.addWidget(message)
+            layout.addStretch()
+            self._sub_stack.addWidget(page)
+        logger.warning("Coding live read skipped: exact definitions and reader unverified")
 
     def _load_coding_presets(self, ecus: list[dict]) -> None:
         """T-2/T-3/T-4: Load coding presets from database for discovered ECUs.
@@ -709,6 +729,9 @@ class CodingPage(QWidget):
         Args:
             categories: List of category dicts from a backup manifest.json.
         """
+        if self._live_unavailable:
+            logger.warning("Live coding backup restore blocked: verified restore unavailable")
+            return
         # Save pre-restore originals to count differences
         prev_originals = self._originals
         self._categories.clear()
@@ -781,6 +804,9 @@ class CodingPage(QWidget):
         logger.info("Coding changes cleared")
 
     def _on_write(self) -> None:
+        if self._live_unavailable:
+            logger.warning("Live coding write blocked: exact definitions/readback unavailable")
+            return
         reply = QMessageBox.question(
             self,
             "Write to Car",
