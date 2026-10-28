@@ -73,9 +73,10 @@ class BoundedStream:
             if count == 0:
                 raise ConnectionError("Vehicle connection closed during send")
             logger.debug(
-                "TX conn=%s request=%s frame=%s",
+                "TX conn=%s operation=%s request=%s frame=%s",
                 self.generation,
                 ctx.operation_id,
+                ctx.request_id,
                 bytes(view[:count]).hex(" "),
             )
             view = view[count:]
@@ -92,9 +93,10 @@ class BoundedStream:
             if not chunk:
                 raise ConnectionError("Vehicle connection closed")
             logger.debug(
-                "RX conn=%s request=%s fragment=%s",
+                "RX conn=%s operation=%s request=%s fragment=%s",
                 self.generation,
                 ctx.operation_id,
+                ctx.request_id,
                 chunk.hex(" "),
             )
             self.buffer.extend(chunk)

@@ -1,6 +1,7 @@
 """udsoncan's split send/receive connection with the outer operation budget."""
 
 import time
+import uuid
 
 from udsoncan.connections import BaseConnection
 from udsoncan.exceptions import TimeoutException
@@ -46,6 +47,7 @@ class UdsConnection(BaseConnection):
         if self.context is None:
             raise ConnectionError("No active diagnostic operation")
         self.context.remaining()
+        self.context.request_id = uuid.uuid4().hex
         self.adapter.send_diagnostic(self.ecu, payload, self.context)
         self.waiting = True
 
@@ -58,6 +60,7 @@ class UdsConnection(BaseConnection):
             ctx.deadline if timeout is None else min(ctx.deadline, time.monotonic() + timeout)
         )
         receive = OperationContext(ctx.generation, deadline, ctx.operation_id, ctx.cancelled)
+        receive.request_id = ctx.request_id
         try:
             return self.adapter.receive_diagnostic(self.ecu, receive)
         except TimeoutError as exc:
