@@ -117,7 +117,16 @@ Tester sends every ~2s to keep the TCP connection alive:
   00 00 00 02 00 12 F4 10
   └─ LENGTH=2, TYPE=0x0012, SRC=0xF4, DST=0x10
 
-ZGW responds with acknowledge_transfer (TYPE 0x0002)
+ZGW responds with acknowledge_transfer (TYPE 0x0002):
+  00 00 00 02 00 02 10 F4
+  └─ LENGTH=2, payload empty — drain from TCP buffer
+
+⚠️ The ACK response must be drained from the TCP socket after every
+alive_check.  If left in the buffer it will be read as the first
+response to the next send_uds() call, causing a type-mismatch error.
+Use a non-blocking recv (50ms timeout) — if the lock is held by a
+concurrent send_uds(), skip the drain (send_uds drains stale ACKs
+before reading its own response).
 ```
 
 This is the transport-layer heartbeat. It's separate from UDS TesterPresent (0x3E)
@@ -133,11 +142,47 @@ Tester sends:
   └─ SRC=0xF4, DST=0x10
   └─ Payload: 10 03 (UDS DiagnosticSessionControl, Extended)
 
-ZGW responds:
+ZGW responds with TWO frames:
+
+  #1 — acknowledge_transfer (TYPE 0x0002):
+  00 00 00 02 00 02 10 F4
+  └─ LENGTH=2, TYPE=0x0002, SRC=0x10, DST=0xF4
+  └─ No payload — transport-layer "I received your message"
+
+  #2 — diagnostic_req_res (TYPE 0x0001):
   00 00 00 04 00 01 10 F4  50 03
   └─ LENGTH=4, TYPE=0x0001, SRC=0x10, DST=0xF4
   └─ Payload: 50 03 (UDS positive response)
 ```
+
+⚠️ **Real-car finding (2026-10-27, F48 X1):** The ZGW on F-series cars
+sends an `acknowledge_transfer` (0x0002) frame **before every** UDS
+`diagnostic_req_res` (0x0001) response.  Implementations that read only
+one response will consume the ACK as a bad frame and throw *"Unexpected
+HSFZ response type: 0x0002"*, never reading the real UDS payload.
+
+**Correct implementation:** after sending a UDS request, read the first
+HSFZ message.  If it's `0x0002` (ACK), discard it and read the next
+message — that will be the actual `0x0001` response.  The ZGW also sends
+an ACK after every `alive_check` (0x0012) heartbeat, so those must be
+drained from the TCP buffer so they don't corrupt the next `send_uds()`
+call.  See `app/connection.py` `HSFZConnection.send_uds()` and
+`alive_check()` for the production implementation.
+
+#### Thread safety
+
+Real-car testing revealed that multiple pages firing `send_uds()`
+simultaneously on the same TCP socket corrupts the response stream.
+All socket I/O must be serialised through a `threading.Lock`.
+
+#### Response timing
+
+Cars vary significantly in response time.  A burst of 8+ sequential
+`send_uds()` calls during post-connect data loading can take 10–30
+seconds on a real car.  The UI must show a spinner with queue progress
+(*"Reading VIN… (2/8)"*) and block interaction until all reads complete.
+Errors must be collected per-request and shown as a friendly summary
+dialog, not raw exceptions.
 
 Note: For routed messages (to ECUs behind the ZGW), the HSFZ header
 still uses SRC/DST for the ZGW, but the UDS payload includes
@@ -204,7 +249,12 @@ class HSFZConnection:
         self.car_ip = car_ip
     
     def send_uds(self, target_ecu: int, uds_payload: bytes) -> bytes:
-        """Send a UDS message and receive response."""
+        """Send a UDS message and receive response.
+
+        ⚠️ Real-car finding (2026-10-27): The ZGW sends an
+        acknowledge_transfer (0x0002) frame BEFORE every UDS
+        response. Read through it.
+        """
         # Build HSFZ diagnostic_req_res frame
         payload_len = len(uds_payload)
         hsfz_len = payload_len + 2  # +2 for src/dst bytes
@@ -218,12 +268,16 @@ class HSFZConnection:
         
         self.sock.sendall(header + uds_payload)
         
-        # Read response: first 8 bytes = HSFZ header
+        # Read response — may be ACK (0x0002) or response (0x0001)
         hdr = self._recv_exact(8)
         resp_len, resp_type, resp_src, resp_dst = struct.unpack(">IHBB", hdr)
+        payload = self._recv_exact(resp_len - 2) if resp_len > 2 else b""
         
-        # Read payload
-        payload = self._recv_exact(resp_len - 2)
+        # If the ZGW sent an ACK, the real response follows
+        if resp_type == TYPE_ACK_TRANSFER:
+            hdr = self._recv_exact(8)
+            resp_len, resp_type, resp_src, resp_dst = struct.unpack(">IHBB", hdr)
+            payload = self._recv_exact(resp_len - 2) if resp_len > 2 else b""
         
         if resp_type == TYPE_DIAG_REQ_RES:
             return payload
@@ -231,10 +285,22 @@ class HSFZConnection:
             raise Exception(f"Unexpected HSFZ response type: 0x{resp_type:04X}")
     
     def alive_check(self):
-        """Send transport-layer keep-alive."""
+        """Send transport-layer keep-alive. Drain the ACK.
+
+        ⚠️ The ZGW responds with acknowledge_transfer (0x0002).
+        The ACK must be drained from the TCP buffer so it doesn't
+        corrupt the next send_uds() call. Use non-blocking recv
+        with a short timeout (50ms).
+        """
         frame = struct.pack(">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR)
         self.sock.sendall(frame)
-        # ZGW responds with acknowledge_transfer
+        # Drain the expected ACK without blocking
+        self.sock.settimeout(0.05)
+        try:
+            hdr = self._recv_exact(8)
+            _, resp_type, _, _ = struct.unpack(">IHBB", hdr)
+        except (socket.timeout, TimeoutError):
+            pass  # No ACK to drain — fine
     
     def _recv_exact(self, n: int) -> bytes:
         """Receive exactly n bytes."""
@@ -334,11 +400,32 @@ Then send raw hex data — the adapter wraps it into HSFZ diagnostic_req_res fra
 
 ## Timing Parameters
 
-| Timer | Value | Description |
-|-------|-------|-------------|
-| TCP connect timeout | 5000 ms | Connection establishment |
-| S3 (session timeout) | 5000 ms | UDS session reverts to default without TesterPresent |
-| TesterPresent interval | 2000-3000 ms | Must send before S3 expires |
-| Alive check interval | ~2000 ms | Transport-layer heartbeat |
-| P2 (response time) | 1000 ms | Max time for ECU to respond |
-| P2* (extended) | 2000 ms | Max after Response Pending (0x78) |
+*Spec values from ISO 14229-2. Observed values from real-car testing (2026-10-27, F48 X1).*
+
+| Timer | Spec | Observed (F48) | Description |
+|-------|------|----------------|-------------|
+| TCP connect timeout | 5000 ms | 100–500 ms | Connection establishment |
+| S3 (session timeout) | 5000 ms | — | UDS session reverts to default without TesterPresent |
+| TesterPresent interval | 2000-3000 ms | 2500 ms | Must send before S3 expires. Non-blocking — skip if send_uds() in flight |
+| Alive check interval | ~2000 ms | 2000 ms | Transport-layer heartbeat. Drain ACK after each |
+| P2 (response time) | 1000 ms | 200–800 ms | Max time for ECU to respond |
+| P2* (extended) | 2000 ms | — | Max after Response Pending (0x78) |
+| Post-connect data load | — | 5–30 s | Reading 5–8 DIDs sequentially. Show spinner with progress count |
+
+### Real-car observations
+
+- **ACK before every response:** The ZGW sends `acknowledge_transfer` (0x0002)
+  before every UDS `diagnostic_req_res` (0x0001) and every `alive_check` (0x0012).
+  This is not optional — tested on F48 X1 with production ZGW firmware.
+
+- **Response ordering is strict:** The ACK and response arrive in order on the
+  TCP stream. No interleaving. One send_uds() call must read both frames
+  (or skip the ACK and read the response).
+
+- **TesterPresent gets 0x7F:** When no diagnostic session is active, TesterPresent
+  (0x3E) returns `7F 10 21` (serviceNotSupportedInActiveSession). This is normal
+  and does not indicate a connection problem.
+
+- **Discovery can fail transiently:** After a TCP disconnect, the ENET interface
+  may briefly show "Network is unreachable" (errno 51). Retry discovery after
+  1–2 seconds.

@@ -19,7 +19,6 @@ import contextlib
 import logging
 import os
 import platform
-import select
 import socket
 import struct
 import subprocess
@@ -463,13 +462,20 @@ class HSFZConnection:
             return False
 
     def disconnect(self) -> None:
-        """Close the TCP connection to the ZGW."""
+        """Close the TCP connection to the ZGW.
+
+        Calls ``shutdown()`` before acquiring the lock to avoid
+        blocking while a ``send_uds()`` is stuck in ``recv()``.
+        Then acquires the lock to close and clear the socket.
+        """
+        sock = self.sock
+        if sock is not None:
+            with contextlib.suppress(OSError):
+                sock.shutdown(socket.SHUT_RDWR)
         with self._lock:
-            if self.sock:
+            if self.sock is sock and sock is not None:
                 with contextlib.suppress(OSError):
-                    self.sock.shutdown(socket.SHUT_RDWR)
-                with contextlib.suppress(OSError):
-                    self.sock.close()
+                    sock.close()
                 self.sock = None
                 self._alive_failures = 0
                 logger.info(
@@ -518,74 +524,70 @@ class HSFZConnection:
             ecu_addr, len(frame), frame.hex(" "),
         )
 
-        start = _time.monotonic()
+        deadline = _time.monotonic() + timeout
         with self._lock:
-            self.sock.settimeout(timeout)
+            # Re-check after acquiring the lock — disconnect() may have
+            # run between the check above and the lock acquisition.
+            if self.sock is None:
+                raise ConnectionError("Not connected")
+
+            remaining = deadline - _time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError(
+                    f"ECU 0x{ecu_addr:02X} timeout before send"
+                )
+            self.sock.settimeout(max(remaining, 1.0))
             try:
                 self.sock.sendall(frame)
             except OSError as e:
                 raise ConnectionError(f"Send failed: {e}") from e
 
-            # Read the first HSFZ message from the ZGW.
-            # This may be an ACK (0x0002) or the actual response (0x0001).
-            elapsed = _time.monotonic() - start
-            remaining = max(timeout - elapsed, 1.0)
-            msg_type, msg_src, _msg_dst, uds_payload = self._recv_hsfz_message(
-                remaining
-            )
-
-            # If the ZGW sent an ACK first, the real UDS response follows.
-            if msg_type == TYPE_ACK_TRANSFER:
-                logger.debug(
-                    "HSFZ ACK from 0x%02X (%.0fms), reading UDS response",
-                    msg_src, (_time.monotonic() - start) * 1000,
-                )
-                elapsed = _time.monotonic() - start
-                remaining = max(timeout - elapsed, 1.0)
+            # Read HSFZ messages until we get the real UDS response.
+            # The ZGW may send acknowledge_transfer (0x0002) or alive
+            # check frames before the diagnostic_req_res (0x0001).
+            while True:
+                remaining = deadline - _time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError(
+                        f"ECU 0x{ecu_addr:02X} did not respond "
+                        f"within {timeout:.0f}s"
+                    )
                 msg_type, msg_src, _msg_dst, uds_payload = (
-                    self._recv_hsfz_message(remaining)
+                    self._recv_hsfz_message(max(remaining, 1.0))
                 )
 
-            # Now we should have the real response.
-            if msg_type == TYPE_DIAG_REQ_RES:
-                elapsed_ms = (_time.monotonic() - start) * 1000
-                logger.debug(
-                    "UDS rx ECU=0x%02X len=%d (%.0fms): %s",
-                    msg_src, len(uds_payload), elapsed_ms,
-                    uds_payload.hex(" "),
-                )
-                return uds_payload
-            elif msg_type == TYPE_ACK_TRANSFER:
-                # Two ACKs in a row — stale data in the buffer.
-                # Drain it and try once more.
-                logger.warning(
-                    "HSFZ: consecutive ACKs from 0x%02X — "
-                    "draining stale response", msg_src,
-                )
-                elapsed = _time.monotonic() - start
-                remaining = max(timeout - elapsed, 1.0)
-                msg_type, msg_src, _msg_dst, uds_payload = (
-                    self._recv_hsfz_message(remaining)
-                )
                 if msg_type == TYPE_DIAG_REQ_RES:
-                    elapsed_ms = (_time.monotonic() - start) * 1000
+                    elapsed_ms = (
+                        _time.monotonic() - (deadline - timeout)
+                    ) * 1000
                     logger.debug(
                         "UDS rx ECU=0x%02X len=%d (%.0fms): %s",
                         msg_src, len(uds_payload), elapsed_ms,
                         uds_payload.hex(" "),
                     )
                     return uds_payload
-                else:
-                    raise ConnectionError(
-                        f"Expected UDS response after draining ACKs, "
-                        f"got HSFZ type 0x{msg_type:04X}"
+
+                if msg_type == TYPE_ACK_TRANSFER:
+                    logger.debug(
+                        "HSFZ ACK from 0x%02X (%.0fms), reading next",
+                        msg_src,
+                        (_time.monotonic() - (deadline - timeout)) * 1000,
                     )
-            elif msg_type in HSFZ_ERROR_TYPES:
-                raise ConnectionError(
-                    f"ZGW error: {HSFZ_ERROR_TYPES[msg_type]} "
-                    f"(type 0x{msg_type:04X})"
-                )
-            else:
+                    continue  # read next frame
+
+                if msg_type == TYPE_ALIVE_CHECK:
+                    logger.debug(
+                        "HSFZ alive check from 0x%02X, skipping",
+                        msg_src,
+                    )
+                    continue  # read next frame
+
+                if msg_type in HSFZ_ERROR_TYPES:
+                    raise ConnectionError(
+                        f"ZGW error: {HSFZ_ERROR_TYPES[msg_type]} "
+                        f"(type 0x{msg_type:04X})"
+                    )
+
                 raise ConnectionError(
                     f"Unexpected HSFZ response type: 0x{msg_type:04X}"
                 )
@@ -596,68 +598,16 @@ class HSFZConnection:
         """Send transport-layer keep-alive (HSFZ type 0x0012).
 
         Must be called every ~2 seconds to prevent the ZGW from closing
-        the TCP connection.  Drains the expected ACK (0x0002) response
-        so it doesn't pile up and corrupt the next ``send_uds()``.
+        the TCP connection.  Both send and ACK drain happen under the
+        lock so alive-check traffic cannot interleave with ``send_uds()``.
 
-        Non-blocking: if the lock is held by a ``send_uds()`` call the
-        drain is skipped — the next ``send_uds()`` will drain any stale
-        ACK first.
-
-        Returns:
-            True if the keep-alive was sent (and ACK drained if
-            possible). False if the socket is gone.
-        """
-        if self.sock is None:
-            return False
-
-        frame = struct.pack(
-            ">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR
-        )
-
-        # Send — atomic for small frames, no lock needed.
-        try:
-            self.sock.sendall(frame)
-        except OSError:
-            self._alive_failures += 1
-            return False
-
-        # Try to drain the ACK without blocking.
-        acquired = self._lock.acquire(blocking=False)
-        if not acquired:
-            # send_uds() is in progress — it will drain any stale
-            # ACK when it reads its own response header.
-            return True
-
-        try:
-            self.sock.settimeout(0.05)
-            try:
-                msg_type, msg_src, _dst, _payload = self._recv_hsfz_message(
-                    0.05
-                )
-                if msg_type == TYPE_ACK_TRANSFER:
-                    logger.debug(
-                        "HSFZ alive ACK drained from 0x%02X", msg_src
-                    )
-                    self._alive_failures = 0
-            except (TimeoutError, socket.timeout):
-                # No ACK arrived yet — fine, it'll be drained later.
-                pass
-            except ConnectionError:
-                self._alive_failures += 1
-        finally:
-            self._lock.release()
-
-        return True
-
-    def tester_present(self) -> bool:
-        """Send UDS TesterPresent (0x3E 0x00) — non-blocking.
-
-        Tries to acquire the lock.  If a ``send_uds()`` is in flight
-        this cycle is skipped — the UDS session timer is long enough
-        (>5 s) that missing one cycle is harmless.
+        Non-blocking: if the lock is held the entire cycle is skipped.
+        The UDS session timer is long enough (>5 s) that missing one
+        cycle is harmless.
 
         Returns:
-            True if sent and ACK drained, False if skipped or failed.
+            True if keep-alive was sent and ACK drained, False if
+            skipped or socket is gone.
         """
         if self.sock is None:
             return False
@@ -667,23 +617,64 @@ class HSFZConnection:
             return True  # skipped, not a failure
 
         try:
-            frame = build_uds(ZGW_ADDR, 0x3E, b"\x00")
+            frame = struct.pack(
+                ">IHBB", 2, TYPE_ALIVE_CHECK, TESTER_ADDR, ZGW_ADDR
+            )
+            self.sock.settimeout(2.0)
+            self.sock.sendall(frame)
+
+            # Drain the expected ACK
+            with contextlib.suppress(TimeoutError, socket.timeout, ConnectionError):
+                msg_type, msg_src, _dst, _payload = self._recv_hsfz_message(0.05)
+                if msg_type == TYPE_ACK_TRANSFER:
+                    logger.debug(
+                        "HSFZ alive ACK drained from 0x%02X", msg_src
+                    )
+            self._alive_failures = 0
+            return True
+        except (OSError, ConnectionError):
+            self._alive_failures += 1
+            return False
+        finally:
+            self._lock.release()
+
+    def tester_present(self) -> bool:
+        """Send UDS TesterPresent (0x3E 0x80) — non-blocking.
+
+        Uses the suppress-positive-response bit (0x80) so the ECU
+        doesn't waste bus time sending a ``7E 00`` response.  Only
+        a negative response (``7F 3E xx``) may arrive — we drain it.
+
+        Tries to acquire the lock.  If a ``send_uds()`` is in flight
+        this cycle is skipped — the UDS session timer is long enough
+        (>5 s) that missing one cycle is harmless.
+
+        Returns:
+            True if sent and response drained, False if skipped or
+            failed.
+        """
+        if self.sock is None:
+            return False
+
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            return True  # skipped, not a failure
+
+        try:
+            frame = build_uds(ZGW_ADDR, 0x3E, b"\x80")
             self.sock.settimeout(1.0)
             self.sock.sendall(frame)
 
-            # Read through ACK + response (or timeout trying).
-            try:
+            # Drain any ACK + possible negative UDS response.
+            with contextlib.suppress(
+                TimeoutError, socket.timeout, ConnectionError,
+            ):
                 msg_type, _src, _dst, _payload = self._recv_hsfz_message(1.0)
                 if msg_type == TYPE_ACK_TRANSFER:
-                    # Drain the ACK — real response follows.
-                    try:
+                    with contextlib.suppress(
+                        TimeoutError, socket.timeout, ConnectionError,
+                    ):
                         self._recv_hsfz_message(1.0)
-                    except (TimeoutError, socket.timeout, ConnectionError):
-                        pass
-            except (TimeoutError, socket.timeout):
-                pass
-            except ConnectionError:
-                return False
             return True
         except OSError:
             return False
@@ -799,6 +790,7 @@ class DoIPConnection:
         self.sock: socket.socket | None = None
         self.source_addr: int = DOIP_TESTER_LOGICAL_ADDR
         self.activated: bool = False
+        self._lock = threading.Lock()
 
     def connect(self) -> bool:
         """Open TCP connection for DoIP.
@@ -948,6 +940,40 @@ class DoIPConnection:
             self.sock.sendall(header)
         except OSError:
             pass
+
+    def tester_present(self) -> bool:
+        """Send UDS TesterPresent (0x3E 0x80) over DoIP.
+
+        Uses the suppress-positive-response bit (0x80).  Non-blocking:
+        acquires the connection lock briefly to build and send the
+        frame.  If ``send_uds()`` is in flight the lock acquisition
+        fails and this cycle is skipped.
+
+        Returns:
+            True if sent, False if skipped or socket is gone.
+        """
+        if self.sock is None:
+            return False
+
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            return True  # skipped
+
+        try:
+            payload = struct.pack(">HH", self.source_addr, ZGW_ADDR)
+            payload += bytes([0x3E, 0x80])
+            header = _build_doip_header(DOIP_DIAG_MESSAGE, payload)
+            self.sock.sendall(header)
+            return True
+        except OSError:
+            return False
+        finally:
+            self._lock.release()
+
+    @property
+    def alive_ok(self) -> bool:
+        """True unless the socket is gone."""
+        return self.sock is not None
 
     def disconnect(self) -> None:
         """Close the DoIP connection."""

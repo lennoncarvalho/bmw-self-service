@@ -7,7 +7,8 @@ Reference: docs/17-ui-decisions.md (Decision #4: one reusable CarWorker pattern)
 """
 
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 

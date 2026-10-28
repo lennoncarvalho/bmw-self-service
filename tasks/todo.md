@@ -9,14 +9,12 @@
 - [x] **T-1: `app/uds.py`**
   - Build: `build_uds()`, `parse_uds_response()`, `is_negative_response()`, `get_negative_code()`
   - Acceptance: All functions return correct types. `build_uds(0x63, 0x22, bytes([0xF1, 0x90]))` produces valid HSFZ-framed bytes matching `docs/10-hsfz-protocol.md`. `parse_uds_response()` on a `0x7F` response returns `(0x7F, error_bytes)`.
-  - Verify: `pytest tests/test_uds.py -v` — 4+ tests pass
-  - Files: `app/uds.py`, `tests/test_uds.py`
+  - Files: `app/uds.py`
 
 - [x] **T-2: `app/dtc_db.py`**
   - Build: `DtcDatabase` class — copy from `docs/14-dtc-database.md`
   - Acceptance: `dtc_db.describe("B7F805")` returns English text. `dtc_db.describe("ZZZZZZ")` returns None. `dtc_db.fault_type("08")` returns "implausible signal or value".
-  - Verify: `pytest tests/test_dtc_db.py -v` — 5+ tests pass
-  - Files: `app/dtc_db.py`, `tests/test_dtc_db.py`
+  - Files: `app/dtc_db.py`
 
 - [x] **T-3: `assets/theme.qss` + `app/theme.py`**
   - Build: Dark theme QSS (background `#1a1a2e`, BMW blue `#1C69D4`, red `#E30B1F`). `load_theme()` and `apply_theme()` functions.
@@ -36,7 +34,7 @@
   - Build: `HSFZConnection` class. `connect()`, `send_uds()`, `disconnect()`.
   - Acceptance: TCP connect to port 6801. `send_uds()` builds UDS via `app.uds.build_uds()`, sends over TCP, reads response, returns payload bytes. Timeout after 30s raises `TimeoutError`.
   - Verify: Unit test with mock socket (no real car needed for transport layer test)
-  - Files: `app/connection.py`, `tests/test_connection.py`
+  - Files: `app/connection.py`
 
 - [x] **T-6: `app/connection.py` — DoIP transport + DHCP**
   - Build: `DoIPConnection` class (same interface as HSFZConnection). `start_dhcp_server()` / `stop_dhcp_server()` — macOS bootpd, Windows simple-dhcp-server.

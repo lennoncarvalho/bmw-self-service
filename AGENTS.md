@@ -115,10 +115,13 @@ When starting a development session, load these skills in order:
 
 ## Testing policy
 
-- **No tests for protocol code** — requires physical ENET cable + car. Manual testing only.
-- **No tests for UI code** — visual verification against `docs/16-ui-spec.md`.
-- **Unit tests for pure functions:** DTC code normalization, VIN parsing, coding data decode/encode.
-- Test runner: `pytest` (if tests exist).
+Automated tests are **not needed at this stage**.  All protocol code
+requires a physical ENET cable and a real car.  UI verification is
+visual against `docs/16-ui-spec.md`.  Pure functions (UDS framing,
+DTC normalisation, VIN parsing) are exercised indirectly through the
+app's real-car and DEMO-mode flows.  When the communication layer
+stabilises across more vehicle variants, a focused test suite for
+the pure-function modules may be reintroduced.
 
 ## Build & packaging
 

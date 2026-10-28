@@ -7,7 +7,7 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 import logging
 from typing import Any
 
-from PySide6.QtCore import Qt, QSize, QThread, QTimer, Signal, Slot
+from PySide6.QtCore import QSize, Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -496,9 +496,13 @@ class MainWindow(QMainWindow):
         self._post_connect_worker = PostConnectWorker(connection, tasks)
         self._post_connect_worker.progress.connect(self.show_spinner)
         self._post_connect_worker.finished.connect(
-            lambda result: self._on_post_connect_finished(result, vin, series)
+            lambda result, conn=connection: self._on_post_connect_finished(
+                result, conn, vin, series
+            )
         )
-        self._post_connect_worker.error.connect(self._on_post_connect_error)
+        self._post_connect_worker.error.connect(
+            lambda msg, conn=connection: self._on_post_connect_error(msg, conn)
+        )
         self._post_connect_worker.start()
 
         logger.info("Connected successfully (demo=%s)", self._demo_mode)
@@ -621,14 +625,21 @@ class MainWindow(QMainWindow):
 
     @Slot(object)
     def _on_post_connect_finished(
-        self, result: dict, vin: str, series: str
+        self, result: dict, connection: object, vin: str, series: str
     ) -> None:
         """Handle PostConnectWorker completion on the main thread.
 
         Populates the vehicle page with results, reports any errors,
         then starts the secondary workers (DTC read, service history,
         coding load).
+
+        If the active connection has changed since the worker started
+        (e.g. user disconnected and reconnected), the results are
+        stale and this handler returns immediately.
         """
+        if self._connection is not connection:
+            return  # connection changed, results are stale
+
         results: dict = result.get("results", {})
         errors: dict = result.get("errors", {})
 
@@ -673,8 +684,16 @@ class MainWindow(QMainWindow):
 
         self.hide_spinner()
 
-    def _on_post_connect_error(self, error_msg: str) -> None:
-        """Handle PostConnectWorker fatal error."""
+    def _on_post_connect_error(
+        self, error_msg: str, connection: object = None
+    ) -> None:
+        """Handle PostConnectWorker fatal error.
+
+        If the active connection has changed since the worker started,
+        the error is stale and this handler returns immediately.
+        """
+        if connection is not None and self._connection is not connection:
+            return  # connection changed, error is stale
         self.hide_spinner()
         QMessageBox.warning(
             self,

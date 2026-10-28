@@ -105,13 +105,29 @@ class HSFZConnection:
         self.sock.connect((car_ip, HSFZ_PORT))
     
     def send_uds(self, target: int, payload: bytes) -> bytes:
-        """Send UDS message via HSFZ, return response."""
+        """Send UDS message via HSFZ, return response.
+
+        ⚠️ Real-car finding: The ZGW sends acknowledge_transfer
+        (0x0002) BEFORE every 0x0001 response. Read through it.
+        """
         hsfz_len = len(payload) + 2
         header = struct.pack(">IHBB", hsfz_len, 0x0001, TESTER_ADDR, target)
         self.sock.sendall(header + payload)
+
+        # Read first HSFZ frame — may be ACK (0x0002) or response (0x0001)
         hdr = self._recv_exact(8)
-        resp_len = struct.unpack(">I", hdr[:4])[0]
-        return self._recv_exact(resp_len - 2)
+        resp_len, resp_type = struct.unpack(">IH", hdr[:6])
+        payload = self._recv_exact(resp_len - 2)
+
+        # If the ZGW sent an ACK, the real response follows
+        if resp_type == 0x0002:  # acknowledge_transfer
+            hdr = self._recv_exact(8)
+            resp_len, resp_type = struct.unpack(">IH", hdr[:6])
+            payload = self._recv_exact(resp_len - 2)
+
+        if resp_type != 0x0001:
+            raise ConnectionError(f"Unexpected HSFZ type: 0x{resp_type:04X}")
+        return payload
     
     def _recv_exact(self, n: int) -> bytes:
         data = b""
@@ -124,6 +140,52 @@ class HSFZConnection:
     def close(self):
         if self.sock: self.sock.close()
 ```
+
+### Thread safety (real-car finding, 2026-10-27)
+
+Multiple pages firing `send_uds()` simultaneously on the same TCP socket
+corrupts the response stream.  All socket I/O must be serialised with a
+`threading.Lock`.  See `app/connection.py` `HSFZConnection` for the
+production implementation which also includes:
+
+- Non-blocking `alive_check()` that drains its ACK without blocking
+  concurrent `send_uds()` calls
+- Non-blocking `tester_present()` that skips if a `send_uds()` is in
+  flight (missing one cycle is harmless for the UDS session timer)
+- `alive_ok` property that tracks consecutive alive-check failures
+
+### Post-connect data loading (real-car finding, 2026-10-27)
+
+Cars respond at different speeds.  Firing a burst of `send_uds()` calls
+during post-connect data loading (VIN, I-Level, mileage, battery, SVT)
+without queue coordination causes response desynchronisation even with
+the lock (the lock serialises, but the caller must know which response
+belongs to which request).
+
+**Correct architecture:**
+
+```
+Connect → PostConnectWorker (sequential, QThread)
+              │
+              ├─ "Reading I-Level… (1/5)"  → ZGW 0x22 0xF18A
+              ├─ "Reading Vehicle Order… (2/5)" → ZGW 0x22 0xF100/FC00
+              ├─ "Reading Mileage… (3/5)"  → KOMBI 0x1A → fallback ZGW 0x22
+              ├─ "Reading Battery… (4/5)"  → DME 0x12 → fallback ZGW 0x10
+              └─ "Reading ECU list… (5/5)" → ZGW 0x22 0xF000
+              │
+              └─ Done → populate UI → friendly error dialog
+                        → start secondary workers (DTC, coding, history)
+```
+
+The `PostConnectWorker` (in `app/worker.py`) processes tasks
+sequentially on a background thread, emits `progress(label)` for each
+task so the UI can show queue status in the spinner, and returns a dict
+of `{results, errors}`.  Failed tasks don't block the rest — the error
+dict is shown as a friendly summary dialog after all tasks complete.
+
+After the post-connect worker finishes, secondary workers (DTC read,
+service history, coding load) start on their own threads.  The
+connection lock ensures they queue naturally without racing.
 
 ---
 

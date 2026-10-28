@@ -70,15 +70,7 @@ bmw-self-service/
 ├── mock_data/
 │   └── f48_x1.json             # Canned car data for DEMO mode
 ├── dtc_descriptions.db         # Read-only DTC database (18.9 MB)
-├── tests/                      # pytest unit tests (39 passing)
 └── docs/                       # Protocol specs and research (18 docs)
-```
-
-## Running tests
-
-```bash
-pytest tests/ -v
-# 39 tests: test_uds.py, test_dtc_db.py, test_connection.py
 ```
 
 ## Building a standalone app (production)

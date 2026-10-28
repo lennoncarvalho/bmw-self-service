@@ -197,8 +197,9 @@ class VehiclePage(QWidget):
         No UDS calls are made here — this is pure display.
 
         Args:
-            results: Dict with keys like ``vin``, ``i-level``,
-                     ``mileage``, ``battery``, ``svt``, ``prod_date``.
+            results: Dict with keys like ``i-level``, ``mileage``,
+                     ``battery_voltage``, ``ecu_list``, ``prod_date``,
+                     ``fa_xml``, ``type_code``.
             series: BMW series letter (F/G/U/I).
             vin: VIN already read during connect (may be empty).
         """
@@ -209,7 +210,7 @@ class VehiclePage(QWidget):
         self.vin_label.setText(f"VIN: {vin or results.get('vin', 'Unknown')}")
 
         # I-Level
-        ilevel = results.get("i_level")
+        ilevel = results.get("i-level")
         self.ilevel_label.setText(
             f"I-Level: {ilevel}" if ilevel else "I-Level: unavailable"
         )
@@ -221,7 +222,7 @@ class VehiclePage(QWidget):
         )
 
         # Battery voltage
-        battery = results.get("battery")
+        battery = results.get("battery_voltage")
         self.battery_label.setText(
             f"Battery: {battery}" if battery else "Battery: unavailable"
         )
@@ -233,7 +234,7 @@ class VehiclePage(QWidget):
         )
 
         # SVT ECU list
-        ecus = results.get("svt")
+        ecus = results.get("ecu_list")
         if isinstance(ecus, list):
             self._ecus = ecus
             self.ecu_count_label.setText(f"{len(ecus)} ECUs detected")

@@ -119,10 +119,11 @@ These are features described in the spec but not yet built.
   - Acceptance: Each error path produces the specified dialog.
   - Files: `ui/main_window.py`, `ui/coding_page.py`, `ui/diagnostics_page.py`, `app/connection.py`
 
-- [ ] **G-15: Rename `bimmercode_data/` to `coding_data/`**
+- [x] **G-15: Rename `bimmercode_data/` to `coding_data/`**
   - Rename the directory on disk. Update any remaining references.
+  - Add `bimmercode_data/` to `.gitignore` as fallback.
   - Acceptance: No mention of "bimmercode_data" in shipped code or assets.
-  - Files: directory rename, `app/connection.py`, `main.py`
+  - Files: directory rename, `app/connection.py`, `main.py`, `.gitignore`
 
 - [ ] **G-16: PyInstaller bundle for macOS**
   - Run PyInstaller with `main.py`. Verify the `.app` launches, all assets included (theme.qss, dtc_descriptions.db, coding_data/, mock_data/).
