@@ -1,5 +1,10 @@
 # Tasks: Coding Database & Protocol Gaps
 
+> **Historical plan/status:** superseded by [the 2026-10-28 audit](../docs/19-audit-and-readiness.md).
+> Checkboxes/merge claims below are not acceptance evidence. Protocol examples
+> may be wrong; use [corrections](../docs/20-protocol-evidence.md) and
+> [owner decisions](../docs/21-product-decisions.md) before implementing.
+
 > Merged in PR #7 (`feat/coding-database`). 12 of 15 tasks complete.
 > 3 tasks remain open: T-2 (CAFD reads), T-4 (build_write_payload), T-11 (seed/key).
 
@@ -8,7 +13,7 @@
 ## Phase 1: Coding database foundation (blocks all real-car coding)
 
 - [x] **T-1: Build `app/coding_db.py` — `CodingDatabase` class**
-  - Decrypt `.enc` files with AES-256-CBC (key `2443...`, IV `7639...`, from `docs/08`)
+  - Decrypt `.enc` files with AES-128-CBC (key `2443...`, IV `7639...`, from `docs/08`)
   - Optional GZIP decompress after decryption
   - Output: JSON plaintext
   - Parse `.strings` files (Apple format) — `en.strings` (1537 entries), `de.strings`

@@ -1,5 +1,10 @@
 # Tasks: Infrastructure Layer
 
+> **Historical plan/status:** superseded by [the 2026-10-28 audit](../docs/19-audit-and-readiness.md).
+> Checkboxes/merge claims below are not acceptance evidence. Protocol examples
+> may be wrong; use [corrections](../docs/20-protocol-evidence.md) and
+> [owner decisions](../docs/21-product-decisions.md) before implementing.
+
 > **Phase 3.** From plan `tasks/plan.md`. Spec: `SPEC-INFRASTRUCTURE.md`
 
 ---

@@ -1,5 +1,10 @@
 # Phase 2: BimmerCode APK Analysis
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+> The compiled-in-only database claim is contradicted by doc 06 asset extraction.
+
 > **Date:** 2026-10-23
 > **Status:** Complete. F/G/U/I-series coding only. E-series uses NCS Expert format.
 > **Source:** `sources/BimmerCode_v4.25.04-12743.apk` (SHA-256: `fc6eedeb...`)

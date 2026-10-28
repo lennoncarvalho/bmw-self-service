@@ -1,12 +1,26 @@
 # BMW Self Service
 
-Cross-platform desktop app for BMW diagnostics, coding, and service history via ENET cable. Supports F/G/U/I-series vehicles (2011+).
+Cross-platform Python desktop app under development for BMW diagnostics, coding,
+and service history over ENET. F/G/U/I coverage is a goal, not a verified
+compatibility claim.
+
+**Current status:** real-car connection remains under investigation in
+[PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8). Coding writes,
+service-history operations and vehicle rollback are not production validated.
+Start with [the documentation index](docs/README.md),
+[readiness audit](docs/19-audit-and-readiness.md) and
+[owner decisions](docs/21-product-decisions.md).
+
+Project skills live in [`.agents/`](.agents/README.md); they are development
+resources and are not shipped with the application.
 
 ## Requirements
 
-- Python 3.13+
+- Python 3.13 (declared CI/tooling target; the current local venv differs)
 - ENET cable (Ethernet-to-OBD2)
-- BMW F-series (2011-2019), G-series (2018+), U-series (2023+), or I-series (2013+)
+- An ENET-capable BMW with an evidenced transport/ECU contract. First physical
+  validation target: owner’s F48 X1, model year 2018, NBT. Year alone does not
+  establish compatibility; E-series remains outside the current transport scope.
 
 ## Quick start
 
@@ -21,21 +35,26 @@ source .venv/bin/activate  # macOS/Linux
 # .venv\Scripts\activate   # Windows
 
 # Install dependencies
-pip install pyside6==6.12.0 pyinstaller==6.22.3 netifaces==0.11.0 pycryptodome
+python3 -m pip install -r requirements.txt pycryptodome
 
 # Run the app
-python main.py
+python3 main.py
 ```
 
 ## Connecting to your car
 
 1. Plug the ENET cable into your laptop's Ethernet port and the car's OBD2 port
-2. Press the Start/Stop button once **without** pressing the brake — this enters ignition/diagnostic mode
-3. Launch the app: `python main.py`
+2. Put the vehicle in the ignition/diagnostic state appropriate to its model;
+   the previous universal button sequence has not been validated across models
+3. Launch the app: `python3 main.py`
 4. Select your BMW series from the dropdown
 5. Pick your Ethernet adapter from the interface dropdown (e.g. `en7` on macOS)
 6. Click **Connect to your BMW**
 7. The top bar will show your VIN and model when connected
+
+> This is the existing UI flow, not a validated connection procedure. Capture
+> fresh debug logs for the next read-only validation. Do not use real-car
+> coding/history actions before resolving the write/readback blockers in the audit.
 
 ### DEMO mode
 
@@ -77,7 +96,7 @@ bmw-self-service/
 
 ## Before you push
 
-Every push must pass the same three checks CI runs, over the full app code
+Every push must pass the three static checks included in CI, over the full app code
 (`app/`, `ui/`, `main.py`). One command does all of it:
 
 ```bash
@@ -95,12 +114,14 @@ scripts/preflight.sh --fix    # apply ruff fixes/formatting, then gate
 nothing about the other. Do not push with any gate red, and never run the
 gate over a subset of the files.
 
-There is no `tests/` directory; the gate is the only automated verification
-at this stage.
+There is no automated test suite under the current project policy. The three
+local gates do not prove correct vehicle behavior. CI also runs `pip-audit`;
+that security check is not included in `scripts/preflight.sh`.
 
-## Building a standalone app (production)
+## Building a standalone app (unverified examples)
 
-The PyInstaller command bundles the app into a single executable with all data files embedded.
+These commands describe intended packaging. Neither platform’s release build
+is validated. See [stack and packaging status](docs/15-tech-stack.md).
 
 ```bash
 # macOS (onedir — proper .app bundle, macOS security compatible)
@@ -145,13 +166,13 @@ open "dist/BMW Self Service.app"           # macOS
 
 ```bash
 # Normal mode — logs errors only
-python main.py
+python3 main.py
 
 # Verbose mode — logs all UDS traffic, connection steps, and diagnostics
-python main.py --debug
+python3 main.py --debug
 
 # No log file — console only
-python main.py --no-log
+python3 main.py --no-log
 ```
 
 When `--debug` is active, the log file at `~/BMW-Tool/logs/uds.log` records:
@@ -165,16 +186,20 @@ When `--debug` is active, the log file at `~/BMW-Tool/logs/uds.log` records:
 
 The log rotates at 5 MB with 3 backup files. All timestamps are ISO 8601.
 
-## Troubleshooting
+## Troubleshooting and next validation
 
-| Problem | Solution |
-|---------|----------|
-| Vehicle not found | Ensure ignition is on (press Start/Stop once without brake). Try turning off Wi-Fi. |
-| Connection timed out | Check the ENET cable is fully seated. The ZGW takes ~5s to respond. |
-| DHCP server requires admin | On macOS/Linux, the DHCP fallback needs `sudo`. Grant it or wait for APIPA auto-config (up to 20s). |
-| App won't launch | Verify Python 3.13+ and all pip dependencies are installed. |
-| Font warnings at startup | Harmless — macOS doesn't ship `-apple-system` as a named font family. |
+Confirm the wired link, selected adapter’s IPv4/netmask and route, then collect
+fresh `--debug` logs. Distinguish discovery failure, TCP failure, routing
+activation, UDS response correlation and optional-data failures. The current
+local log was empty during the audit; retain new logs before retry/rotation.
 
-## License
+Do not force a particular host IP, disable unrelated networking, start DHCP or
+run the entire GUI as root based on the older troubleshooting table. Network
+fallback and cross-platform privilege handling need review. See
+[protocol corrections](docs/20-protocol-evidence.md).
 
-This tool is not affiliated with BMW AG. Use at your own risk.
+## Project and data licensing
+
+This project is not affiliated with BMW AG. A release license and redistribution
+rights for extracted data have not been established by this audit. Development
+skill provenance is recorded separately in `.agents/README.md`.

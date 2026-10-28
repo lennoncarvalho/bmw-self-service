@@ -1,5 +1,10 @@
 # Replacement App — Architecture & Integration Guide
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+> “All gaps resolved” is withdrawn; do not copy these example transports/encoders.
+
 > **Date:** 2026-10-23
 > **Status:** Complete — all gaps resolved
 >

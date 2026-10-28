@@ -1,5 +1,10 @@
 # Phase 4: SHM.exe + .bmwsh Service History Writer Analysis
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+> Absence of a string does not prove dynamically constructed jobs or wire payloads.
+
 > **Date:** 2026-10-23
 > **Status:** Complete
 > **Source:** `sources/SHM/SHM.exe` (SHA-256: `2d6bb528...`), 

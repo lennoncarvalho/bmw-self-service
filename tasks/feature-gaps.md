@@ -1,6 +1,11 @@
 # Tasks: Feature Gaps — Real-Car Readiness
 
-> Merged in PR #6 (`feat/feature-gaps`). All 17 tasks complete.
+> **Historical plan/status:** superseded by [the 2026-10-28 audit](../docs/19-audit-and-readiness.md).
+> Checkboxes/merge claims below are not acceptance evidence. Protocol examples
+> may be wrong; use [corrections](../docs/20-protocol-evidence.md) and
+> [owner decisions](../docs/21-product-decisions.md) before implementing.
+
+> Merged in PR #6 (`feat/feature-gaps`). Historical merge claim; completion not established (most checkboxes below are open).
 
 ---
 

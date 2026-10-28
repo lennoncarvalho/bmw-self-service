@@ -1,5 +1,9 @@
 # English Coding Labels — Fixed
 
+> **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
+> See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
+> Completion labels and code examples below are not validated vehicle contracts.
+
 > Branch: `feat/english-coding-labels`
 > Status: Done — one-line logic fix in `CodingDatabase._load_strings()`.
 

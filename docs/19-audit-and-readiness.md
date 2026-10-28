@@ -1,0 +1,110 @@
+# Initial audit and readiness findings
+
+Date: 2026-10-28. Baseline: `129d181d5ab4ca770e89de59ecb5189e6f9643a6`,
+branch `fix/hsfz-ack-handling`, clean index/worktree before this audit.
+Open [PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8) has the same
+head. No runtime code was changed by this cleanup. This is triage and preparation,
+not the full PR review or an attestation that any car operation is correct.
+
+## Outcome
+
+The app is **not production ready**. The owner has not achieved a successful
+end-to-end connection. A historical PR excerpt reports real gateway/UDS traffic,
+including a VIN response; the full local log is now empty. Thus “no network
+contact” and “fully working connection” are both inaccurate descriptions.
+
+All 28 original project-owned Markdown files were read. Fifty ignored reference
+Markdown files were inventoried and screened, with focused reading of relevant
+transport/PRG material; third-party VM internals were not independently certified.
+The [document index](README.md) records per-file standing. Sources, databases and
+ignored reference repositories were preserved.
+
+## Findings that should drive the next review
+
+These findings were checked against the current checkout. Some predate PR #8;
+confirm introduction with the diff/history before calling them regressions.
+
+| ID / priority | Evidence and failure consequence | Required resolution |
+|---------------|----------------------------------|---------------------|
+| A-01 / P0 | `ui/service_history_page.py: ServiceHistoryReadWorker.do_work` sends `31 01 A0 81`, identified elsewhere as an add routine. Loading a page invokes an unverified potentially mutating operation. | Establish a real read-only contract before vehicle use; review disabling the unsupported path |
+| A-02 / P0 | `CodingWriteWorker.do_work` falls back to `bytes([current UI index])` when live bytes/selection mapping is unavailable; it accepts responses without validating application success. | Fail closed without complete verified baseline/encoder, check responses and readback |
+| A-03 / P0 | `CodingPage._save_backup` stores categories in `manifest.json`, without raw ECU data, VIN or software identity. Backups restoration changes UI state. | Implement a restorable format and verified vehicle restore before advertising rollback |
+| A-04 / P1 | `MainWindow._connect_real` always calls HSFZ discovery even for DoIP, then creates DoIPConnection without `activate_routing`. Its activation method elsewhere emits a four-byte payload instead of seven. | Correct discover/activate/identify flow from primary evidence |
+| A-05 / P1 | HSFZ returns the first diagnostic frame without checking source/target or UDS correlation; pending/late responses can be returned to another request. | Review transaction ownership, pending responses, timeout recovery and matching |
+| A-06 / P1 | `_recv_hsfz_message` always reads eight bytes; short/control frames have type-specific bodies. Short drains suppress timeouts and can discard partial reads. | Frame six-byte base header first; retain partial bytes or invalidate stream |
+| A-07 / P1 | DoIP `_lock` exists but `send_uds` does not acquire it. ACK/response are consumed as exactly two frames; no general NACK/alive dispatch. | One serialized dispatcher with validated routing, control messages and response correlation |
+| A-08 / P1 | Main-window keepalive QTimer callbacks call synchronous network methods. Coding category construction also contains real-car reads outside a CarWorker. | Trace every caller; move all blocking I/O off GUI thread, including timers and shutdown waits |
+| A-09 / P1 | Post-connect DIDs/codecs assume FA XML, fixed SVT structure, F18A I-level, F406 mileage, F40C voltage. Coding chooses first available variant and probes unrelated candidates. | Trace mappings in source artifacts and match exact gateway/ECU/software; unknown stays unavailable |
+| A-10 / P1 | macOS discovery interface filtering includes Wi-Fi `enX` and labels by index. DoIP discovery ignores its interface argument; TCP is not scoped to selection. | Detect actual wired link and bind validated selected interface on both transports |
+| A-11 / P1 | DHCP pools use link-local addresses. macOS startup ignores subprocess status; Windows returns false; stop routines kill services globally. | Specify network UX and scoped owned lifecycle before enabling fallback |
+| A-12 / P1 | Service-history write sends unproven ASCII arguments under `0x2E`; docs conflict with `0x31`. A positive SID is treated as success without business validation/readback. | Reopen protocol research, preserve byte evidence, specify append/replace independently |
+| A-13 / P1 | Fault-type lookup uses DTC status semantics, snapshot identification invents timestamps/km, negative paths can hide unread ECUs. | Correct format semantics and explicitly show incomplete scans; verify emissions MIL independently |
+| A-14 / P1 | Backup format, known-good readback, multi-change block composition and interrupted-write recovery are not implemented to owner requirements. | Review shared write engine across all write screens; preserve baseline/intended/observed states |
+| A-15 / P2 | `Crypto.Cipher.AES` is a runtime import but requirements omit its distribution. Venv reports Python 3.15.2 while CI/config target 3.13. | Separate dependency/toolchain repair with fresh-install verification |
+| A-16 / P2 | DTC schema key omits ECU; arbitrary `LIMIT 1` mixes table types. `mode=ro` is described as thread safety, which it does not provide. | Specify description ambiguity and connection ownership; inspect extraction collisions |
+| A-17 / P2 | Assets are referenced relative to working directory in UI; ignored coding data lacks a committed acquisition/integrity manifest. Release builds are unverified. | Verify asset/dependency closure and platform packaging outside checkout |
+
+P0 means a potentially mutating or misleading recovery path, not proof that the
+operation damaged a vehicle. These issues are recorded for code review, not
+silently repaired during a documentation task.
+
+## Documentation defects corrected
+
+- Removed blind “all specs authoritative” handling; evidence and owner decisions
+  now take precedence over contradicted historical examples.
+- Reopened service-history SID/DID/RID and encoder claims; a job-name prefix or
+  local file format cannot establish transmitted bytes.
+- Corrected HSFZ base-header handling, DoIP header/activation structure, UDS
+  negative/pending semantics and DTC record/snapshot distinctions.
+- Withdrew unsupported universal ECU counts, transport-by-series, fixed FA/SVT
+  encodings, generic mileage/voltage mappings and “all gaps resolved” claims.
+- Corrected SQLite threading and total-row/translation claims. The read-only
+  database query measured 88,580 rows and 71,439 nonempty English descriptions.
+- Corrected stale test-suite claims, resume instructions and root capability
+  status. The owner reaffirmed the no-test-suite policy in this chat.
+- Coding/history write screens require backup and readback. Fault clearing is
+  explicitly exempt from saved reports/backups, per the owner's follow-up.
+
+## Skills and tooling
+
+`.agents/skills` was absent. Three reviewed upstream skills were installed using
+`npx skills@1.7.4` with pinned Git references: PySide6 reviewer, Python error
+handling and REA. Project skills cover spec/evidence workflow, Python correctness,
+SQLite, BMW transport, vehicle-write integrity and requirements interviewing.
+See [provenance and setup](../.agents/README.md) and `skills-lock.json`.
+
+The upstream Qt skill's reference links were broken and some general advice
+conflicted with the app's chosen architecture. A local overlay fixes routing
+and bounds that advice. No QML, model/view or asyncio migration is authorized.
+
+REA CLI 6.8.0 responds under existing Node 24.22.1. Its doctor reports no Codex
+registration and no configured JADX/native analysis engine; no usable JDK was
+found by `java_home`. The skill alone does not enable APK/native decompilation.
+No host MCP configuration or unrelated software was altered. The REA
+skill is pinned to the CLI 6.8.0 release (metadata version 49); obey actual schemas.
+
+## Verification and limits
+
+Baseline `scripts/preflight.sh` passed all three full-target checks: Ruff lint,
+Ruff formatting (18 files), mypy (18 files). Local execution used Python 3.15.2;
+this is not evidence of a Python 3.13 run. CI also includes `pip-audit`, outside
+the three-command local script; no dependency-security audit result is claimed.
+
+Final cleanup verification is recorded in `tasks/audit-verification.md`.
+No automated suite, vehicle requests, DHCP/elevation action, hardware validation,
+UI acceptance session or platform release build was performed. No push, PR
+modification, merge or message to another chat was made. PR #8 was attached
+for the next review.
+
+## Recommended next work, after remaining behavior decisions
+
+1. Review PR #8 against its base, separating new regressions from older app
+   defects. Capture exact findings and only then make scoped fixes.
+2. Establish a read-only F48/NBT connection baseline: adapter/route, discovery,
+   full HSFZ frame dispatch, correlated VIN and diagnostic session timing.
+3. Validate vehicle data/DTC reads with exact variant evidence. Suppress automatic
+   unsupported history/coding operations during that connection validation.
+4. Define and implement backup/current/intended/readback files and recovery UX.
+   Approve each real-car write path only after its encoder and readback exist.
+5. Expand transport/ECU coverage from source apps with retained evidence, then
+   package and validate each supported platform. Keep coverage status explicit.

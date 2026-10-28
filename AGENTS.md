@@ -1,9 +1,25 @@
 # BMW Self Service — AGENTS.md
 
-> OpenCode project configuration. Read automatically at session start.
+> Repository instructions for development and review.
 > Compatible with OpenCode, Claude Code, and Codex.
 
 ---
+
+## Read first
+
+1. Load `.agents/skills/spec-driven-development/SKILL.md`.
+2. Read `docs/README.md` for document status, then `docs/19-audit-and-readiness.md`.
+3. Read `docs/20-protocol-evidence.md` before transport/UDS changes and
+   `docs/21-product-decisions.md` before changing behavior.
+4. Load applicable skills from `.agents/skills/`; provenance and setup are in
+   `.agents/README.md`. Skills installed in the repo are available next turn;
+   their instructions can be read directly now.
+
+The 2026-10-28 audit overrides older completion labels and contradictory protocol
+examples. Historical REA notes are evidence candidates, not authoritative wire
+contracts. Correct a disproven spec before implementing it; ask the owner about
+product decisions that remain unclear. Do not infer vehicle support from year
+or chassis letter alone. No successful end-to-end connection is established.
 
 ## Project identity
 
@@ -51,8 +67,11 @@ This project follows spec-first development. Before writing any code:
 4. **Run the quality gate** — `scripts/preflight.sh` must be green (see below).
 5. **Commit** with descriptive messages referencing the spec doc.
 
-All 16 specification docs are authoritative. If a doc and your understanding
-conflict, the doc wins. If the doc is unclear, ask before coding.
+Approved product decisions define required behavior. Reproducible protocol
+evidence defines byte-level behavior. `docs/README.md` records the status of all
+18 original documents and the audit additions. Older documents contain known
+errors; use their correction notices. If evidence is missing, mark the claim
+unverified and investigate; if intent is unclear, ask before implementing it.
 
 ### Gating rules
 
@@ -67,7 +86,7 @@ conflict, the doc wins. If the doc is unclear, ask before coding.
 ## Quality gate — mandatory before every push
 
 **No push leaves this machine without a green `ruff` and `mypy` run over the
-full app code.** CI runs exactly these three commands; skipping them locally
+full app code.** CI includes these three commands plus `pip-audit`; skipping them locally
 does not make the failure go away, it only moves it to GitHub and burns a
 review cycle.
 
@@ -122,19 +141,26 @@ Lint passing does **not** mean formatting passes, and formatting passing does
 
 ## Skills to load
 
-When starting a development session, load these skills in order:
+Start with `spec-driven-development` every session. Open local files directly;
+do not assume skills named in prose or `rea.*` tools are already loaded.
 
-### Always load (every session)
-1. **`spec-driven-development`** — structured spec → plan → implement → verify workflow
+| Task | Project skill |
+|------|---------------|
+| Python correctness / PR review | `.agents/skills/python-reviewer/SKILL.md` |
+| Exceptions and input validation | `.agents/skills/python-error-handling/SKILL.md` |
+| PySide6 review and UI implementation | `.agents/skills/pyside6-reviewer/SKILL.md` plus its `project-overlay.md` |
+| SQLite schema and queries | `.agents/skills/sqlite/SKILL.md` |
+| ENET / HSFZ / DoIP / UDS | `.agents/skills/bmw-enet-protocol/SKILL.md` |
+| Any vehicle mutation or restoration | `.agents/skills/vehicle-write-safety/SKILL.md` |
+| APK / native binary investigation | `.agents/skills/reverse-engineer-anything/SKILL.md` |
+| Feature and failure-behavior decisions | `.agents/skills/requirements-interview/SKILL.md` |
 
-### Load by task
-
-| Task | Skill | Why |
-|------|-------|-----|
-| **PySide6 code review** | `pyside6-reviewer` | Thread safety, signal/slot, Qt 6.8+ idioms, anti-pattern detection |
-| **SQLite queries/schema** | `sqlite` | Prepared statements, WAL mode, indexing, Python sqlite3 patterns |
-| **Protocol/debugging** | REA tools (`rea.*`) | Inspect original APKs and PRG files to resolve protocol gaps during implementation |
-| **Session management** | `opencode` | Subagents, worktrees, parallel work |
+Generic skill examples do not override repository choices: Python 3.13 target,
+100-column lines, Qt Widgets, QThread subclasses, no asyncio/QML/model-view
+migration, and no automated test suite. Do not introduce dependencies merely
+because a skill example uses them. Session management uses the current harness;
+there is no required `opencode` skill. REA skill installation supplies guidance,
+not its analysis engines or a live MCP connection. See `.agents/README.md`.
 
 ## Coding conventions
 
@@ -157,25 +183,33 @@ When starting a development session, load these skills in order:
 - **No asyncio + Qt mixing.** Use `QThread` + signals for async operations.
 - **One `CarWorker(QThread)` base class** for all car I/O. Subclass per operation type.
 - **QSS in one file:** `assets/theme.qss`, loaded once at startup.
-- **QSettings** for all persistence. No manual config file I/O.
+- **QSettings** for application preferences. Backups, current/intended state,
+  readback records and exports are versioned data files, not preferences.
 - **Inline expand/collapse** for detail views. No sub-page navigation.
 - **QDialog** for forms (add service entry, write confirmation).
 
 ### SQLite patterns
 - Read-only connection: `sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)`
 - Always use parameterized queries. Never string formatting for SQL.
-- `DtcDatabase` is a singleton. Load once at startup, reuse everywhere.
+- `DtcDatabase` is an application-level singleton. Its SQLite connection ownership
+  must respect thread affinity; read-only mode does not make one connection
+  safe across threads. Do not enable WAL on the embedded static asset.
 
 ### Error handling
-- Every car operation has a 30-second timeout.
+- Default operation budget is 30 seconds. Apply a monotonic overall deadline
+  including queueing, ACKs and UDS pending responses; document per-operation
+  timing. Do not reset the deadline with each received fragment.
 - Timeouts produce user-friendly messages (see error matrix in `docs/16-ui-spec.md`).
 - Never show raw exceptions to the user.
 - Log all UDS messages at DEBUG level for troubleshooting.
 
 ## Testing policy
 
-Automated tests are **not needed at this stage**.  All protocol code
-requires a physical ENET cable and a real car.  UI verification is
+The current owner policy is **no automated test suite at this stage**.
+Do not create `tests/`. Framing, parsers and timeout behavior can be verified
+offline; physical cars are required to validate ECU-specific behavior.
+The owner reaffirmed this policy on 2026-10-28. It is not evidence of production
+readiness; track verification limits in `docs/21-product-decisions.md`. UI verification is
 visual against `docs/16-ui-spec.md`.  Pure functions (UDS framing,
 DTC normalisation, VIN parsing) are exercised indirectly through the
 app's real-car and DEMO-mode flows.  When the communication layer
@@ -218,7 +252,16 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 - **Offline capable.** All databases embedded in the binary. No internet beyond ENET cable.
 - **ENET cable only.** No Bluetooth, no WiFi OBD adapters, no K+DCAN.
 - **F/G/U/I-series only (2011+).** No E-series.
-- **117 of 139 ECUs are codable without SecurityAccess.** The 22 blocked ECUs are safety-critical (airbags, engine ECU, cameras).
+- Static database support/security flags do not establish that an ECU is safe or
+  writable on a particular car. Exact variant, software, authorization and
+  verified write/readback behavior are required; the old 117/139 claim is unverified.
+- **Coding/history write screens save a backup first; all mutations require readback.**
+  Preserve original, intended and observed state separately. This includes
+  service history and both coding modes. The owner explicitly exempts fault
+  clearing from saved backups/reports. Cleared DTC memory cannot be promised
+  restorable.
+- Never report a write as successful based only on an ACK or a positive response.
+  Resolve uncertain/partial outcomes before proposing retry or rollback.
 
 ## GitHub CLI (pushing to this repo)
 

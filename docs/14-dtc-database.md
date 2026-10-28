@@ -1,251 +1,79 @@
-# DTC Description Database
-
-> Ship `dtc_descriptions.db` as a read-only app asset. Load once at startup.
-> 88,580 entries. English + German. 18.9 MB.
-
----
-
-## Quick reference
-
-| | |
-|---|---|
-| **File** | `dtc_descriptions.db` |
-| **Size** | 18.9 MB |
-| **Entries** | 88,580 |
-| **Languages** | German (`text_de`) + English (`text_en`) — all user-facing entries translated |
-| **Lookup** | O(1) indexed, read-only SQLite |
-| **Tables covered** | FORTTEXTE (55K), IORTTEXTE (16K), FARTTEXTE (33) |
-
-## Schema
-
-```sql
-CREATE TABLE dtc_descriptions (
-    code        TEXT NOT NULL,     -- uppercase hex, e.g. "B7F805"
-    text_de     TEXT NOT NULL,     -- original German description
-    text_en     TEXT,              -- English translation
-    ecu         TEXT,              -- source ECU name (e.g. "BDC", "NBT")
-    table_type  TEXT,              -- "FORTTEXTE" | "FARTTEXTE" | "IORTTEXTE" | ...
-    translated  INTEGER DEFAULT 0, -- always 1 for user-facing entries
-    PRIMARY KEY (code, table_type)
-);
-CREATE INDEX idx_code ON dtc_descriptions(code);
-```
-
-## DtcDatabase class
-
-Ship this class with the app. Load the database once, reuse the connection.
-
-```python
-import sqlite3
-
-class DtcDatabase:
-    """Read-only, thread-safe DTC lookup. O(1) indexed per code."""
-
-    def __init__(self, db_path="assets/dtc_descriptions.db"):
-        self.conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-
-    def describe(self, code: str) -> str | None:
-        """Look up a DTC code. Returns English text, falls back to German.
-
-        >>> dtc_db.describe("B7F805")
-        'Connection head unit to DAB L-band antenna base: line disconnection'
-        """
-        code = code.upper().replace("0X", "").replace("0x", "")
-
-        row = self.conn.execute(
-            "SELECT text_en, text_de FROM dtc_descriptions WHERE code = ? LIMIT 1",
-            (code,)
-        ).fetchone()
-
-        if row:
-            return row[0] or row[1]
-
-        return _OBD2_CODES.get(code)
-
-    def describe_with_ecu(self, code: str) -> tuple[str, str] | None:
-        """Return (description, ecu_name) or None.
-
-        >>> dtc_db.describe_with_ecu("8040BD")
-        ('Terminal 30F reset or shutdown', 'BDC')
-        """
-        code = code.upper().replace("0X", "").replace("0x", "")
-
-        row = self.conn.execute(
-            "SELECT text_en, text_de, ecu FROM dtc_descriptions WHERE code = ? LIMIT 1",
-            (code,)
-        ).fetchone()
-
-        if row:
-            return (row[0] or row[1], row[2])
-        return None
-
-    def fault_type(self, type_code: str) -> str | None:
-        """Describe a fault type byte from DTC status mask.
-
-        >>> dtc_db.fault_type("08")
-        'implausible signal or value'
-        """
-        row = self.conn.execute(
-            "SELECT text_en, text_de FROM dtc_descriptions "
-            "WHERE code = ? AND table_type = 'FARTTEXTE' LIMIT 1",
-            (type_code.upper(),)
-        ).fetchone()
-        return (row[0] or row[1]) if row else None
-
-
-# Singleton — load once at app startup
-dtc_db = DtcDatabase()
-```
-
-## Usage: read DTCs from a car
-
-```python
-def read_dtcs(conn, ecu_addr: int) -> list[dict]:
-    """Read DTCs from an ECU and return rich descriptions.
-
-    Returns list of dicts with: code, status_byte, description
-
-    UDS flow:
-      10 03        → DiagnosticSessionControl (extended session)
-      19 02 08     → ReadDTCInformation (by status mask, confirmed DTCs)
-    """
-    dtcs = []
-
-    # Extended diagnostic session
-    conn.send_uds(ecu_addr, bytes([0x10, 0x03]))
-
-    # Read confirmed DTCs
-    resp = conn.send_uds(ecu_addr, bytes([0x19, 0x02, 0x08]))
-    if resp[0] != 0x59:        # negative response — no DTCs or ECU doesn't support
-        return dtcs
-
-    # Parse response: 0x59 + status_mask_echo + [3-byte DTC + 1-byte status]*
-    offset = 2
-    while offset + 4 <= len(resp):
-        code = resp[offset:offset+3].hex().upper()
-        status = resp[offset+3]
-        desc = dtc_db.describe(code) or "(no description)"
-
-        dtcs.append({
-            "code": code,
-            "status_byte": status,
-            "description": desc,
-        })
-        offset += 4
-
-    return dtcs
-
-
-# Example: read DTCs from headunit (ECU 0x63)
-for dtc in read_dtcs(hsfz, 0x63):
-    print(f"{dtc['code']}: {dtc['description']}")
-    # B7F805: Connection head unit to DAB L-band antenna base: line disconnection
-    # B7F807: Connection head unit to DAB L-band antenna base: short circuit
-    # 026300: Energy saving mode active
-```
-
-## Usage: clear DTCs
-
-```python
-def clear_dtcs(conn, ecu_addr: int):
-    """Clear all DTCs from an ECU.
-
-    UDS: 14 FF FF FF → ClearDiagnosticInformation (all DTCs)
-    """
-    conn.send_uds(ecu_addr, bytes([0x14, 0xFF, 0xFF, 0xFF]))
-```
-
-## UDS 0x19 sub-function reference
-
-Per ISO 14229-1. BMW follows the standard for these sub-functions.
-
-| Sub-function | ISO name | Common usage |
-|-------------|----------|-------------|
-| `0x19 01` | reportNumberOfDTCByStatusMask | Quick check: any faults? |
-| `0x19 02` | reportDTCByStatusMask | Read all confirmed/pending DTC codes |
-| `0x19 03` | reportDTCSnapshotIdentification | Which DTCs have freeze-frame data? |
-| `0x19 04` | reportDTCSnapshotRecordByDTCNumber | Read freeze-frame for one DTC (needs DTC+record params) |
-| `0x19 06` | reportDTCExtDataRecordByDTCNumber | Read extended data (environment, aging counters) |
-
-### Snapshot identification (0x19 03)
-
-Request: `0x19 03` (no parameters)
-Response: `0x59 03 + [DTC(3) + status(1) + snapshot_count(1) + records...]*`
-
-Each record (when snapshot_count > 0), BMW-specific format (tentative):
-`record_num(1) + timestamp(4) + mileage(4)`
-
-- **timestamp**: Seconds since 2000-01-01 00:00:00 UTC (BMW convention, needs per-chassis verification)
-- **mileage**: Kilometers × 10, big-endian uint32 (BMW convention, needs per-chassis verification)
-
-Example: `0x59 03 B7F805 08 01 01 A1B2C3D4 0001A340`
-→ DTC B7F805, 1 snapshot, record #1, timestamp=..., mileage=10,732.8 km
-
-### Snapshot record (0x19 04)
-
-Request: `0x19 04 [DTC(3)] [record_num(1)]`
-Response: `0x59 04 [DTC(3)] [status(1)] [record_num(1)] [snapshot_data...]`
-
-Snapshot data format is ECU-specific. Common DID→value pairs:
-- Engine RPM, vehicle speed, coolant temperature, battery voltage
-- Ambient temperature, intake air temperature
-- Fuel system status, calculated load
-
-The snapshot data format varies by ECU and is not decoded by this app.
-Only the timestamp and mileage from 0x19 03 are used for display.
-
-## DTC code format
-
-BMW hex codes from UDS `0x19` responses:
-
-```
-B7F805
-│││└── Fault code (0x05)
-││└─── Sub-category
-│└──── ECU identifier (0xF8 = headunit)
-└───── Platform prefix (0xB7 = F/G-series)
-```
-
-The car returns 3-byte codes. Normalize by uppercasing and stripping `0x` prefix before lookup.
-
-## OBD-II P-code fallback
-
-Standard P-codes (P0xxx-P3xxx) per SAE J2012. Extend as needed:
-
-```python
-_OBD2_CODES = {
-    "P0100": "Mass or Volume Air Flow Circuit Malfunction",
-    "P0101": "Mass or Volume Air Flow Circuit Range/Performance",
-    "P0171": "System Too Lean (Bank 1)",
-    "P0172": "System Too Rich (Bank 1)",
-    "P0300": "Random/Multiple Cylinder Misfire Detected",
-    "P0420": "Catalyst System Efficiency Below Threshold (Bank 1)",
-    # ... complete from SAE J2012 / ISO 15031-6
-}
-```
-
-## Why SQLite
-
-| Factor | SQLite | JSON |
-|--------|--------|------|
-| Lookup | O(1) indexed | O(n) scan, or full load into RAM |
-| Memory | Queries on disk | Must load entire file |
-| Startup | Instant | Must parse entire file |
-| Thread safety | `mode=ro`, concurrent reads | Needs locking |
-| Size | 18.9 MB | ~25 MB equivalent |
-
----
-
-## Appendix: provenance
-
-The database was built once from BMW PRG files and translated once via a local
-LLM. It is a static asset — never rebuilt during app development.
-
-| Step | Tool | Input | Output |
-|------|------|-------|--------|
-| Extract | `extract_dtc.py` | 2,571 PRG files | 88,580 entries (German) |
-| Translate | `translate_ollama.py` | German SQLite | 71,439 entries (English) |
-
-Both scripts are kept for reference in the repo root. See their `--help` for
-usage. The extraction requires `BimmerDaten/decoderPrg.py`. Translation requires
-Ollama with `qwen2.5:3b`.
+# Diagnostic descriptions and DTC decoding
+
+Reviewed 2026-10-28. Database facts and vehicle interpretation are separate.
+The database remains a static read-only asset.
+
+## Locally measured facts
+
+There are **88,580 rows**, with **71,439 nonempty English texts**. These are
+not counts of unique fault codes or professionally verified translations.
+
+| Table type | Rows |
+|------------|------|
+| FORTTEXTE | 55,315 |
+| IORTTEXTE | 16,091 |
+| PCODETEXTE | 8,388 |
+| FUMWELTTEXTE | 6,685 |
+| FARTTEXTEINDIVIDUELL | 1,202 |
+| IUMWELTTEXTE | 558 |
+| FARTTEXTEERWEITERT | 242 |
+| IARTTEXTEERWEITERT | 38 |
+| FARTTEXTE | 33 |
+| HORTTEXTE | 27 |
+| POSWHEBELTEXTE | 1 |
+
+Schema: `code`, `text_de`, `text_en`, `ecu`, `table_type`, `translated`, primary
+key `(code, table_type)`. ECU is not part of the key: investigate collapsed
+cross-ECU collisions before claiming complete ECU-specific coverage.
+
+## Database access
+
+Use an escaped file URI with `mode=ro`, parameterized queries and documented
+connection ownership. Do not rebuild the database or enable WAL during lookup.
+Read-only mode does not remove Python connection thread affinity. A singleton
+service need not mean one SQLite connection shared across threads. See
+[Python sqlite3](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect).
+
+Query the intended table type and ECU context; `WHERE code = ? LIMIT 1` can
+select an unrelated kind of description. Unknown codes remain unknown. English
+falls back to German; machine translation remains unverified. B-tree lookup is
+not guaranteed O(1); measure performance and inspect query plans.
+
+Read-only does not mean immutable or independent of WAL sidecars. Check asset
+integrity and packaging before selecting immutable mode. See
+[SQLite read-only/WAL behavior](https://sqlite.org/wal.html#read_only_databases).
+
+## UDS decoding corrections
+
+`19 02 <mask>` returns `59 02 <availability mask>` followed by repeated
+`<DTC:3 bytes><status:1 byte>` records. Records begin at offset **3**, not 2.
+Validate SID, subfunction, size and alignment. Mask `0x08` selects confirmed
+DTCs, not all pending/current faults.
+
+`19 03` identifies DTC/snapshot-record-number pairs. The earlier timestamp/km
+layout was unsupported. `19 04` reads snapshot records; `19 06` reads extended
+data. Codecs and lengths are ECU-specific: preserve raw unknown data rather
+than inventing dates or mileage. See the
+[ReadDTCInformation implementation](https://github.com/pylessard/python-udsoncan/blob/master/udsoncan/services/ReadDTCInformation.py).
+
+Status bit 7 means warningIndicatorRequested, not a standalone global emissions
+MIL reading. Status bits are not `FARTTEXTE` fault-type codes. The previous
+hex-nibble “platform/ECU” interpretation of `B7F805` was unsupported. Retain
+ECU identity and DTC format when interpreting codes.
+
+## Clearing and MIL
+
+`14 FF FF FF` requests all DTC groups on the addressed ECU; check the response
+and reread that ECU. An incomplete scan is not “no faults.” Do not deduplicate
+the same code across different ECUs. Single-code clears and the old claimed
+powertrain/chassis/body group constants need ECU-specific evidence.
+
+OBD service `01` and UDS `0x19` are different application services. MIL requires
+an evidenced emissions endpoint and codec, not `01 01` sent to an assumed
+gateway. Clearing does not guarantee the lamp stays off. Report readiness and
+recurring faults from observed results.
+
+The owner explicitly requires **no saved report/backup before fault clearing**.
+Reread fault/lamp state to establish the result; do not add report persistence
+as a prerequisite. Cleared memory, freeze frames and readiness are not guaranteed
+restorable. Clear scope and confirmation wording remain owner decisions.

@@ -1,0 +1,105 @@
+{
+  "auditDate": "2026-10-28",
+  "skillsCliVersion": "1.7.4",
+  "skills": {
+    "bmw-enet-protocol": {
+      "origin": "project-authored",
+      "files": {
+        "SKILL.md": "442a5315c912da581a01a998e38947ca8874bd48025bb3e2c7e2f50f88786e90"
+      }
+    },
+    "pyside6-reviewer": {
+      "origin": "upstream",
+      "files": {
+        "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "SKILL.md": "80198acf759741e86f5a77ec7bff6521b71234de9821ea0bd22582dd5deff1b8",
+        "anti-patterns.md": "dba28b10ede502f355c356292e3c54cba59dba6d0323f2ce44e012834cd1703d",
+        "model-view.md": "349f0118d9017736b1c79d145557e917d0a90afee5145249a407df37082e080d",
+        "performance.md": "5ab4a009ccb67bc0a749c16a341eb83980443160e3a7e0318a9dcaf437d47e4b",
+        "project-overlay.md": "3aa53fa8159307894226d1963d2f5eecc92d3fb0d7fb39c4941707247e635f92",
+        "qml-integration.md": "a9b8ea49ca46b51041b7b9d16fe7f1e706d03910472c6ee1defec5495716c791",
+        "review.py": "ebaee5e6be6724ec061ccf61552e5645dd77045e202192c90ca9a85d9851fbb5",
+        "signals-slots.md": "7d4d46f50f06239793934b2a321490c2f543585f938d96ec088840fd740b4876",
+        "threading.md": "1c49aface86a623abd15f74d924d225887bad441fe7322577ba64db855ac52b1",
+        "widgets.md": "8dff7dabe434e51738aa212a67ef774fffb6e33bb03bd1db1b27c7c1e207d798"
+      },
+      "source": "akiselev/qt-llm-template",
+      "ref": "6855e82e0c371d599b25c60f218c7f881939e4be",
+      "skillPath": ".claude/skills/qt-code-review/SKILL.md",
+      "upstreamComputedHash": "f6b411a902ff72aa1223ff110c4615ebd6640c096e4fb4655154c165279644b6",
+      "localModifications": [
+        "Corrected seven local reference links",
+        "Routed SKILL.md to project-overlay.md first",
+        "Added project-overlay.md",
+        "Normalized trailing whitespace and final newlines"
+      ]
+    },
+    "python-error-handling": {
+      "origin": "upstream",
+      "files": {
+        "LICENSE": "8ceaab71b527eb5db43810b74afc618ee36556197d2d51c45fd00aac483988c1",
+        "SKILL.md": "796346a50615010c4fea52ecb93784ebf232c5d4c9f0691bfc668529d9592543",
+        "references/details.md": "022c6c6bfb362d861258763712a05f62ccac09120866355582f874db14735c82"
+      },
+      "source": "wshobson/agents",
+      "ref": "0874a27b17a22e2b7c2e2bcd725768e0803cad06",
+      "skillPath": "plugins/python-development/skills/python-error-handling/SKILL.md",
+      "upstreamComputedHash": "b7bf403c928c5646329a0e0f686abe93dd2b353b23ababfd5ef79578f3082067",
+      "localModifications": [
+        "Normalized trailing whitespace and final newlines"
+      ]
+    },
+    "python-reviewer": {
+      "origin": "project-authored",
+      "files": {
+        "SKILL.md": "6b68652913f2e6c0772101fe331b965f4bc41c255b38f939582d8b52be297b92"
+      }
+    },
+    "requirements-interview": {
+      "origin": "project-authored",
+      "files": {
+        "SKILL.md": "8694dcf4b315ea4db2b1708bab6f1236ce962804a247fc85af6e1173e63084b5"
+      }
+    },
+    "reverse-engineer-anything": {
+      "origin": "upstream",
+      "files": {
+        "LICENSE": "798f9e4d18e49b30bf2f12696c8ced73dc4e1413da375a333d01281543a1ea8b",
+        "SKILL.md": "8818b645c9fd348399a50a8678b91cff20215690adad484e70282ff9f2ef91ee",
+        "references/android-applications.md": "24ecaa1798eb4f28591884a7deb68df31e90313865515a23e3b466403f1abc39",
+        "references/connection-and-recovery.md": "4754441e63e4252a0b230cf5aa12b78c0716463905305059bb7dea6713ba0bfc",
+        "references/environments.md": "83e041f0a5243172af69eaadf62da0699617add3ff1d46b294e4bba7ece9d95f",
+        "references/evidence-workflows.md": "f44b68acc6ebaa60c1f5d0670e4f9ff7212d351a0ecc6e6ca77ce38b9177ea57",
+        "references/javascript-applications.md": "619cfd15ffdf466452cc32002ae357fefec59d5dcad4c9dfc27630138f0f719d",
+        "references/native-and-artifacts.md": "cf394568ae91e9017d63056adb8872fb1df9e2f6bbe544a95d0fd9f064b06dd5",
+        "references/runtime-observation.md": "852bd1e25e9f83f0e8c7d4f8441a043e2b2a7d5e39f729bf22ac77259a0207bd"
+      },
+      "source": "morluto/rea",
+      "ref": "160d821ac9a0310afcb8d1fc427862dd6508add5",
+      "skillPath": ".agents/skills/reverse-engineer-anything/SKILL.md",
+      "upstreamComputedHash": "5eb458e9f41e75bd767f15ffc00f3192529b67e97146156e3dab2838b1733bbe",
+      "localModifications": [
+        "Pinned package-runner examples to CLI 6.8.0",
+        "Added published tool_count metadata (229)"
+      ]
+    },
+    "spec-driven-development": {
+      "origin": "project-authored",
+      "files": {
+        "SKILL.md": "cfd83574db0de7b2a8baba74d92467e0c315250303ad3db67d9d551ab81aeb7c"
+      }
+    },
+    "sqlite": {
+      "origin": "project-authored",
+      "files": {
+        "SKILL.md": "e2f9c0862010881d5d41abcd7c23ccb14cf9e398a5a841d3b964af6bc83cf7e1"
+      }
+    },
+    "vehicle-write-safety": {
+      "origin": "project-authored",
+      "files": {
+        "SKILL.md": "62e79019e68f98e8da711e97ac3c5e0dff0424e17212bc2989a865a077a3c26e"
+      }
+    }
+  }
+}
