@@ -1,8 +1,10 @@
 # Task A specification — standard protocol library migration
 
-Status: ready for implementation planning. This task changes protocol plumbing;
-it does not supply the missing BMW operation definitions. Companion task:
-[implementation checklist](../tasks/protocol-library-migration.md).
+Status: implementation plan recorded; implementation and acceptance pending.
+This task changes protocol plumbing; it does not supply the missing BMW
+operation definitions. Companion task:
+[implementation plan](../tasks/protocol-library-migration.md) and
+[development tasks](../tasks/protocol-library-migration-tasks.md).
 Task B's feature contract is [doc 26](26-feature-readiness-spec.md).
 
 ## Required result
@@ -48,7 +50,10 @@ deadline/cancellation context and correlated response or classified failure.
 Retain a compatibility facade for current `send_uds(ecu, payload, timeout)`
 callers only while migrating them; convert timeout to one deadline at entry.
 Typed service entry points are preferred for supported standard operations.
-Choose exact class names during the task's implementation plan.
+The plan names DiagnosticConnection, ProtocolOwner/ProtocolWorker,
+OperationContext, TransportAdapter and UdsServices, with exact module paths,
+thread/queue ownership, compatibility behavior and failure mapping. These are
+planned APIs; do not treat them as implemented until the task records evidence.
 
 Do not put udsoncan Client over today's blocking request-and-response
 `send_uds`: its transport connection expects send and receive separately.

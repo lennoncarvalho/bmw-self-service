@@ -28,8 +28,10 @@ UDS/DoIP/HSFZ reuse recommendation, released-source review and migration gates.
 | B — REA and functional feature recovery | [task B](../tasks/rea-protocol-recovery.md) | [spec 26](26-feature-readiness-spec.md), [source/REA guide 27](27-rea-source-guide.md) |
 
 Start another session with [SESSION-PROMPT.md](../SESSION-PROMPT.md). Task A
-is ready for implementation planning. Task B is ready for source investigation;
-protocol facts and explicitly pending product decisions gate affected code.
+has an [implementation plan](../tasks/protocol-library-migration.md) and
+[ordered development tasks](../tasks/protocol-library-migration-tasks.md);
+implementation and acceptance remain pending. Task B is ready for source
+investigation; protocol facts and explicitly pending product decisions gate affected code.
 The first usable slice is connection/vehicle info, all-ECU fault display with
 one Clear All action, local history read/add and all applicable easy presets.
 History editing, advanced coding and CBS are later scope. REA now works for
