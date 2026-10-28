@@ -11,12 +11,18 @@ privileged DHCP configuration and unverified packaging claims.
 | PySide6 | 6.12.0 in requirements | 6.12.0 installed |
 | PyInstaller | 6.22.3 in requirements | 6.22.3 installed |
 | netifaces | 0.11.0 in requirements | 0.11.0 installed |
-| Crypto | Runtime imports `Crypto.Cipher.AES` | pycryptodome installed, missing from requirements |
+| PyCryptodome | 4.2.0 in requirements; supplies `Crypto.Cipher.AES` | 4.2.0 installed |
 | mypy | Unpinned CI tool install | 2.4.0 installed |
 
-Align the environment with CI and resolve the crypto dependency before claiming
-reproducible installation/packaging. No pins changed in this audit. Use Widgets,
-QSS, QThread/signals, sockets and SQLite. The app does not use asyncio.
+Align the environment with CI before claiming reproducible packaging. The initial
+audit changed no dependency pins. The PR review follow-up added the missing
+PyCryptodome 4.2.0 declaration after a fresh CI install exposed it: an undeclared
+AES import became Any under mypy and would be unavailable at runtime. This pin
+matches the installed package used for app startup. See the
+[official Crypto namespace installation guide](https://www.pycryptodome.org/src/installation)
+and [release metadata](https://pypi.org/project/pycryptodome/4.2.0/).
+
+Use Widgets, QSS, QThread/signals, sockets and SQLite. The app does not use asyncio.
 
 ## Network contract
 

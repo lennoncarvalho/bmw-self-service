@@ -66,6 +66,7 @@ were non-actionable suggestions/claims.
 | A-07 | Complete DoIP exchanges now serialize and dispatch ACK/NACK/alive traffic; broader DoIP discovery is still open. |
 | A-08 | Keepalive I/O moved to a CarWorker with cooperative lifecycle cleanup. Coding-page I/O and other application paths remain to review. |
 | A-10 | Adapter filter duplication removed; actual wired-link detection, labels and interface-bound networking remain open. |
+| A-15 | PyCryptodome 4.2.0 now declared after fresh CI exposed the missing AES dependency. Local Python 3.15 versus target 3.13 and release packaging validation remain open. |
 
 The other audit findings remain open. In particular, these fixes do not authorize
 running the unsupported service-history/coding paths against a vehicle. The

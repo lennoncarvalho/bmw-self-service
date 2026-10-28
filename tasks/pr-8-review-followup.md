@@ -122,3 +122,22 @@ mutable, and no immutable upstream version is asserted from those copies.
 supports cooperative interruption and waiting for actual thread completion;
 msleep does not itself honor an interruption request. Main-window cleanup polls
 isRunning and defers object destruction rather than blocking the GUI in wait.
+
+## CI dependency follow-up
+
+The first push (`ba94853`) passed local preflight and CodeQL, but the clean Linux
+Python 3.13 CI environment failed mypy in the unchanged `_decrypt_enc` function:
+`app/coding_db.py:42` returned Any because `Crypto.Cipher.AES` was unavailable.
+See [the failed quality job](https://github.com/lennoncarvalho/bmw-self-service/actions/runs/40747334911/job/123024495481).
+
+Plan extension: declare the existing runtime dependency in requirements.txt,
+update doc 15 and audit A-15 status, run the full gate and verify a fresh CI
+install. Pin pycryptodome==4.2.0, matching the package already used by the local
+app and current [PyPI release](https://pypi.org/project/pycryptodome/4.2.0/).
+[Upstream installation docs](https://www.pycryptodome.org/src/installation)
+confirm it supplies the Crypto namespace. Do not mask the missing dependency with
+a cast or type-ignore. No application behavior or cryptographic format changes.
+
+After publishing the source fixes, the 20 remaining inline threads were resolved;
+a fresh read confirmed all 24 existing inline threads resolved. Non-inline items
+and rejected/deferred suggestions retain their dispositions above.
