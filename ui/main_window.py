@@ -453,7 +453,7 @@ class MainWindow(QMainWindow):
     def _async_connect(self, connect_fn: Callable[[Event], object], series: str) -> None:
         worker = ConnectWorker(connect_fn, series)
         self._worker = worker
-        worker.finished.connect(self._on_worker_result)
+        worker.result_ready.connect(self._on_worker_result)
         worker.error.connect(self._on_connect_error)
         worker.progress.connect(self._on_connection_progress)
         worker.start()
@@ -537,7 +537,7 @@ class MainWindow(QMainWindow):
         self._post_connect_worker = PostConnectWorker(connection, tasks)
         self._post_connect_context = (connection, vin, series)
         self._post_connect_worker.progress.connect(self._on_connection_progress)
-        self._post_connect_worker.finished.connect(self._on_post_connect_result)
+        self._post_connect_worker.result_ready.connect(self._on_post_connect_result)
         self._post_connect_worker.error.connect(self._on_post_connect_worker_error)
         self._post_connect_worker.start()
 

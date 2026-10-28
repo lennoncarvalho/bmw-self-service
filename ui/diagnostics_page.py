@@ -287,7 +287,7 @@ class DiagnosticsPage(QWidget):
         worker = DtcReadWorker(self._connection, ecus, coverage_known=bool(self._ecus))
         self._worker = worker
         worker.started.connect(lambda: self.read_btn.setEnabled(False))
-        worker.finished.connect(self._on_dtcs_loaded)
+        worker.result_ready.connect(self._on_dtcs_loaded)
         worker.error.connect(self._on_dtc_error)
         # Capture worker ref at connect time so timeout handler always
         # references the correct DtcReadWorker, even if clear starts mid-read.
@@ -558,7 +558,7 @@ class DiagnosticsPage(QWidget):
 
         clear_worker = ClearWorker(self._connection, self._ecus)
         self._worker = clear_worker
-        clear_worker.finished.connect(self._on_clear_complete)
+        clear_worker.result_ready.connect(self._on_clear_complete)
         clear_worker.error.connect(self._on_dtc_error)
         clear_worker.start()
 

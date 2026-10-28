@@ -434,7 +434,7 @@ class ServiceHistoryPage(QWidget):
         self.add_btn.setEnabled(False)
         self._write_btn.setEnabled(False)
         self._worker = ServiceHistoryWriteWorker(self._connection, self._pending_writes)
-        self._worker.finished.connect(self._on_entry_written)
+        self._worker.result_ready.connect(self._on_entry_written)
         self._worker.error.connect(self._on_write_error)
         self._worker.start()
 
@@ -489,7 +489,7 @@ class ServiceHistoryPage(QWidget):
             return
 
         self._worker = ServiceHistoryEraseWorker(self._connection)
-        self._worker.finished.connect(self._on_history_erased)
+        self._worker.result_ready.connect(self._on_history_erased)
         self._worker.error.connect(self._on_erase_error)
         self._worker.start()
 
