@@ -294,6 +294,9 @@ class DiagnosticConnection:
                         services.bridge.ecu.address,
                         self.trace_id,
                     )
+                # Check queued operations between ECUs. A whole due-session
+                # sweep would multiply the bounded keepalive wait by ECU count.
+                break
         # Preserve fragments across idle poll expiry.
         with contextlib.suppress(TimeoutError):
             self.adapter.poll(self.context(0.02, self._owner.stop_event))
