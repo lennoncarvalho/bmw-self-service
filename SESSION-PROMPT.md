@@ -136,3 +136,23 @@ physical observations separate; do not turn missing car access into missing code
 The three-variant MIL decoder and shared dashboard/Diagnostics observation are
 implemented, reviewed and checked offline; reuse them rather than redoing that
 trace. Additional engine mappings remain required source recovery.
+
+## Post-PR13 topology/dashboard increment — 2026-10-29
+
+PR13 is merged at06e8baf. The next implementation branch is
+codex/task-b-topology-selection, created from fetched origin/main with a clean
+worktree. Read tasks/task-b-topology-implementation.md and its verification
+record before repeating work. Source recovery adds failed/empty-inventory
+fallback over all148UDS catalogue addresses, preserving candidate origin and
+identity outcomes without claiming installed topology. Native Qt Ethernet types
+replace interface-number/Wi-Fi heuristics. MIL now accounts for all62exact
+engine rows:53rows/17definitions use three traced direct DIDs;9rows/9definitions
+have explicit remaining decoder/source branches. Shared freshness/UI stays intact.
+
+Next concrete source work remains: U/I category/metadata and actual full-width
+DoIP address mapping, bit-packed gateway3F06 vehicle order/model decoding, the
+five older MIL block-reader chains, alternate DME9FF_R/EDMEI1 MIL and missing
+DME98_R/FCCU definitions; then diagnostic category/description breadth. Follow
+ordered queue after those branches with local JSON/history journal/cards,
+mode-specific writes and complete easy coding/recovery. None is hardware-blocked.
+No history reader, legacy product adapters or guessed coding baseline is revived.

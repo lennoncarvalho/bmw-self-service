@@ -106,3 +106,21 @@ session:
 - Preserve exact tail-based F101 decoding, full-window discovery ambiguity checks,
   shared tri-state MIL/freshness and operation deadlines. A simplification must
   retain their recovered contracts, not substitute plausible offsets or routing.
+
+## Completed next increment checkpoint — topology/MIL selection
+
+PR13 merge verified at06e8baf; fresh branch codex/task-b-topology-selection.
+Failed/empty inventory now follows the source's148-address UDS candidate branch
+with origin/identity/coverage accounting. Native Ethernet types remove Wi-Fi
+misidentification. MIL expands to53exact rows/17definitions across three traced
+DIDs; all62engine rows are accounted. See
+[verification](task-b-topology-verification.md),
+[topology source](../docs/evidence/task-b-topology-selection.md) and
+[MIL source](../docs/evidence/task-b-mil-breadth.md).
+
+Continue queue1–3 with actual DoIP address translation/U/I category metadata,
+gateway3F06 bit-packed vehicle order/model decoder, five older MIL block-reader
+chains and alternate/missing engine definitions. Diagnostic category/description
+reconciliation and local history/writes/coding remain required in order. After
+this increment merges, verify merge/fetch and create another fresh codex/branch;
+do not reuse a merged implementation branch or wait for more cars.

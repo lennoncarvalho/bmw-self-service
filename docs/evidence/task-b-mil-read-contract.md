@@ -118,3 +118,12 @@ and one exact `22 4A 69` request for a matched synthetic row. An offscreen Qt
 exercise confirmed the overview and Diagnostics mirror the same observation,
 immediately remove color for an already-stale result, and clear both on reset.
 These checks created no automated suite and involved no connection to a car.
+
+## Broader exact-definition implementation
+
+The [catalogue expansion](task-b-mil-breadth.md) now supersedes the original
+three-definition coverage boundary:17 fully traced scalar engine definitions
+cover53 exact F150 address-index rows, with9 other rows explicitly accounted for
+as missing definitions or remaining decoder recovery. The original three
+contracts remain unchanged. No universal DID or additional physical validation
+is claimed.

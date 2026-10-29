@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.connection import list_interfaces, list_interfaces_detailed
+from app.connection import list_interfaces_detailed
 
 
 class WelcomePage(QWidget):
@@ -143,13 +143,8 @@ class WelcomePage(QWidget):
             for adapter in disconnected:
                 self.interface_combo.addItem(adapter.display_text(), adapter.name)
         except Exception:
-            # Fallback to bare names if detailed detection fails
-            try:
-                for iface in list_interfaces():
-                    self.interface_combo.addItem(iface, iface)
-            except Exception:
-                self.interface_combo.addItem("en0", "en0")
-                self.interface_combo.addItem("en7", "en7")
+            # A failed native inventory must not offer guessed interface names.
+            self.interface_combo.addItem("Ethernet interface inventory unavailable", "")
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled

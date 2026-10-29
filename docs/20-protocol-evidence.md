@@ -126,3 +126,18 @@ provides REA MCP 6.8.0 and successful JADX package/class/method-smali inspection
 Ghidra 12.1.4 is reported available, not yet exercised on a native target here.
 See [source guide and retained Evidence](27-rea-source-guide.md). Tool readiness
 does not establish any missing BMW operation contract above.
+
+## Post-PR13 selection findings — 2026-10-29
+
+[Exact source chain](evidence/task-b-topology-selection.md): supplied F/G coding
+interfaces share HSFZ ENET; the source does not choose DoIP from a chassis letter.
+Failed/empty3F07 inventory uses148distinct UDS catalogue addresses for F150
+identification. Candidates are not installed topology; failed/unknown/unattempted
+identities remain explicit. Continue only on a healthy owned stream within the
+whole inventory budget. No DoIP byte-to-logical-address conversion is inferred.
+
+[MIL breadth](evidence/task-b-mil-breadth.md) supersedes the original three-engine
+selection with53exact F150/name rows across17definitions, using source-selected
+4A69/50D8/42BC scalar readers. Every other catalogued engine has a concrete source
+or decoder disposition. Raw values beyond0/1 remain unavailable, not truthy On.
+These static source contracts add no physical vehicle or lamp observation.

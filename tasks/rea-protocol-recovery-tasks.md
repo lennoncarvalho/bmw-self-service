@@ -373,3 +373,15 @@ See [deep evidence](../docs/evidence/task-b-history-deep-investigation.md).
   DEMO isolation, portability, explicit deletion and no car requests on imports.
 
 This replaces B4's former complete-car-baseline prerequisite for history only.
+
+## Post-PR13 B2/B3 progress
+
+Implemented source failed/empty topology fallback using148UDS catalogue addresses,
+with exact F150 identities and all candidate outcomes retained. Candidate scans
+cannot imply complete installed topology. Native Ethernet selection and discovery
+revalidation remove Wi-Fi/name guesses. MIL now enables53exact engine rows across
+17source definitions, accounting for all62rows/26names. Existing worker ownership,
+shared MIL freshness and mutation lockout remain. Read
+[verification](task-b-topology-verification.md) and its source links before
+repeating work. B2/B3 aggregate acceptance remains open for explicitly listed
+transport/identity/decoder/diagnostic branches; later B4–B6 are still required.

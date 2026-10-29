@@ -177,9 +177,15 @@ class VehiclePage(QWidget):
         ecus = results.get("ecu_list")
         self._ecus = ecus if isinstance(ecus, list) else []
         identified = sum(row.get("identified") is True for row in self._ecus)
+        candidates = sum(row.get("origin") == "catalogue" for row in self._ecus)
         self.ecu_count_label.setText(
-            f"ECUs announced: {len(self._ecus)} · Identified: {identified} · "
-            f"Unidentified: {len(self._ecus) - identified}"
+            (
+                f"Catalogue candidates: {candidates} · Identified: {identified} · "
+                "Installed topology unavailable; candidates do not establish vehicle coverage"
+                if candidates
+                else f"ECUs announced: {len(self._ecus)} · Identified: {identified} · "
+                f"Unidentified: {len(self._ecus) - identified}"
+            )
             if isinstance(ecus, list)
             else "ECU inventory: unavailable"
         )
@@ -218,12 +224,15 @@ class VehiclePage(QWidget):
             item = self.ecu_layout.takeAt(0)
             child = item.widget() if item is not None else None
             if child is not None:
+                child.hide()
                 child.deleteLater()
         for ecu in ecus:
             status = "Identified" if ecu.get("identified") is True else "Unidentified"
             label = QLabel(
                 f"{ecu.get('addr', '?')} · {ecu.get('name', 'Unknown ECU')} · {status}\n"
-                f"Variant: {ecu.get('variant', 'Unavailable')} · {ecu.get('description', '')}"
+                f"Variant: {ecu.get('variant', 'Unavailable')} · {ecu.get('description', '')}\n"
+                f"Origin: {ecu.get('origin', 'gateway')} · Identity: "
+                f"{ecu.get('identity_state', status)} · Inventory: {ecu.get('inventory_state', 'read')}"
             )
             label.setTextFormat(Qt.TextFormat.PlainText)
             label.setWordWrap(True)

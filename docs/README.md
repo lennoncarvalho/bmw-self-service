@@ -120,3 +120,14 @@ The supplied history utility's native read action is a Pro-only message.
 
 See [recovered contracts](evidence/task-b-recovered-contracts.md) and
 [verification/review](../tasks/task-b-implementation-verification.md).
+
+## Post-merge topology and MIL increment
+
+PR13 merge is verified. [Topology selection](evidence/task-b-topology-selection.md)
+recovers the missing failed/empty gateway-inventory branch over all148UDS
+catalogue addresses. [MIL breadth](evidence/task-b-mil-breadth.md) accounts for
+all62engine rows and enables53exact rows across17definitions with traced scalar
+readers. [Implementation plan](../tasks/task-b-topology-implementation.md) and
+[verification](../tasks/task-b-topology-verification.md) record native Ethernet
+selection, candidate/installed-topology boundaries and remaining source paths.
+This supersedes the earlier three-engine implementation count; Task B remains open.

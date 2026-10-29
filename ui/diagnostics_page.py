@@ -233,7 +233,14 @@ class DiagnosticsPage(QWidget):
         if self._coverage:
             lines = [f"{r['name']} / {r['memory']}: {r['state']}" for r in self._coverage]
             summary = QLabel(
-                ("Scan complete" if complete else "Scan incomplete") + "\n" + "\n".join(lines)
+                ("Scan complete" if complete else "Scan incomplete")
+                + (
+                    " — installed topology unavailable; catalogue candidates only"
+                    if isinstance(result, dict) and not result.get("topology_known", True)
+                    else ""
+                )
+                + "\n"
+                + "\n".join(lines)
             )
             summary.setWordWrap(True)
             self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, summary)
@@ -382,6 +389,11 @@ class DiagnosticsPage(QWidget):
             "Clear all supported Fault and Information memories? Permanent faults are not cleared by this operation.\n\n"
             "This cannot be undone or cancelled once started. Keep the car and computer powered, ignition on and cable connected.\n"
         )
+        if any(ecu.get("origin") == "catalogue" for ecu in self._ecus):
+            prompt += (
+                "\nInstalled topology is unavailable. Catalogue candidates are not a complete "
+                "vehicle inventory; only identified supported targets can be cleared.\n"
+            )
         if gaps:
             prompt += "\nScan gaps:\n" + "\n".join(gaps)
         connection = self._connection

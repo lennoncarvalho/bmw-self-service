@@ -230,3 +230,16 @@ padding is proven; the variable-NUL hypothesis was disproven by native offsets
 and a byte-for-byte round-trip of all eight supplied records. Complete headunit
 history reading is now retired by D-50; Task B implementation remains open. REA supports development recovery
 of code/data/contracts and is never a runtime dependency.
+
+## Post-PR13 selection implementation
+
+The topology/MIL increment implements source-derived fallback candidates and
+native Ethernet filtering, plus53exact MIL identity rows/17definitions. See
+[selection evidence](evidence/task-b-topology-selection.md),
+[MIL accounting](evidence/task-b-mil-breadth.md) and
+[verification](../tasks/task-b-topology-verification.md). Candidate-origin scans
+always remain incomplete installed-topology coverage even if all requested
+memories respond. D-26 still permits identified supported targets to clear, with
+topology gaps named. Full-width DoIP/U/I selection, remaining MIL readers,
+vehicle-order/odometer/model fields and subsequent queue items remain concrete
+source/implementation work; no new physical validation is implied.
