@@ -19,6 +19,11 @@
    recovery (`tasks/rea-protocol-recovery.md`, spec 26). Source/tool/evidence
    routing is `docs/27-rea-source-guide.md`. REA is now connected; earlier
    missing-engine observations are historical. Do not repeat setup blindly.
+6. D-57 requires broad source-supported F/G/U/I implementation; only the owner's
+   F48/NBT is available for physical tests. Do not make other cars a development
+   dependency or stop at that variant. Keep physical observations separate.
+   `tasks/task-b-next-development.md` owns continuation after the owner merges
+   PR13: verify merge, fetch origin, then create a fresh branch from origin/main.
 
 The 2026-10-29 owner interview (docs 21/26, D-21–D-49) supersedes older
 conflicting behavior requirements, including universal immediate readback.

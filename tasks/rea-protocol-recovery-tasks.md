@@ -1,6 +1,8 @@
 # Task B — ordered development tasks
 
-Status: decisions consolidated 2026-10-29; all implementation boxes remain open.
+Status: incremental implementation through PR13; unchecked aggregate items may
+contain implemented substeps. Use the linked verification records and current
+code before repeating work. D-57 continuation: [next development](task-b-next-development.md).
 Planning baseline `origin/main` `db3c99f`; current milestone is owner Mac source
 functionality (D-47–D-49), with Windows/packages/signing deferred. Follow the [implementation plan](rea-protocol-recovery-implementation-plan.md)
 for exact proposed files, timing, state design and decision gates; [spec 26](../docs/26-feature-readiness-spec.md)
@@ -69,7 +71,8 @@ additional configuration/measurement decoders remain pending.
 - [ ] Finish exact MIL applicability/endpoint/response/validity from the new
   MEVD172/172Y/1725 ISMIL4A69 PRG lead; independently bind engine variant/software.
   Do not apply it to DME9FF or every BMW. Retain exact positive/negative/sentinel
-  handling and owner comparison to iDrive/cluster before physical validation.
+  handling. The three-variant decoder is implemented; track physical comparison
+  separately while continuing the remaining source branches.
 - [ ] Recover vehicle/FA identity and actual odometer separately from engineering
   lifetime/regeneration mileage; never fabricate model/build/options from hints.
 - [ ] Add supported oil/coolant temperatures, RPM and other useful measurements
@@ -283,7 +286,7 @@ Files: `app/coding.py`, `app/coding_db.py`, `app/security.py` as evidenced,
 Exit: B-CODE-W and coding B-REC implemented/reviewed with exact applicability;
 advanced editing remains later scope.
 
-## B7 — review and release acceptance
+## B7 — implementation review and separate physical observations
 
 Depends: required B feature implementations and their evidence.
 
@@ -292,9 +295,11 @@ Depends: required B feature implementations and their evidence.
 - [ ] Complete support matrix by transport/gateway/ECU/software/feature, keeping
   source support, offline checks and physical results separate.
 - [ ] Visually check all required pages, limited/partial states, recovery and DEMO
-  isolation; retain meaningful owner-operated F48/NBT observations.
+  isolation; record available owner-operated F48/NBT observations separately.
+  No other vehicles are available or required to continue implementation.
 - [ ] Verify Python 3.13 source launch on the owner’s Mac, offline asset closure
-  and actual car flows (D-47–D-49). Record exact environment/outcomes. Windows,
+  and offline flows (D-47–D-49/D-57). Record actual car flows when observed,
+  without making fleet hardware a development/PR gate. Windows,
   Intel Mac, packages, signing and public distribution materials are later work.
 - [ ] Run full Ruff lint, Ruff formatting and mypy before each push; no suite.
 - [ ] Open separate implementation PRs with evidence/contract links and precise

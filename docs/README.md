@@ -33,8 +33,12 @@ has an [implementation plan](../tasks/protocol-library-migration.md) and
 code implementation and local review are complete, with remaining physical/platform/release
 acceptance recorded in the [verification record](../tasks/protocol-library-migration-verification.md). Task B product decisions are consolidated (2026-10-29);
 [remaining REA investigations](../tasks/rea-protocol-recovery-investigations.md)
-gate affected operations. Current acceptance is functional Mac Python-source
-use on the owner’s car; Windows/packages/signing are deferred.
+gate affected operations. Current development target is functional Mac Python-source use with broad
+source-supported BMW coverage (D-57). Only the owner’s car is available for
+physical observations; that does not gate other source-derived implementation.
+Windows/packages/signing are deferred. The owner plans to merge PR13;
+[next development](../tasks/task-b-next-development.md) defines the fresh-branch
+procedure and ordered continuation after confirmed merge.
 Task B now has an [implementation plan](../tasks/rea-protocol-recovery-implementation-plan.md)
 and [ordered development tasks](../tasks/rea-protocol-recovery-tasks.md), based on
 main after Task A PR #12 merged. No B feature contract is closed by that planning.

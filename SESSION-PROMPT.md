@@ -16,8 +16,10 @@ that merged API; Task A acceptance remains pending independently. Follow the
 [ordered development tasks](tasks/rea-protocol-recovery-tasks.md). Task B research
 can run independently; B integration uses A's merged API. Do not invent BMW
 constants inside A or declare the release functional merely because libraries work.
-Current Task B milestone is working personal use from Python 3.13 source on the
-owner's Mac/F48/NBT (D-47–D-49). Windows, packages/signing and public distribution
+Current Task B milestone is a working Mac Python-source application with broad
+source-supported BMW F/G/U/I ENET coverage (D-57). The owner's F48/NBT is the
+only physical validation vehicle; access to other cars is not a dependency.
+Windows, packages/signing and public distribution
 are later. [Spec 26](docs/26-feature-readiness-spec.md) is consolidated after the
 2026-10-29 interview; [REA checklist](tasks/rea-protocol-recovery-investigations.md)
 contains the remaining facts. No product interview gate remains for starting work.
@@ -44,7 +46,8 @@ bundles if new-session IDs are absent; do not fabricate `ev_...` references.
 Current app baseline: PRs #8/#9/#11/#12 merged. The retained session (doc 23) proves
 HSFZ discovery/session/VIN on the owner's F48 X1 MY2018/NBT. Optional reads were
 rejected, I-level/FA successes were misleading and DTCs reached only the gateway.
-Live history/coding readers are disabled pending evidence. The former add-like
+Live history reads are retired; full preset-value coding reads remain incomplete,
+while exact-identity coding snapshots are implemented in PR13. The former add-like
 history request is no longer automatically sent. Read doc 24 for library
 evaluation and exact adapter obligations. Inspect current Git/PR state before
 changes; this baseline does not replace current source review.
@@ -82,7 +85,8 @@ Implementation branch: `codex/task-b-feature-recovery` (new from origin/main,
 carrying the approved planning commits). The owner requested unattended REA-led
 implementation, outsider review, fixes, verification and a PR. The fundamental
 source-recovery rule is now in AGENTS.md. A reviewed recovery slice is implemented;
-**Task B remains incomplete** and its PR must remain draft.
+**Task B remains incomplete**. Under D-57, the owner reviews/merges PR13 as an
+incremental delivery; do not keep it draft as a completion gate.
 
 Read `docs/evidence/task-b-recovered-contracts.md` and
 `tasks/task-b-implementation-verification.md` before continuing. They record
@@ -97,10 +101,11 @@ faults, clears supported fault/information memories with checked post-reads,
 and saves exact-identity opaque coding snapshots in portable durable JSON.
 DoIP connection retains Task A but byte-to-logical ECU inventory translation
 is not recovered. Full easy preset predicates/dynamic options/writes, recovery,
-power/ignition contracts, local JSON/history append/replacement and actual
-emissions MIL remain open; a history reader is no longer required.
-No new car acceptance or universal compatibility is claimed. Continue the same
-unmerged implementation PR/branch for this work; don't reuse it after merge.
+power/ignition contracts, local JSON/history append/replacement and broader
+emissions MIL coverage remain open; a history reader is no longer required.
+No new car acceptance or universal compatibility is claimed. The owner now plans
+to merge PR13; follow the post-merge continuation below instead of starting
+another implementation slice on this branch.
 
 ## History codec and runtime boundary follow-up — 2026-10-29
 
@@ -114,3 +119,20 @@ padding is proven; the variable-NUL hypothesis was disproven by native offsets
 and a byte-for-byte round-trip of all eight supplied records. Complete headunit
 history read is retired; Task B implementation remains open. REA supports development recovery
 of code/data/contracts and is never a runtime dependency.
+
+## Next development after PR13 — owner handoff
+
+Read [the ordered continuation](tasks/task-b-next-development.md) first. Confirm
+PR13 merged, fetch origin, and create a fresh codex/ branch from origin/main.
+Until merge, limit this branch to review fixes/documentation. Do not merge for
+the owner or create the next branch early. D-57 supersedes older F48-only
+acceptance wording and any instruction to hold PR13 draft until Task B is complete.
+
+Next: broad connection/topology/definition selection, then MIL/dashboard coverage
+and diagnostics breadth, local JSON/history journal/cards, history writes and
+full applicable easy coding/recovery. Source-derived implementation/review and
+offline checks proceed without fleet hardware. Keep source support and actual
+physical observations separate; do not turn missing car access into missing code.
+The three-variant MIL decoder and shared dashboard/Diagnostics observation are
+implemented, reviewed and checked offline; reuse them rather than redoing that
+trace. Additional engine mappings remain required source recovery.

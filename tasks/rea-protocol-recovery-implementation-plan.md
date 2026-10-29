@@ -17,7 +17,9 @@ local JSON history/cards plus ADD-only append and explicit erase-and-replace,
 the entire applicable easy coding catalog and B-REC recovery. Headunit history
 read is retired. Direct per-record car editing/deletion, advanced coding and CBS
 stay later scope. [Workflow28](../docs/28-service-history-workflow.md) owns history. Current acceptance is functional personal use from Python 3.13 source on
-the owner’s Mac/F48/NBT (D-47–D-49). Windows/platform packages, signing and public
+macOS with broad source-supported F/G/U/I applicability (D-47–D-49/D-57).
+The owner’s F48/NBT is the only physical observation vehicle, not the scope boundary.
+Windows/platform packages, signing and public
 distribution are deferred. No cloud synchronization, flashing or authorization bypass.
 
 Every enabled operation needs a retained source-to-send-to-decoder contract,
@@ -28,6 +30,11 @@ independently. A disabled placeholder is a safe interim state, not completion.
 A missing applicable preset remains an open release item.
 
 ## Baseline and design constraints
+
+This section describes the original planning baseline. PR13's implementation
+and linked verification records supersede completed replacement work below;
+check current code before reimplementing it. Post-merge execution is in
+[next development](task-b-next-development.md).
 
 Observed locally in the merged source: Task A exposes `DiagnosticConnection`
 `context`, `register_ecu`, `run_operation`, `submit_operation` and typed `request`
@@ -79,7 +86,7 @@ names; proprietary source bundles/keys stay out of Git and shipped assets.
 | B5b | Mode-specific frozen append/replace plan and CarWorker in app/service_history.py; separate v1 history journal in app/history_files.py; history/backups UI | B2 identity + B4 history journal + B5a + B-HIST-W execution/results/cycle evidence; no car-history baseline/read |
 | B6a | New `app/coding.py`: live reads/exact matching; update `app/coding_db.py`, `ui/coding_page.py`; catalog accounting in `docs/evidence/easy-preset-coverage.json` | B2 + B-CODE-R and complete source catalog inventory |
 | B6b | Composed write/readback/recovery in `app/coding.py`; update coding/store/backups UI, review `app/security.py` without guessing keys | B4 + B6a + B-CODE-W/restore/cycle/power evidence; D-27–D-31 |
-| B7 | Source/vehicle coverage, real owner Mac source acceptance and DEMO/UI; update README, docs 15/16/21/26 | All required slices; owner F48/NBT source flows, full applicable catalog accounting |
+| B7 | Broad source coverage, Mac source/offline/UI checks, separate available physical observations; update README and docs 15/16/21/26 | All required slices and full applicable catalog accounting; no fleet-hardware dependency (D-57) |
 
 Research into B2/B3 and B5/B6 may advance independently; this is a dependency
 schedule, not authorization to enable partially recovered mutations. Implement
@@ -197,8 +204,10 @@ Owner-operated acceptance starts with read-only identity/inventory/info/DTCs.
 History/coding/Clear All physical mutation validation requires a separately
 agreed concrete procedure after encoder, prerequisites and contract-specific completion are reviewed.
 Retain source/operation summaries and full unmasked local diagnostic captures. One F48/NBT does not establish
-fleet coverage. B7 remains open for missing required acceptance, even when all
-code and static checks pass.
+fleet coverage. Track physical observations separately from source-derived
+implementation completion; missing other cars does not block B7 review or
+incremental PR delivery (D-57). Offline checks/static gates alone still cannot
+replace complete source contracts and working implementations.
 
 ## Implementation execution — 2026-10-29
 
@@ -239,3 +248,9 @@ Detailed tasks and exit criteria are B4/B5a/B5b in
 [ordered tasks](rea-protocol-recovery-tasks.md), with concrete behavior in
 [workflow 28](../docs/28-service-history-workflow.md). UI and storage design choices
 are specified; source capacity/session/reset/result questions remain factual work.
+
+## Post-PR13 execution
+
+[Next development](task-b-next-development.md) owns the ordered continuation
+and fresh-branch procedure after the owner merges PR13. D-57 supersedes older
+F48-only scope and fleet-hardware gates; no new implementation branch before merge.

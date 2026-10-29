@@ -96,6 +96,27 @@ identity/configuration and technical details organized in expandable groups.
 Unknown data stays unavailable and optional failures retain the valid connection.
 See [dashboard source findings](evidence/task-b-dashboard-read-findings.md).
 
+## Broad support and validation — D-57 (2026-10-29)
+
+Only the owner's vehicle is available for physical testing. Required development
+scope remains most source-supported BMW F/G/U/I models over ENET, not an F48/NBT
+implementation. Recover selection, discovery, topology, ECU/definition matching,
+requests and decoders across supplied source branches. Do not stop at the
+owner's variant or make access to other cars a development dependency.
+
+Complete source-derived implementation, independent review, offline byte/error
+checks and UI verification without waiting for fleet hardware. Track physical
+observations separately; do not claim unobserved vehicles were physically tested.
+Missing evidence requires further source investigation, not guessed universal
+constants or a permanent unsupported placeholder. Genuine source restrictions
+must retain their reason and next investigation where unresolved.
+
+The owner will review/merge PR13 as an incremental delivery. After confirmed
+merge, fetch origin/main and create a fresh codex/ branch for continued Task B;
+do not start it before merge or reuse the merged branch. This supersedes earlier
+instructions to keep PR13 draft until all Task B work is finished. No merge is
+authorized for the agent.
+
 ## Precedence and implementation interpretation
 
 - D-50–D-55 supersede history-read, complete car-history backup, legacy-format

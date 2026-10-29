@@ -10,17 +10,22 @@ operations. Authority: [owner decisions 21](21-product-decisions.md).
 
 ## Current acceptance target
 
-A working Python-source application on the owner's Mac and F48/NBT: ENET
-connection, real vehicle information, complete discovered-ECU fault display and
-one Clear All, local JSON history with append/explicit erase-and-replace, every applicable matched easy
-preset and usable backup/recovery. Real owner-operated results are required;
-DEMO, placeholders, source claims and static green gates alone are insufficient.
+A working Python-source application on macOS with broad source-supported BMW
+F/G/U/I ENET applicability: connection, real vehicle information, complete
+discovered-ECU fault display and one Clear All, local JSON history with append/
+explicit replacement, all applicable matched easy presets and usable recovery.
+Under D-57 only the owner's F48/NBT is available for physical tests. Recover and
+implement other source-supported branches without waiting for other vehicles.
+Source contracts, implementation, offline verification and physical observations
+are separate acceptance records. Static gates/placeholders alone cannot close
+implementation; unavailable fleet hardware is not a coding or PR-delivery gate.
 
 Windows is available but deferred. Packaging, signing/notarization, Intel Mac
 validation and public distribution are later milestones (D-47–D-49). Preserve
 cross-platform design and existing legal notices without making release packaging
 an obstacle to working source flows. Broad source-supported F/G/U/I applicability
-remains the research/design goal, not universal physical validation. Advanced
+is required implementation scope under D-57, not a claim of universal physical
+validation. Advanced
 coding, direct per-record car-history edit/delete and CBS remain later scope.
 Explicit whole-list replacement is now required under D-51; see
 [history workflow 28](28-service-history-workflow.md).
@@ -92,8 +97,10 @@ vehicle/configuration/mileage/software/voltage and ECU coverage, plus a prominen
 MIL green Off/red On/grey unavailable or stale with text and observation age.
 Unknown model/build/odometer values are not guessed. The new
 [dashboard source findings](evidence/task-b-dashboard-read-findings.md) contain
-real sensor definitions and an exact-variant MIL PRG lead; the full matching/
-decoder/owner validation contract is not yet complete. Batch initial publication,
+real sensor definitions. The [MIL contract](evidence/task-b-mil-read-contract.md)
+now enables three exact engine identities; broader matching/decoders remain
+required recovery, while actual physical observations are tracked separately.
+Batch initial publication,
 background bounded refresh and post-Clear-All actual MIL reads remain required.
 
 ## Definitive writes, completion and recovery

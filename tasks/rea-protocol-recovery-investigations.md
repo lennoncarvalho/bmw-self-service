@@ -78,7 +78,9 @@ per-ECU results and On/Off/Unavailable MIL (D-19/D-25/D-26). No saved report/bac
 A new format-aware PRG search recovered ISMIL/STAT_MIL_EIN_WERT at DID4A69 for
 MEVD172/172Y/1725, with STATUS_LESEN using22. This supersedes the earlier bounded
 APK-sensor negative as a blanket absence claim. Complete exact engine matching,
-response/validity/prerequisite extraction and physical comparison before enabling;
+response/validity/prerequisite extraction are now complete for three exact
+identities in the [MIL contract](../docs/evidence/task-b-mil-read-contract.md).
+Expand to the remaining source branches; physical comparison is separate;
 no general DME9FF/F48/fleet support follows. Full hashes/rows/disassembly and real
 sensor metadata for mileage/temperatures/RPM are in
 [dashboard findings](../docs/evidence/task-b-dashboard-read-findings.md).
@@ -168,8 +170,9 @@ artifact/version and expected observation before requesting additional material.
 Existing REA setup observations are historical; no installation is requested here.
 
 Close an item only with retained evidence and remaining branch limits. The final
-owner-operated read/write checks validate the Mac/F48/NBT milestone; source-backed
-support elsewhere stays distinct from physical validation. No automated suite.
+owner-operated read/write checks document the only available physical vehicle.
+D-57 requires broader source-backed implementation without waiting for fleet
+hardware; source support stays distinct from physical validation. No automated suite.
 
 ## R6/R7 additional-source investigation — 2026-10-29
 
