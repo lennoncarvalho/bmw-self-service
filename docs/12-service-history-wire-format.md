@@ -1,4 +1,4 @@
-# Service history wire protocol — unresolved
+# Service history formats and unresolved execution contracts
 
 Current Task B behavior (2026-10-29): [spec 26](26-feature-readiness-spec.md)
 and D-21–D-49 in [doc 21](21-product-decisions.md) supersede conflicting older
@@ -14,58 +14,46 @@ Reviewed 2026-10-28. The earlier “fully resolved” claim contradicted its own
 examples. This is the current research contract, not an encoder specification.
 Original text remains in Git history.
 
-## What is established
+## Current primary evidence and implementation
 
-Research describes headunit jobs `steuern_servicehistory_add` and
-`steuern_servicehistory_erase`, with semicolon-delimited **job API arguments**
-containing date, mileage, dealer identity, status and service items. The owner
-confirmed an NBT headunit in “Plan BMW Service History Tool” and reports that
-the Windows history manager has written to this car successfully.
+The [deep native/PRG investigation](evidence/task-b-history-deep-investigation.md)
+supersedes earlier unverified byte-layout claims. CIC/NBT/NBTEVO/HU_MGU ADD jobs
+encode `31 01 A0 81`, a 19-byte fixed header (seven-byte ASCII dealer field),
+then up to thirteen eight-byte items. Year, mileage, remaining distance/time
+are big-endian; remaining distance is signed32. The implemented reply shape is
+`71 01 A0 81 result` with a checked application result. Extra response bytes
+fail closed; the source status extraction alone does not prove their absence. These constants are
+routine identifiers, not DIDs. PRG arguments are not sent as ASCII job text.
 
-A PRG job may parse strings, encode binary fields, send multiple requests and
-decode named results. This does not establish that the car receives the job
-name, PRG filename, `JOB_STATUS` or unchanged semicolon string.
+`app/service_history.py` implements the recovered codec and result validation.
+It does not send to a car. The supplied local .bmwsh records share this body
+layout; their eight records round-trip byte-for-byte. This does not establish
+a genuine vehicle read, fresh original state, append preservation or restore.
+Unknown existing data is preserved locally, with new-entry validation separate.
 
-## Claims withdrawn pending evidence
+## Still unresolved
 
-| Previous claim | Current status |
-|----------------|----------------|
-| All `STEUERN` jobs use `0x2E` | Job-name prefixes cannot establish UDS SIDs |
-| `0xA081` / `0xA080` are DIDs | Candidate constants; trace into transmitted bytes |
-| The same constants are routine identifiers | Conflicts with the DID claim; unverified |
-| Job arguments go on the wire as ASCII | No saved byte-level trace establishes this |
-| Read history uses `31 01 A0 81` | Starts a routine labeled “add” elsewhere; not a proven read |
-| All CIC/NBT/EVO/MGU share this contract | Requires per-variant/software evidence |
-| `0x6E` or `0x71` proves business success | Validate echoes, result semantics and readback |
-| `.bmwsh` layout equals the wire format | Local serialization is a separate format |
+No complete maintenance-history read has been recovered. `31 01 A0 81` is ADD,
+not a read. The Lite reader UI is an unconditional Pro message; extended native
+tracing has not confirmed a dormant reader behind a key. A separate Pro build
+is a possible source, not a proven requirement. Ten headunit PRG inventories
+and their generic selectors supply no recovered list reader. The actual CBS
+history22 1004 on other ECUs is a different store and cannot substitute for it.
 
-## Evidence needed before implementation
-
-1. Hash the actual headunit PRG and referenced tables. Trace job entry points,
-   argument parsing and every transmitted buffer, including initialization and
-   diagnostic-session requirements.
-2. Preserve disassembly/decompilation and byte provenance, not just `ev_...`
-   IDs or nearby constants. PRG is BEST bytecode, not ordinary x86. A raw byte
-   search is not a decoder.
-3. Identify a genuinely read-only operation independently of add/erase. Establish
-   record framing, field lengths, endianness, item codes, dates/km, pagination
-   and unknown-field preservation.
-4. Correlate with an existing known-good capture or planned owner-operated
-   session. Record headunit/software and complete request/response ordering.
-   Do not perform a destructive erase as a discovery probe.
-5. Save reproducible evidence, then specify read, append, replace and erase
-   independently. Do not enable a real-car encoder based on candidate constants.
+Execution/session prerequisites, complete preservation/capacity, activation and
+ignition semantics still require evidence. Never erase as a discovery probe or
+use imported file bytes as proof of a complete current car baseline.
 
 ## Required application behavior
 
-Every write saves original state first, retains intended state and rereads the
-headunit to confirm the result. A backup must support the advertised recovery
-with vehicle/ECU identity and integrity metadata. Unknown readback/restore
-semantics cannot support verified success or guaranteed rollback.
+Before history mutation, retain an identified complete baseline and durable
+backup/intent. Follow D-29's operation-specific completion/cycle rules rather
+than universally requiring immediate same-cycle readback. Validate application
+status and distinguish response-confirmed from observed verification. Resolve
+uncertain/partial outcomes before retry or recovery; no automatic replay.
 
-Headunit-local history, CBS counters and BMW backend history are separate
-stores. Backend synchronization and CBS resets are not established here.
-The owner requires read/add for the initial release; edit/delete/replace remain
-later requirements. Duplicate/chronology and field rules need explicit decisions
-before affected implementation. See [owner decisions](21-product-decisions.md)
-and [Task B acceptance](26-feature-readiness-spec.md).
+The initial feature requires read/add; edit/delete/replace and CBS remain later.
+Reject future and same-day additions, allow backdated entries and entered
+mileage, support multiple items and free dealer input within real field limits.
+No Cancel during definitive writes. See [spec26](26-feature-readiness-spec.md)
+and [owner decisions](21-product-decisions.md). Backend sync remains unproven.

@@ -1,21 +1,16 @@
 """SecurityAccess (UDS 0x27) — seed/key authentication for protected ECUs.
 
-22 of ~139 BMW ECUs require SecurityAccess before accepting diagnostic writes
-(0x2E WriteDataByIdentifier, 0x31 RoutineControl, etc.). This module defines
-which ECUs are protected and provides the framework for the seed/key exchange.
-
-Reference: docs/01-bmw-protocol-research.md (FDL coding section),
-           docs/13-replacement-app-architecture.md
+This legacy helper does not establish write capability or ECU-specific levels
+and algorithms. Family classifications are display metadata, not authorization.
+No recovered security algorithm or live coding write path is implemented here.
 """
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-# ECU families that require SecurityAccess before writes.
-# Source: coding-ecu-infos.enc expertMode flags + BimmerCode source analysis.
-# These ECUs are safety-critical; incorrect writes can prevent the car from
-# starting or disable safety systems.
+# Historical family classification only. Exact variant/software evidence is
+# required to determine whether security access applies to an operation.
 PROTECTED_ECUS: set[str] = {
     "ACSM",  # Airbag Control Unit
     "ACSM2",  # Airbag Control Unit v2
@@ -47,13 +42,13 @@ PROTECTED_ECUS: set[str] = {
 
 
 def is_protected(ecu_name: str) -> bool:
-    """Check whether an ECU requires SecurityAccess before writes.
+    """Check the historical family classification, not actual write protection.
 
     Args:
         ecu_name: ECU short name from SVT (e.g. "DME", "ACSM_4C").
 
     Returns:
-        True if the ECU is in the protected list.
+        True if the ECU matches this historical list; this grants no capability.
     """
     name_upper = ecu_name.upper()
     # Check exact match
@@ -120,24 +115,3 @@ def send_key(connection, ecu_addr: int, key: bytes) -> bool:
             nrc,
         )
     return False
-
-
-# NOTE: Seed/key algorithms are ECU-specific and not publicly documented.
-# BimmerCode implements them in native libraries (libbimmercode.so, etc.).
-# Known algorithm families:
-#
-#   BMW Level 1:  Used by older ECUs (E-series). Simple XOR/key table.
-#                  Not needed for F/G/U/I-series (2011+).
-#
-#   BMW Level 3:  Used by FEM, REM, KOMBI, etc. on F-series.
-#                  Algorithm found in multiple public ECU tuning tools.
-#
-#   BMW Level 5:  Used by DME, DSC, ACSM on F/G-series.
-#                  More complex, varies by ECU software version.
-#
-#   BMW Level 7:  Used by latest G/U/I-series ECUs.
-#                  Not yet fully reverse-engineered.
-#
-# TODO: Extract algorithms from BimmerCode's native libraries via REA
-#       (libbimmercode.so in the APK's lib/ directory).
-#       Until then, protected ECUs must remain read-only.

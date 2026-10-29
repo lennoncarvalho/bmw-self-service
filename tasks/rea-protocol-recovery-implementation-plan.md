@@ -202,3 +202,20 @@ three-byte variant identification. Remove the unsupported F000/text parsing
 and optional DID guesses. Recover normal, information and permanent memories
 separately. SHM is native x86/Delphi; NBT PRG add/erase jobs require tracing,
 not CIL inspection or treating the local `.bmwsh` format as a vehicle read.
+
+## History/runtime follow-up plan and disposition — 2026-10-29
+
+1. Trace all native form handlers/resources and common network callers beyond
+   the Lite read stub; retain coordinates and hashes. Done; no dormant complete
+   reader confirmed, with indirect-call/coverage limits explicit.
+2. Independently decode the four headunit ADD jobs and local sample. Done;
+   fixed19-byte header, seven-byte dealer and eight-byte items. Variable-NUL
+   hypothesis rejected against native display offsets and actual file.
+3. Implement standalone immutable local codec, preserving unknown originals,
+   new-entry validation, NBT payload and checked business-result decoder in
+   app/service_history.py. Do not enable vehicle send without original state.
+4. Audit app imports/dependencies/startup/packaging for REA separation; remove
+   misleading source-tool/security-algorithm comments from app/security.py and
+   app/coding_db.py; document development-only rule in AGENTS.md.
+5. Independent review, offline golden/boundary/sample checks, full preflight,
+   then update the existing unmerged draft PR. No vehicle mutation validation.

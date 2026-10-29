@@ -127,14 +127,18 @@ existing BEST parser: history ADD/ERASE appear; no history read job was recovere
 NBT's SERVICEHISTORY table describes business results (0 okay,1 memory,2 data
 inconsistency,4 no permission,5 unknown), not a history readback format. The
 `.bmwsh` example remains local serialization and cannot establish original car
-history or permission to erase it. A Pro artifact, matching captured read flow,
-or another source containing this operation is needed to finish history backup
-and preserving append. Do not enable destructive rewriting from the Lite path.
+history or permission to erase it. Extended native tracing has not confirmed a
+dormant reader or key-only activation in this exact build; a separate Pro build
+is a possible source, not a proven requirement. See the
+[deep investigation](task-b-history-deep-investigation.md) for recovered ADD
+codecs/results, expanded reader search and runtime independence. Do not enable
+destructive rewriting from the Lite path.
 
 ## Remaining work keeps Task B open
 
-- Genuine history read and complete preservation, add/restore encoder, exact
-  write result and ignition/reconnection semantics.
+- Genuine history read and complete preservation/execution/restore, including
+  ignition/reconnection semantics. ADD payload and business-result codecs are
+  now implemented; no live mutation worker is enabled.
 - Complete applicable easy preset selection and writes, composed blocks,
   authorization/signature handling, power prerequisites and checked restoration.
   Type1 roots are **dynamic angel-eyes options**, not malformed empty presets:

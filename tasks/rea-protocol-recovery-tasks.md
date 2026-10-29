@@ -263,3 +263,17 @@ The supplied history utility's native read action is a Pro-only message.
 
 See [recovered contracts](../docs/evidence/task-b-recovered-contracts.md) and
 [verification/review](task-b-implementation-verification.md).
+
+## B5 codec follow-up — 2026-10-29
+
+- [x] Recover fixed ADD payload/field encoding and business-result position from
+  four primary headunit PRGs; implement standalone NBT encoder/result codec.
+- [x] Preserve all eight supplied local-file records byte-for-byte; retain
+  unknown status/item/dealer/padding values and reject malformed/truncated input.
+- [x] Independently review future/same-day checks, dealer/item/numeric limits,
+  positive echo/business-result handling and absence of vehicle calls.
+- [ ] Complete genuine vehicle read, preservation/append execution/capacity,
+  identity/session/activation/ignition and recovery contracts before enabling
+  vehicle send. The codec does not close B5a or B5b as a whole.
+
+See [deep evidence](../docs/evidence/task-b-history-deep-investigation.md).

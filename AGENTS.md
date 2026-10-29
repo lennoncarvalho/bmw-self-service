@@ -285,6 +285,9 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 ## Key constraints
 
 - **No admin/root for diagnostics.** Only initial ENET interface config + DHCP server need elevation.
+- **REA is development-only.** Use it to recover behavior/data and implement
+  standalone Python contracts. No research tools, source executables, providers
+  or runtime REA service may be required by the app or included in its bundle.
 - **Offline capable.** All databases embedded in the binary. No internet beyond ENET cable.
 - **ENET cable only.** No Bluetooth, no WiFi OBD adapters, no K+DCAN.
 - **F/G/U/I-series only (2011+).** No E-series.

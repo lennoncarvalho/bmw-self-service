@@ -108,3 +108,35 @@ spec26/task checklist; source recovery breadth is not physical all-BMW proof.
 Deliver this as a **draft PR for the reviewed recovery slice**, with no claim of
 Task B completion. Owner acceptance on the Mac/car remains required for the
 current milestone; Windows/packages remain explicitly later.
+
+## History codecs and runtime follow-up — 2026-10-29
+
+Extended REA/Delphi tracing covers four forms, PE resources/imports, Buy/erase
+handlers, native fixed-slot record parsing and all direct callers of the common
+ENET exchange. No key-only reader activation was confirmed; indirect-call and
+alternative networking limits remain explicit. Four primary and six additional
+headunit PRGs plus 861 diagnostic JSON assets were reviewed for actual history
+reads. CBS6.3 history is a different store, not a complete headunit baseline.
+
+Independent review verified app/service_history.py and the actual360-bytefile:
+8records, exact byte-for-byte roundtrip. A separately assembled golden PDU checks
+all fixed offsets, BE year/mileage, signed distance and unsigned time. One-off
+checks cover new-entry future/same-day, integer limits, seven-byte dealer and
+1..13 item bounds; unknown original flags/statuses/nonASCII/padding/14items;
+stale original+changed model rejection; trailing/truncated/invalid-calendar
+input; all known and unknown final result statuses/echoes. Final reply extensions
+fail closed rather than being interpreted without evidence. No blocking codec
+review findings remained. No vehicle I/O path was enabled or exercised.
+
+Runtime audit:32 pre-existing modules/requirements/packaging contain no REA
+invocation/dependency; offscreen source startup loaded no research tools. The
+new33rd module has only standard-library imports. Misleading source-tool and
+unproven security-level commentary was removed; AES material correctly labeled
+128-bit. AGENTS.md explicitly makes REA development-only, including code/data
+recovery, and forbids a runtime tool/service dependency.
+
+Full Ruff lint, Ruff format and mypy passed across33app/UI/main files. No
+suite/tests directory, car execution/write, source EXE execution, license
+modification or additional physical acceptance is claimed. Retained report and
+script hashes are in docs/evidence/task-b-history-deep-manifest.json. Complete
+Task B and its history reader/execution requirements remain open; PR stays draft.

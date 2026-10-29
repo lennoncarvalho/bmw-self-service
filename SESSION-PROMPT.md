@@ -92,3 +92,15 @@ is not recovered. Full easy preset predicates/dynamic options/writes, recovery,
 power/ignition contracts, history read/add and actual emissions MIL remain open.
 No new car acceptance or universal compatibility is claimed. Continue the same
 unmerged implementation PR/branch for this work; don't reuse it after merge.
+
+## History codec and runtime boundary follow-up — 2026-10-29
+
+[Deep investigation](docs/evidence/task-b-history-deep-investigation.md) records extended Lite native tracing and four primary
+headunit ADD jobs. The key-only dormant-reader assertion remains unconfirmed.
+Standalone `app/service_history.py` now preserves local records and encodes the
+recovered NBT ADD body with checked final application status; no vehicle send
+worker is enabled without a complete baseline/execution contract. Fixed7 dealer
+padding is proven; the variable-NUL hypothesis was disproven by native offsets
+and a byte-for-byte round-trip of all eight supplied records. Complete headunit
+history read and Task B completion remain open. REA supports development recovery
+of code/data/contracts and is never a runtime dependency.

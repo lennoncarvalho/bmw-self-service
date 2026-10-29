@@ -1,0 +1,16 @@
+{
+  "local_directory": "/Users/lennon/BMW-Tool/investigations",
+  "files_sha256": {
+    "task-b-shm-deep-20261029-evidence.json": "66687e84c6b368366f4dc3e66b91727f161026cca2db6a1f2e65b3fe73b85a67",
+    "task-b-shm-deep-local-report.json": "3b0171474b47da9ec1e578cd58c21ad89097ded3209e63bf78350e24ee6ebd2b",
+    "task-b-shm-form-parser.py": "77babbb8eafa21074e80c749142594444593210eb135fab209780a266e4705f8",
+    "task-b-shm-string-inventory.py": "fd1305ca927b4aac6f442891d9c9174e149d346157fe3e60a350468d76e21cea",
+    "task-b-history-codec-verification.py": "329e53fd763448ec8320921e6019d1e708d9af57f03b9ac798b5158e86553e00",
+    "task-b-history-add-prg-review.json": "774916b3ff58465c38741b7e10bf760a55808b5efa3ed401e6caba0b4455de05",
+    "task-b-history-prg-expanded-review.json": "3b1b0bab046c541388bb84dac6e19c2ad305619fd724ed7661a03698322ef14f",
+    "task-b-history-diagnostic-assets-search.json": "dddf5831cdcf7f71a53cc94449480a51983c33618da62c12ac9a012e42911619",
+    "task-b-history-all-prg-search.json": "9f95c381ab8a75d5f4cfafe5f213912d9faacf0c09575bb142869c9b4d2644ea",
+    "task-b-history-prg-selector-review.json": "75825ba9877050dc627e6e5addd09234431f87c9692633a39eb1f32c9f9a263d",
+    "task-b-runtime-boundary-review.json": "f5ce2941a11ca4d9b7f76cf99ef27cb89deabe5c6491753ec7d33a3ff6a3f4b7"
+  }
+}
