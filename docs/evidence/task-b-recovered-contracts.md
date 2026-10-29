@@ -144,24 +144,27 @@ destructive rewriting from the Lite path.
 
 ## Remaining work keeps Task B open
 
-- Genuine history read and complete preservation/execution/restore, including
-  ignition/reconnection semantics. ADD payload and business-result codecs are
-  now implemented; no live mutation worker is enabled.
+- Local JSON/cards and the separate durable history journal, then ADD-only
+  append and explicit erase-and-replace with activation/cycle contracts.
+  History reading and old-car backup/restore are retired under D-50–D-55.
+  ADD/result codecs exist; no live history mutation worker is enabled.
 - Complete applicable easy preset selection and writes, composed blocks,
   authorization/signature handling, power prerequisites and checked restoration.
   Type1 roots are **dynamic angel-eyes options**, not malformed empty presets:
   source EcuActivity.Q0 → AngelEyesBrightnessCodingOptionActivity/a0 chooses
   functions from current DRL module/DRL_Idx/POLI matrices. Type0 also needs all
   applicability predicates (ID8, series, excluded variants, definition functions).
-- Real emissions MIL matching/decoder/validation: a later
-  [PRG investigation](task-b-dashboard-read-findings.md) found ISMIL4A69 for exact
-  MEVD variants. This is a concrete read lead, not universal/owner-car validation;
-  a warning-indicator-requested DTC bit remains insufficient.
+- Broader emissions MIL and optional information mappings. The three-variant
+  [MIL contract](task-b-mil-read-contract.md) is implemented and checked offline;
+  other source branches remain recovery work. DTC warning bits are not MIL.
 - DoIP inventory/address mapping, remaining optional vehicle information,
   missing source data and full regional presentation acceptance.
-- Owner Mac/car execution and write validation. Local venv is Python3.15.2,
-  while repository/static configuration targets3.13; no3.13 vehicle run is claimed.
+- Mac source/runtime checks and separately recorded available owner-car
+  observations. Local venv is Python3.15.2, target3.13. Under D-57 no additional
+  cars are required to complete source-derived implementation and review.
 
 These are open requirements, not completed checkboxes or relabelled exclusions.
-The current PR must remain a draft recovery slice; no all-BMW compatibility or
-full Task B completion claim follows from these changes or static gates.
+The owner reviews and merges PR13 as an incremental delivery under D-57; do not
+hold it draft for full Task B completion. After confirmed merge use the fresh
+branch procedure in [next development](../../tasks/task-b-next-development.md).
+No universal physical validation or full Task B completion is claimed.

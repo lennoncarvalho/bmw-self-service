@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.service_history import SERVICE_TYPES
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -37,19 +38,7 @@ logger = logging.getLogger(__name__)
 class AddServiceDialog(QDialog):
     """Modal form for adding a new service entry."""
 
-    SERVICE_ITEMS = [
-        ("Engine oil change", 0x01),
-        ("Oil filter", 0x04),
-        ("Cabin filter / microfilter", 0x04),
-        ("Engine air filter", 0x0B),
-        ("Spark plugs", 0x0A),
-        ("Front brake pads", 0x02),
-        ("Rear brake pads", 0x06),
-        ("Brake fluid", 0x03),
-        ("Vehicle check (standard)", 0x64),
-        ("Coolant", 0x12),
-        ("Transmission fluid", 0x23),
-    ]
+    SERVICE_ITEMS = SERVICE_TYPES
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the service-history page with separate displayed and pending entries."""
@@ -82,7 +71,7 @@ class AddServiceDialog(QDialog):
         layout.addLayout(form)
 
         # Service items checkboxes
-        items_label = QLabel("Services performed:")
+        items_label = QLabel("Services performed (select 1–13):")
         items_label.setStyleSheet("font-weight: bold; margin-top: 8px;")
         layout.addWidget(items_label)
 
@@ -116,10 +105,10 @@ class AddServiceDialog(QDialog):
 
     def _on_item_toggled(self) -> None:
         """Enable OK only when at least one service item is checked."""
-        any_checked = any(cb.isChecked() for cb in self.checkboxes.values())
+        count = sum(cb.isChecked() for cb in self.checkboxes.values())
         ok_btn = self._button_box.button(QDialogButtonBox.StandardButton.Ok)
         if ok_btn is not None:
-            ok_btn.setEnabled(any_checked)
+            ok_btn.setEnabled(1 <= count <= 13)
 
 
 class ServiceHistoryPage(QWidget):
@@ -210,6 +199,8 @@ class ServiceHistoryPage(QWidget):
             "QPushButton:hover { background: #27AE60; }"
         )
         self._write_btn.clicked.connect(self._on_write_clicked)
+        self._write_btn.setEnabled(False)
+        self._write_btn.setToolTip("Vehicle history writes are not implemented yet")
         bar_layout.addWidget(self._write_btn)
         layout.addWidget(self._write_bar)
 
@@ -225,7 +216,7 @@ class ServiceHistoryPage(QWidget):
         if hasattr(self._connection, "data") and self._connection.data:
             self._unavailable_reason = ""
             self.add_btn.setEnabled(True)
-            self._write_btn.setEnabled(True)
+            self._write_btn.setEnabled(False)
             entries = self._connection.data.get("service_history", [])
             self._entries = sorted(entries, key=lambda e: e.get("date", ""), reverse=True)
             self._render()
@@ -233,16 +224,14 @@ class ServiceHistoryPage(QWidget):
 
         # No evidenced live read contract exists. In particular, the old
         # 31 01 A0 81 request may start an add routine; never send it as a read.
-        self._unavailable_reason = (
-            "Service history unavailable: the vehicle read operation has not been verified."
-        )
+        self._unavailable_reason = "Vehicle history cannot be read. Local JSON editing, append and replacement are not implemented yet."
         self._entries = []
         self._pending_writes = []
         self.add_btn.setEnabled(False)
         self.erase_btn.setVisible(False)
         self._write_btn.setEnabled(False)
         self._write_bar.setVisible(False)
-        logger.warning("History live read skipped: verified read protocol unavailable")
+        logger.info("Vehicle history read retired; local history workflow is not implemented yet")
         self._render()
 
     def _on_history_loaded(self, entries: list[dict]) -> None:
@@ -410,7 +399,7 @@ class ServiceHistoryPage(QWidget):
 
     def _on_entry_written(self, _result: object = None) -> None:
         """Re-load history after a successful write."""
-        self._write_btn.setEnabled(True)
+        self._write_btn.setEnabled(False)
         self.add_btn.setEnabled(True)
         self._pending_writes = []
         self._update_pending_label()
@@ -427,30 +416,15 @@ class ServiceHistoryPage(QWidget):
             self._write_bar.setVisible(False)
 
     def _on_write_clicked(self) -> None:
-        """Write all pending service entries to the car with confirmation."""
-        count = len(self._pending_writes)
-        if count == 0 or self._connection is None:
-            return
-        reply = QMessageBox.question(
-            self,
-            "Write to Car",
-            f"Write {count} new service entr{'y' if count == 1 else 'ies'} to the vehicle?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-        self.add_btn.setEnabled(False)
-        self._write_btn.setEnabled(False)
-        self._worker = ServiceHistoryWriteWorker(self._connection, self._pending_writes)
-        self._worker.result_ready.connect(self._on_entry_written)
-        self._worker.error.connect(self._on_write_error)
-        self._worker.start()
+        """Keep the unfinished live write boundary unavailable."""
+        # The forthcoming journal-backed append/replacement workers own sending.
+        # Keep this boundary closed even if a stale callback exposes the button.
+        logger.info("Vehicle history write unavailable: implementation pending")
 
     def _on_write_error(self, msg: str) -> None:
         """Handle write failure — re-enable buttons, preserve pending entries."""
         self.add_btn.setEnabled(True)
-        self._write_btn.setEnabled(True)
+        self._write_btn.setEnabled(False)
         logger.warning("Service history write failed: %s", msg)
         QMessageBox.warning(
             self,
@@ -543,7 +517,7 @@ class ServiceHistoryReadWorker(CarWorker):
 
 
 class ServiceHistoryWriteWorker(CarWorker):
-    """Reserved for a preserving history add with a complete vehicle baseline."""
+    """Reserved for journal-backed append or explicit replacement (workflow28)."""
 
     def __init__(self, connection: Any, entry_or_entries: dict | list[dict]) -> None:
         super().__init__(connection)
@@ -552,12 +526,12 @@ class ServiceHistoryWriteWorker(CarWorker):
     def do_work(self) -> bool:
         """Reject the former guessed ASCII/DID encoder at the worker boundary."""
         raise PermissionError(
-            "History writes require a complete vehicle read and preserving encoder"
+            "History writes require an implemented local journal and supported execution contract"
         )
 
 
 class ServiceHistoryEraseWorker(CarWorker):
-    """History erase is outside the current add-only product scope."""
+    """Standalone history erase is outside the append/replacement product scope."""
 
     def do_work(self) -> bool:
         """Never send the former unverified erase DID."""

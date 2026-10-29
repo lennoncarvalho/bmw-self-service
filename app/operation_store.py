@@ -170,6 +170,8 @@ def _publish(path: Path, record: dict[str, Any]) -> None:
             os.fsync(stream.fileno())
         os.replace(temporary, path)
         temporary = None
+        # Sync the directory entry too: durable baseline publication must survive
+        # power loss before any later vehicle mutation, not merely be atomic.
         directory = os.open(path.parent, os.O_RDONLY)
         try:
             os.fsync(directory)
@@ -243,7 +245,9 @@ class OperationStore:
         record = load_record(source)
         destination = self.root / f"{record['original']['id']}.json"
         if destination.exists():
-            if load_record(destination) != record:
+            # Both complete revision digests have already been validated,
+            # including events; comparing only the original would lose updates.
+            if load_record(destination)["sha256"] != record["sha256"]:
                 raise ValueError("A different revision of this backup already exists")
             return destination
         _publish(destination, record)

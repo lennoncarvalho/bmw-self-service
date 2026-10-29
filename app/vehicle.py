@@ -44,7 +44,9 @@ def read_mil(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
         and row.get("name") == MIL_VARIANTS.get(row.get("address_index", ""))
         and row.get("addr") == "0x12"
     ]
-    if getattr(connection, "kind", None) != TransportKind.HSFZ or len(candidates) != 1:
+    if getattr(connection, "kind", None) != TransportKind.HSFZ:
+        return {"on": None, "detail": "MIL mapping for this transport is not yet implemented"}
+    if len(candidates) != 1:
         return {"on": None, "detail": "No verified MIL read contract for the identified engine"}
     on = decode_mil(connection.send_uds(0x12, b"\x22\x4a\x69", timeout=30.0))
     return {

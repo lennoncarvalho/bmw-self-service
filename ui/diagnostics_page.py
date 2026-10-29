@@ -379,7 +379,7 @@ class DiagnosticsPage(QWidget):
             if r["state"] not in ("read", "unsupported")
         ]
         prompt = (
-            "Clear all supported fault and information memories? Permanent faults cannot be cleared this way.\n\n"
+            "Clear all supported Fault and Information memories? Permanent faults are not cleared by this operation.\n\n"
             "This cannot be undone or cancelled once started. Keep the car and computer powered, ignition on and cable connected.\n"
         )
         if gaps:

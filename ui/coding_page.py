@@ -593,6 +593,10 @@ class CodingPage(QWidget):
         worker.finished.connect(self._on_snapshot_finished)
         worker.start()
 
+    def is_reading(self) -> bool:
+        """Whether an owned coding snapshot read is still running."""
+        return self._coding_reader is not None and self._coding_reader.isRunning()
+
     @Slot(str)
     def _on_snapshot_error(self, message: str) -> None:
         self._on_snapshot(
@@ -650,7 +654,21 @@ class CodingPage(QWidget):
             self._sub_stack.removeWidget(old)
             old.deleteLater()
         self._sub_stack.insertWidget(0, page)
+        advanced = self._sub_stack.widget(1)
+        if advanced is not None:
+            self._sub_stack.removeWidget(advanced)
+            advanced.deleteLater()
+        settled = QWidget()
+        settled_layout = QVBoxLayout(settled)
+        settled_notice = QLabel(
+            "Advanced coding is unavailable. See the Easy tab for snapshot results and coverage."
+        )
+        settled_notice.setWordWrap(True)
+        settled_layout.addWidget(settled_notice)
+        settled_layout.addStretch()
+        self._sub_stack.insertWidget(1, settled)
         self._sub_stack.setCurrentIndex(0)
+        self._easy_tab.setChecked(True)
 
     def _load_coding_presets(self, ecus: list[dict]) -> None:
         """T-2/T-3/T-4: Load coding presets from database for discovered ECUs.
@@ -894,19 +912,19 @@ class CodingPage(QWidget):
             self,
             "Write to Car",
             f"Write {self._pending} coding changes to the vehicle?\n\n"
-            "A backup will be saved before writing.",
+            "A DEMO preview will be saved. No vehicle backup or write is performed.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        # G-9: Auto-backup before write
-        if not self._save_backup():
+        # DEMO metadata is deliberately separate from vehicle backups.
+        if not self._save_demo_preview():
             QMessageBox.warning(
                 self,
                 "Write Aborted",
-                "Cannot proceed without a backup. Free up disk space and try again.",
+                "Cannot save the DEMO preview. Check storage space and permissions.",
             )
             return
 
@@ -957,15 +975,14 @@ class CodingPage(QWidget):
         )
         logger.warning("Coding write failed: %s", msg)
 
-    def _save_backup(self) -> bool:
-        """Save a backup of original coding values before writing.
+    def _save_demo_preview(self) -> bool:
+        """Save a non-restorable DEMO preview, never a live ECU backup.
 
-        G-9: Creates a timestamped backup directory with ECU CAFD/FDL data.
-        G-14: Handles disk-full gracefully with user-facing error.
-
-        Returns:
-            True if backup succeeded, False if it failed (e.g. disk full).
+        Live coding snapshots use OperationStore; future writes must prepare
+        complete baseline/intent there rather than reusing UI category data.
         """
+        if not getattr(self._connection, "data", None):
+            return False
         import json
         import os
         from datetime import datetime
@@ -973,8 +990,8 @@ class CodingPage(QWidget):
         backup_dir = os.path.join(
             os.path.expanduser("~"),
             "BMW-Tool",
-            "backups",
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+            "demo-previews",
+            datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f"),
         )
         try:
             os.makedirs(backup_dir, exist_ok=True)
@@ -986,9 +1003,10 @@ class CodingPage(QWidget):
             )
             return False
 
-        # Fix #6: Save the ORIGINAL values, not the user's edits.
-        # This ensures rollback restores the pre-write state.
+        # Display metadata only; never accepted by the live backup importer.
         manifest = {
+            "mode": "demo",
+            "restorable": False,
             "timestamp": datetime.now().isoformat(),
             "changes": self._pending,
             "categories": self._originals,

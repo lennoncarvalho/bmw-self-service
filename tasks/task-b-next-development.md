@@ -83,3 +83,26 @@ Physical car checks can be recorded when the owner runs them, with a concrete
 reviewed procedure for mutations. They do not block the source-based queue or
 require more cars. Windows/build/signing remain deferred; Mac source use remains
 first, with the actual local Python version distinguished from the3.13 target.
+
+## PR13 review carry-forward
+
+See [review dispositions](pr-13-review-followup.md) for every Robin/CodeRabbit
+finding and current-slice fixes. Preserve these boundaries in the next coding
+session:
+
+- B5a/B5b must replace the intentionally disabled history send boundary with the
+  separate local journal and mode-specific workers. Do not re-enable it merely
+  because an ADD encoder exists. Vehicle history reading remains retired.
+- `SERVICE_TYPES` in app/service_history.py is the shared fourteen-type catalogue;
+  legacy sample parsing now lives only in scripts/inspect_history_format.py.
+  JSON/card work reuses the catalogue; it must not restore legacy interchange.
+- B6b must prepare live baseline/intent and per-step results through OperationStore
+  using actual ECU bytes. `_save_demo_preview` stores non-restorable display
+  metadata outside the live backup tree and is not a vehicle backup implementation.
+- Keep filesystem-heavy backup import/export/validation off the UI thread when
+  extending the backup UI. Current reads are bounded32MiB; do not add a streaming
+  dependency or relax integrity checks based on the review's incorrect claim
+  that the read is unbounded. Define byte/depth/collection bounds for new schemas.
+- Preserve exact tail-based F101 decoding, full-window discovery ambiguity checks,
+  shared tri-state MIL/freshness and operation deadlines. A simplification must
+  retain their recovered contracts, not substitute plausible offsets or routing.

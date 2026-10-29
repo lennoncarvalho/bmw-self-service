@@ -957,9 +957,11 @@ class MainWindow(QMainWindow):
 
     def _can_start_mutation(self) -> bool:
         """Only commit after background page reads have settled."""
-        return not self._mutation_active and all(
-            worker is None or not worker.isRunning()
-            for worker in (self._post_connect_worker, self.coding_page._coding_reader)
+        worker = self._post_connect_worker
+        return (
+            not self._mutation_active
+            and not self.coding_page.is_reading()
+            and (worker is None or not worker.isRunning())
         )
 
     @Slot(bool)

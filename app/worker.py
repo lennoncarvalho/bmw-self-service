@@ -89,6 +89,13 @@ class CarWorker(QThread):
                 message = "Multiple vehicles responded. Leave only one vehicle on the selected Ethernet connection, then retry."
             elif "identities differ" in str(exc) or "conflicting vehicle" in str(exc):
                 message = "The vehicle identities do not agree. Isolate the vehicle and reconnect."
+            elif isinstance(exc, ConnectionError):
+                if str(exc).startswith("Vehicle not found"):
+                    message = (
+                        "Vehicle not found. Check the cable, ignition and Ethernet IPv4 settings."
+                    )
+                elif str(exc).startswith("Select an Ethernet interface"):
+                    message = "Select an Ethernet interface with one configured IPv4 address"
             self.error.emit(message)
         finally:
             logger.info(

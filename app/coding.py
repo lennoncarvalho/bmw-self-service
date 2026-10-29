@@ -50,6 +50,7 @@ class CodingSnapshotWorker(CarWorker):
         super().__init__(connection)
         self.ecus = [dict(ecu) for ecu in ecus]
         self.vin = vin
+        self._deadline = 0.0
 
     def _read(self, address: int, payload: bytes) -> bytes:
         remaining = self._deadline - time.monotonic()

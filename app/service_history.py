@@ -12,8 +12,24 @@ from datetime import date
 
 _ITEM = struct.Struct(">BBiH")
 _HEADER = struct.Struct(">BBHBIB7sBB")
+# Decimal wire IDs recovered from the source service catalogues (workflow28).
+SERVICE_TYPES: tuple[tuple[str, int], ...] = (
+    ("Engine oil", 1),
+    ("Front brakes", 2),
+    ("Brake fluid", 3),
+    ("Microfilter / cabin filter", 4),
+    ("Recirculating air filter", 5),
+    ("Rear brakes", 6),
+    ("Spark plugs", 10),
+    ("Engine air filter", 11),
+    ("Fuel filter", 12),
+    ("Vehicle check", 100),
+    ("Pre-delivery inspection", 20),
+    ("Running-in check", 21),
+    ("Statutory vehicle inspection", 32),
+    ("Statutory emissions test", 33),
+)
 ADD_REQUEST = b"\x31\x01\xa0\x81"
-MAX_FILE_BYTES = 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -43,59 +59,6 @@ class HistoryEntry:
     def dealer(self) -> str:
         """Display ASCII dealer text without changing unrecognized original bytes."""
         return self.dealer_bytes.split(b"\x00", 1)[0].decode("ascii", errors="replace")
-
-
-def decode_legacy_history(data: bytes) -> tuple[HistoryEntry, ...]:
-    """Parse the concatenated legacy records; reject incomplete or trailing data.
-
-    Calendar/year/mileage/item numbers are big-endian. The dealer occupies
-    exactly seven bytes, including any NUL padding. Existing status bytes, codes,
-    dates and padding are preserved without normalization or filtering.
-    """
-    if len(data) > MAX_FILE_BYTES:
-        raise ValueError("History file exceeds the supported local file size")
-    entries = []
-    offset = 0
-    while offset < len(data):
-        if len(data) - offset < _HEADER.size:
-            raise ValueError("Incomplete history record header")
-        start = offset
-        day, month, year, correction, mileage, flag, dealer, status, count = _HEADER.unpack_from(
-            data, offset
-        )
-        service_date = date(year, month, day)
-        offset += _HEADER.size
-        end = offset + count * _ITEM.size
-        if end > len(data):
-            raise ValueError("Incomplete history service items")
-        items = tuple(
-            HistoryItem(*_ITEM.unpack_from(data, offset + i * _ITEM.size)) for i in range(count)
-        )
-        offset = end
-        entries.append(
-            HistoryEntry(
-                service_date, correction, mileage, flag, dealer, status, items, data[start:end]
-            )
-        )
-    return tuple(entries)
-
-
-def encode_legacy_history(entries: Collection[HistoryEntry]) -> bytes:
-    """Serialize a local file while preserving every previously decoded record."""
-    encoded = bytearray()
-    for entry in entries:
-        if entry.original_bytes:
-            # Do not accept a modified model paired with stale original bytes.
-            original = decode_legacy_history(entry.original_bytes)
-            if len(original) != 1 or original[0] != entry:
-                raise ValueError("Original history bytes no longer match the decoded entry")
-            encoded.extend(entry.original_bytes)
-        else:
-            _validate_fields(entry)
-            encoded.extend(_new_record_bytes(entry))
-        if len(encoded) > MAX_FILE_BYTES:
-            raise ValueError("History file exceeds the supported local file size")
-    return bytes(encoded)
 
 
 def _validate_fields(entry: HistoryEntry) -> None:
@@ -145,16 +108,22 @@ def encode_nbt_add(
     """Encode a new NBT add routine after product and source field validation.
 
     This is a payload encoder, NOT a send operation or proof of preserved car
-    history. Callers still need a freshly identified complete vehicle baseline,
-    durable backup/intent and the appropriate execution/recovery contract.
+    history. Callers still need an exactly identified supported headunit, durable
+    local state/intent/results and the mode-specific execution contract. Prior
+    car history is unavailable under D-50–D-55; this checks known local dates only.
     """
     _validate_fields(entry)
     if entry.service_date > (today or date.today()):
         raise ValueError("Future service dates cannot be written")
     if entry.service_date in existing_dates:
-        raise ValueError("A service entry already exists on this date")
+        raise ValueError(
+            "A service entry already exists on this date in local records; car history is unknown"
+        )
     if len(entry.items) > 13:
         raise ValueError("This headunit format supports at most thirteen service items")
+    supported_codes = {code for _, code in SERVICE_TYPES}
+    if any(item.code not in supported_codes for item in entry.items):
+        raise ValueError("Unsupported service type for a new entry")
     return ADD_REQUEST + _new_record_bytes(entry)
 
 
