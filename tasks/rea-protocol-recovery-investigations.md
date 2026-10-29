@@ -202,3 +202,21 @@ D-55 now requires multi-item cards and JSON only; the earlier legacy-format
 adapter idea is withdrawn. A readable plan/step journal fits the current flow.
 Garage suggestions/QR are not required; CBS stays later. Replay/maps/3D and a
 browser UI migration are not proposed.
+
+## Post-PR13 R2/R3/R5 implementation checkpoint
+
+- Recovered source HSFZ F/G interface inheritance and adapter factory, existing
+  host-broadcast behavior without DHCP setup, and failed/empty3F07 fallback over
+  all148UDS catalogue addresses. Implemented candidate provenance and outcomes;
+  native Qt Ethernet types replace interface-number heuristics.
+- Reconciled all62exact UDS engine rows/26names:53rows/17definitions have traced
+  direct scalar MIL readers (4A69/50D8/42BC), implemented with strict0/1 handling.
+  Five older block-reader chains, two alternate engines and two missing PRGs are
+  specific remaining source branches, not permanent unsupported classifications.
+- Full-width DoIP translation, U/I model/category metadata and bit-packed3F06
+  vehicle-order/model decoding remain next investigations. No extra physical
+  car is required. R2/R3/R5 aggregate boxes stay open for these remaining paths.
+
+Source evidence: docs/evidence/task-b-topology-selection.md and
+ docs/evidence/task-b-mil-breadth.md. Execution/review:
+ tasks/task-b-topology-verification.md. Reuse these findings before new tracing.

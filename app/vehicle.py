@@ -10,48 +10,63 @@ import logging
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from app.protocol.contracts import TransportKind
 from app.resources import resource_path
 
 logger = logging.getLogger(__name__)
 
-# Exact F150 identities with a recovered direct MIL read/decoder. See the
-# dashboard evidence report; a related engine name is not a compatible mapping.
-MIL_VARIANTS = {
-    "12 0F13F0": "MEVD172",
-    "12 0F1910": "MEVD172Y",
-    "12 0F17F0": "MEVD1725",
-}
+
+def mil_contracts() -> dict[str, dict[str, Any]]:
+    """Load exact engine selection and read dispositions from embedded definitions."""
+    path = resource_path("coding_data/mil_contracts.json")
+    with path.open("rb") as stream:
+        raw = stream.read(65537)
+    if len(raw) > 65536:
+        raise ValueError("MIL definitions exceed their supported size")
+    data = json.loads(raw)
+    if data.get("schema") != 1 or not isinstance(data.get("engines"), dict):
+        raise ValueError("Unsupported MIL definition format")
+    if any(not isinstance(row, dict) for row in data["engines"].values()):
+        raise ValueError("Invalid MIL engine definition")
+    return cast(dict[str, dict[str, Any]], data["engines"])
 
 
-def decode_mil(response: bytes) -> bool:
-    """Decode the exact single-value 4A69 MIL condition (0=off, 1=on)."""
-    data = did_data(response, 0x4A69)
+def decode_mil(response: bytes, did: int = 0x4A69) -> bool:
+    """Decode one exact scalar MIL condition; unknown request values stay unavailable."""
+    data = did_data(response, did)
     if len(data) != 1 or data[0] not in (0, 1):
         raise ValueError("Vehicle MIL response has an unsupported value or shape")
     return data[0] == 1
 
 
 def read_mil(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
-    """Read an actual MIL condition only after an exact engine identity match."""
-    candidates = [
-        row
-        for row in ecus
-        if row.get("identified") is True
-        and row.get("address_index") in MIL_VARIANTS
-        and row.get("name") == MIL_VARIANTS.get(row.get("address_index", ""))
-        and row.get("addr") == "0x12"
-    ]
+    """Read an actual MIL condition only after an exact engine definition match."""
     if getattr(connection, "kind", None) != TransportKind.HSFZ:
         return {"on": None, "detail": "MIL mapping for this transport is not yet implemented"}
-    if len(candidates) != 1:
+    engines = [row for row in ecus if row.get("addr") == "0x12"]
+    if len(engines) != 1 or engines[0].get("identified") is not True:
+        return {"on": None, "detail": "No unique identified engine for an emissions MIL read"}
+    engine = engines[0]
+    contract = mil_contracts().get(engine.get("address_index", ""), {})
+    if contract.get("name") != engine.get("name"):
         return {"on": None, "detail": "No verified MIL read contract for the identified engine"}
-    on = decode_mil(connection.send_uds(0x12, b"\x22\x4a\x69", timeout=30.0))
+    state = contract.get("state")
+    if state != "scalar-boolean":
+        reasons = {
+            "missing-definition": "MIL engine definition is not present in the supplied data",
+            "no-direct-mil-row": "MIL direct-read mapping is not recovered for this engine",
+            "block-reader-not-yet-traced": "MIL block-reader contract still requires recovery",
+        }
+        return {"on": None, "detail": reasons.get(str(state), "MIL engine decoder is unavailable")}
+    did = contract.get("did")
+    if type(did) is not int or not 0 <= did <= 0xFFFF:
+        raise ValueError("Invalid MIL read definition")
+    on = decode_mil(connection.send_uds(0x12, b"\x22" + did.to_bytes(2, "big"), timeout=30.0), did)
     return {
         "on": on,
-        "detail": f"Engine {candidates[0]['name']} reports the MIL condition; not a physical lamp check",
+        "detail": f"Engine {engine['name']} reports the MIL condition; not a physical lamp check",
         "observed_clock": time.monotonic(),
     }
 
@@ -115,6 +130,16 @@ class DiagnosticCatalog:
             self.descriptions = data["descriptions"]
             self.info_descriptions = data["info_descriptions"]
 
+    def uds_addresses(self) -> tuple[int, ...]:
+        """Return all distinct source-catalogue UDS addresses for identity fallback.
+
+        These are candidates, not installed/discovered vehicle ECUs. Non-UDS
+        catalogue rows never authorize a UDS identity probe.
+        """
+        return tuple(
+            sorted({int(key.split()[0], 16) for key, row in self.variants.items() if row["uds"]})
+        )
+
     def identify(self, address: int, response: bytes) -> dict[str, Any]:
         """Match the F150 three-byte identifier against the exact address index."""
         data = did_data(response, 0xF150)
@@ -144,15 +169,51 @@ class DiagnosticCatalog:
 
 
 def read_inventory(connection: Any) -> list[dict[str, Any]]:
-    """Read all announced targets; preserve failed and unknown identification rows.
+    """Identify gateway targets, or source-catalogue candidates on failed/empty topology.
 
-    Inventory and each identity have an absolute 30-second budget including
-    queueing. An invalidated stream stops sends; remaining rows stay unattempted.
+    The entire batch has a 30-second absolute deadline including catalogue load,
+    queueing and all identities. A fallback never proves installed topology;
+    retain every candidate and disposition without retrying an uncertain stream.
     """
-    if getattr(connection, "kind", TransportKind.HSFZ) != TransportKind.HSFZ:
+    if getattr(connection, "kind", None) != TransportKind.HSFZ:
         raise ValueError("DoIP ECU inventory/address translation is not yet recovered")
+    deadline = time.monotonic() + 30.0
     catalog = DiagnosticCatalog()
-    addresses = decode_inventory(connection.send_uds(0x10, b"\x22\x3f\x07", timeout=30.0))
+
+    def read(address: int, payload: bytes) -> tuple[bytes | None, str]:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None, "not-attempted-budget-exhausted"
+        if not connection.alive_ok:
+            return None, "not-attempted-connection-closed"
+        outcome = connection.request(
+            address, payload, context=connection.context(min(30.0, remaining))
+        )
+        if outcome.failure is not None:
+            logger.warning(
+                "Identity read address=%02X request=%s outcome=%s nrc=%s",
+                address,
+                payload.hex(),
+                outcome.failure,
+                outcome.nrc,
+            )
+            return None, outcome.failure.value
+        return outcome.payload, "read"
+
+    response, inventory_state = read(0x10, b"\x22\x3f\x07")
+    addresses: tuple[int, ...] = ()
+    if response is not None:
+        try:
+            addresses = decode_inventory(response)
+            inventory_state = "read" if addresses else "empty"
+        except ValueError:
+            logger.warning(
+                "Invalid gateway inventory; retaining catalogue candidates", exc_info=True
+            )
+            inventory_state = "invalid"
+    origin = "gateway" if addresses else "catalogue"
+    if not addresses:
+        addresses = catalog.uds_addresses()
     results = []
     for address in addresses:
         row: dict[str, Any] = {
@@ -162,15 +223,17 @@ def read_inventory(connection: Any) -> list[dict[str, Any]]:
             "identified": False,
             "uds": False,
         }
-        if getattr(connection, "alive_ok", True):
+        response, state = read(address, b"\x22\xf1\x50")
+        if response is not None:
             try:
-                response = connection.send_uds(address, b"\x22\xf1\x50", timeout=30.0)
                 row = catalog.identify(address, response)
-            except (ConnectionError, TimeoutError, ValueError):
-                logger.warning(
-                    "ECU identification unavailable address=%04X", address, exc_info=True
-                )
-                row["description"] = "Identification unavailable; see session log"
+                state = "identified" if row["identified"] else "unmatched-variant"
+            except ValueError:
+                logger.warning("Invalid ECU identity address=%02X", address, exc_info=True)
+                state = "invalid"
+        if state not in ("identified", "unmatched-variant"):
+            row["description"] = "Identification unavailable; see session log"
+        row.update(origin=origin, inventory_state=inventory_state, identity_state=state)
         results.append(row)
     return results
 

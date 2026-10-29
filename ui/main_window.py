@@ -673,6 +673,10 @@ class MainWindow(QMainWindow):
         self.vehicle_page.set_loading(False)
         if self._overview_refresh:
             self._overview_refresh = False
+            refreshed_ecus: list[dict] = results.get("ecu_list") or results.get("svt") or []
+            if isinstance(refreshed_ecus, dict):
+                refreshed_ecus = refreshed_ecus.get("ecus", [])
+            self.diag_page.set_connection(connection, refreshed_ecus)
             return
 
         # Report any errors with a single friendly dialog

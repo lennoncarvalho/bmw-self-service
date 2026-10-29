@@ -7,11 +7,11 @@ import socket
 import struct
 import time
 
-import netifaces
 from doipclient.client import DoIPClient, Parser
 from doipclient.messages import VehicleIdentificationRequest, VehicleIdentificationResponse
 from scapy.contrib.automotive.bmw.hsfz import HSFZ
 
+from app.connection import ethernet_ipv4
 from app.protocol.contracts import OperationContext
 
 logger = logging.getLogger(__name__)
@@ -19,14 +19,8 @@ logger = logging.getLogger(__name__)
 
 def discover_vehicle(interface: str, context: OperationContext) -> dict[str, str] | None:
     """Probe both explicit transports on the selected IPv4; reject ambiguity."""
-    addresses = netifaces.ifaddresses(interface).get(netifaces.AF_INET, [])
-    if len(addresses) != 1 or not addresses[0].get("addr") or not addresses[0].get("netmask"):
-        raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
-    address = addresses[0]
-    local = address["addr"]
-    broadcast = str(
-        ipaddress.IPv4Interface(f"{local}/{address['netmask']}").network.broadcast_address
-    )
+    local, netmask = ethernet_ipv4(interface)
+    broadcast = str(ipaddress.IPv4Interface(f"{local}/{netmask}").network.broadcast_address)
     probes = [
         ("hsfz", 6811, bytes(HSFZ(length=0, control=0x11))),
         ("doip", 13400, DoIPClient._pack_doip(2, 1, VehicleIdentificationRequest().pack())),

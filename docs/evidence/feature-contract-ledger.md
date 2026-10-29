@@ -41,3 +41,14 @@ be used to mark a feature row complete.
 History authority: [workflow28](../28-service-history-workflow.md), D-50–D-55.
 Earlier read/preserving-full-car-backup gates are superseded, not open work.
 No app behavior is newly implemented by this planning amendment.
+
+## Topology/MIL increment — 2026-10-29
+
+| Contract | Source and implementation | Verification / limits |
+|---|---|---|
+| B-CON candidate fallback | S-01 g0.P/Y→g0$j→g.b/c→v.O F150, all691UDS catalogue rows→148addresses; app/vehicle.py; [exact evidence](task-b-topology-selection.md) | All targets retained; provenance distinguishes candidates/announced topology;30sec whole budget, no sends after lost owner. No DoIP translation inferred. |
+| B-CON adapter selection | Native QNetworkInterface Ethernet type/name/IPv4, app/connection.py→discovery; S-02 existing-broadcast path corroborates no DHCP requirement | Native Mac and synthetic metadata checked; assigned IP never proves car/link. Windows runtime remains deferred. |
+| B-INFO direct MIL | All62engine rows/26names;53rows/17definitions with traced STATUS_LESEN scalar readers; [manifest](task-b-mil-breadth.json), [contract](task-b-mil-breadth.md); app/vehicle.py + embedded mil_contracts.json | Three DIDs strict0/1, exact F150/name/address.9rows/9definitions have concrete remaining source paths. No physical lamp/car observation. |
+
+Independent review and complete offline/UI/static checks are recorded in
+[tasks/task-b-topology-verification.md](../../tasks/task-b-topology-verification.md).

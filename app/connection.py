@@ -1,11 +1,11 @@
 """ENET cable detection and car connection (HSFZ + DoIP transport).
 
 Provides:
-  - list_interfaces() — enumerate Ethernet adapters via netifaces
+  - list_interfaces() — enumerate native Ethernet interface types
   - discover_zgw() — UDP vehicle discovery
   - start_dhcp_server() / stop_dhcp_server() — DHCP fallback
-  - HSFZConnection — HSFZ transport (F-series, TCP 6801)
-  - DoIPConnection — DoIP transport (G/U/I-series, TCP 13400)
+  - HSFZConnection — HSFZ transport (TCP 6801)
+  - DoIPConnection — DoIP transport (TCP 13400)
 
 Live socket I/O, UDS services and keepalive run on one protocol owner.
 Transport selection uses discovery evidence rather than a chassis heuristic.
@@ -13,14 +13,14 @@ Transport selection uses discovery evidence rather than a chassis heuristic.
 Reference: docs/10-hsfz-protocol.md, docs/05-protocol-reference.md
 """
 
+import ipaddress
 import logging
 import os
 import platform
-import socket
 import subprocess
 from dataclasses import dataclass
 
-import netifaces
+from PySide6.QtNetwork import QNetworkInterface
 
 logger = logging.getLogger(__name__)
 
@@ -72,20 +72,7 @@ DOIP_TESTER_LOGICAL_ADDR = 0x0E00
 
 
 def list_interfaces() -> list[str]:
-    """Return all Ethernet adapter names on this machine.
-
-    Uses netifaces to enumerate interfaces. Filters to Ethernet adapters only.
-    On macOS: returns enX interfaces (en0, en7, etc.).
-    On Windows: returns physical Ethernet adapters (Ethernet, Ethernet 2, etc.).
-    On Linux: returns ethX and enpXsY interfaces.
-
-    Returns:
-        Sorted list of interface name strings.
-
-    Example:
-        >>> ifaces = list_interfaces()
-        >>> [i for i in ifaces if i.startswith('en') or i.startswith('eth')]
-    """
+    """Return native names of Ethernet candidates, without Wi-Fi/virtual fallback."""
     return sorted(info.name for info in list_interfaces_detailed())
 
 
@@ -94,7 +81,7 @@ def list_interfaces() -> list[str]:
 
 @dataclass(slots=True)
 class _InterfaceInfo:
-    """Adapter candidate; an assigned IPv4 address does not prove physical link."""
+    """Native Ethernet candidate; configured IPv4 does not prove vehicle reachability."""
 
     name: str
     ip: str
@@ -105,8 +92,8 @@ class _InterfaceInfo:
     def display_text(self) -> str:
         """Rich one-line label for use in a QComboBox."""
         if self.connected:
-            return f"{self.name} — {self.ip}  ({self.description})"
-        return f"{self.name} — disconnected  ({self.description})"
+            return f"{self.name} — {self.ip} · IPv4 configured ({self.description})"
+        return f"{self.name} — IPv4 unavailable ({self.description})"
 
     def sort_key(self) -> tuple[int, str]:
         """Sort key: connected first, then by name."""
@@ -114,146 +101,75 @@ class _InterfaceInfo:
 
 
 def list_interfaces_detailed() -> list[_InterfaceInfo]:
-    """Return all Ethernet adapters with IP, MAC, and connected status.
+    """List native Ethernet interfaces, with their actual names and IPv4 readiness.
 
-    Uses ``netifaces`` to enumerate every adapter, then enriches each
-    entry with the assigned IPv4 address and a human-readable
-    description.  Connected adapters appear first in the result.
-
-    Returns:
-        List of ``_InterfaceInfo``, connected-first.
-
-    Example:
-        >>> for info in list_interfaces_detailed():
-        ...     print(info.display_text())
-        en15 — 169.254.244.220  (USB Ethernet Adapter)
-        en0 — disconnected  (Built-in Ethernet)
+    Qt reports interface type across platforms. Neither an enX name nor an IP
+    address identifies Ethernet. No host configuration or subprocess is needed.
+    Internal macOS auxiliary interfaces remain excluded. An assigned address is
+    explicitly labelled configuration, never physical link or car detection.
     """
     results: list[_InterfaceInfo] = []
-
-    for iface in netifaces.interfaces():
-        # Skip loopback
-        if iface.startswith("lo"):
+    for interface in QNetworkInterface.allInterfaces():
+        if interface.type() != QNetworkInterface.InterfaceType.Ethernet:
             continue
-
-        addrs = netifaces.ifaddresses(iface)
-
-        # Must have a link-layer address (real hardware)
-        if netifaces.AF_LINK not in addrs:
+        name = interface.name()
+        if platform.system() == "Darwin" and name.startswith("anpi"):
             continue
-
-        link_addr = addrs[netifaces.AF_LINK][0].get("addr", "")
-        if not link_addr or link_addr == "00:00:00:00:00:00":
-            continue
-
-        if platform.system() == "Darwin":
-            virtual_prefixes = (
-                "bridge",
-                "gif",
-                "stf",
-                "utun",
-                "ap",
-                "awdl",
-                "llw",
-                "pdp_ip",
-                "anpi",
-                "vmnet",
-                "fw",
-            )
-            if any(iface.startswith(p) for p in virtual_prefixes):
+        addresses = []
+        for entry in interface.addressEntries():
+            try:
+                address = ipaddress.IPv4Address(entry.ip().toString())
+            except ipaddress.AddressValueError:
                 continue
-            if not iface.startswith("en"):
-                continue
-
-        elif platform.system() == "Linux":
-            if not (iface.startswith("en") or iface.startswith("eth")):
-                continue
-
-        # Extract IPv4 address
-        ip = ""
-        connected = False
-        if netifaces.AF_INET in addrs:
-            for entry in addrs[netifaces.AF_INET]:
-                addr = entry.get("addr", "")
-                if addr and addr != "0.0.0.0" and not addr.startswith("127."):
-                    ip = addr
-                    connected = True
-                    break
-
-        # Build human-readable description
-        description = _describe_interface(iface)
-
+            if not (address.is_unspecified or address.is_loopback or address.is_multicast):
+                addresses.append(str(address))
+        # Discovery requires exactly one IPv4. Do not silently choose one from
+        # a multiply configured adapter and imply it is ready for connection.
+        ip = addresses[0] if len(addresses) == 1 else ""
+        description = interface.humanReadableName() or name
+        if len(addresses) > 1:
+            description += "; multiple IPv4 addresses — select one configuration"
         results.append(
             _InterfaceInfo(
-                name=iface,
+                name=name,
                 ip=ip,
-                mac=link_addr.lower(),
-                connected=connected,
+                mac=interface.hardwareAddress().lower(),
+                connected=bool(ip),
                 description=description,
             )
         )
-
-    results.sort(key=lambda i: i.sort_key())
-    return results
+    return sorted(results, key=lambda candidate: candidate.sort_key())
 
 
-def _describe_interface(name: str) -> str:
-    """Return a human-readable label for an interface name.
+def ethernet_ipv4(name: str) -> tuple[str, str]:
+    """Validate one native Ethernet interface and return its sole IPv4/netmask.
 
-    Uses platform heuristics and common naming patterns.
+    Recheck at discovery time: selection may outlive an adapter or configuration
+    change. A wireless/virtual interface never becomes an ENET candidate by name.
     """
-    system = platform.system()
-
-    if system == "Darwin":
-        # en0/en1 are typically built-in (Wi-Fi or Ethernet)
-        # en2+ are often Thunderbolt or USB adapters
-        num = 0
-        for ch in name:
-            if ch.isdigit():
-                num = num * 10 + int(ch)
-            elif num > 0:
-                break
-
-        if num <= 1:
-            return "Built-in Ethernet"
-        elif num <= 5:
-            return "Thunderbolt Bridge"
-        else:
-            return "USB Ethernet Adapter"
-
-    if system == "Linux":
-        if name.startswith("enp") or name.startswith("ens"):
-            return "PCI Ethernet"
-        if name.startswith("eth"):
-            return "Built-in Ethernet"
-        return "Network Adapter"
-
-    if system == "Windows":
-        # Windows netifaces names are already descriptive (e.g. "Ethernet 2")
-        return ""
-
-    return "Network Adapter"
-
-
-def _bind_to_interface(sock: socket.socket, interface: str) -> None:
-    """Bind a UDP socket to a specific network interface.
-
-    On macOS: uses IP_BOUND_IF (scope ID) to steer broadcasts.
-    On Linux/Windows: binds to the interface's IP address.
-
-    This is best-effort — failures are logged but not fatal because
-    the broadcast may still work on the default route.
-    """
-    try:
-        addrs = netifaces.ifaddresses(interface)
-        if netifaces.AF_INET in addrs:
-            ip = addrs[netifaces.AF_INET][0].get("addr", "")
-            if ip:
-                sock.bind((ip, 0))
-                logger.debug("Bound discovery socket to %s (%s)", interface, ip)
-                return
-    except (ValueError, KeyError, OSError) as e:
-        logger.debug("Could not bind to interface %s: %s", interface, e)
+    interface = QNetworkInterface.interfaceFromName(name)
+    if (
+        not interface.isValid()
+        or interface.type() != QNetworkInterface.InterfaceType.Ethernet
+        or (platform.system() == "Darwin" and name.startswith("anpi"))
+    ):
+        raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
+    addresses = []
+    for entry in interface.addressEntries():
+        try:
+            address = ipaddress.IPv4Address(entry.ip().toString())
+        except ipaddress.AddressValueError:
+            continue
+        if address.is_unspecified or address.is_loopback or address.is_multicast:
+            continue
+        mask = entry.netmask().toString()
+        if not mask:
+            raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
+        ipaddress.IPv4Interface(f"{address}/{mask}")
+        addresses.append((str(address), mask))
+    if len(addresses) != 1:
+        raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
+    return addresses[0]
 
 
 # ── Vehicle Discovery (T-4) ──────────────────────────────────────────────────

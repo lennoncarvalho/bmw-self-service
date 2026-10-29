@@ -1,0 +1,306 @@
+{
+  "engines": {
+    "12 0F1090": {
+      "name": "MSD85L6",
+      "state": "block-reader-not-yet-traced"
+    },
+    "12 0F10A0": {
+      "did": 20696,
+      "name": "D73N57A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1370": {
+      "name": "MSD87",
+      "state": "block-reader-not-yet-traced"
+    },
+    "12 0F1380": {
+      "did": 19049,
+      "name": "MSD87_R0",
+      "state": "scalar-boolean"
+    },
+    "12 0F13E0": {
+      "name": "MSV90",
+      "state": "block-reader-not-yet-traced"
+    },
+    "12 0F13F0": {
+      "did": 19049,
+      "name": "MEVD172",
+      "state": "scalar-boolean"
+    },
+    "12 0F1740": {
+      "did": 20696,
+      "name": "D72N47A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1780": {
+      "name": "MSD85YL6",
+      "state": "block-reader-not-yet-traced"
+    },
+    "12 0F17B0": {
+      "did": 20696,
+      "name": "D73N57E0",
+      "state": "scalar-boolean"
+    },
+    "12 0F17B4": {
+      "did": 20696,
+      "name": "D73N57E0",
+      "state": "scalar-boolean"
+    },
+    "12 0F17B8": {
+      "did": 20696,
+      "name": "D73N57E0",
+      "state": "scalar-boolean"
+    },
+    "12 0F17BC": {
+      "did": 20696,
+      "name": "D73N57E0",
+      "state": "scalar-boolean"
+    },
+    "12 0F17F0": {
+      "did": 19049,
+      "name": "MEVD1725",
+      "state": "scalar-boolean"
+    },
+    "12 0F1810": {
+      "did": 19049,
+      "name": "MEVD1724",
+      "state": "scalar-boolean"
+    },
+    "12 0F18A0": {
+      "did": 20696,
+      "name": "D72N47A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1910": {
+      "did": 19049,
+      "name": "MEVD172Y",
+      "state": "scalar-boolean"
+    },
+    "12 0F1920": {
+      "did": 20696,
+      "name": "D72N47A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F19E0": {
+      "name": "EDMEI1",
+      "state": "no-direct-mil-row"
+    },
+    "12 0F1A10": {
+      "did": 19049,
+      "name": "S63TU_R0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1A20": {
+      "did": 19049,
+      "name": "N63TU_R0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1D20": {
+      "did": 19049,
+      "name": "DME_BX8",
+      "state": "scalar-boolean"
+    },
+    "12 0F1D22": {
+      "did": 19049,
+      "name": "DME_BX8",
+      "state": "scalar-boolean"
+    },
+    "12 0F1D24": {
+      "did": 19049,
+      "name": "DME_BX8",
+      "state": "scalar-boolean"
+    },
+    "12 0F1D26": {
+      "did": 19049,
+      "name": "DME_BX8",
+      "state": "scalar-boolean"
+    },
+    "12 0F1EA0": {
+      "did": 19049,
+      "name": "S55",
+      "state": "scalar-boolean"
+    },
+    "12 0F1EF0": {
+      "did": 20696,
+      "name": "D73N57E0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1F70": {
+      "did": 20696,
+      "name": "D75BX7A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1F80": {
+      "did": 20696,
+      "name": "D75BX7A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1F90": {
+      "did": 20696,
+      "name": "D70BX7A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1FA0": {
+      "did": 20696,
+      "name": "D70BX7A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1FE8": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1FF0": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1FF4": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F1FF8": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F2220": {
+      "name": "N55_ALP",
+      "state": "block-reader-not-yet-traced"
+    },
+    "12 0F2422": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2424": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2426": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2427": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2428": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2429": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F242A": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F242C": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F242E": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2460": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F25A0": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F25A2": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2670": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F2674": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F2678": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F267C": {
+      "did": 20696,
+      "name": "D83BX7C0",
+      "state": "scalar-boolean"
+    },
+    "12 0F26B4": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F26B8": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F26BC": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F26E0": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F26E4": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F26E8": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F28E0": {
+      "name": "DME9FF_R",
+      "state": "no-direct-mil-row"
+    },
+    "12 0F2930": {
+      "did": 19049,
+      "name": "DME8FF_R",
+      "state": "scalar-boolean"
+    },
+    "12 0F2C60": {
+      "name": "FCCU",
+      "state": "missing-definition"
+    },
+    "12 0F2C80": {
+      "did": 17084,
+      "name": "D94BX7A0",
+      "state": "scalar-boolean"
+    },
+    "12 0F2E00": {
+      "name": "DME98_R",
+      "state": "missing-definition"
+    }
+  },
+  "schema": 1
+}

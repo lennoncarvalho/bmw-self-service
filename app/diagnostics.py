@@ -72,7 +72,9 @@ class DiagnosticReadWorker(CarWorker):
     def __init__(self, connection: Any, ecus: list[dict], *, coverage_known: bool = True) -> None:
         super().__init__(connection)
         self.ecus = [dict(ecu) for ecu in ecus]
-        self.coverage_known = coverage_known
+        self.coverage_known = coverage_known and all(
+            ecu.get("origin") != "catalogue" for ecu in self.ecus
+        )
 
     def do_work(self) -> dict:
         """Publish one settled scan, including every target's coverage disposition."""
@@ -85,7 +87,13 @@ class DiagnosticReadWorker(CarWorker):
             name = str(ecu.get("name", f"ECU {address:02X}"))
             supported = bool(ecu.get("identified") and ecu.get("uds"))
             for memory, payload in MEMORIES.items():
-                row = {"name": name, "addr": address, "memory": memory, "state": "not-attempted"}
+                row = {
+                    "name": name,
+                    "addr": address,
+                    "memory": memory,
+                    "state": "not-attempted",
+                    "origin": ecu.get("origin", "gateway"),
+                }
                 coverage.append(row)
                 if not supported:
                     row["state"] = (
@@ -129,7 +137,13 @@ class DiagnosticReadWorker(CarWorker):
                 for row in coverage
             )
         )
-        return {"dtcs": dtcs, "coverage": coverage, "complete": complete, "mil": None}
+        return {
+            "dtcs": dtcs,
+            "coverage": coverage,
+            "complete": complete,
+            "topology_known": self.coverage_known,
+            "mil": None,
+        }
 
 
 class DiagnosticClearWorker(CarWorker):
