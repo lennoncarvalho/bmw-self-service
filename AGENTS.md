@@ -35,6 +35,18 @@ or chassis letter alone. The first retained session establishes HSFZ/VIN on the
 owner's setup, with failed optional reads and incomplete DTC coverage; see
 `docs/23-first-vehicle-session.md` and `tasks/rea-protocol-recovery.md`.
 
+## Fundamental implementation rule — source recovery
+
+The owner reaffirmed on 2026-10-29 that this project reconstructs behavior from
+software in `sources/` using REA. Recover and reuse the classes, encrypted and
+decrypted data, databases, request engines and variant selection paths; do not
+replace that investigation with guessed constants or an F48-only implementation.
+Aim for the full F/G/U/I ENET coverage represented by the supplied artifacts.
+Trace each enabled branch to the exact artifact and decoder. Source breadth is
+not a claim that every BMW/ECU/software combination has been physically tested.
+Proceed unattended through implementation, independent review, corrections,
+verification and a PR; unresolved facts are research work, not owner questions.
+
 ## Project identity
 
 **BMW Self Service** — cross-platform desktop app for BMW diagnostics,

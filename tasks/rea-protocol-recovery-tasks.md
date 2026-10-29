@@ -252,3 +252,14 @@ alone cannot close it.
 - [ ] Implement simple ordinary unencrypted backup storage (D-45), portable
   schema/integrity checks and full diagnostic identifier logging/export (D-46).
   No password/encryption or VIN-masking feature is needed.
+
+## Implementation slice — 2026-10-29
+
+REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
+portable backup storage are implemented in `codex/task-b-feature-recovery`.
+Task B is **not complete**: history read/preserving add, full preset writes and
+restoration, actual MIL and DoIP inventory/address recovery remain open.
+The supplied history utility's native read action is a Pro-only message.
+
+See [recovered contracts](../docs/evidence/task-b-recovered-contracts.md) and
+[verification/review](task-b-implementation-verification.md).

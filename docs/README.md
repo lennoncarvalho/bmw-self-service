@@ -93,3 +93,14 @@ venvs, caches and `.git` are excluded from the project-document audit.
 Do not edit ignored reference checkouts to fix our documentation. The inventory
 is in [reference provenance](evidence/reference-markdown-inventory.json).
 Their own agent instructions apply only when working inside those trees.
+
+## Implementation slice — 2026-10-29
+
+REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
+portable backup storage are implemented in `codex/task-b-feature-recovery`.
+Task B is **not complete**: history read/preserving add, full preset writes and
+restoration, actual MIL and DoIP inventory/address recovery remain open.
+The supplied history utility's native read action is a Pro-only message.
+
+See [recovered contracts](evidence/task-b-recovered-contracts.md) and
+[verification/review](../tasks/task-b-implementation-verification.md).

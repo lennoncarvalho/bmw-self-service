@@ -178,3 +178,14 @@ No product decisions remain unanswered for starting this milestone. Remaining
 protocol questions are enumerated in the REA checklist; unsupported interim
 states do not satisfy a required feature. Report precise evidence gaps and
 validation limits rather than claiming success from static gates or library reuse.
+
+## Implementation slice — 2026-10-29
+
+REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
+portable backup storage are implemented in `codex/task-b-feature-recovery`.
+Task B is **not complete**: history read/preserving add, full preset writes and
+restoration, actual MIL and DoIP inventory/address recovery remain open.
+The supplied history utility's native read action is a Pro-only message.
+
+See [recovered contracts](evidence/task-b-recovered-contracts.md) and
+[verification/review](../tasks/task-b-implementation-verification.md).

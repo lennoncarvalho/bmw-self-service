@@ -11,7 +11,7 @@ import logging
 import os
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.coding import CodingSnapshotWorker
 from app.coding_db import CodingDatabase, _decrypt_enc
 from app.resources import resource_path
 from app.worker import CarWorker
@@ -130,6 +131,7 @@ class CodingPage(QWidget):
         self._coding_writer: CarWorker | None = None
         self._is_real = False  # True when categories come from car, not mock
         self._live_unavailable = True
+        self._snapshot_workers: list[CarWorker] = []
         self._sub_stack: QStackedWidget
         self._setup_ui()
         self._write_btn.setEnabled(False)
@@ -559,20 +561,96 @@ class CodingPage(QWidget):
                 self._load_coding_presets(ecus)
             return
 
-        # A first-directory CAFD variant and a generic DID are not a live coding
-        # definition. Keep both tabs navigable without mock values or ECU probes.
         for mode in ("Easy", "Advanced"):
             page = QWidget()
             layout = QVBoxLayout(page)
-            message = QLabel(
-                f"{mode} coding values unavailable. Exact ECU/software definitions "
-                "and a verified vehicle read operation are required."
-            )
+            message = QLabel(f"{mode}: reading exact coding definitions and stored bytes...")
             message.setWordWrap(True)
             layout.addWidget(message)
             layout.addStretch()
             self._sub_stack.addWidget(page)
-        logger.warning("Coding live read skipped: exact definitions and reader unverified")
+        self._snapshot_ecus = ecus or []
+        self._snapshot_loaded = False
+
+    def activate(self) -> None:
+        """Start an exact-identity read when this live page is first opened."""
+        connection = self._connection
+        if (
+            connection is None
+            or hasattr(connection, "data")
+            or getattr(self, "_snapshot_loaded", False)
+            or self._coding_reader is not None
+        ):
+            return
+        vin = getattr(connection, "verified_vin", "")
+        if not vin:
+            return
+        worker = CodingSnapshotWorker(connection, self._snapshot_ecus, vin)
+        self._coding_reader = worker
+        self._snapshot_workers.append(worker)
+        worker.result_ready.connect(self._on_snapshot)
+        worker.error.connect(self._on_snapshot_error)
+        worker.finished.connect(self._on_snapshot_finished)
+        worker.start()
+
+    @Slot(str)
+    def _on_snapshot_error(self, message: str) -> None:
+        self._on_snapshot(
+            [{"name": "Coding", "state": message, "definitions": [], "blocks": {}, "backup": ""}]
+        )
+
+    @Slot()
+    def _on_snapshot_finished(self) -> None:
+        worker = self.sender()
+        if worker is self._coding_reader:
+            self._coding_reader = None
+        if isinstance(worker, CarWorker):
+            if worker in self._snapshot_workers:
+                self._snapshot_workers.remove(worker)
+            if not worker.property("retired_by_main"):
+                worker.deleteLater()
+
+    @Slot(object)
+    def _on_snapshot(self, rows: list[dict]) -> None:
+        """Publish an entire settled read batch; never make opaque bytes editable."""
+        worker = self.sender()
+        if (
+            not isinstance(worker, CarWorker)
+            or worker is not self._coding_reader
+            or worker.connection is not self._connection
+        ):
+            return
+        self._snapshot_loaded = True
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        notice = QLabel(
+            "Stored coding bytes read from the vehicle. Preset editing and writes require the remaining selection, authorization and restoration contracts."
+        )
+        notice.setWordWrap(True)
+        layout.addWidget(notice)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QWidget()
+        entries = QVBoxLayout(content)
+        for row in rows:
+            label = QLabel(
+                f"{row['name']}: {row['state']}\nDefinitions: {', '.join(row['definitions']) or 'Unavailable'}\nGroups read: {len(row['blocks'])}"
+            )
+            label.setWordWrap(True)
+            entries.addWidget(label)
+            if row["backup"]:
+                saved = QLabel(f"Snapshot: {row['backup']}")
+                saved.setWordWrap(True)
+                entries.addWidget(saved)
+        entries.addStretch()
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
+        old = self._sub_stack.widget(0)
+        if old is not None:
+            self._sub_stack.removeWidget(old)
+            old.deleteLater()
+        self._sub_stack.insertWidget(0, page)
+        self._sub_stack.setCurrentIndex(0)
 
     def _load_coding_presets(self, ecus: list[dict]) -> None:
         """T-2/T-3/T-4: Load coding presets from database for discovered ECUs.
@@ -969,37 +1047,8 @@ class CodingReadWorker(CarWorker):
         ]
 
     def do_work(self) -> list[dict]:
-        categories: list[dict] = []
-        for addr, name in self.targets:
-            self.progress.emit(f"Reading coding from {name}...")
-            try:
-                # Extended session
-                self.connection.send_uds(addr, bytes([0x10, 0x03]))
-                # Read coding data — DID varies by ECU; use generic approach
-                resp = self.connection.send_uds(addr, bytes([0x22, 0xF1, 0x00]))
-                if resp[0] == 0x62:
-                    logger.debug(
-                        "Coding data from %s (0x%02X): %d bytes",
-                        name,
-                        addr,
-                        len(resp),
-                    )
-            except Exception as e:
-                logger.debug("Coding read skip %s (0x%02X): %s", name, addr, e)
-        if categories:
-            return categories
-        # Return a placeholder so the UI shows data while DIDs are being
-        # mapped per chassis. Real coding values require per-vehicle DID
-        # calibration — this stub will be replaced once tested on a car.
-        return [
-            {
-                "name": name,
-                "icon": name[0] if name else "?",
-                "description": f"Coding data for {name} — DID mapping pending",
-                "options": [],
-            }
-            for _, name in self.targets
-        ]
+        """The old guessed reader is retired; use exact-identity snapshots."""
+        raise PermissionError("Use the exact coding snapshot reader")
 
 
 class CodingWriteWorker(CarWorker):
@@ -1025,83 +1074,7 @@ class CodingWriteWorker(CarWorker):
         self.originals = originals or []
 
     def do_work(self) -> bool:
-        for cat in self.categories:
-            cat_name = cat.get("name", "")
-            for opt in cat.get("options", []):
-                opt_name = opt.get("name", "")
-                self.progress.emit(f"Writing {opt_name}...")
-
-                # T-4: Look up real coding metadata
-                meta = self.coding_meta.get((cat_name, opt_name))
-                if meta:
-                    ecu_addr = meta["ecu_addr"]
-                    did = meta["did"]
-
-                    # Skip if value hasn't changed from original
-                    orig_current = None
-                    for oc in self.originals or []:
-                        if oc.get("name") == cat_name:
-                            for oo in oc.get("options", []):
-                                if oo.get("name") == opt_name:
-                                    orig_current = oo.get("current")
-                                    break
-                            break
-                    if orig_current is not None and opt.get("current") == orig_current:
-                        continue
-
-                    # T-4: Build bit-accurate write payload when CAFD bytes available.
-                    # Uses coding_db.build_write_payload() which modifies only the
-                    # target bits via mask operations, preserving all other settings.
-                    cafd_bytes = meta.get("cafd_bytes", b"")
-                    if cafd_bytes:
-                        preset = meta.get("preset", {})
-                        selected_name = (
-                            opt.get("values", [])[opt.get("current", 0)]
-                            if opt.get("values")
-                            and opt.get("current", 0) < len(opt.get("values", []))
-                            else ""
-                        )
-                        # Map UI value label back to preset option name
-                        selected_opt_name = ""
-                        for o in preset.get("options", []):
-                            if o.get("label") == selected_name or o.get("name") == selected_name:
-                                selected_opt_name = o["name"]
-                                break
-                        if selected_opt_name:
-                            payload = coding_db.build_write_payload(
-                                preset,
-                                selected_opt_name,
-                                cafd_bytes,
-                                meta["cafd_id"],
-                                meta["variant"],
-                            )
-                            if payload:
-                                did_high = (did >> 8) & 0xFF
-                                did_low = did & 0xFF
-                                full_payload = bytes([0x2E, did_high, did_low]) + payload
-                                try:
-                                    self.connection.send_uds(ecu_addr, full_payload)
-                                    continue
-                                except Exception as e:
-                                    raise ConnectionError(
-                                        f"Write failed for {opt_name}: {e}"
-                                    ) from e
-                    # Fallback: DID-correct payload with value index
-                    did_high = (did >> 8) & 0xFF
-                    did_low = did & 0xFF
-                    data_bytes = bytes([opt.get("current", 0)])
-                    payload = bytes([0x2E, did_high, did_low]) + data_bytes
-                    try:
-                        self.connection.send_uds(ecu_addr, payload)
-                    except Exception as e:
-                        raise ConnectionError(f"Write failed for {opt_name}: {e}") from e
-                else:
-                    # No CAFD metadata — skip with warning. Writing without
-                    # correct DID and ECU address is unsafe.
-                    logger.warning(
-                        "Skipping %s/%s: no CAFD metadata. "
-                        "Use Easy Coding with a real ECU connection.",
-                        cat_name,
-                        opt_name,
-                    )
-        return True
+        """Block the retired encoder until composed writes and recovery are recovered."""
+        raise PermissionError(
+            "Coding writes require the recovered authorization and restoration contract"
+        )

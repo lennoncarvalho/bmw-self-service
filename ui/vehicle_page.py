@@ -22,36 +22,6 @@ from PySide6.QtWidgets import (
 logger = logging.getLogger(__name__)
 
 
-def _parse_svt_response(resp: bytes) -> list[dict]:
-    """Parse a raw SVT (0x62 F0 00 ...) UDS response into ECU entries.
-
-    Attempts to extract ECU short names from the response payload.
-    Format varies by BMW generation; this parser handles common patterns.
-
-    Args:
-        resp: Raw UDS response including SID/DID echo bytes.
-
-    Returns:
-        List of dicts with 'name' and 'addr' keys, or empty list.
-    """
-    ecus: list[dict] = []
-    payload = resp[3:] if len(resp) > 3 else resp
-    try:
-        text = payload.decode("ascii", errors="ignore")
-        # Try to find ECU short-name patterns (2-8 uppercase alphanumeric)
-        import re
-
-        seen: set[str] = set()
-        for match in re.finditer(r"\b([A-Z]{2,8}(?:_[A-Z0-9]{1,4})?)\b", text):
-            name = match.group(1)
-            if name not in seen and len(name) >= 2:
-                seen.add(name)
-                ecus.append({"name": name, "description": ""})
-    except Exception:
-        pass
-    return ecus
-
-
 class VehiclePage(QWidget):
     """Dashboard showing vehicle identity, mileage, battery, and ECU list."""
 

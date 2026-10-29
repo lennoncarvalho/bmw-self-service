@@ -68,3 +68,27 @@ Start new app code on a fresh `codex/` branch from current main and create its
 own PR. Do not put app code into the docs/planning branch or reuse a merged PR
 branch. Never merge without owner instruction. Follow the personal GitHub
 account rule in AGENTS.md before push/`gh pr` operations.
+
+## Task B implementation checkpoint — 2026-10-29
+
+Implementation branch: `codex/task-b-feature-recovery` (new from origin/main,
+carrying the approved planning commits). The owner requested unattended REA-led
+implementation, outsider review, fixes, verification and a PR. The fundamental
+source-recovery rule is now in AGENTS.md. A reviewed recovery slice is implemented;
+**Task B remains incomplete** and its PR must remain draft.
+
+Read `docs/evidence/task-b-recovered-contracts.md` and
+`tasks/task-b-implementation-verification.md` before continuing. They record
+recovered requests/decoders, exact native/Android evidence, deterministic asset
+reproduction, code/review findings, offline checks and outstanding work. SHM Lite's
+native Read-from-car case only displays a Pro-only message; don't fabricate a
+history read or enable destructive rewrite without an original car baseline.
+
+Current code reads HSFZ inventory/variants and normal/information/permanent
+faults, clears supported fault/information memories with checked post-reads,
+and saves exact-identity opaque coding snapshots in portable durable JSON.
+DoIP connection retains Task A but byte-to-logical ECU inventory translation
+is not recovered. Full easy preset predicates/dynamic options/writes, recovery,
+power/ignition contracts, history read/add and actual emissions MIL remain open.
+No new car acceptance or universal compatibility is claimed. Continue the same
+unmerged implementation PR/branch for this work; don't reuse it after merge.

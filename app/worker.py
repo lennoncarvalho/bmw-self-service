@@ -75,14 +75,21 @@ class CarWorker(QThread):
                 self.connection.set_caller_cancel(self._cancelled)
             result = self.do_work()
             self.result_ready.emit(result)
-        except TimeoutError as e:
-            msg = str(e) if str(e) else "Car operation timed out"
-            logger.warning("CarWorker timeout: %s", msg)
-            self.error.emit(msg)
-        except Exception as e:
-            msg = str(e) if str(e) else "An unexpected error occurred"
-            logger.error("CarWorker error: %s", e, exc_info=True)
-            self.error.emit(msg)
+        except TimeoutError:
+            logger.warning("CarWorker timed out", exc_info=True)
+            self.error.emit(
+                "The vehicle did not respond in time. Check the cable, ignition and session log."
+            )
+        except Exception as exc:
+            logger.error("CarWorker failed: %s", exc, exc_info=True)
+            message = "The operation could not be completed. Check the connection and session log."
+            if isinstance(exc, PermissionError):
+                message = "This operation is blocked in the current session. Check read-only mode and vehicle access."
+            elif "Multiple vehicles" in str(exc):
+                message = "Multiple vehicles responded. Leave only one vehicle on the selected Ethernet connection, then retry."
+            elif "identities differ" in str(exc) or "conflicting vehicle" in str(exc):
+                message = "The vehicle identities do not agree. Isolate the vehicle and reconnect."
+            self.error.emit(message)
         finally:
             logger.info(
                 "Worker end operation=%s conn=%s elapsed=%.3fs",

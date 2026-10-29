@@ -188,3 +188,17 @@ agreed concrete procedure after encoder, prerequisites and contract-specific com
 Retain source/operation summaries and full unmasked local diagnostic captures. One F48/NBT does not establish
 fleet coverage. B7 remains open for missing required acceptance, even when all
 code and static checks pass.
+
+## Implementation execution — 2026-10-29
+
+Owner authorizes unattended REA-led implementation, independent review, fixes,
+verification and PR. Branch `codex/task-b-feature-recovery` starts at current
+`origin/main` and carries the approved planning commits. Recover source-wide
+F/G/U/I selection and contracts, rather than a chassis-specific shortcut.
+
+First recovered correction: diagnostic inventory uses gateway `22 3F07`,
+BE16 payload byte count and one-byte ECU addresses, followed by `22 F150`
+three-byte variant identification. Remove the unsupported F000/text parsing
+and optional DID guesses. Recover normal, information and permanent memories
+separately. SHM is native x86/Delphi; NBT PRG add/erase jobs require tracing,
+not CIL inspection or treating the local `.bmwsh` format as a vehicle read.

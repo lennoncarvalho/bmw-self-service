@@ -33,7 +33,6 @@ def discover_vehicle(interface: str, context: OperationContext) -> dict[str, str
     ]
     sockets: dict[socket.socket, str] = {}
     found: dict[tuple[str, str], dict[str, str]] = {}
-    settle: float | None = None
     deadline = min(context.deadline, time.monotonic() + 5.0)
     try:
         for kind, port, payload in probes:
@@ -51,7 +50,7 @@ def discover_vehicle(interface: str, context: OperationContext) -> dict[str, str
                 kind,
                 payload.hex(" "),
             )
-        while time.monotonic() < min(deadline, settle or deadline):
+        while time.monotonic() < deadline:
             context.remaining()
             ready = select.select(
                 list(sockets), [], [], min(0.05, max(0, deadline - time.monotonic()))
@@ -93,17 +92,19 @@ def discover_vehicle(interface: str, context: OperationContext) -> dict[str, str
                 try:
                     vin = vin_bytes.decode("ascii")
                 except UnicodeDecodeError:
-                    continue
-                if len(vin) != 17 or not vin.isalnum():
-                    continue
+                    vin = ""
+                if len(vin) != 17 or not vin.isalnum() or vin == "0" * 17:
+                    vin = ""
                 info["vin"] = vin
                 found[(peer[0], kind)] = info
-                settle = settle or time.monotonic() + 0.2
-        vehicles = {(item["ip"], item["vin"]) for item in found.values()}
+        vehicles = {item["ip"] for item in found.values()}
         if len(vehicles) > 1:
             raise ConnectionError(
                 "Multiple vehicles responded; isolate the intended ENET connection"
             )
+        vins = {item["vin"] for item in found.values() if item["vin"]}
+        if len(vins) > 1:
+            raise ConnectionError("Discovery returned conflicting vehicle identities")
         # A responding entity may support both protocols. Preserve the observed
         # HSFZ baseline when both are explicitly advertised, never infer by series.
         return next(
