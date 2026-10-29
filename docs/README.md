@@ -131,3 +131,12 @@ readers. [Implementation plan](../tasks/task-b-topology-implementation.md) and
 [verification](../tasks/task-b-topology-verification.md) record native Ethernet
 selection, candidate/installed-topology boundaries and remaining source paths.
 This supersedes the earlier three-engine implementation count; Task B remains open.
+
+[Packed vehicle order](evidence/task-b-vehicle-order.md) and
+[equipment/category recovery](evidence/task-b-vehicle-metadata.md) document the
+post-PR14 dashboard increment: gateway3F06 configuration fields and4735English
+equipment labels, with explicit source scope and no inferred build date/trim.
+[Older MIL block lifecycle](evidence/task-b-mil-block-recovery.md) narrows the
+remaining five readers to fixedF303configuration/ownership/cleanup work; those
+mutations are not enabled by the overview increment. See
+[increment verification](../tasks/task-b-vehicle-order-verification.md).

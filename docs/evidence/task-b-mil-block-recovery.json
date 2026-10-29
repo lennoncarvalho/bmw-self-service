@@ -1,0 +1,265 @@
+{
+  "android_methods": [
+    {
+      "class_name": "k6.x.b.a",
+      "evidence_id": "ev_0498ffa7b33018a9747cc371c2e1a6cf6e0338cfb1d6adf170fc144631699967",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x",
+      "evidence_id": "ev_04af4a612d11d8950c35076379bc93272cc5e1ae35ba6220b527ef3c85b84e29",
+      "method_name": "j",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0",
+      "evidence_id": "ev_0e128232732cbffc68a948c459af41e061162d90ad1f76308cbb7e93bde73392",
+      "method_name": "h",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "j6.v",
+      "evidence_id": "ev_11ef1d6f2888ee0038bff113c8c62142ce572d9663375fd744bd1ff30e971808",
+      "method_name": "u0",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0",
+      "evidence_id": "ev_12f573ed65dee5b58c657764f7f1ff9a0640da8e0efa698a71304f0d1a34d368",
+      "method_name": "m",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "j6.v",
+      "evidence_id": "ev_13b29c5aaa971ad1d22db1381bb3c6a8b1a5b3cd83886dc8e22960c3a096eab9",
+      "method_name": "H0",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0.b",
+      "evidence_id": "ev_1506f6e0abe62337eb62d383d61bb66d47e3c1dc605ca93c20d7af54c69b4dc2",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0",
+      "evidence_id": "ev_285d6ccd22e398b14d248e2c37481b2ad29e6bc8db24612994854827f5d96586",
+      "method_name": "k",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "j6.v",
+      "evidence_id": "ev_2cb28c59394622205a89342585bce5dd341200ddf5567ae8e4547b5678acf5c3",
+      "method_name": "i",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.y",
+      "evidence_id": "ev_2db281390875b6d17bb02b5ab79eec7a99900aae00969297717e60a19772fd73",
+      "method_name": "d",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "j6.v",
+      "evidence_id": "ev_4852f17d7045b1ab4f906cb4b78623887754775d81b0d8a1547f31354f7c698a",
+      "method_name": "Z",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x.d",
+      "evidence_id": "ev_492d2f372fbb8bf986a1c3c4d49e1f1ef0867cf0f79394edf1a22c2024bccd66",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "j6.v",
+      "evidence_id": "ev_588ff4b9b1ec4f8404f9a0cef392fd438a7a5ef5662fee539f766ec5d41e7c8c",
+      "method_name": "b0",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x.b",
+      "evidence_id": "ev_63cdd7d67717979108d5bc5bd15ea6291c978c64d9b0a8c0d553af824abeacf2",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0.b.a.C0204a",
+      "evidence_id": "ev_7a9792959c76a74f6ac0e451e90ba4dd316000c8ba8535ecddca6fc17c836961",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.y",
+      "evidence_id": "ev_9311564606f16d67e5ebf87b3902dd30bebe3019f295f20291c4057f6698f01f",
+      "method_name": "a",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.z",
+      "evidence_id": "ev_a09413c97b160f94eebf36c94c6c3580bd476897615ef3dc938c7c5cf00febcf",
+      "method_name": "d",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "j6.v",
+      "evidence_id": "ev_bf23ad2591770671d1d3b723bb90a31daa21955c211e34ad68db29e8ac1eb041",
+      "method_name": "G0",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0.b.a",
+      "evidence_id": "ev_c1ac67fb36f84c75e057bd38690efec9273d19d3606fc68d2c380673d47824fe",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x",
+      "evidence_id": "ev_c1b897e8e0c9a9be7501c4da7893a9674bfaceff6a39adc8c9681f69213a9eaa",
+      "method_name": "i",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x",
+      "evidence_id": "ev_c2c8e549cd4c5d786ecbfc2f8fe1c7e53539ec32a9d12cd5a18c62e076d9e474",
+      "method_name": "c",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0",
+      "evidence_id": "ev_c35f0df73e7bfb9b3c24c685c1666969d490b341e9a971bfb8908da747fd4329",
+      "method_name": "l",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x",
+      "evidence_id": "ev_cf75fdfd35fa2778149df09a0329414ef7c11b962994cc09c2f6a116462ff6f6",
+      "method_name": "d",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x",
+      "evidence_id": "ev_e7addaafc3ce7e0ef6253bfcccb7693e165578036ef52ab81e88bfe16f658cfb",
+      "method_name": "h",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.c0",
+      "evidence_id": "ev_e82bea5e00cc352852069b30a87d04381270e842845213c57a5fe8148f37b617",
+      "method_name": "<init>",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    },
+    {
+      "class_name": "k6.x.b.a.C0240a",
+      "evidence_id": "ev_f7de1446a871f56af3c265da7b1a8f51927f7c12af421276486b14d4361af273",
+      "method_name": "b",
+      "path": "/Users/lennon/git/rea_bmw/sources/BimmerLink_v2.36.1.apk"
+    }
+  ],
+  "definitions": {
+    "DME9FF_R": {
+      "apk_member": {
+        "path": "assets/dat/dme9ff_r.enc",
+        "plain_sha256": "e278372d58221cc551b063f491cc7bf10b92371fdaffe9a918b8e85a09a514d2",
+        "sha256": "c2d4e15b62c197cd855477edc5f7fc9570bd10836de9f292d2a834a528542657"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 1024
+    },
+    "EDMEI1": {
+      "apk_member": {
+        "path": "assets/dat/edmei1.enc",
+        "plain_sha256": "a25895ce78d228c2de82e95e8353257ac153b56b2369a6d925731970d5e36755",
+        "sha256": "562f81db01f5c9b38a2218ea02a8ba1748b3b522cbc5789f7c88e0e5fa1832c7"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 6
+    },
+    "MSD85L6": {
+      "apk_member": {
+        "path": "assets/dat/msd85l6.enc",
+        "plain_sha256": "8a61ac9d393591a45c5523ec3c4c05a8f0dee3e994572ef0247fde5a7c043b2e",
+        "sha256": "4ab926bc36daa22f6b7458c6f663978d92f77604e84aa0398426fe1fd5bacbd0"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 355,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": "0x3fe8e",
+      "line_count": 31180,
+      "listing_sha256": "cfcf3b6c5103b8f100213eb22d761ac28c6dd500b783327e3b25de11bc135615",
+      "normalized_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
+      "source_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861"
+    },
+    "MSD85YL6": {
+      "apk_member": {
+        "path": "assets/dat/msd85yl6.enc",
+        "plain_sha256": "bb1165ca326e2d65ea13810ee5f53a75058ebc21734f41d295de3ea5a700bf14",
+        "sha256": "c5c70a79d5ca26d7d96c218c1adf5be138ee2fc303923a10478f3d2d49535071"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 346,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": "0x3fe49",
+      "line_count": 31180,
+      "listing_sha256": "c2ec52e4e3a1185807a03daaf7220efaad660d90297bfa74d16688deafed9f52",
+      "normalized_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
+      "source_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867"
+    },
+    "MSD87": {
+      "apk_member": {
+        "path": "assets/dat/msd87.enc",
+        "plain_sha256": "005b9dbe98518a27c7ccd3f9f10fb3ed8b3144e21814025444481970a399a26e",
+        "sha256": "c419e40e1b4687a3d161e04bcc6e4b64fe00ce45f67d79abd53d3e1664deaf39"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 325,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": "0x66354",
+      "line_count": 31180,
+      "listing_sha256": "56e342999d5af00026e29ab9b638a0983f8a2ced6d6f2808aca7f0e160da0e60",
+      "normalized_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
+      "source_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3"
+    },
+    "MSV90": {
+      "apk_member": {
+        "path": "assets/dat/msv90.enc",
+        "plain_sha256": "01e3dab79ebc165bb7a848b86a4f9a7a41df2d5970ff5d901f272477110cbca8",
+        "sha256": "e9384827f887b7a79a556ecbe76a6e326ca84a58720fc571c06730450d87f6e3"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 303,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": "0x4d351",
+      "line_count": 31180,
+      "listing_sha256": "3e4b0d07843252e8b426f47cad43004232d0003146d70c36f5b960d0ae2e28ed",
+      "normalized_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
+      "source_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85"
+    },
+    "N55_ALP": {
+      "apk_member": {
+        "path": "assets/dat/n55_alp.enc",
+        "plain_sha256": "3ddb33d721b83fc833f2046f480c35929d091cd02ad91ff092cc0f5274081c4a",
+        "sha256": "806259d69979cafa95971787a35407366d362551bb898eeaa82525b030005ddb"
+      },
+      "apk_mil_sensor_rows": [],
+      "apk_sensor_rows": 348,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": "0x43dee",
+      "line_count": 31180,
+      "listing_sha256": "57203ddfe7c13f27eb91c2d68eb9210a263d638b22749afe99f6c975362c95bb",
+      "normalized_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
+      "source_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540"
+    }
+  },
+  "limits": [
+    "Static source recovery only; no target execution or vehicle traffic",
+    "No dynamic-definition mutation enabled",
+    "Existing53exact rows/17definitions remain enabled;9rows remain unimplemented",
+    "No complete ECU-local ownership/cleanup implementation yet"
+  ],
+  "rea_export": "/Users/lennon/BMW-Tool/investigations/task-b-mil-block-20261029/rea-evidence.json",
+  "rea_export_sha256": "5d9ab857ef104aa043f9d4c1a1ea673e91f3592ef583a23c5e88de1f47509a05",
+  "source_apk_sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5",
+  "status": "primary implementation reference; runtime expansion not enabled"
+}

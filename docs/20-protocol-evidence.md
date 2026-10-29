@@ -141,3 +141,15 @@ selection with53exact F150/name rows across17definitions, using source-selected
 4A69/50D8/42BC scalar readers. Every other catalogued engine has a concrete source
 or decoder disposition. Raw values beyond0/1 remain unavailable, not truthy On.
 These static source contracts add no physical vehicle or lamp observation.
+
+## Vehicle-order recovery correction — next increment
+
+S-02 `models.s0.t` sends gateway `22 3F 06`; its callback passes response bytes
+starting at PDU offset5 to `models.b1`. This is packed six-bit data, not XML.
+`a.g0` labels its five fixed fields as time criterion, model range, type key,
+paint code and upholstery code. **Time criterion is not an observed build date**.
+The two bytes before the packed data are preserved as opaque framing metadata;
+the reference callback does not validate a length meaning. Optional markers
+8/4/12 and two-zero-bit termination need bounded parsing, not string guessing.
+The concrete implementation/evidence record is tracked in
+`tasks/task-b-vehicle-order-implementation.md`.

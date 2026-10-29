@@ -229,3 +229,23 @@ transport/callers and target CBS jobs. Resolve exact owning ECU/version, reset
 preconditions, unknown flags/status, final echoes and meaningful post-state.
 Implement both reads and writes through the existing owner, with durable state
 and no automatic retry. Earlier CBS-later notes are historical/superseded.
+
+## Post-PR14 R2/R3/R5 recovery
+
+- Gateway3F06→packed vehicle order now recovered/implemented with bounded
+  field/section parsing. Model range/type key/time criterion/paint/upholstery and
+  optional codes are source configuration facts, not inferred build date/trim.
+- All45supplied coding-source series groups accounted; i3/i8category2,
+  i4/iX3category3. No U/I20group or DoIP address converter in these paths.
+  Newer applicable branches still need a matching source, not guessed prefixes.
+- All4735passenger equipment descriptions recovered with exactPfilter and
+  English field.905motorcycle rows excluded. Runtime is standalone generic JSON.
+- Five older MIL block chains now traced (not enabled): fixedF303clear/define/read,
+  source stop sends no cleanup in inspected methods. Next: owner-exclusive
+  multi-request operation, bounded cleanup, uncertainty reporting/read-only policy.
+  Four alternate/missing engines, actual odometer/model/build and diagnostic
+  category/description reconciliation remain. No fleet hardware dependency.
+
+See docs/evidence/task-b-vehicle-order.md, task-b-vehicle-metadata.md and
+ task-b-mil-block-recovery.md. Aggregate B/R tasks remain open for their remaining
+branches; this checkpoint does not falsely complete them.

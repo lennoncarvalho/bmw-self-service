@@ -36,7 +36,7 @@ row indices/metadata, job offsets and normalized whole-job fingerprints are in
 | Direct `22 4A69`, unsigned char, unit0/1 | DME8FF_R, DME_BX8, MEVD172, MEVD1724, MEVD1725, MEVD172Y, MSD87_R0, N63TU_R0, S55, S63TU_R0 | Enabled after exact F150/name/address match |
 | Direct `22 50D8`, unsigned char, unscaled MIL request | D70BX7A0, D72N47A0, D73N57A0, D73N57E0, D75BX7A0, D83BX7C0 | Enabled for exact raw0/1 only; other request values unavailable |
 | Direct `22 42BC`, unsigned char, unscaled MIL request | D94BX7A0 | Enabled for exact raw0/1 only |
-| Block-reader chain requires further tracing | MSD85L6, MSD85YL6, MSD87, MSV90, N55_ALP | Exact direct table row exists, but STATUS_LESEN is absent; STATUS_BLOCK_LESEN has dynamic/block branches. No direct probe enabled from metadata alone |
+| Block lifecycle traced; runtime implementation pending | MSD85L6, MSD85YL6, MSD87, MSV90, N55_ALP | STATUS_BLOCK_LESEN clear/define/read traced; definition-disabled path still reads F3nn. Exclusive sequence ownership, checked cleanup, uncertainty handling and read-only enforcement remain; no metadata-only direct probe |
 | No direct ISMIL table row | DME9FF_R, EDMEI1 | No guessed4A69/50D8 request; recover actual alternate MIL selection/decoder next |
 | Exact PRG absent | DME98_R, FCCU | Specific missing source definition retained; no related-name substitution |
 
@@ -109,9 +109,21 @@ lint/format checks and mypy for the edited module pass; the parent increment
 records the mandatory full-app gate and independent review separately.
 No suite or tests directory was created.
 
-Remaining concrete recovery: extract the direct/no-dynamic branch (if present)
-of the five STATUS_BLOCK_LESEN chains and its scalar validity; trace alternate
+Remaining concrete implementation: own the five recovered STATUS_BLOCK_LESEN
+clear/define/read sequences exclusively, with checked cleanup, explicit uncertain
+outcomes and read-only enforcement. Source tracing establishes no independent
+direct/no-dynamic branch; disabling definition still reads F3nn. Trace alternate
 MIL selection for DME9FF_R/EDMEI1 from their actual engine readers; reconcile
 missing DME98_R/FCCU PRGs against other supplied sources; recover DoIP engine
 address selection before enabling these MIL requests there. Those are open
 implementation tasks, not hardware dependencies or a final support restriction.
+
+## Post-PR14 block lifecycle trace
+
+[The exact block follow-up](task-b-mil-block-recovery.md) now records the five
+identical STATUS_BLOCK_LESEN paths and the Android fixed-F303 allocation/polling
+contract. It disproves an assumed generic direct branch: disabling definition
+still reads F3nn, not4A69. A fully owned dynamic clear/define/read/cleanup
+operation, with explicit read-only rejection and uncertain-cleanup handling,
+is the next concrete implementation prerequisite. No dynamic mutations or
+additional runtime MIL rows are enabled by that investigation.

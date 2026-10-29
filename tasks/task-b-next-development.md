@@ -139,5 +139,27 @@ do not reuse a merged implementation branch or wait for more cars.
 CBS reads **and writes** are current Task B work, ordered after history and before
 easy/advanced coding. Older CBS-later labels are superseded. The existing
 `future-cbs-research.md` path is retained for links but now owns implementation,
-not a deferred research-only item. This documentation branch starts from
-origin/main independently of PR15; no PR15 implementation is copied or modified.
+not a deferred research-only item. PR15 merged at b62243f; continued development
+uses PR16’s codex/task-b-cbs-priority branch updated with origin/main at the
+owner’s request. Do not open new PRs without explicit owner instruction.
+
+## Post-PR14 vehicle-order checkpoint
+
+PR14 merge verified at dcb70a6, new branch codex/task-b-vehicle-order from fetched
+origin/main. Gateway3F06 packed vehicle order and4735English passenger-equipment
+labels are implemented in the settled overview with explicit unknown/incomplete
+states. No trim/build date is inferred. Exact45source-category groups and their
+U/I/DoIP limits are recorded in the metadata evidence. See
+[verification](task-b-vehicle-order-verification.md),
+[vehicle-order contract](../docs/evidence/task-b-vehicle-order.md) and
+[metadata/category accounting](../docs/evidence/task-b-vehicle-metadata.md).
+
+The next MIL software task is now concrete: implement fixedF303 clear/define/read
+under one exclusive multi-request lifecycle with bounded cleanup and honest
+uncertain outcomes, preserving --read-only's2Crejection. The current overview
+still uses the53direct-scalar rows; this increment does not enable mutations.
+[Recovered block lifecycle](../docs/evidence/task-b-mil-block-recovery.md) includes
+all five original job paths and Android allocation/stop behavior. Alternate/missing
+four engines remain source work. Queue1–3also retains actual DoIP full-width
+mapping/newer U artifacts, actual odometer/model/build measurements and diagnostic
+category/description reconciliation. History/coding follow in the existing order.

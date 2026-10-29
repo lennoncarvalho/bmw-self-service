@@ -54,3 +54,14 @@ No app behavior is newly implemented by this planning amendment.
 
 Independent review and complete offline/UI/static checks are recorded in
 [tasks/task-b-topology-verification.md](../../tasks/task-b-topology-verification.md).
+
+## Packed vehicle-order increment — 2026-10-29
+
+| Contract | Source and implementation | Verification / limits |
+|---|---|---|
+| B-INFO vehicle order | S-02 s0.t→s0.b→b1→g0; gateway22/3F06 packed fields/options; app/vehicle_order.py→settled overview | Bounds, echoes, all8section combinations, unknown/truncated/error states checked offline; time criterion is not build date, model range is not trim. No physical3F06observation. [Contract](task-b-vehicle-order.md) |
+| B-INFO equipment labels | S-02 y0→salapa.enc exactProws;4735English codes,905Mrows excluded; app/vehicle_metadata.py | Exact/unknown/case/collision/bounds and deterministic extraction checked; no online lookup, source executable or German fallback. [Metadata/categories](task-b-vehicle-metadata.md) |
+| B-INFO remaining MIL blocks | Five exact PRGs+Android fixedF303allocation; [source lifecycle](task-b-mil-block-recovery.md) | Recovered clear/define/read and absent cleanup in inspected stop path; runtime remains disabled pending owned multi-request/cleanup implementation, not hardware.53direct rows remain enabled. |
+
+Full increment verification and independent review:
+[tasks/task-b-vehicle-order-verification.md](../../tasks/task-b-vehicle-order-verification.md).

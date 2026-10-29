@@ -264,3 +264,15 @@ Implementation acceptance and source anchors: [CBS task](../tasks/future-cbs-res
 Source recovery, offline byte/error checks, visual Qt/DEMO verification,
 independent review and full preflight are required; physical observations stay
 separate, and no additional vehicle is a development dependency.
+
+## Packed vehicle-order increment
+
+Gateway3F06 uses the recovered packed six-bit contract, not FA XML. Dashboard
+shows model range/type key, time criterion, paint/upholstery and optional source
+configuration codes together in its settled initial/refresh batch. Time
+criterion remains explicitly labelled configuration data; do not convert it to
+an asserted production date or exact trim model. Preserve the original response
+and opaque two-byte framing prefix. Known optional sections require complete
+items/terminators; unknown sections retain an explicit incomplete state.
+DoIP requires a recovered logical target mapping before this read is enabled.
+See `evidence/task-b-vehicle-order.md` and the concrete increment plan.
