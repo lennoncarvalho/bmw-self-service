@@ -50,6 +50,10 @@ _INTENT_FIELDS = frozenset(
 )
 
 
+class HistoryJournalLimitError(ValueError):
+    """Matching local journals exceed a listing limit and need archiving."""
+
+
 def _encoded(value: object) -> bytes:
     try:
         return json.dumps(
@@ -346,16 +350,22 @@ def _constant(value: str) -> None:
     raise ValueError("History journal cannot contain nonfinite numbers")
 
 
-def load_journal(path: Path) -> dict[str, Any]:
-    """Read bounded data only; loading never resumes or authorizes an operation."""
+def _read_journal(path: Path) -> Any:
+    """Parse bounded JSON before selecting and fully validating a journal."""
     with path.open("rb") as stream:
         raw = stream.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         raise ValueError("History journal exceeds the 8 MiB limit")
     try:
-        return validate_journal(
-            json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs, parse_constant=_constant)
-        )
+        return json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs, parse_constant=_constant)
+    except (UnicodeError, RecursionError, OverflowError, TypeError) as exc:
+        raise ValueError("History journal contains malformed data") from exc
+
+
+def load_journal(path: Path) -> dict[str, Any]:
+    """Read bounded data only; loading never resumes or authorizes an operation."""
+    try:
+        return validate_journal(_read_journal(path))
     except (UnicodeError, RecursionError, OverflowError, TypeError) as exc:
         raise ValueError("History journal contains malformed data") from exc
 
@@ -506,24 +516,33 @@ class HistoryJournalStore:
             raise ValueError("Invalid journal filter vehicle identity")
         if environment not in ("live", "demo"):
             raise ValueError("Invalid journal filter environment")
-        paths = []
-        for path in self.root.glob("*.json"):
-            paths.append(path)
-            if len(paths) > 10000:
-                raise ValueError("History journal listing exceeds its resource limit")
-        records = []
+        records: list[tuple[Path, dict[str, Any]]] = []
         total_bytes = 0
-        for path in sorted(paths):
-            record = load_journal(path)
+        for path in self.root.glob("*.json"):
+            value = _read_journal(path)
+            intent = value.get("intent") if isinstance(value, dict) else None
+            if not isinstance(intent, dict):
+                raise ValueError("Invalid history journal intent fields")
+            if intent.get("environment") not in ("live", "demo") or not valid_vin(
+                intent.get("vin")
+            ):
+                raise ValueError("Invalid history journal vehicle or environment")
+            if intent.get("environment") != environment or (
+                vin is not None and intent.get("vin") != vin
+            ):
+                continue
+            if len(records) >= 10000:
+                raise HistoryJournalLimitError(
+                    "History journals exceed the 10,000-record listing limit; export and archive older journals before reloading."
+                )
+            record = validate_journal(value)
             total_bytes += len(_encoded(record))
             if total_bytes > MAX_LIST_BYTES:
-                raise ValueError(
-                    "History journals exceed the 32 MiB listing limit; explicitly export/archive older reports"
+                raise HistoryJournalLimitError(
+                    "History journals exceed the 32 MiB listing limit; export and archive older journals before reloading."
                 )
-            intent = record["intent"]
-            if intent["environment"] == environment and (vin is None or intent["vin"] == vin):
-                records.append(record)
-        return records
+            records.append((path, record))
+        return [record for _, record in sorted(records)]
 
     def known_dates(self, vin: str, environment: str = "live") -> set[date]:
         """Conservatively reserve dates of accepted or possibly sent ADD steps."""

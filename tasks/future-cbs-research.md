@@ -25,8 +25,8 @@ Concrete porting anchors, **primary implementation reference**:
 - `read_dme_status` reads1001at12. `owner`/`RESET_ECU` associate oil/additive,
   brake and cluster items with12/29/60. The source defaults unknown items to60;
   do not port that as permission to probe unknown write owners.
-- `reset_payload`/`reset_request` build a2E1001reset record with one-item count,
-  availability100, service increment and unchanged-field sentinels. Preserve
+- `reset_payload`/`reset_request` build a 2E 10 01 reset record with one-item count,
+  availability 100, service increment and unchanged-field sentinels. Preserve
   exact field widths; corroborate version-specific meanings against target jobs.
   `reset_cbs` relies on its client to detect rejection; inspect that transport
   and callers before deciding which final replies establish completion.

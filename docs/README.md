@@ -147,7 +147,9 @@ mutations are not enabled by the overview increment. See
 PR15 is merged at b62243f. PR16's codex/task-b-cbs-priority branch now includes
 that main baseline and implements local JSON history/editor workspaces, preserving
 D-58's CBS-before-coding order. See [implementation/verification](../tasks/task-b-local-history-implementation.md).
-This is local editing/storage, not history execution, a vehicle archive or a coding
-baseline. The separate mutation journal and ADD-only/explicit replacement workers
-remain next history tasks; CBS reads/writes follow before coding. No new PR is
-authorized without an explicit owner request.
+The separate history-operation journal and ADD-only/explicit replacement workers
+are also implemented; physical validation remains pending. See
+[history execution implementation](../tasks/task-b-history-write-implementation.md).
+These journals preserve local intent/results, not unknown prior car history or a
+coding baseline. CBS reads/writes follow before coding. No new PR is authorized
+without an explicit owner request.

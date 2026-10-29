@@ -301,8 +301,15 @@ gaps remain explicit even when static source support is broad.
 6. Broader source coverage and platform releases.
 
 Track feature contracts by B-CON/B-INFO/B-DTC-R/B-DTC-W/B-HIST-F/B-HIST-W/
-B-CODE-R/B-CODE-W/B-REC with source/evidence/spec/code/verification links.
-Each row remains pending until its spec 26 acceptance is observed. Engine
+B-CBS-R/B-CBS-W/B-CODE-R/B-CODE-W/B-REC with source/evidence/spec/code/verification links.
+
+| CBS contract | Source | Evidence | Specification | Implementation | Verification |
+|---|---|---|---|---|---|
+| B-CBS-R | [Pinned cbs.py: read_cbs/read_item/decode](https://github.com/devttys1/bmw-service-manager/blob/6c0041bb71674ec52d567c4a6360b5469c048173/bmw_service_manager/cbs.py) | [Source findings](../docs/evidence/task-b-history-new-sources.md#cbs-priority-update--d-58), [read anchors/limits](future-cbs-research.md#starting-source-and-observed-limits) | [Spec 26](../docs/26-feature-readiness-spec.md#feature-acceptance) | [Read implementation plan](future-cbs-research.md#implementation-sequence-and-files); app code pending | [Acceptance checks](future-cbs-research.md#acceptance); results pending |
+| B-CBS-W | [Pinned cbs.py: reset_payload/reset_request/reset_cbs](https://github.com/devttys1/bmw-service-manager/blob/6c0041bb71674ec52d567c4a6360b5469c048173/bmw_service_manager/cbs.py) | [Source findings](../docs/evidence/task-b-history-new-sources.md#cbs-priority-update--d-58), [reset anchors/limits](future-cbs-research.md#starting-source-and-observed-limits) | [Spec 26](../docs/26-feature-readiness-spec.md#feature-acceptance) | [Write implementation plan](future-cbs-research.md#implementation-sequence-and-files); app code pending | [Acceptance checks](future-cbs-research.md#acceptance); results pending |
+
+Each row remains pending until its spec 26 acceptance is observed. CBS code and
+verification artifacts must be linked here when produced; plans are not results. Engine
 setup is no longer the baseline blocker. No new wire mapping is established
 by the limited tooling smoke inspection.
 

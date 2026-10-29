@@ -48,13 +48,15 @@ source restriction; not-yet-recovered means an actionable investigation.
    description catalogue and Clear All against all recovered selection branches;
    finish gaps in applicability, target accounting, negatives and post-clear
    reads. Exit: per-target outcomes and full source-category accounting.
-4. **Local history, independent of car access (B4/B5a).** Implement the separate
+4. **Local history, independent of car access (B4/B5a), implemented.** The separate
    durable history journal, versioned JSON-only files, fourteen service choices,
-   multi-item cards and date/VIN/conflict rules in workflow28. Keep the coding
+   multi-item cards and date/VIN/conflict rules follow workflow28. Keep the coding
    backup validator intact. No reader, legacy adapters or current-odometer gate.
-5. **History writes (B5b; R7).** Finish exact headunit session/result/reset/
-   capacity contracts, then implement ADD-only append and explicit one-ERASE
-   replacement with frozen plans, durable per-step outcomes and global lockout.
+5. **History writes (B5b; R7), implemented; physical validation pending.** ADD-only
+   append and explicit one-ERASE replacement use exact headunit session/result/
+   reset contracts, frozen plans, durable per-step outcomes and global lockout.
+   Capacity rejection stops execution without fallback; physical capacity and
+   visibility observations remain pending. See [implementation](task-b-history-write-implementation.md).
    No automatic retries/replay or invented old-car backup.
 6. **CBS reading and writing (B-CBS-R/B-CBS-W; D-58).** Port the concrete
    source-supported status/read and reset/write behavior through CarWorker and
@@ -99,9 +101,9 @@ See [review dispositions](pr-13-review-followup.md) for every Robin/CodeRabbit
 finding and current-slice fixes. Preserve these boundaries in the next coding
 session:
 
-- B5a/B5b must replace the intentionally disabled history send boundary with the
-  separate local journal and mode-specific workers. Do not re-enable it merely
-  because an ADD encoder exists. Vehicle history reading remains retired.
+- B5a/B5b now implement the separate local journal and mode-specific workers;
+  physical validation remains pending. Preserve exact identity, frozen plans and
+  checked results. Vehicle history reading remains retired.
 - `SERVICE_TYPES` in app/service_history.py is the shared fourteen-type catalogue;
   legacy sample parsing now lives only in scripts/inspect_history_format.py.
   JSON/card work reuses the catalogue; it must not restore legacy interchange.
@@ -177,10 +179,13 @@ Local JSON history/editor/workspaces are implemented; read
 JSON-only bounded import/export,14service choices, editable multi-item cards,
 unknown/conflict preservation, explicit VIN association and isolated offline/
 live/DEMO durable projects have offline/Qt/DEMO and independent-review evidence.
-Editor persistence is not the B4 mutation journal. No history writes were enabled.
-Next history work: actual separate history-operation journal and frozen append/
-replacement plans, exact headunit execution/session/capacity/result/activation,
-then enabled reviewed write workers. CBS read **and write** follows before coding.
+Editor persistence remains separate from the implemented B4 history-operation
+journal. Frozen append/replacement plans and mode-specific write workers are
+implemented with exact headunit identity/session/result/reset handling and durable
+per-step outcomes; physical validation remains pending. Read
+[the history implementation](task-b-history-write-implementation.md)
+and [the execution contract](../docs/evidence/task-b-history-write-contract.md).
+CBS read **and write** follows before coding.
 
 Queue1–3also retains real DoIP/newer U sources, odometer/model/build/measurements,
 diagnostic category/description reconciliation and remaining MIL branches.

@@ -6,14 +6,15 @@ compatibility claim.
 
 **Current status:** PRs #8/#9 are merged. The retained owner session confirms
 HSFZ connection/session/VIN, but optional reads failed and DTC coverage was
-gateway-only ([diagnosis](docs/23-first-vehicle-session.md)). Live history/coding
-remain unavailable; writes and rollback are not production validated.
+gateway-only ([diagnosis](docs/23-first-vehicle-session.md)). Live coding remains
+unavailable; writes and rollback are not production validated.
 Next development is split into [library migration](tasks/protocol-library-migration.md)
 and [REA feature recovery](tasks/rea-protocol-recovery.md), with separate specs.
-History is planned as local JSON/cards with ADD-only append or explicit erase-
-and-replace; vehicle history reading is retired. See
-[the workflow](docs/28-service-history-workflow.md). Current live history workers
-remain disabled until that execution/journal work is implemented.
+Local JSON/cards, a separate history-operation journal and mode-specific workers
+for ADD-only append or explicit erase-and-replace are implemented; physical
+validation remains pending. Vehicle history reading is retired. See
+[the workflow](docs/28-service-history-workflow.md) and
+[the implementation](tasks/task-b-history-write-implementation.md).
 Use [the session handoff](SESSION-PROMPT.md) and [source guide](docs/27-rea-source-guide.md).
 Start with [the documentation index](docs/README.md),
 [readiness audit](docs/19-audit-and-readiness.md) and

@@ -1,7 +1,9 @@
 # Service history — local JSON, append and explicit replacement
 
 Status: approved product scope consolidated 2026-10-29; local JSON/editor and
-isolated workspace persistence implemented. Vehicle execution/journal tasks remain open. Authority: D-50–D-55 in [owner decisions21](21-product-decisions.md).
+isolated workspace persistence, history-operation journal and mode-specific write
+workers implemented. Physical validation remains pending. Authority: D-50–D-55 in
+[owner decisions21](21-product-decisions.md).
 This supersedes earlier history-read/complete-car-backup gates in spec 26, plans,
 tasks and skill examples. [Native/PRG evidence](evidence/task-b-history-deep-investigation.md)
 and [additional-source comparison](evidence/task-b-history-new-sources.md) retain
@@ -222,9 +224,11 @@ storage design, not a pending owner or implementation choice.
 
 ## Acceptance and remaining facts
 
-Planning is complete; runtime page/workers/storage are not implemented by this
-scope change. Existing mutation guards stay until the mode-specific worker,
-identity/prerequisites, durable journal, response handling and review are ready.
+The runtime page, local storage, separate operation journal and mode-specific
+append/replacement workers are implemented. Exact identity/prerequisites, durable
+per-step outcomes and checked application responses gate execution; physical
+validation remains pending. See [implementation](../tasks/task-b-history-write-implementation.md)
+and [source-backed execution contract](evidence/task-b-history-write-contract.md).
 B-HIST-R is retired and must not be resurrected as a release prerequisite.
 
 Offline/manual checks: JSON round-trip/errors/conflicts/unknowns/VIN/atomic I/O;
@@ -267,6 +271,8 @@ corrupt initial state cannot silently become an editable empty fallback, and
 shutdown waits nonblockingly for one worker owner. Coding validators stay intact.
 
 See [implementation and verification](../tasks/task-b-local-history-implementation.md).
-The operation journal, prior-operation date accounting, frozen append/replacement
-plans, business results and write completion/activation still belong to B5b/B4's
-history extension. CBS read/write follows history and precedes coding under D-58.
+The subsequent B5b/B4 history extension implements the separate operation journal,
+prior-operation date accounting, frozen append/replacement plans, business results
+and write completion/reset handling; physical validation remains pending. See
+[the implementation](../tasks/task-b-history-write-implementation.md). CBS read/write
+follows history and precedes coding under D-58.

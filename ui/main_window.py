@@ -184,7 +184,7 @@ class MainWindow(QMainWindow):
             btn = QPushButton(f"{icon}\n{label}")
             btn.setObjectName("navButton")
             btn.setCheckable(True)
-            btn.setEnabled(label == "History")
+            btn.setEnabled(label in ("Vehicle", "History"))
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             self.nav_group.addButton(btn, i)
             layout.addWidget(btn)
@@ -341,7 +341,7 @@ class MainWindow(QMainWindow):
     # ---- Navigation ----
 
     def _on_nav_clicked(self, index: int) -> None:
-        """Record navigation and show the selected connected-vehicle page."""
+        """Show the selected page, returning Vehicle to Welcome when disconnected."""
         logger.info(
             "Navigation page=%s conn=%s read_only=%s",
             self.NAV_ITEMS[index][0],
@@ -349,7 +349,10 @@ class MainWindow(QMainWindow):
             self._read_only,
         )
         if not self._mutation_active:
-            self.stack.setCurrentIndex(index + 1)
+            if index == 0 and not self._connected:
+                self.stack.setCurrentWidget(self.welcome_page)
+            else:
+                self.stack.setCurrentIndex(index + 1)
             page = self.stack.currentWidget()
             if page in (self.diag_page, self.coding_page):
                 page.activate()
@@ -933,7 +936,7 @@ class MainWindow(QMainWindow):
 
         for btn in self.nav_group.buttons():
             btn.setChecked(False)
-            btn.setEnabled(self.nav_group.id(btn) == 3)
+            btn.setEnabled(self.nav_group.id(btn) in (0, 3))
 
         self.stack.setCurrentIndex(0)
         self.hide_spinner()
@@ -981,7 +984,7 @@ class MainWindow(QMainWindow):
         elif self._connected:
             QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
-            btn.setEnabled((self._connected or self.nav_group.id(btn) == 3) and not active)
+            btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3)) and not active)
         self._cancel_btn.setVisible(False)
         if (
             not active

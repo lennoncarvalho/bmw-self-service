@@ -47,11 +47,11 @@ reload because directory-sync failure can occur after atomic replacement.
 MainWindow waits nonblockingly at shutdown; only the page deletes its file worker.
 Global vehicle mutation lockout disables local editing/navigation.
 
-The B4 history-operation journal is **not** implemented by editor persistence.
-No previous-response/uncertain vehicle outcomes are manufactured. Journal-date
-accounting, frozen append/replacement plans, actual execution/prerequisites/
-capacity/activation and write workers remain B4/B5b. CBS read/write follows those
-before coding. Remaining earlier protocol/source queue branches stay open.
+Editor persistence is separate from the B4 history-operation journal. The later
+[B4/B5b extension](task-b-history-write-implementation.md) implements that journal,
+prior-operation date accounting, frozen append/replacement plans and mode-specific
+write workers with checked results/reset handling. Physical validation remains
+pending; no prior car history is manufactured. CBS read/write follows before coding. Remaining earlier protocol/source queue branches stay open.
 
 ## Verification — executed 2026-10-29
 

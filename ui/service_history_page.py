@@ -855,6 +855,8 @@ class ServiceHistoryPage(QWidget):
         )
 
     def _refresh_journals(self) -> None:
+        from app.history_journal import HistoryJournalLimitError
+
         self._journal_dirty = False
         key, before = self._key, self.workspace
         vin = before["project"]["vin"]
@@ -862,7 +864,10 @@ class ServiceHistoryPage(QWidget):
         memory = copy.deepcopy(self._write_report)
 
         def operation() -> object:
-            records = self.journals.list_records(vin, environment) if vin else []
+            try:
+                records = self.journals.list_records(vin, environment) if vin else []
+            except HistoryJournalLimitError as exc:
+                return {"listing_error": str(exc)}
             from datetime import date
 
             workspace = copy.deepcopy(before)
@@ -925,6 +930,10 @@ class ServiceHistoryPage(QWidget):
 
         def loaded(value: object) -> None:
             assert isinstance(value, dict)
+            if "listing_error" in value:
+                self._journal_ready = False
+                self.message.setText(value["listing_error"])
+                return
             self.workspace = value["workspace"]
             self._journal_records = value["records"]
             self._journal_states = value["states"]

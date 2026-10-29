@@ -113,8 +113,10 @@ another implementation slice on this branch.
 [Deep investigation](docs/evidence/task-b-history-deep-investigation.md) records extended Lite native tracing and four primary
 headunit ADD jobs. The key-only dormant-reader assertion remains unconfirmed.
 Standalone `app/service_history.py` now preserves local records and encodes the
-recovered NBT ADD body with checked final application status; no vehicle send
-worker is enabled yet. The approved next plan is workflow28 rather than the
+recovered NBT ADD body with checked final application status. The subsequent
+[history execution implementation](tasks/task-b-history-write-implementation.md)
+adds the separate journal and mode-specific write workers; physical validation
+remains pending. The approved contract is workflow28 rather than the
 old complete-car-history baseline/read prerequisite. Fixed7 dealer
 padding is proven; the variable-NUL hypothesis was disproven by native offsets
 and a byte-for-byte round-trip of all eight supplied records. Complete headunit
@@ -213,10 +215,13 @@ Local JSON history/editor/workspaces are implemented; read
 JSON-only bounded import/export,14service choices, editable multi-item cards,
 unknown/conflict preservation, explicit VIN association and isolated offline/
 live/DEMO durable projects have offline/Qt/DEMO and independent-review evidence.
-Editor persistence is not the B4 mutation journal. No history writes were enabled.
-Next history work: actual separate history-operation journal and frozen append/
-replacement plans, exact headunit execution/session/capacity/result/activation,
-then enabled reviewed write workers. CBS read **and write** follows before coding.
+Editor persistence remains separate from the implemented B4 history-operation
+journal. Frozen append/replacement plans and mode-specific write workers are
+implemented with exact headunit identity/session/result/reset handling and durable
+per-step outcomes; physical validation remains pending. Read
+[tasks/task-b-history-write-implementation.md](tasks/task-b-history-write-implementation.md)
+and [the execution contract](docs/evidence/task-b-history-write-contract.md).
+CBS read **and write** follows before coding.
 
 Queue1–3also retains real DoIP/newer U sources, odometer/model/build/measurements,
 diagnostic category/description reconciliation and remaining MIL branches.
