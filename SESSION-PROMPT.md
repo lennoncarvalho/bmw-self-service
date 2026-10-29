@@ -199,3 +199,29 @@ DME9FF_R/EDMEI1 alternate MIL and DME98_R/FCCU missing definitions remain source
 work. These are implementation/source tasks, not waits for more cars. Then
 continue local JSON/history journal/cards, mode-specific history writes and full
 applicable coding/recovery in the ordered queue. No new physical observations.
+
+
+## PR16 implementation continuation — local history editor
+
+PR15 merged at b62243f (2026-10-29T20:12:28Z). At the owner's request, switched
+cleanly to codex/task-b-cbs-priority and merged fetched origin/main, preserving
+both PR15's code/fixes and D-58. No new PR is authorized; continue this existing
+PR16 branch until the owner directs otherwise. Do not merge it.
+
+Local JSON history/editor/workspaces are implemented; read
+`tasks/task-b-local-history-implementation.md` before repeating this work.
+JSON-only bounded import/export,14service choices, editable multi-item cards,
+unknown/conflict preservation, explicit VIN association and isolated offline/
+live/DEMO durable projects have offline/Qt/DEMO and independent-review evidence.
+Editor persistence is not the B4 mutation journal. No history writes were enabled.
+Next history work: actual separate history-operation journal and frozen append/
+replacement plans, exact headunit execution/session/capacity/result/activation,
+then enabled reviewed write workers. CBS read **and write** follows before coding.
+
+Queue1–3also retains real DoIP/newer U sources, odometer/model/build/measurements,
+diagnostic category/description reconciliation and remaining MIL branches.
+Independent code review confirms the five older engines can use existing
+run_operation for exclusive clear/define/read/cleanup; explicit2C service support,
+confirmed UI action/global lockout, reserved cleanup budget and per-step uncertain
+outcomes remain required. Do not put dynamic-DID writes in normal overview refresh.
+No additional physical vehicles are a prerequisite for these implementation tasks.

@@ -163,3 +163,29 @@ all five original job paths and Android allocation/stop behavior. Alternate/miss
 four engines remain source work. Queue1–3also retains actual DoIP full-width
 mapping/newer U artifacts, actual odometer/model/build measurements and diagnostic
 category/description reconciliation. History/coding follow in the existing order.
+
+
+## PR16 implementation continuation — local history editor
+
+PR15 merged at b62243f (2026-10-29T20:12:28Z). At the owner's request, switched
+cleanly to codex/task-b-cbs-priority and merged fetched origin/main, preserving
+both PR15's code/fixes and D-58. No new PR is authorized; continue this existing
+PR16 branch until the owner directs otherwise. Do not merge it.
+
+Local JSON history/editor/workspaces are implemented; read
+`tasks/task-b-local-history-implementation.md` before repeating this work.
+JSON-only bounded import/export,14service choices, editable multi-item cards,
+unknown/conflict preservation, explicit VIN association and isolated offline/
+live/DEMO durable projects have offline/Qt/DEMO and independent-review evidence.
+Editor persistence is not the B4 mutation journal. No history writes were enabled.
+Next history work: actual separate history-operation journal and frozen append/
+replacement plans, exact headunit execution/session/capacity/result/activation,
+then enabled reviewed write workers. CBS read **and write** follows before coding.
+
+Queue1–3also retains real DoIP/newer U sources, odometer/model/build/measurements,
+diagnostic category/description reconciliation and remaining MIL branches.
+Independent code review confirms the five older engines can use existing
+run_operation for exclusive clear/define/read/cleanup; explicit2C service support,
+confirmed UI action/global lockout, reserved cleanup budget and per-step uncertain
+outcomes remain required. Do not put dynamic-DID writes in normal overview refresh.
+No additional physical vehicles are a prerequisite for these implementation tasks.

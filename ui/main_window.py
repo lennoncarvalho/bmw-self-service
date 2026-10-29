@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
             btn = QPushButton(f"{icon}\n{label}")
             btn.setObjectName("navButton")
             btn.setCheckable(True)
-            btn.setEnabled(False)
+            btn.setEnabled(label == "History")
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
             self.nav_group.addButton(btn, i)
             layout.addWidget(btn)
@@ -540,7 +540,7 @@ class MainWindow(QMainWindow):
             self.vehicle_page.populate({}, series, "Unverified")
             self.hide_spinner()
             for btn in self.nav_group.buttons():
-                btn.setEnabled(False)
+                btn.setEnabled(self.nav_group.id(btn) == 3)
             self.stack.setCurrentWidget(self.vehicle_page)
             QMessageBox.information(
                 self,
@@ -872,8 +872,9 @@ class MainWindow(QMainWindow):
             return
         if not self._closing:
             self._closing = True
+            self.history_page.shutdown()
             self._on_disconnect()
-            for page in (self.diag_page, self.history_page, self.coding_page):
+            for page in (self.diag_page, self.coding_page):
                 worker = getattr(page, "_worker", None)
                 if isinstance(worker, QThread):
                     self._retire_worker(worker)
@@ -882,7 +883,7 @@ class MainWindow(QMainWindow):
         for worker in protocol_workers():
             self._retire_worker(worker)
         self._reap_workers()
-        if self._retired_workers:
+        if self._retired_workers or self.history_page.is_busy():
             event.ignore()
             QTimer.singleShot(100, self.close)
         else:
@@ -901,7 +902,8 @@ class MainWindow(QMainWindow):
         for worker in (self._worker, self._post_connect_worker):
             if worker is not None:
                 self._retire_worker(worker)
-        for page in (self.diag_page, self.history_page, self.coding_page):
+        self.history_page.set_connection(None)
+        for page in (self.diag_page, self.coding_page):
             for name in ("_worker", "_coding_reader", "_coding_writer"):
                 worker = getattr(page, name, None)
                 if isinstance(worker, QThread):
@@ -928,7 +930,7 @@ class MainWindow(QMainWindow):
 
         for btn in self.nav_group.buttons():
             btn.setChecked(False)
-            btn.setEnabled(False)
+            btn.setEnabled(self.nav_group.id(btn) == 3)
 
         self.stack.setCurrentIndex(0)
         self.hide_spinner()
@@ -959,6 +961,7 @@ class MainWindow(QMainWindow):
         worker = self._post_connect_worker
         return (
             not self._mutation_active
+            and not self.history_page.is_busy()
             and not self.coding_page.is_reading()
             and (worker is None or not worker.isRunning())
         )
@@ -967,13 +970,14 @@ class MainWindow(QMainWindow):
     def _set_mutation_active(self, active: bool) -> None:
         """Keep the GUI responsive while blocking disruptive app actions."""
         self._mutation_active = active
+        self.history_page.setEnabled(not active)
         self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
         elif self._connected:
             QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
-            btn.setEnabled(self._connected and not active)
+            btn.setEnabled((self._connected or self.nav_group.id(btn) == 3) and not active)
         self._cancel_btn.setVisible(False)
         if (
             not active

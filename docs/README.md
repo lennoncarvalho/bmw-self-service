@@ -140,3 +140,14 @@ equipment labels, with explicit source scope and no inferred build date/trim.
 remaining five readers to fixedF303configuration/ownership/cleanup work; those
 mutations are not enabled by the overview increment. See
 [increment verification](../tasks/task-b-vehicle-order-verification.md).
+
+
+## PR16 continuation — local history editor
+
+PR15 is merged at b62243f. PR16's codex/task-b-cbs-priority branch now includes
+that main baseline and implements local JSON history/editor workspaces, preserving
+D-58's CBS-before-coding order. See [implementation/verification](../tasks/task-b-local-history-implementation.md).
+This is local editing/storage, not history execution, a vehicle archive or a coding
+baseline. The separate mutation journal and ADD-only/explicit replacement workers
+remain next history tasks; CBS reads/writes follow before coding. No new PR is
+authorized without an explicit owner request.
