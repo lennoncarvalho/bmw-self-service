@@ -27,9 +27,8 @@ REVIEWED_JOBS = {
 }
 
 
-def recover(root: Path, output: Path, manifest: Path) -> None:
+def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None:
     """Select exact engine rows, preserving every non-enabled disposition."""
-    parser_path = root / "BimmerDaten/decoderPrg.py"
     spec = importlib.util.spec_from_file_location("mil_prg_reference", parser_path)
     if spec is None or spec.loader is None:
         raise ValueError("Reference BEST parser is unavailable")
@@ -145,7 +144,8 @@ def recover(root: Path, output: Path, manifest: Path) -> None:
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("root", type=Path)
+    cli.add_argument("parser_path", type=Path)
     cli.add_argument("output", type=Path)
     cli.add_argument("manifest", type=Path)
     args = cli.parse_args()
-    recover(args.root, args.output, args.manifest)
+    recover(args.root, args.parser_path, args.output, args.manifest)

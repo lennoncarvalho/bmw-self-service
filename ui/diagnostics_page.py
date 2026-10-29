@@ -43,6 +43,7 @@ class DiagnosticsPage(QWidget):
         self._coverage: list[dict] = []
         self._retired: list[CarWorker] = []
         self._loaded = False
+        self._inventory_revision = 0
         self.can_mutate: Callable[[], bool] = lambda: True
         self._worker: CarWorker | None = None
         self._setup_ui()
@@ -137,14 +138,17 @@ class DiagnosticsPage(QWidget):
         layout.addWidget(self.list_container)
 
     def set_connection(self, connection: Any, ecus: list[dict]) -> None:
-        """Set the active connection and ECU list, then auto-read DTCs."""
+        """Replace settled targets and invalidate results from the previous inventory."""
+        self._inventory_revision += 1
         self._connection = connection
-        self._ecus = ecus
+        self._ecus = [dict(ecu) for ecu in ecus]
         # Build ECU name lookup map for detail view
         self._ecu_lookup = {e.get("name", ""): e.get("description", "") for e in ecus}
         self._loaded = False
         self._coverage = []
         self._dtcs = []
+        self.read_btn.setEnabled(self._worker is None)
+        self.clear_btn.setEnabled(False)
         self._empty_text.setText("Open Diagnostics to read vehicle fault memories.")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
@@ -177,6 +181,7 @@ class DiagnosticsPage(QWidget):
 
         worker = DiagnosticReadWorker(self._connection, self._ecus, coverage_known=bool(self._ecus))
         self._worker = worker
+        worker.setProperty("inventory_revision", self._inventory_revision)
         self._retired.append(worker)
         worker.result_ready.connect(self._on_dtcs_loaded)
         worker.progress.connect(self._operation_progress.setText)
@@ -189,6 +194,7 @@ class DiagnosticsPage(QWidget):
         worker = self.sender()
         if worker is self._worker:
             self._worker = None
+            self.read_btn.setEnabled(self._connection is not None)
         if isinstance(worker, CarWorker):
             if worker in self._retired:
                 self._retired.remove(worker)
@@ -199,6 +205,10 @@ class DiagnosticsPage(QWidget):
         """Display the DTC list after reading."""
         sender = self.sender()
         if isinstance(sender, CarWorker) and sender.connection is not self._connection:
+            return
+        if isinstance(sender, DiagnosticReadWorker) and (
+            sender.property("inventory_revision") != self._inventory_revision
+        ):
             return
         # Handle both legacy list format and new dict format
         if isinstance(result, dict):
@@ -358,6 +368,10 @@ class DiagnosticsPage(QWidget):
         """Report an unavailable scan without leaving stale results or a healthy-car claim."""
         sender = self.sender()
         if isinstance(sender, CarWorker) and sender.connection is not self._connection:
+            return
+        if isinstance(sender, DiagnosticReadWorker) and (
+            sender.property("inventory_revision") != self._inventory_revision
+        ):
             return
         self.read_btn.setEnabled(True)
         self._empty_text.setText("DTC scan unavailable. See the session log for details.")
