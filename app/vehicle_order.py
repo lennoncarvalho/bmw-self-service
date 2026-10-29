@@ -44,7 +44,7 @@ def decode_vehicle_order(response: bytes) -> dict[str, Any]:
     Unknown section tags leave equipment explicitly incomplete. Truncated known
     sections are rejected instead of presenting a shortened list as complete.
     """
-    if not response.startswith(b"\x62\x3f\x06") or not 22 <= len(response) <= 4096:
+    if not response.startswith(b"\x62\x3f\x06") or not 21 <= len(response) <= 4096:
         raise ValueError("Vehicle-order response has an unsupported echo or size")
     data = response[5:]
     bits = _Bits(data)
@@ -60,6 +60,8 @@ def decode_vehicle_order(response: bytes) -> dict[str, Any]:
     position = 128
     sections: dict[str, list[str]] = {}
     for marker, width in ((8, 3), (4, 4), (12, 4)):
+        if len(data) * 8 - position < 4:
+            break
         if bits.read(position, 4) != marker:
             continue
         position += 4

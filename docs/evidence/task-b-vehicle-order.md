@@ -25,8 +25,9 @@ identity and explicit decompiler limitations. Names below are under
 
 ## Standalone interpretation and bounds
 
-`app/vehicle_order.py` checks exact62/3F06 echo,22–4096totalPDUbytes,
-all bit/item bounds and known-section terminators. It preserves the complete
+`app/vehicle_order.py` checks exact62/3F06 echo,21–4096totalPDUbytes,
+all bit/item bounds and known-section terminators. Optional tag reads stop
+when fewer than four bits remain; zero padding or no optional bytes is valid. It preserves the complete
 response and opaque framing prefix. Fixed fields are configuration codes;
 time criterion is **not** an observed production date. Model range/type key
 are **not** a decoded trim, powertrain, transport or write authorization.

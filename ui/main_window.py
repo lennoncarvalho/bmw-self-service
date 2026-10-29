@@ -641,6 +641,7 @@ class MainWindow(QMainWindow):
             return  # connection changed, results are stale
         if self._closing or not getattr(connection, "alive_ok", True):
             self.vehicle_page.invalidate("Connection lost — reconnect before refreshing")
+            self.vehicle_page.invalidate_order()
             self.vehicle_page.set_loading(False)
             self.vehicle_page.refresh_button.setEnabled(False)
             self._overview_refresh = False
@@ -722,6 +723,7 @@ class MainWindow(QMainWindow):
             return  # connection changed, error is stale
         self.hide_spinner()
         self.vehicle_page.invalidate("Overview read failed — refresh or reconnect")
+        self.vehicle_page.invalidate_order()
         self.vehicle_page.set_loading(False)
         if self._closing or not getattr(connection, "alive_ok", True):
             self.vehicle_page.refresh_button.setEnabled(False)

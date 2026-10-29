@@ -163,6 +163,11 @@ class VehiclePage(QWidget):
         self._mil_on = None
         self._set_mil(None, reason)
 
+    def invalidate_order(self) -> None:
+        """Discard configuration details after a fatal overview read failure."""
+        self.order_label.setText("Vehicle order: unavailable")
+        self._populate_order(None)
+
     def set_loading(self, loading: bool) -> None:
         """Keep the previous settled facts together until the next result arrives."""
         self.refresh_button.setEnabled(not loading)
