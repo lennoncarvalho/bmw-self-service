@@ -169,13 +169,10 @@ class DiagnosticsPage(QWidget):
         self._empty_text.setText("Reading confirmed fault codes...")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
-        self._mil_indicator.setText("")
-        self._mil_label.setText("MIL unavailable: vehicle endpoint has not been verified")
 
         if hasattr(self._connection, "data") and self._connection.data:
             # Mock path — read directly from canned data
             self._on_dtcs_loaded(self._connection.data.get("dtcs", []))
-            self._update_mil(False, 0)  # Mock: no MIL
             return
 
         worker = DiagnosticReadWorker(self._connection, self._ecus, coverage_known=bool(self._ecus))
@@ -446,22 +443,20 @@ class DiagnosticsPage(QWidget):
 
         webbrowser.open(f"https://www.google.com/search?q={code}+BMW")
 
-    # ── T-9: MIL status (updated from DiagnosticReadWorker.mil_status signal) ─
-
-    def _update_mil(self, mil_on: bool, dtc_count: int) -> None:
-        """Update the MIL indicator on the UI thread."""
-        if mil_on:
-            self._mil_indicator.setText(chr(0x1F6A8))  # 🚨
-            self._mil_label.setText(f"Check Engine Light ON — {dtc_count} code(s) stored")
-            self._mil_label.setStyleSheet(
-                "font-size: 13px; color: #E30B1F; font-weight: bold; background: transparent;"
-            )
-        else:
-            self._mil_indicator.setText(chr(0x2705))  # ✅
-            self._mil_label.setText("No Check Engine Light — MIL off")
-            self._mil_label.setStyleSheet(
-                "font-size: 13px; color: #2ECC71; background: transparent;"
-            )
+    @Slot(object, str)
+    def set_mil_observation(self, on: object, detail: str) -> None:
+        """Mirror the independent overview observation, never infer from fault count."""
+        state = "on" if on is True else "off" if on is False else "unknown"
+        text = "ON" if on is True else "OFF" if on is False else "Unavailable"
+        self._mil_indicator.setText("")
+        self._mil_label.setObjectName("milStatus")
+        self._mil_label.setStyleSheet("")
+        self._mil_label.setText(f"Emissions MIL: {text} · {detail}")
+        self._mil_label.setWordWrap(True)
+        self._mil_label.setTextFormat(Qt.TextFormat.PlainText)
+        self._mil_label.setProperty("milState", state)
+        self._mil_label.style().unpolish(self._mil_label)
+        self._mil_label.style().polish(self._mil_label)
 
 
 # ---- Helpers ----

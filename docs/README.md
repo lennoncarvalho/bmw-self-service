@@ -108,7 +108,10 @@ Their own agent instructions apply only when working inside those trees.
 REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
 portable backup storage are implemented in `codex/task-b-feature-recovery`.
 Task B is **not complete**: local history/append/replacement flows, full preset writes and
-restoration, actual MIL and DoIP inventory/address recovery remain open.
+restoration, broader MIL and DoIP inventory/address recovery remain open.
+The [dashboard implementation](../tasks/dashboard-implementation.md) now includes
+a [source-traced MIL decoder](evidence/task-b-mil-read-contract.md) for three
+exact engine identities; physical comparison remains pending.
 The supplied history utility's native read action is a Pro-only message.
 
 See [recovered contracts](evidence/task-b-recovered-contracts.md) and

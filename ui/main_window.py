@@ -73,6 +73,8 @@ class MainWindow(QMainWindow):
         self._worker: ConnectWorker | None = None
         self._post_connect_worker: PostConnectWorker | None = None
         self._post_connect_context: tuple[object, str, str] | None = None
+        self._overview_refresh = False
+        self._overview_identity = ("", "")
         self._keepalive_worker: ProtocolWorker | None = None
         self._retired_workers: list[QThread] = []
         self._closing = False
@@ -98,9 +100,11 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.welcome_page)
 
         self.vehicle_page = VehiclePage()
+        self.vehicle_page.refresh_requested.connect(self._refresh_overview)
         self.stack.addWidget(self.vehicle_page)
 
         self.diag_page = DiagnosticsPage()
+        self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
         self.diag_page.mutation_active.connect(self._set_mutation_active)
         self.diag_page.can_mutate = self._can_start_mutation
         self.stack.addWidget(self.diag_page)
@@ -483,6 +487,9 @@ class MainWindow(QMainWindow):
         """Configure page capabilities before exposing navigation and loading optional data."""
         self._connection = connection
         self._connected = True
+        self._overview_identity = (vin, series)
+        self._overview_refresh = False
+        self.vehicle_page.reset()
         if not getattr(connection, "data", None):
             # Clear DEMO/default page state before navigation can expose it.
             # These live setters only display unavailable capabilities; no I/O.
@@ -520,6 +527,7 @@ class MainWindow(QMainWindow):
         # Mock mode: load data directly from MockConnection (no UDS needed)
         if hasattr(connection, "data") and connection.data:
             self.vehicle_page.load_data(connection, series)
+            self.vehicle_page.set_loading(False)
             ecus = connection.data.get("svt_ecus", [])
             self.diag_page.set_connection(connection, ecus)
             self.history_page.set_connection(connection)
@@ -544,6 +552,7 @@ class MainWindow(QMainWindow):
         # Real car: start PostConnectWorker to read vehicle data
         # sequentially (with queue progress shown in spinner).
         self.show_spinner("Reading vehicle data...")
+        self.vehicle_page.set_loading(True)
         tasks = self._build_post_connect_tasks(vin)
         self._post_connect_worker = PostConnectWorker(connection, tasks)
         self._post_connect_context = (connection, vin, series)
@@ -565,6 +574,30 @@ class MainWindow(QMainWindow):
         assert isinstance(worker, QThread)
         self._retire_worker(worker)
         self._on_post_connect_finished(result, connection, vin, series)
+
+    @Slot()
+    def _refresh_overview(self) -> None:
+        """Refresh one settled overview without restarting other page operations."""
+        if (
+            self._connection is None
+            or self._closing
+            or self._mutation_active
+            or self._post_connect_worker is not None
+            or not getattr(self._connection, "alive_ok", True)
+        ):
+            return
+        if self._demo_mode:
+            self.vehicle_page.load_data(self._connection)
+            return
+        vin, series = self._overview_identity
+        self._overview_refresh = True
+        self.vehicle_page.set_loading(True)
+        self._post_connect_context = (self._connection, vin, series)
+        worker = PostConnectWorker(self._connection, self._build_post_connect_tasks(vin))
+        self._post_connect_worker = worker
+        worker.result_ready.connect(self._on_post_connect_result)
+        worker.error.connect(self._on_post_connect_worker_error)
+        worker.start()
 
     @Slot(str)
     def _on_post_connect_worker_error(self, message: str) -> None:
@@ -606,9 +639,27 @@ class MainWindow(QMainWindow):
         """
         if self._connection is not connection:
             return  # connection changed, results are stale
+        if self._closing or not getattr(connection, "alive_ok", True):
+            self.vehicle_page.invalidate("Connection lost — reconnect before refreshing")
+            self.vehicle_page.set_loading(False)
+            self.vehicle_page.refresh_button.setEnabled(False)
+            self._overview_refresh = False
+            return
 
         results: dict = result.get("results", {})
         errors: dict = result.get("errors", {})
+        if "mil" in errors:
+            results["mil"] = {
+                "on": None,
+                "detail": "MIL could not be read — check ignition, connection and session log",
+            }
+        config = getattr(connection, "config", None)
+        kind = getattr(connection, "kind", "Unknown transport")
+        results["connection_info"] = (
+            f"Transport: {getattr(kind, 'value', kind)} · Gateway: "
+            f"{getattr(config, 'host', 'Unavailable')} · Local interface: "
+            f"{getattr(config, 'local_ipv4', None) or 'Unavailable'}"
+        )
 
         # Extract sub-results from FA dict
         fa_data = results.get("vehicle_order_(fa)")
@@ -619,6 +670,10 @@ class MainWindow(QMainWindow):
 
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
+        self.vehicle_page.set_loading(False)
+        if self._overview_refresh:
+            self._overview_refresh = False
+            return
 
         # Report any errors with a single friendly dialog
         if errors:
@@ -641,7 +696,11 @@ class MainWindow(QMainWindow):
                 "Other features remain available.",
             )
 
-        if self._connection is not connection or self._closing:
+        if (
+            self._connection is not connection
+            or self._closing
+            or not getattr(connection, "alive_ok", True)
+        ):
             return  # A modal message can deliver disconnect/reconnect events.
 
         # Now start secondary workers (DTC read, service history, coding).
@@ -665,6 +724,13 @@ class MainWindow(QMainWindow):
         if connection is not None and self._connection is not connection:
             return  # connection changed, error is stale
         self.hide_spinner()
+        self.vehicle_page.invalidate("Overview read failed — refresh or reconnect")
+        self.vehicle_page.set_loading(False)
+        if self._closing or not getattr(connection, "alive_ok", True):
+            self.vehicle_page.refresh_button.setEnabled(False)
+        if self._overview_refresh:
+            self._overview_refresh = False
+            return
         QMessageBox.warning(
             self,
             "Data Load Failed",
@@ -705,6 +771,8 @@ class MainWindow(QMainWindow):
 
         Reference: docs/16-ui-spec.md error matrix (line 578).
         """
+        self.vehicle_page.invalidate("Connection lost")
+        self.vehicle_page.refresh_button.setEnabled(False)
         if self._mutation_active:
             logger.warning("Connection lost during mutation; waiting for explicit outcomes")
             return
@@ -826,6 +894,9 @@ class MainWindow(QMainWindow):
     def _on_disconnect(self) -> None:
         if self._mutation_active:
             return
+        self.vehicle_page.reset()
+        self._overview_identity = ("", "")
+        self._overview_refresh = False
         logger.info("Disconnecting from vehicle...")
         self._stop_keepalive()
         for worker in (self._worker, self._post_connect_worker):
@@ -895,6 +966,11 @@ class MainWindow(QMainWindow):
     def _set_mutation_active(self, active: bool) -> None:
         """Keep the GUI responsive while blocking disruptive app actions."""
         self._mutation_active = active
+        self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
+        if active:
+            self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
+        elif self._connected:
+            QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
             btn.setEnabled(self._connected and not active)
         self._cancel_btn.setVisible(False)

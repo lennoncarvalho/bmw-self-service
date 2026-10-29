@@ -128,5 +128,12 @@ Next tasks: exact engine matching, complete MIL response/validity/prerequisite
 contract, remaining identity/odometer definitions, primary-batch budgeting and
 readiness accounting; then implement/review offline checks and owner observation.
 This investigation does not enable new reads or claim a working MIL on the F48.
-''')
-PY
+
+## Implementation follow-up
+
+The complete MIL result decoder has since been traced for the three exact
+variants above. See [the narrowed read contract](task-b-mil-read-contract.md)
+and [implementation/verification](../../tasks/dashboard-implementation.md).
+The new code enables only those exact HSFZ identities, not every DME. Physical
+lamp comparison remains pending. The earlier decoder-pending statements above
+record the initial investigation, not the current narrowed decoder status.

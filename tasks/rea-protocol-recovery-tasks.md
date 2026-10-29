@@ -54,12 +54,15 @@ physical acceptance remains marked pending until actually observed.
 ## B2 dashboard enrichment — D-56 / MIL priority
 
 Source/limitations: [dashboard findings](../docs/evidence/task-b-dashboard-read-findings.md).
-This is planned work, not a new validated car-read claim.
+The dashboard/MIL implementation and offline review are recorded in
+[the implementation record](dashboard-implementation.md). The direct MIL codec
+is now source-traced for exactly three identities; physical acceptance and
+additional configuration/measurement decoders remain pending.
 
 - [ ] Expand the first page from VIN to identified model/configuration when
   supported, valid mileage, integration levels, supply voltage and ECU identities/
   coverage, with inline technical details and source-aware unavailable states.
-- [ ] Prioritize real engine MIL in the initial overview batch, independent of
+- [x] Prioritize real engine MIL in the initial overview batch, independent of
   opening Diagnostics: green Off, red On, grey unsupported/not-read/stale plus
   text/icon/timestamp. Never use fault count, the generic DTC warning bit or a
   lamp-actuation command as MIL. Verified nonapplicability is not green Off.
@@ -72,10 +75,10 @@ This is planned work, not a new validated car-read claim.
 - [ ] Add supported oil/coolant temperatures, RPM and other useful measurements
   in an expanded optional area only after source-to-decoder validation. Avoid a
   connect-time sweep of thousands of engineering sensors or2C dynamic writes.
-- [ ] Publish the initial bounded page batch together under D-23; prioritize core
+- [x] Publish the initial bounded page batch together under D-23; prioritize core
   identity/MIL and account for optional failure/time budget without disconnecting
   a verified car. Background manual refresh must respect write/clear lockout.
-- [ ] Reread the actual MIL after Clear All; never force green. Clear old VIN/
+- [x] Reread the actual MIL after Clear All; never force green. Clear old VIN/
   disconnected/error observations, keep data age visible, and exercise stale/
   unavailable/On/Off cases offline and visually with exact variant coverage.
 

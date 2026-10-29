@@ -7,6 +7,7 @@ not infer transport, software identity or write capability from a chassis hint.
 import gzip
 import json
 import logging
+import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,42 @@ from app.protocol.contracts import TransportKind
 from app.resources import resource_path
 
 logger = logging.getLogger(__name__)
+
+# Exact F150 identities with a recovered direct MIL read/decoder. See the
+# dashboard evidence report; a related engine name is not a compatible mapping.
+MIL_VARIANTS = {
+    "12 0F13F0": "MEVD172",
+    "12 0F1910": "MEVD172Y",
+    "12 0F17F0": "MEVD1725",
+}
+
+
+def decode_mil(response: bytes) -> bool:
+    """Decode the exact single-value 4A69 MIL condition (0=off, 1=on)."""
+    data = did_data(response, 0x4A69)
+    if len(data) != 1 or data[0] not in (0, 1):
+        raise ValueError("Vehicle MIL response has an unsupported value or shape")
+    return data[0] == 1
+
+
+def read_mil(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
+    """Read an actual MIL condition only after an exact engine identity match."""
+    candidates = [
+        row
+        for row in ecus
+        if row.get("identified") is True
+        and row.get("address_index") in MIL_VARIANTS
+        and row.get("name") == MIL_VARIANTS.get(row.get("address_index", ""))
+        and row.get("addr") == "0x12"
+    ]
+    if getattr(connection, "kind", None) != TransportKind.HSFZ or len(candidates) != 1:
+        return {"on": None, "detail": "No verified MIL read contract for the identified engine"}
+    on = decode_mil(connection.send_uds(0x12, b"\x22\x4a\x69", timeout=30.0))
+    return {
+        "on": on,
+        "detail": f"Engine {candidates[0]['name']} reports the MIL condition; not a physical lamp check",
+        "observed_clock": time.monotonic(),
+    }
 
 
 def did_data(response: bytes, did: int) -> bytes:
@@ -138,6 +175,12 @@ def read_inventory(connection: Any) -> list[dict[str, Any]]:
 
 def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
     """Return a single settled dashboard batch using recovered read contracts."""
+    ecus: list[dict[str, Any]] = []
+
+    def inventory(connection: Any) -> object:
+        ecus.clear()
+        ecus.extend(read_inventory(connection))
+        return list(ecus)
 
     def supported(connection: Any, read: Callable[[Any], object]) -> object:
         if getattr(connection, "kind", TransportKind.HSFZ) != TransportKind.HSFZ:
@@ -145,7 +188,8 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
         return read(connection)
 
     return [
-        ("ECU list", read_inventory),
+        ("ECU list", inventory),
+        ("MIL", lambda conn: read_mil(conn, ecus)),
         (
             "I-Level",
             lambda conn: supported(
