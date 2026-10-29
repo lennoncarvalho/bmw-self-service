@@ -25,7 +25,11 @@ conflicting behavior requirements, including universal immediate readback.
 Current milestone: functional personal Mac Python-source use; packages/signing
 and Windows validation are later. D-29 uses contract-specific application/cycle
 completion, D-28/D-30 forbid write Cancel and block disruptive app actions, and
-D-39 removes history odometer validation.
+D-39 removes history odometer validation. D-50–D-55 now retire history reading,
+require local JSON only and sourced service types/multi-item cards, and permit
+ADD-only append or explicit erase-and-replace with an honest local journal.
+See docs/28-service-history-workflow.md; old complete car-history baseline/
+readback prerequisites do not apply to history. Coding requirements remain.
 
 The 2026-10-28 audit overrides older completion labels and contradictory protocol
 examples. Historical REA notes are evidence candidates, not authoritative wire
@@ -294,11 +298,12 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 - Static database support/security flags do not establish that an ECU is safe or
   writable on a particular car. Exact variant, software, authorization and
   verified write/readback behavior are required; the old 117/139 claim is unverified.
-- **Coding/history writes save a backup first; completion follows D-29.**
-  Preserve original, intended and observed state separately. This includes
-  service history and both coding modes. The owner explicitly exempts fault
-  clearing from saved backups/reports. Cleared DTC memory cannot be promised
-  restorable.
+- **Coding saves a complete vehicle baseline; history saves local state/intent.**
+  D-50–D-55 retire history reads: prior car history is unavailable, never a dummy
+  baseline or a guaranteed restorable backup. Preserve local JSON/requests/results
+  before history writes; explicit replacement warns of irreversible missing data.
+  No .bmwsh/.tst adapters or reader/probe pursuit. Coding retains original ECU
+  data/restore checks. Fault clearing stays exempt from saved backups/reports.
 - A transport ACK alone is insufficient. Under D-29, checked final application
   responses can establish response-confirmed completion where immediate readback
   is not meaningful; distinguish it from observed verification and give required

@@ -1,11 +1,11 @@
 # Service history formats and unresolved execution contracts
 
 Current Task B behavior (2026-10-29): [spec 26](26-feature-readiness-spec.md)
-and D-21–D-49 in [doc 21](21-product-decisions.md) supersede conflicting older
+and D-21–D-55 in [doc 21](21-product-decisions.md) supersede conflicting older
 examples below. No write Cancel; disruptive controls/normal quit blocked during
 writes. Completion is operation/cycle-aware, not universally immediate readback.
-History add may preserve/rewrite the complete list; reject future/same-day new
-entries; use entered mileage without reading current odometer. Mac Python-source
+History uses ADD-only or explicit acknowledged replacement; reject future and
+known-local same-day entries; use entered mileage without reading current odometer. Mac Python-source
 functionality is the milestone; packages/signing are deferred. Protocol examples
 remain unverified unless linked to retained source evidence.
 
@@ -31,29 +31,28 @@ layout; their eight records round-trip byte-for-byte. This does not establish
 a genuine vehicle read, fresh original state, append preservation or restore.
 Unknown existing data is preserved locally, with new-entry validation separate.
 
-## Still unresolved
+## Product scope and remaining execution facts
 
-No complete maintenance-history read has been recovered. `31 01 A0 81` is ADD,
-not a read. The Lite reader UI is an unconditional Pro message; extended native
-tracing has not confirmed a dormant reader behind a key. A separate Pro build
-is a possible source, not a proven requirement. Ten headunit PRG inventories
-and their generic selectors supply no recovered list reader. The actual CBS
-history22 1004 on other ECUs is a different store and cannot substitute for it.
+The owner has retired history read/retrieval research under D-50. No complete
+reader was recovered in the inspected sources; this is not a universal statement
+about all possible BMW access. Do not require read/backup/readback before enabling
+an otherwise reviewed history writer. CBS remains a separate later feature.
 
-Execution/session prerequisites, complete preservation/capacity, activation and
-ignition semantics still require evidence. Never erase as a discovery probe or
-use imported file bytes as proof of a complete current car baseline.
+[Workflow28](28-service-history-workflow.md) is the current product/data/UI
+contract: local **JSON only**, multi-item cards, one-entry ADD without ERASE, or
+explicit acknowledged ERASE followed by the reviewed full replacement list.
+Source .bmwsh/.tst formats remain research-only; no product adapters are planned.
+The local file parser currently in app/service_history.py is an implementation
+artifact to retire from the runtime API, not a promised import feature.
 
-## Required application behavior
+Identify the headunit and exact encoder, durably save local project/intent/raw
+request plan with prior vehicle history null, then validate each final business
+result. Retain activation instructions and distinguish response-confirmed from
+observed verification. No automatic replay/resume/rollback or guaranteed restore
+of unreadable original history. Coding still requires full original ECU data.
 
-Before history mutation, retain an identified complete baseline and durable
-backup/intent. Follow D-29's operation-specific completion/cycle rules rather
-than universally requiring immediate same-cycle readback. Validate application
-status and distinguish response-confirmed from observed verification. Resolve
-uncertain/partial outcomes before retry or recovery; no automatic replay.
-
-The initial feature requires read/add; edit/delete/replace and CBS remain later.
-Reject future and same-day additions, allow backdated entries and entered
-mileage, support multiple items and free dealer input within real field limits.
-No Cancel during definitive writes. See [spec26](26-feature-readiness-spec.md)
-and [owner decisions](21-product-decisions.md). Backend sync remains unproven.
+Session prerequisites, ADD-only capacity/order behavior, ERASE result handling
+and reset/ignition completion still need exact source/vehicle validation; never
+erase as a discovery probe or automatically fall back to replacement on rejection.
+Future and known-local same-day rules and the sourced fourteen-type service list
+are in workflow 28. Unknown old car dates cannot be checked by this app.

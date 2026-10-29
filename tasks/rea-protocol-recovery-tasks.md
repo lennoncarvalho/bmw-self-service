@@ -16,7 +16,7 @@ the [REA checklist](rea-protocol-recovery-investigations.md) for remaining facts
   unresolved or contradicted legacy claims with their next bounded investigation.
 - [ ] Trace connection/inventory and optional-read failures first; export real
   REA records and hashes outside Git, sanitized contract summaries inside Git.
-- [ ] Recover history and coding chains as later reads require; inventory every
+- [ ] Recover history writer execution/results and coding read/write chains; inventory every
   easy preset by stable ID/applicability, including exclusions and unknowns.
 - [ ] For each operation publish complete endpoint/session/request/response/error/
   decoder/timing/cancel contracts before implementing it. Correct older specs.
@@ -98,66 +98,108 @@ Depends: identity/result design; precedes B5b/B6b. Files: new
 
 - [ ] Finalize versioned schema, storage location, identity matching, integrity,
   atomic publication/durability and platform behavior before implementation.
-- [ ] Implement immutable baseline, separate intent/readbacks and state events;
+- [ ] Implement coding immutable baseline, separate intent/readbacks and state events;
   preserve individual target states in aggregate partial/uncertain outcomes.
-- [ ] Block writes on incomplete backup, corrupt data or persistence failure.
+- [ ] Block coding on incomplete original ECU backup; block history on missing
+  local snapshot/intent/journal persistence (not on unavailable car history).
+  Corrupt data or persistence failure blocks either write.
 - [ ] Define eligible portable exports/imports and legacy-preview-only manifests;
   isolate DEMO/live and per-vehicle data. Retain all backups until explicit user
   deletion (D-41); no automatic pruning. Vehicle compatibility gates restoration,
   not local preview/import (D-42); validate imported schema/integrity; retain full unmasked diagnostic identifiers (D-46).
-- [ ] Implement recovery reidentification/reread/compare and capability filtering;
+- [ ] Implement coding recovery reidentification/reread/compare and capability filtering;
   no automatic replay or inferred restore ability.
 - [ ] Manually inspect disk-full/permission/interruption/corruption/mismatched
   identity cases and process-restart discovery of pending bundles.
 
 Exit: durable pre-send storage and recovery eligibility verified offline;
-feature restoration still depends on each actual encoder/completion/cycle contract.
+Coding restoration still depends on its actual encoder/completion/cycle contract.
+History uses a separate local journal and cannot restore unreadable original car
+records; see workflow 28 and the B4 extension below.
 
-## B5a — genuine local history read
+## B5a — local history project, sourced cards and JSON interchange
 
-Depends: B2 + B-HIST-R. Files: new `app/service_history.py`,
-`ui/service_history_page.py`; docs 04/12/16.
+Depends: B-HIST-F and D-50/D-54/D-55; no car/read/reader dependency. Files:
+app/service_history.py, new app/history_files.py, ui/service_history_page.py;
+[workflow 28](../docs/28-service-history-workflow.md) owns the concrete contract.
 
-- [ ] Identify SHM type/dependencies and follow read action through PRG execution
-  to every buffer; distinguish local backup serialization from wire records.
-- [ ] Recover NBT records, pagination, date/distance/dealer/items and unknown
-  fields; account separately for CIC/EVO/MGU branches and restrictions.
-- [ ] Replace disabled reader with evidenced read only; delete/retire contradictory
-  legacy parser/routine assumptions as their replacements are proven.
-- [ ] Verify offline parsing, empty vs invalid state and DEMO/UI; retain owner
-  read-only history comparison before any append validation.
+- [ ] Retire B-HIST-R and remove automatic ServiceHistoryReadWorker/page-load
+  calls and exploratory probes. Loading/reconnecting shows local records only;
+  empty local files never imply an empty car. No further reader investigation.
+- [ ] Centralize all 14 evidenced type IDs/English labels for model/selector/cards;
+  remove Oilfilter4/coolant12hex/transmission23hex guesses. No custom item or
+  silent engine-oil fallback. Support1–13 items per dated entry and 7 ASCII dealer
+  bytes with explicit BMW/independent flag; retain entered mileage/native units.
+- [ ] Implement schema_version 1/vin/entries project JSON in app/history_files.py:
+  strict structure/types/version/size/duplicate-key/nonfinite checks; offline null
+  VIN, explicit association and mismatched-VIN send blocking. No legacy adapters,
+  QR or imported execution directives. Retire unused runtime legacy-file API.
+- [ ] Preserve structurally valid unknown fields/conflicting records for preview/
+  export; clearly block unsupported/future/duplicate replacement data from sending.
+  Atomic deterministic export, explicit project/file overwrite and all-or-nothing
+  import failure must preserve the current project. Verify portable round-trips.
+- [ ] Build expandable multi-item cards using widget children: date/mileage/garage/
+  status/chips/origin/outcome summary, each item's status/detail on expansion,
+  and clear local draft/imported/previous-response states. All items in one card
+  are encoded as one dated record. Local edits/deletes never affect the car.
+- [ ] Keep future picker/operation rejection, known-local/pending same-day checks,
+  user-entered mileage/backdated conflicts and imported conflict visibility. Append
+  accepts an unsent draft only; excluding its own draft ID never excludes an
+  accepted/uncertain prior journal date. Replacement validates uniqueness within
+  its list, not against old ledger dates that it intentionally rewrites. State
+  that unseen car dates cannot be checked; never shift/merge/drop dates silently.
+- [ ] Verify empty/offline/unbound/mismatchedVIN/conflict/DEMO/live separation,
+  settled page publication, card expansion and zero car I/O during file actions.
 
-Exit: B-HIST-R actual state and raw unknown data preserved; loading never mutates.
+Exit: B-HIST-F usable with JSON only,14 sourced choices and multi-item cards;
+B-HIST-R retired, no car-history backup/reader promise or dependency.
 
-## B5b — history add and safe recovery
+## B5b — one-entry append and explicit erase-and-replace
 
-Depends: B4 + B5a + B-HIST-W application/encoding/cycle contract. D-32–D-39
-settle product rules; recover only actual format/field limits from sources.
-Files: `app/service_history.py`, `app/operation_store.py`,
-`ui/service_history_page.py`, `ui/backups_page.py`; docs 12/16/26.
+Depends: B2 exact headunit identity + B4 history journal + B5a + B-HIST-W
+execution/result/cycle contract. Files: app/service_history.py,
+app/history_files.py, ui/service_history_page.py, ui/backups_page.py; docs12/28.
 
-- [ ] Recover native append or full-list replacement encoder (D-32),
-  authorization/session and contract-specific completion/read semantics; verify
-  complete existing/unknown-record preservation. SHM overwrite behavior is an
-  owner observation to investigate, not retained wire evidence.
-- [ ] Reread before add, compare evidenced calendar dates and block every
-  same-day addition (D-35); reject future dates in picker and operation validation.
-  Preserve all existing entries; support free dealer input within actual limits.
-- [ ] Use entered mileage without a current-odometer query/check (D-39); permit
-  historical mileage conflicts (D-37). Validate actual numeric/unit/range format.
-  Support multiple items per entry (D-38); trace the owner-referenced `.bmwsh`
-  example through actual headunit encoding.
-- [ ] Persist original and intent before send; preserve all existing/unknown data;
-  apply meaningful readback or checked application completion/cycle instructions
-  under D-29; keep response-confirmed and observed verification distinct.
-- [ ] Handle forced interruption, meaningful mismatch, restart and uncertain add
-  without replay; no write Cancel UI;
-  offer only source-supported recovery after reread.
-- [ ] Keep edit/delete/replace out of this slice. Verify offline and agree the
-  concrete owner append/readback procedure before car mutation.
+- [ ] Build immutable mode-specific request plans. Default append contains one
+  new entry/ADD and **no ERASE**. Replacement is a separate explicit action with
+  a nonempty complete local write list, exactly one ERASE and ADDs in visible
+  frozen order. No capacity-error fallback, automatic mileage sorting or import-
+  selected mode. Direct per-record car edit/delete/standalone erase stays out.
+- [ ] Retain/review exact source variant/session/address/encoding, ADD/ERASE
+  business status and activation/reset semantics. Do not copy source status01as
+  generic success or a missing-status shortcut. Resolve remaining field/capacity/
+  ordering facts; do not require a history reader or old-car baseline.
+- [ ] Confirm mode/VIN/headunit/records/items/count/order/power/definitive write
+  and activation expectations. Explain no old-car backup/unseen-date check for
+  append; require irreversible-loss acknowledgement for replacement. Unknown
+  car history itself is not a write blocker; unmatched encoder/identity is.
+- [ ] Save local_before/intent/exact request plan/target/encoder/hash and null
+  vehicle_history_before before any send. Journal each step and raw response;
+  failed persistence prevents starting. A journal failure after a car step stops
+  subsequent mutations and reports known effects/partial uncertainty; never
+  continue without durable results. Keep coding baseline validation intact.
+- [ ] Use CarWorker/Task A owner;30-second request/five-minute operation absolute
+  budgets include queueing/delays/reset. Freeze edits/mode/imports and block
+  competing operations/navigation/disconnect/normal close; responsive progress,
+  no Cancel. Stop on first failed/uncertain history step with remaining unattempted.
+- [ ] Validate echoes, complete reply and variant business/reset completion.
+  Record response-confirmed/cycle-required outcomes; show iDrive/ignition-cycle
+  instructions without readback or synchronization claims. Accepted entries plus
+  failed reset are partial, never falsely “nothing written” or fully successful.
+- [ ] On interruption preserve known accepted/rejected/unattempted steps and
+  uncertainty. Reidentify and show manual inspection instructions; never replay,
+  resume at a guessed index, rollback automatically or promise unknown-history
+  restoration. Any recovery replacement is a separately confirmed new operation.
+- [ ] Offline/manual checks: append contains no ERASE; replacement count/order,
+  invalid/empty/duplicate/future/unknown/VIN inputs; journal/disk failures; lockout,
+  status/echo/pending/deadline/reset disconnect/partial outcomes; no hidden retry.
+- [ ] Independent review and full gates, then agree concrete owner append/iDrive
+  check and explicit replacement procedure. Retain actual identity/traffic/results
+  separately from static checks. No automated suite or unrequested car writes.
 
-Exit: B-HIST-W/B-REC history path includes backup, date rules, evidenced completion/cycle semantics and
-reviewed recovery; physical outcome separately recorded.
+Exit: B-HIST-W and history B-REC meet workflow 28 without a reader. Local files/
+intent/results are preserved; replacement loss limits and physical acceptance
+remain honest. Coding's separate baseline/readback/recovery requirements remain.
 
 ## B6a — full easy catalog and current coded values
 
@@ -257,7 +299,7 @@ alone cannot close it.
 
 REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
 portable backup storage are implemented in `codex/task-b-feature-recovery`.
-Task B is **not complete**: history read/preserving add, full preset writes and
+Task B is **not complete**: local history/append/replacement flows, full preset writes and
 restoration, actual MIL and DoIP inventory/address recovery remain open.
 The supplied history utility's native read action is a Pro-only message.
 
@@ -272,8 +314,24 @@ See [recovered contracts](../docs/evidence/task-b-recovered-contracts.md) and
   unknown status/item/dealer/padding values and reject malformed/truncated input.
 - [x] Independently review future/same-day checks, dealer/item/numeric limits,
   positive echo/business-result handling and absence of vehicle calls.
-- [ ] Complete genuine vehicle read, preservation/append execution/capacity,
-  identity/session/activation/ignition and recovery contracts before enabling
-  vehicle send. The codec does not close B5a or B5b as a whole.
+- [ ] Implement the revised local JSON/cards and mode-specific history execution/
+  capacity/identity/session/activation/journal contracts in B5a/B5b. The old car-
+  reader/baseline gate is retired by D-50–D-55; existing codec work is not full B5.
 
 See [deep evidence](../docs/evidence/task-b-history-deep-investigation.md).
+
+## B4 extension — history journal without a vehicle baseline
+
+- [ ] Implement separate version 1 history-operation JSON journal persistence in
+  app/history_files.py with immutable local_before/intent/requests/identity and
+  vehicle_history_before=null. Use/extract durable publication, not dummy ECU
+  baseline blocks. Keep operation-store v1 coding validators/files unchanged.
+- [ ] Store canonical immutable/full-record hashes and ordered per-step state/
+  requests/responses/unattempted work; never label history readback-verified.
+- [ ] Update Backups UI schema routing, preview/export/delete and labels to show
+  local history snapshots/journals separately from actual coding ECU backups.
+  No history restore action promising the unreadable previous vehicle list.
+- [ ] Check disk failure, integrity/version/type errors, partial outcomes, VIN and
+  DEMO isolation, portability, explicit deletion and no car requests on imports.
+
+This replaces B4's former complete-car-baseline prerequisite for history only.

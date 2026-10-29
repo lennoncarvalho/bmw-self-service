@@ -83,6 +83,12 @@ preserved copy remain local with the SHA-256 recorded there.
 
 ## Additional sources when a concrete gap remains
 
+D-50 retires history-reader/probe research; do not request or inspect additional
+artifacts solely to chase that retired gate. History writer identity/encoding/
+capacity/results/activation remain factual work. [Workflow28](28-service-history-workflow.md)
+requires local JSON only, sourced items/cards and explicit append/replacement.
+Legacy formats named in the source inventory are research references only.
+
 1. **Owner-supplied ISTA+ with matching diagnostic data/ECU files:** useful next
    source for inventory/variant selection, diagnostic jobs, DTC details, MIL,
    measurement decoders and future CBS. Inventory version/hash and dependencies

@@ -6,7 +6,7 @@ Read `AGENTS.md`, `.agents/skills/spec-driven-development/SKILL.md`,
 | Task | Start file | Specification | Outcome |
 |------|------------|---------------|---------|
 | A — library migration | `tasks/protocol-library-migration.md` | `docs/25-library-migration-spec.md` | One protocol owner/API using udsoncan and selected Scapy HSFZ/doipclient adapters |
-| B — close feature gaps with REA | `tasks/rea-protocol-recovery.md` | `docs/26-feature-readiness-spec.md` | Real vehicle info, all-ECU fault display/single Clear All, history read/add and all applicable easy coding |
+| B — close feature gaps with REA | `tasks/rea-protocol-recovery.md` | `docs/26-feature-readiness-spec.md` | Real vehicle info, all-ECU fault display/single Clear All, local JSON history/append/explicit replacement and all applicable easy coding |
 
 Task A code is merged into main through PR #12; see
 `tasks/protocol-library-migration-verification.md` for the API, exact library
@@ -21,10 +21,12 @@ owner's Mac/F48/NBT (D-47–D-49). Windows, packages/signing and public distribu
 are later. [Spec 26](docs/26-feature-readiness-spec.md) is consolidated after the
 2026-10-29 interview; [REA checklist](tasks/rea-protocol-recovery-investigations.md)
 contains the remaining facts. No product interview gate remains for starting work.
-All applicable easy presets are required. History user editing/deletion/replacement,
-advanced coding and CBS are later. Internal preserving whole-list rewrite is
-allowed for add; reject future/same-day dates and use entered mileage without
-an odometer check. English UI, regional formats (Brazilian/km fallback), simple
+All applicable easy presets are required. D-50–D-55 retire car-history reading
+and promote explicit erase-and-replace alongside one-entry ADD-only append.
+Use local JSON only, the14sourced service types and expandable multi-item cards.
+Direct per-record car editing/deletion, advanced coding and CBS are later.
+Reject future/known-local same-day dates and use entered mileage without an
+odometer check. Do not pursue a reader or legacy .bmwsh/.tst adapters. English UI, regional formats (Brazilian/km fallback), simple
 retained/deletable portable backups and full unmasked logs are required.
 
 Answers live in `sources/` and its extracted/reference trees, accessed through
@@ -47,14 +49,19 @@ history request is no longer automatically sent. Read doc 24 for library
 evaluation and exact adapter obligations. Inspect current Git/PR state before
 changes; this baseline does not replace current source review.
 
-Save durable baseline and intent before history/coding mutations. D-29 in doc 21
+Save a complete vehicle baseline/intent before coding. History instead saves
+local_before/intent/requests/results with null prior-car state in a separate
+journal; it cannot back up or restore unknown car entries. Follow
+[workflow28](docs/28-service-history-workflow.md) for explicit destructive
+replacement acknowledgement and no automatic replay/resume/rollback. D-29 in doc 21
 supersedes unconditional immediate readback: validate application completion,
 recover per-operation ignition-cycle requirements, and distinguish response-confirmed
 completion from observed verification. Easy coding stops/restores on established failure, never on premature old-value
 readback. D-28/D-30 forbid write Cancel and block disruptive actions/normal quit;
 D-31 blocks known insufficient power and permits acknowledgement when unknown.
-Fault clearing requires no saved report/backup. Interrupted writes:
-reidentify, reread/compare, then user-selected recovery; no automatic replay.
+Fault clearing requires no saved report/backup. Interrupted coding requires
+reidentification/reread/compare. History uses its local journal and manual iDrive
+inspection before a separately confirmed new operation; no automatic replay.
 Keep all I/O in CarWorker, partial coverage explicit and DEMO isolated. Source
 support is not universal physical validation; exact ECU/software/definitions
 gate writes. One Clear All is the only fault-clear UI action in this release.
@@ -82,14 +89,16 @@ Read `docs/evidence/task-b-recovered-contracts.md` and
 recovered requests/decoders, exact native/Android evidence, deterministic asset
 reproduction, code/review findings, offline checks and outstanding work. SHM Lite's
 native Read-from-car case only displays a Pro-only message; don't fabricate a
-history read or enable destructive rewrite without an original car baseline.
+history read. D-50–D-55 supersede the old complete-car-baseline gate for history;
+implement explicit append/replacement with durable local state and warnings.
 
 Current code reads HSFZ inventory/variants and normal/information/permanent
 faults, clears supported fault/information memories with checked post-reads,
 and saves exact-identity opaque coding snapshots in portable durable JSON.
 DoIP connection retains Task A but byte-to-logical ECU inventory translation
 is not recovered. Full easy preset predicates/dynamic options/writes, recovery,
-power/ignition contracts, history read/add and actual emissions MIL remain open.
+power/ignition contracts, local JSON/history append/replacement and actual
+emissions MIL remain open; a history reader is no longer required.
 No new car acceptance or universal compatibility is claimed. Continue the same
 unmerged implementation PR/branch for this work; don't reuse it after merge.
 
@@ -99,8 +108,9 @@ unmerged implementation PR/branch for this work; don't reuse it after merge.
 headunit ADD jobs. The key-only dormant-reader assertion remains unconfirmed.
 Standalone `app/service_history.py` now preserves local records and encodes the
 recovered NBT ADD body with checked final application status; no vehicle send
-worker is enabled without a complete baseline/execution contract. Fixed7 dealer
+worker is enabled yet. The approved next plan is workflow28 rather than the
+old complete-car-history baseline/read prerequisite. Fixed7 dealer
 padding is proven; the variable-NUL hypothesis was disproven by native offsets
 and a byte-for-byte round-trip of all eight supplied records. Complete headunit
-history read and Task B completion remain open. REA supports development recovery
+history read is retired; Task B implementation remains open. REA supports development recovery
 of code/data/contracts and is never a runtime dependency.

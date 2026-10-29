@@ -1,6 +1,7 @@
 # Task B — implementation plan
 
-Status: product decisions consolidated, 2026-10-29; no feature contract newly recovered or code implemented.
+Status: history scope revised 2026-10-29 under D-50–D-55; planning changes only
+in this revision. Existing code/recovery-slice status is recorded below.
 Planning branch: `codex/task-b-recovery-plan`, from fetched `origin/main`
 `db3c99f`. Task A is present in this baseline; its physical/platform/release
 acceptance remains separate. Authority: [spec 26](../docs/26-feature-readiness-spec.md),
@@ -12,9 +13,10 @@ acceptance remains separate. Authority: [spec 26](../docs/26-feature-readiness-s
 ## Scope and completion
 
 Deliver B-CON/B-INFO, all-ECU B-DTC-R and one B-DTC-W Clear All, genuine
-headunit-local history read/add, the entire applicable easy coding catalog and
-B-REC recovery. History edit/delete/replace, advanced coding and CBS stay later
-scope. Current acceptance is functional personal use from Python 3.13 source on
+local JSON history/cards plus ADD-only append and explicit erase-and-replace,
+the entire applicable easy coding catalog and B-REC recovery. Headunit history
+read is retired. Direct per-record car editing/deletion, advanced coding and CBS
+stay later scope. [Workflow28](../docs/28-service-history-workflow.md) owns history. Current acceptance is functional personal use from Python 3.13 source on
 the owner’s Mac/F48/NBT (D-47–D-49). Windows/platform packages, signing and public
 distribution are deferred. No cloud synchronization, flashing or authorization bypass.
 
@@ -73,8 +75,8 @@ names; proprietary source bundles/keys stay out of Git and shipped assets.
 | B3a | New `app/diagnostics.py`: ECU scan and coverage records; update `ui/diagnostics_page.py`, `app/dtc_db.py`; extraction corrections only with provenance | B2 inventory + B-DTC-R |
 | B3b | Clear All operation in `app/diagnostics.py`; update diagnostics UI and docs 14/16/20 | B3a + B-DTC-W/MIL contracts and applicable owner decisions |
 | B4 | New `app/operation_store.py`: durable bundles/state/recovery eligibility; update `ui/backups_page.py`, docs 13/16/26 | Identity schema + persistence/recovery design; precedes B5b/B6b |
-| B5a | New `app/service_history.py`: genuine read/record codecs; update `ui/service_history_page.py`, docs 12/16 | B2 + B-HIST-R; NBT first |
-| B5b | Add encoder/date-rule/completion flow in `app/service_history.py`; integrate operation store/history UI/backups UI | B4 + B5a + B-HIST-W/cycle semantics; D-32–D-39 |
+| B5a | Local project/JSON in app/service_history.py + new app/history_files.py; sourced 14-type catalogue, multi-item cards in ui/service_history_page.py; retire legacy file API | B-HIST-F, D-50/D-54/D-55; no vehicle-reader dependency |
+| B5b | Mode-specific frozen append/replace plan and CarWorker in app/service_history.py; separate v1 history journal in app/history_files.py; history/backups UI | B2 identity + B4 history journal + B5a + B-HIST-W execution/results/cycle evidence; no car-history baseline/read |
 | B6a | New `app/coding.py`: live reads/exact matching; update `app/coding_db.py`, `ui/coding_page.py`; catalog accounting in `docs/evidence/easy-preset-coverage.json` | B2 + B-CODE-R and complete source catalog inventory |
 | B6b | Composed write/readback/recovery in `app/coding.py`; update coding/store/backups UI, review `app/security.py` without guessing keys | B4 + B6a + B-CODE-W/restore/cycle/power evidence; D-27–D-31 |
 | B7 | Source/vehicle coverage, real owner Mac source acceptance and DEMO/UI; update README, docs 15/16/21/26 | All required slices; owner F48/NBT source flows, full applicable catalog accounting |
@@ -82,7 +84,8 @@ names; proprietary source bundles/keys stay out of Git and shipped assets.
 Research into B2/B3 and B5/B6 may advance independently; this is a dependency
 schedule, not authorization to enable partially recovered mutations. Implement
 read slices first. B4 design can advance before all encoders exist, but concrete
-raw-state round trips and durable-write checks must precede either mutation.
+coding raw-state round trips and history local snapshot/intent durability must
+precede their respective mutations.
 D-29 makes completion contract-specific: meaningful readback when supported,
 otherwise checked application response and required cycle instructions. Never
 interpret a pre-cycle old value as failure. Easy mode needs an evidenced restore
@@ -109,8 +112,11 @@ only after recording the concrete unresolved chain and bounded searches.
 
 ## Durable operation design to finalize in B4
 
-One versioned bundle links immutable baseline, intent and append-only observed
-readbacks/events by operation ID. Carry schema/app version, VIN, transport,
+Coding uses its existing v1 bundle linking immutable vehicle baseline, intent
+and append-only observed readbacks/events by operation ID. History instead uses
+a separate v1 history-operation journal in app/history_files.py with null prior
+car history, immutable local_before/intent/requests and per-step events. Do not
+change coding validation or manufacture a baseline for history. Carry schema/app version, VIN, transport,
 ECU hardware/software, definition hashes, raw/decoded fields, units/timestamps,
 integrity and outcome. Keep DEMO/live and vehicles isolated; preferences remain
 in QSettings. Define atomic file publication, flush/fsync and platform semantics
@@ -130,11 +136,15 @@ before claiming durability. Backup/intent persistence failure blocks sending.
 | recovered | User-selected recovery completed under its response/cycle/verification contract |
 
 Aggregate partial and uncertain states must retain individual target phases;
-no single success flag replaces them. Recovery reidentifies and rereads before
-offering choices, applying required cycle semantics first. Restore is itself
+no single success flag replaces them. Coding recovery reidentifies and rereads before offering choices, applying
+required cycle semantics first. History recovery reidentifies and presents the
+last known journal plus manual iDrive-inspection instructions; no reread gate or
+automatic replay/resume/rollback. Any later replacement is a new explicit action. Restore is itself
 a backed-up mutation with evidenced response/cycle/completion checks.
-History append never auto-replays; original/unknown records and unrelated coding
-bits survive. Legacy UI-only backup manifests may be displayed as previews but
+History append never auto-replays or sends ERASE; prior car records are unknown.
+Explicit replacement deletes entries absent from the reviewed local list.
+Preserve original local files and unrelated coding bits; do not promise recovery
+of unreadable vehicle history. Legacy UI-only backup manifests may be displayed as previews but
 cannot be promoted to eligible vehicle restoration.
 
 ## Resolved product rules and remaining investigations
@@ -143,7 +153,8 @@ cannot be promoted to eligible vehicle restoration.
 refuse multiple vehicles, limited VIN troubleshooting, batch page publication,
 conditional assisted setup; distinct MIL/coverage; no write Cancel, app lockout,
 power acknowledgement and easy rollback on established failure; cycle-aware
-completion; preserving history rewrite, no future/same-day additions, free dealer,
+completion; D-50–D-55 history ADD-only/explicit replacement, local-known date
+checks, JSON only, sourced items/cards, and free dealer,
 multiple items and entered mileage without odometer validation; untouched Custom
 coding; retained/deletable portable plain backups; English text, system regional
 formats with Brazilian/km fallback and full unmasked logs; Mac source-first use.
@@ -203,19 +214,28 @@ and optional DID guesses. Recover normal, information and permanent memories
 separately. SHM is native x86/Delphi; NBT PRG add/erase jobs require tracing,
 not CIL inspection or treating the local `.bmwsh` format as a vehicle read.
 
-## History/runtime follow-up plan and disposition — 2026-10-29
+## Current history execution plan — D-50–D-55
 
-1. Trace all native form handlers/resources and common network callers beyond
-   the Lite read stub; retain coordinates and hashes. Done; no dormant complete
-   reader confirmed, with indirect-call/coverage limits explicit.
-2. Independently decode the four headunit ADD jobs and local sample. Done;
-   fixed19-byte header, seven-byte dealer and eight-byte items. Variable-NUL
-   hypothesis rejected against native display offsets and actual file.
-3. Implement standalone immutable local codec, preserving unknown originals,
-   new-entry validation, NBT payload and checked business-result decoder in
-   app/service_history.py. Do not enable vehicle send without original state.
-4. Audit app imports/dependencies/startup/packaging for REA separation; remove
-   misleading source-tool/security-algorithm comments from app/security.py and
-   app/coding_db.py; document development-only rule in AGENTS.md.
-5. Independent review, offline golden/boundary/sample checks, full preflight,
-   then update the existing unmerged draft PR. No vehicle mutation validation.
+1. Retire B-HIST-R, automatic reader/probes and the complete car-history backup
+   prerequisite everywhere. Keep exact headunit identity/encoder/result gates.
+2. Implement a minimal version 1 project JSON (schema_version/vin/entries) and
+   separate version 1 history-operation journal in app/history_files.py, using
+   durable atomic I/O. Preserve coding operation-store v1 and its validator.
+3. Replace guessed UI service types with the fourteen sourced IDs; no invented
+   custom type. Retire product .bmwsh/.tst helpers/adapters. Keep research evidence.
+4. Implement local multi-item cards/drafts and JSON-only import/export, with
+   source/known-local date/VIN/conflict handling and no vehicle I/O on page load.
+5. Implement ADD-only one-entry plans and an explicit nonempty replacement plan:
+   ERASE once, ADD frozen visible list, sourced activation. Persist local snapshot/
+   intent before send, disclose null prior-car state and irreversible replacement.
+6. Run through Task A/CarWorker, bounded deadlines/global lockout/no Cancel,
+   exact business/echo/reset checks and durable per-step partial/uncertain state.
+   No automatic replay/resume/rollback or history readback requirement.
+7. Offline/manual JSON/model/plan/error checks, independent Python/Qt/protocol
+   review, full preflight, then reviewed owner append/replacement acceptance.
+   History scope is no longer blocked on a reader; implementation is still open.
+
+Detailed tasks and exit criteria are B4/B5a/B5b in
+[ordered tasks](rea-protocol-recovery-tasks.md), with concrete behavior in
+[workflow 28](../docs/28-service-history-workflow.md). UI and storage design choices
+are specified; source capacity/session/reset/result questions remain factual work.

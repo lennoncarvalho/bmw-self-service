@@ -73,28 +73,36 @@ failed/unsupported/not-attempted counts and complete discovered-target accountin
 Output: one confirmed Clear All, named coverage gaps, continued reachable targets,
 per-ECU results and On/Off/Unavailable MIL (D-19/D-25/D-26). No saved report/backup.
 
-### R6 — genuine history read, file and headunit representation (B5a; B-HIST-R)
+### R6 — retired reader investigation; local JSON/model contract instead
 
-- [ ] S-03 SHM read entry → dependencies → S-04 NBT jobs/interpreter → every send
-  buffer and decoder. Trace pagination, unknown fields, date/distance/dealer/items
-  and ordering. Reconcile local `.bmwsh` representation with wire representation.
-- [ ] Verify the owner-referenced multi-item file example without publishing
-  personal contents. NBT first; CIC/EVO/MGU are separate evidenced branches.
+B-HIST-R is retired by D-50. Stop read/retrieval/DID/probe searches; no complete
+vehicle history read/backup is an implementation or release gate. Existing source
+findings remain evidence with their bounded limitations, not pending reader tasks.
 
-Output: complete nonmutating history read contract, raw preservation and item
-catalog. An add-like routine or local backup serializer cannot substitute for it.
+- [x] Owner accepted no history read and JSON-only product scopeD-50–D-55.
+- [x] Fixed record encoding and14 sourced item types are retained in the evidence.
+- [ ] Implement B-HIST-F JSON-only project validation/unknowns/VIN/conflicts and
+  local multi-item cards from [workflow 28](../docs/28-service-history-workflow.md).
+  No .bmwsh/.tst product adapters, custom item code or invented service choices.
 
-### R7 — history add or preserving rewrite (B5b; B-HIST-W/B-REC)
+Output: honest local project/UI contract, not a vehicle-history-reader contract.
 
-- [ ] Verify owner-reported SHM whole-list write behavior, actual job/encoder,
-  full-list preservation, capacity/field limits, free dealer representation,
-  multiple items, final status, interruption risk and supported restore path.
-- [ ] Establish whether native append or full read/merge/rewrite is the simplest
-  valid implementation (D-32). Recover date/unit encodings; don't ask owner for bytes.
+### R7 — ADD-only and explicit erase-and-replace execution
 
-Output: original+new list preservation, pre-send backup/intent and contract-specific
-completion. App blocks future/same-day additions; entered mileage needs no current
-odometer check or historical monotonicity (D-33/D-35/D-37/D-39).
+- [ ] Recover/review exact identity/session/prerequisites, ADD/ERASE business
+  responses and activation/reset/ignition behavior on each enabled headunit.
+  Preserve PRG-backed result semantics; do not copy permissive external shortcuts.
+- [ ] Establish ADD-only order/capacity behavior and rejection outcomes without
+  destructive discovery. Capacity failure never triggers automatic ERASE.
+- [ ] Implement exact mode plans and local snapshot/intent/outcome journal;
+  vehicle_history_before=null, no fake car baseline or history restore promise.
+- [ ] Complete source field/status/distance semantics for sendable records,
+  response-confirmed/partial/uncertain outcomes and manual iDrive instructions.
+
+Output: B-HIST-W per workflow 28, no reader dependency. Append contains no ERASE;
+replacement requires an explicit reviewed nonempty list and irreversible-loss
+acknowledgement. Validate known-local dates, future dates, sourced types and
+entered mileage. No readback, automatic replay/resume/rollback or auto fallback.
 
 ### R8 — complete easy catalog and live reads (B6a; B-CODE-R)
 
@@ -161,7 +169,8 @@ See [findings](../docs/evidence/task-b-history-new-sources.md).
 
 - [x] Inspect pinned devttys1/bmw-service-manager and the supplied Java package.
 - [x] Distinguish CBS current-service reads, generic result reads and experimental
-  probes from a complete headunit history reader. Neither source closes B-HIST-R.
+  probes from a complete headunit history reader. B-HIST-R was later retired by
+  D-50 rather than recovered.
 - [x] Recheck conflicting result labels against all four exact original PRGs.
   Keep the existing checked decoder; do not accept missing-status/01asgenericOK.
 - [x] Corroborate14service-item IDs/labels and seven-byte dealer field independently.
@@ -169,11 +178,12 @@ See [findings](../docs/evidence/task-b-history-new-sources.md).
   and transmission23hex lack evidence. Preserve unknown existing values.
 - [ ] Establish ADD-only capacity/order/preservation and activation results on exact
   headunit/software. A no-ERASE code path is not a complete preserving-write proof.
-- [ ] Recover complete car read/storage/backup and same-day detection; do not loosen
-  current baseline guards based on a manual list or unrelated CBS data.
+- [x] D-50 retires complete-car read/storage/backup pursuit. Implement known-local
+  same-day checks and honest null prior-car state; coding baseline guards remain.
 - [ ] Resolve unsigned-distance and status-label discrepancies per variant using
   primary job/display/capture evidence before changing semantic input/display rules.
 
-Garage suggestions, readable plan/step journal, accurate expandable cards and
-strict portable format adapters fit current behavior. Offline QR and CBS cards
-are later optional ideas; replay/maps/3D and a browser UI migration are not proposed.
+D-55 now requires multi-item cards and JSON only; the earlier legacy-format
+adapter idea is withdrawn. A readable plan/step journal fits the current flow.
+Garage suggestions/QR are not required; CBS stays later. Replay/maps/3D and a
+browser UI migration are not proposed.

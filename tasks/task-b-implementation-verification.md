@@ -140,3 +140,26 @@ suite/tests directory, car execution/write, source EXE execution, license
 modification or additional physical acceptance is claimed. Retained report and
 script hashes are in docs/evidence/task-b-history-deep-manifest.json. Complete
 Task B and its history reader/execution requirements remain open; PR stays draft.
+
+## Owner scope revision — D-50–D-55
+
+The owner has retired history reading/retrieval and the old complete-car-history
+backup gate. Earlier reader blockers in this verification record describe the
+prior scope, not remaining release requirements. Current spec is
+[workflow28](../docs/28-service-history-workflow.md): local JSON only, sourced14type
+catalogue/multi-item cards, ADD-only append or explicit erase-and-replace, durable
+local snapshot/intent/results with null prior-car state and no hidden retries.
+No .bmwsh/.tst adapters. Coding baseline/readback rules remain unchanged.
+This revision changes specifications/plans/tasks only; runtime implementation
+and owner append/replacement acceptance are pending, not passed by documentation.
+
+Planning verification: independent review checked scope consistency, the14type/
+13item catalogue, separate history/coding storage, JSON-only interchange and
+mode-specific dates/no-replay. Fixed stale read/deferred-replacement pointers,
+qualified the no-ERASE guarantee without claiming unknown ECU eviction behavior,
+and specified stopping later mutations after post-step journal persistence loss.
+All changed local links resolve, the minimal JSON example parses, Diagnostics
+Screen5 is byte-for-byte unchanged, and no app/UI/main code changed. Full Ruff
+lint, Ruff formatting and mypy pass over all33application files. No car operation,
+target execution or automated suite. These are planning checks, not runtime or
+vehicle acceptance of the newly planned history flows.

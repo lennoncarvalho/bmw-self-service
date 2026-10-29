@@ -12,7 +12,7 @@ operations. Authority: [owner decisions 21](21-product-decisions.md).
 
 A working Python-source application on the owner's Mac and F48/NBT: ENET
 connection, real vehicle information, complete discovered-ECU fault display and
-one Clear All, headunit-local history read/add, every applicable matched easy
+one Clear All, local JSON history with append/explicit erase-and-replace, every applicable matched easy
 preset and usable backup/recovery. Real owner-operated results are required;
 DEMO, placeholders, source claims and static green gates alone are insufficient.
 
@@ -21,7 +21,9 @@ validation and public distribution are later milestones (D-47–D-49). Preserve
 cross-platform design and existing legal notices without making release packaging
 an obstacle to working source flows. Broad source-supported F/G/U/I applicability
 remains the research/design goal, not universal physical validation. Advanced
-coding, user-facing history edit/delete/replace and CBS remain later scope.
+coding, direct per-record car-history edit/delete and CBS remain later scope.
+Explicit whole-list replacement is now required under D-51; see
+[history workflow 28](28-service-history-workflow.md).
 
 Task A PR #12 is merged. Use its single owner/API and selected libraries;
 Task B must not introduce another transport stack or socket consumer. Retain
@@ -47,11 +49,12 @@ asset decryption and smoke inspection do not close a wire contract.
 | B-INFO | Evidenced mileage, voltage, I-level, FA/model/production fields | Source-to-UI trace and meaningful owner values or explicit supported-unavailable reasons; explain original failed reads |
 | B-DTC-R | All discovered supported ECUs, source-supported fault categories/details/descriptions, per-ECU coverage | Correct records and success/failed/unsupported/not-attempted accounting; partial empty scan never means no whole-car faults |
 | B-DTC-W | One confirmed Clear All over identified supported targets, continue reachable targets, reread supported faults/MIL | Named scan gaps; per-target application and post-clear results; no saved backup/report or per-code/per-ECU clear buttons |
-| B-HIST-R | Genuine nonmutating complete headunit history read | NBT first; complete records/unknown fields and pagination from source-to-buffer-to-decoder trace |
-| B-HIST-W | Add one multi-item dated entry without losing existing history | Native append or preserving full-list rewrite; complete backup/intent, date rules, evidenced application completion/cycle instructions |
+| B-HIST-R | Retired by D-50; no vehicle history reader or readback requirement | No further reader/probe pursuit; unavailability is a product constraint, not a pending release gate |
+| B-HIST-F | Local multi-item cards and simple JSON import/export | Strict versioned JSON, retained conflicts/unknown fields, VIN binding, file-only provenance; no legacy adapters |
+| B-HIST-W | Append one multi-item entry or explicitly erase/write a reviewed local list | No ERASE in append; explicit irreversible replacement; durable local snapshot/intent/results, known-local date checks, application/cycle completion; no car-history-backup claim |
 | B-CODE-R | Every applicable matched easy preset with actual current values | Exact ECU/software/CAFD and live bytes; complete catalog accounting; untouched Custom values preserved |
 | B-CODE-W | Compose selected presets against one complete baseline; preserve unrelated data | Exact masks/blocks/authorization/encoding, backup/intent, application completion and meaningful verification; easy failure rollback path |
-| B-REC | Portable backup preview/import and eligible restoration/interruption recovery | Identity/integrity compatibility, reidentification and meaningful reread/compare before user-selected recovery; import itself never writes |
+| B-REC | Coding backup/restoration plus honest history local journals/interruption handling | Coding retains complete original ECU bytes; history has null prior-car state, no automatic rollback/replay; JSON import itself never writes |
 
 Track source-evidenced, implemented, offline-inspected, vehicle-validated,
 unsupported and unknown separately for each variant. All applicable presets
@@ -86,10 +89,13 @@ account for remaining targets. Never reuse an invalid stream to force continuati
 
 ## Definitive writes, completion and recovery
 
-Before coding/history mutation identify VIN/ECU/software/definitions, read complete
-original data and durably save baseline/intent. Missing original data, unmatched
-encoder or disk failure blocks sending. Confirmation shows target, changes,
-consequences, power requirement and the user's commitment/responsibility.
+Before coding mutation identify VIN/ECU/software/definitions, read complete
+original data and durably save baseline/intent; missing original blocks coding.
+History follows D-50–D-52: identify the supported headunit and durably save local
+project/intent/request plan with prior car history explicitly unavailable. No car
+history baseline or readback is required. Unknown encoder or persistence failure
+blocks either write. Confirmation shows mode, target, changes, consequences,
+power requirement and the user's commitment/responsibility.
 
 D-28/D-30: no write Cancel. Block disruptive navigation, disconnect, competing
 operations and normal closing throughout write/check/rollback. Keep the GUI
@@ -117,24 +123,30 @@ then user-selected recovery (D-08); no blind restoration/replay. Advanced mode,
 when later implemented, continues after definite ECU-local rejection on a healthy
 connection. Both modes share the same underlying verified engine.
 
-## History add rules
+## History append, replacement, cards and JSON
 
-D-32 permits the simplest evidenced native append or full-list read/merge/rewrite.
-Preserve every existing record and unknown field; block if preservation cannot
-be established. Backup alone is not permission to lose records. Internal rewrite
-does not expose user-facing editing/deletion/replacement in this milestone.
+D-50–D-55 and [workflow 28](28-service-history-workflow.md) supersede the old
+read/merge/backup prerequisite. Do not pursue a headunit history reader. Show local
+records with their origin; unknown car history is not an empty or synchronized list.
 
-D-33: picker and operation validation reject future dates. D-35: reject a new
-entry on any existing calendar date, regardless of other fields. Preserve any
-same-day entries already present; never silently shift or merge dates. Recheck
-against fresh complete history before sending.
+Append sends one multi-item ADD with no ERASE. Replacement is an explicit separate
+action: acknowledge irreversible loss of absent car entries, freeze a nonempty
+reviewed list, save local state/intent, ERASE once and ADD in preview order. No
+silent fallback, standalone erase, automatic rollback/resume/replay, or promise
+to restore unreadable original records. Final checked application responses and
+activation instructions establish response-confirmed completion, not readback.
 
-D-34: dealer/garage is free input within actual field/encoding limits. D-38:
-multiple supported service items in one dated entry. D-39 supersedes D-36:
-write user-entered mileage without a current-odometer read/check. Allow mileage
-conflicting with surrounding history (D-37). Validate actual numeric/unit/range
-encoding only; user accepts entered-mileage responsibility. Optional B-INFO
-mileage remains independent. Never replay an uncertain append/rewrite.
+Reject future writes and same-day additions against known local/pending records;
+state the unseen-car-date limitation. Preserve imported conflicts for preview/
+export but block duplicate-date replacement lists until explicit resolution.
+Allow backdated/entered mileage without an odometer query or chronology check.
+
+Use the fourteen sourced service types and 1–13 items/entry; no invented custom
+service field, oil-filter-as-code 4, coolant or transmission guess. Supported garage
+text remains free input within 7 ASCII bytes. Include expandable multi-item cards and
+strict, portable, ordinary versioned **JSON only**. No .bmwsh/.tst adapters or QR.
+Imports never write, choose a destructive mode, normalize unknown records or imply
+an observed car baseline. Coding current-value/backup requirements are unchanged.
 
 ## Coding, local data and presentation
 
@@ -183,7 +195,7 @@ validation limits rather than claiming success from static gates or library reus
 
 REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
 portable backup storage are implemented in `codex/task-b-feature-recovery`.
-Task B is **not complete**: history read/preserving add, full preset writes and
+Task B is **not complete**: history local-file/append/replacement flows, full preset writes and
 restoration, actual MIL and DoIP inventory/address recovery remain open.
 The supplied history utility's native read action is a Pro-only message.
 
@@ -196,8 +208,9 @@ See [recovered contracts](evidence/task-b-recovered-contracts.md) and
 headunit ADD jobs. The key-only dormant-reader assertion remains unconfirmed.
 Standalone `app/service_history.py` now preserves local records and encodes the
 recovered NBT ADD body with checked final application status; no vehicle send
-worker is enabled without a complete baseline/execution contract. Fixed7 dealer
+worker is enabled yet; new history work follows D-50–D-55/workflow 28 rather
+than requiring a complete vehicle history baseline. Fixed7 dealer
 padding is proven; the variable-NUL hypothesis was disproven by native offsets
 and a byte-for-byte round-trip of all eight supplied records. Complete headunit
-history read and Task B completion remain open. REA supports development recovery
+history reading is now retired by D-50; Task B implementation remains open. REA supports development recovery
 of code/data/contracts and is never a runtime dependency.

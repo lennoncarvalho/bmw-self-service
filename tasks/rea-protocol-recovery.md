@@ -21,9 +21,10 @@ families; retain the existing exclusion of E-series and other adapters.
 ## Outcome and constraints
 
 Required first usable slice: connection and real vehicle information, all-ECU
-fault display with one Clear All action, local history reads/adds and all
+fault display with one Clear All action, local JSON history/append/explicit replacement and all
 applicable easy coding reads/writes. No preset subset is accepted as catalog
-completion. History edit/delete/replace, advanced coding and CBS are later scope.
+completion. Explicit whole-list history replacement is current scope under D-51;
+direct per-record car editing/deletion, advanced coding and CBS remain later.
 This task includes evidence, corrected operation specs and implementation PRs,
 not research documents alone. Spec 26 defines completion and pending choices.
 
@@ -61,7 +62,7 @@ app code. Planning verification is recorded below.
 | B2 | Source-derived connection/inventory + vehicle-info contracts, then integration | Pending |
 | B3 | All-ECU faults + one Clear All, partial results, post-clear reread | Pending |
 | B4 | Shared durable baseline/intent/readback storage and recovery state design | Pending; needed before B5/B6 mutations |
-| B5 | Headunit history read/add, same-day block, preserving rewrite and cycle-aware completion | Pending |
+| B5 | Local JSON/cards, ADD-only append and explicit erase-and-replace, known-local date checks and checked completion | Planned under D-50–D-55; reader retired |
 | B6 | Every applicable easy preset: catalog/live state, composed write/restore/completion | Pending |
 | B7 | Owner Mac source acceptance and source/vehicle coverage; packaged release later | Pending |
 
@@ -237,58 +238,37 @@ ECU scan with explicit per-ECU success/failure/not-attempted coverage. The F48
 validation should provide meaningful data and explain any remaining unavailable
 fields, without promoting one vehicle's result to universal support.
 
-## Phase 4 — history and coding reads
+## Phase 4 — local JSON history and coding reads
 
-Deliver B-HIST-R/B-CODE-R first, then required add-history/easy-coding mutation
-work in phase 5. Full applicable easy catalog is in scope; advanced editing
-must not delay it. History edit/delete/replace are later work, not this release.
+Deliver B-HIST-F local project/cards/JSON and B-CODE-R live coding reads.
+B-HIST-R is retired under D-50: no read/probe pursuit or history-reader gate.
+Use [workflow28](../docs/28-service-history-workflow.md) and B5a tasks for sourced
+service types,1..13items, local-known date checks, origin/VIN/conflict handling,
+expandable cards and strict JSON-only import/export. No proprietary/legacy adapters.
 
-These can be independent research lanes once identity/variant selection exists:
+Coding still requires source-derived exact ECU/software/CAFD matching and actual
+current data, block ordering/integrity and preset masks/composition. Use supplied
+simulations only as labelled offline examples, not hardware acceptance.
 
-- **History:** trace SHM read action through libraries/PRG interpreter into every
-  send buffer; distinguish local `.bmwsh` serialization and job arguments from
-  on-wire records. Establish NBT read first, then CIC/EVO/MGU independently,
-  including pagination, dates, distance, dealer/items and unknown field retention.
-  A routine named add/write cannot become the read path without byte evidence.
-- **Coding:** trace reference ECU/software/CAFD matching and actual current coded
-  data reads. Separate definitions from live values, recover NCD/block ordering,
-  encoding/compression/integrity and preset masks/multi-field composition.
-  Easy and advanced screens must use the same verified underlying values.
+## Phase 5 — mode-specific history writes and coding recovery
 
-Use `enet-sim.json`, `sim-enet.json`, named F/G/I simulations and Link's
-`sim-u-series.json` only as labelled offline examples, never hardware proof.
+History: one-entry ADD-only append or a separately acknowledged nonempty full
+replacement (ERASE once + ADDs in frozen preview order + evidenced activation).
+Persist a separate local JSON history-operation journal with null prior-car state,
+immutable local_before/intent/requests and per-step outcomes. Do not fabricate a
+car backup or require its unavailable readback. Unknown car dates cannot be checked;
+state the limitation. No automatic erase fallback, replay/resume/rollback or promise
+to recover erased unseen entries. Capacity/session/result/reset facts still need
+source/physical validation; no further history reader research is requested.
 
-Outputs: rewritten docs 11/12, relevant corrections in 02/04/06/08/13/16,
-operation contracts and per-variant capability matrix. Exit: genuine read-only
-flows and exact live state for every enabled history/coding page.
+Coding: keep complete live original ECU bytes, exact definitions, durable backup/
+intent, composed writes and meaningful readback/restoration. D-27 easy rollback and
+D-29 cycle-aware results remain. Fault clearing retains its no-report exception.
+All modes keep CarWorker/Task A ownership, power policy, app lockout and no Cancel.
 
-## Phase 5 — mutations, backup, readback and recovery
-
-Deliver B-HIST-W/B-CODE-W/B-REC from spec 26. Implement shared durable state
-and recovery dependencies before enabling either mutation family. Trace read/
-write jointly where useful; user-visible writes require complete evidence.
-Only history add is required now; do not enable destructive history editing to
-meet a legacy checklist. Preserve the full original history when adding.
-
-Only after read contracts exist, recover history add, easy coding writes and
-diagnostic Clear All separately. Record edit/delete/replace as later contracts.
-Trace security/session
-requirements and modern signed/authorized coding restrictions; do not infer
-write permission from static flags or probe keys/bypasses.
-
-Design shared durable baseline/intended/observed files with VIN, ECU/software,
-raw state, schema version and integrity; all coding/history writes save backup
-first. Fault clearing retains the owner's explicit no-report exception. D-29
-requires final application semantics and meaningful readback when supported,
-otherwise response-confirmed completion with required cycle instructions. A
-transport ACK is insufficient; do not treat a pre-cycle old value as failure. After interruption, reread/compare before user-selected
-recovery; never automatically replay an append. Keep local preview distinct
-from vehicle restoration. D-28/D-30 prohibit write Cancel and block disruptive
-controls/normal quit; record multi-ECU partial/uncertain outcomes.
-
-Exit: complete encoder/application/cycle contract per mutation and supported
-recovery under settled D-21–D-49, followed by scoped
-implementation PRs and owner-operated validation.
+Deliver B-HIST-W/B-CODE-W/B-REC per spec26/workflow28. Review and offline-check each
+execution/result contract before agreed owner mutation validation. Retain raw
+responses, partial/uncertain outcomes and per-variant applicability separately.
 
 ## Phase 6 — broaden coverage and prepare releases
 
@@ -313,11 +293,11 @@ gaps remain explicit even when static source support is broad.
    In parallel, design the selected-library adapter and verify lifecycle
    compatibility per doc 24; do not rewrite standard transports during REA.
 2. ECU discovery/identity, then vehicle information + complete DTC reads.
-3. History and coding reads, so all requested pages can load real data.
+3. Local JSON history/cards and exact live coding reads; no history-reader gate.
 4. Verified mutations and recovery.
 5. Broader source coverage and platform releases.
 
-Track feature contracts by B-CON/B-INFO/B-DTC-R/B-DTC-W/B-HIST-R/B-HIST-W/
+Track feature contracts by B-CON/B-INFO/B-DTC-R/B-DTC-W/B-HIST-F/B-HIST-W/
 B-CODE-R/B-CODE-W/B-REC with source/evidence/spec/code/verification links.
 Each row remains pending until its spec 26 acceptance is observed. Engine
 setup is no longer the baseline blocker. No new wire mapping is established
@@ -404,7 +384,7 @@ this interview. Actual Mac/car feature acceptance remains development work.
 
 REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
 portable backup storage are implemented in `codex/task-b-feature-recovery`.
-Task B is **not complete**: history read/preserving add, full preset writes and
+Task B is **not complete**: history local JSON/append/replacement flows, full preset writes and
 restoration, actual MIL and DoIP inventory/address recovery remain open.
 The supplied history utility's native read action is a Pro-only message.
 
@@ -417,8 +397,9 @@ See [recovered contracts](../docs/evidence/task-b-recovered-contracts.md) and
 headunit ADD jobs. The key-only dormant-reader assertion remains unconfirmed.
 Standalone `app/service_history.py` now preserves local records and encodes the
 recovered NBT ADD body with checked final application status; no vehicle send
-worker is enabled without a complete baseline/execution contract. Fixed7 dealer
+worker is enabled yet. D-50–D-55/workflow28 replace the old vehicle-history
+baseline/read prerequisite with a local snapshot/intent/outcome journal. Fixed7 dealer
 padding is proven; the variable-NUL hypothesis was disproven by native offsets
 and a byte-for-byte round-trip of all eight supplied records. Complete headunit
-history read and Task B completion remain open. REA supports development recovery
+history read is retired by D-50; Task B implementation remains open. REA supports development recovery
 of code/data/contracts and is never a runtime dependency.

@@ -39,8 +39,11 @@ Task B now has an [implementation plan](../tasks/rea-protocol-recovery-implement
 and [ordered development tasks](../tasks/rea-protocol-recovery-tasks.md), based on
 main after Task A PR #12 merged. No B feature contract is closed by that planning.
 The first usable slice is connection/vehicle info, all-ECU fault display with
-one Clear All action, local history read/add and all applicable easy presets.
-History editing, advanced coding and CBS are later scope. REA now works for
+one Clear All action, local JSON history/cards with append and explicit erase-
+and-replace, and all applicable easy presets. D-50–D-55 retire history reads and
+legacy-format adapters. Direct per-record car editing/deletion, advanced coding
+and CBS are later scope. [Workflow28](28-service-history-workflow.md) owns the
+consolidated history behavior, storage boundaries and acceptance checks. REA now works for
 Android inspection; doc 27 records actual evidence and per-tool limits.
 
 ## Original documents reviewed
@@ -58,7 +61,7 @@ Android inspection; doc 27 records actual evidence and per-tool limits.
 | [09 — gap analysis](09-gap-analysis.md) | Historical; green completeness marks and estimates are not acceptance results |
 | [10 — HSFZ](10-hsfz-protocol.md) | Corrected transport contract; heartbeat behavior remains partly unresolved |
 | [11 — coding data format](11-curated-coding-format.md) | Definition schema reference; sample offsets/masks/block writes need verification |
-| [12 — service-history wire](12-service-history-wire-format.md) | Reopened; no verified encoder/read contract |
+| [12 — service-history wire](12-service-history-wire-format.md) | Recovered ADD codec; execution/results/cycle review pending; reader retired under D-50; workflow28 applies |
 | [13 — architecture](13-replacement-app-architecture.md) | Historical design/examples; “all gaps resolved” withdrawn |
 | [14 — DTC database](14-dtc-database.md) | Corrected counts, threading and diagnostic parsing guidance |
 | [15 — stack](15-tech-stack.md) | Corrected declared/observed runtime, network and release status |
@@ -98,7 +101,7 @@ Their own agent instructions apply only when working inside those trees.
 
 REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and
 portable backup storage are implemented in `codex/task-b-feature-recovery`.
-Task B is **not complete**: history read/preserving add, full preset writes and
+Task B is **not complete**: local history/append/replacement flows, full preset writes and
 restoration, actual MIL and DoIP inventory/address recovery remain open.
 The supplied history utility's native read action is a Pro-only message.
 

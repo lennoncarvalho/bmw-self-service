@@ -1,11 +1,11 @@
 # UI/UX Specification
 
 Current Task B behavior (2026-10-29): [spec 26](26-feature-readiness-spec.md)
-and D-21–D-49 in [doc 21](21-product-decisions.md) supersede conflicting older
+and D-21–D-55 in [doc 21](21-product-decisions.md) supersede conflicting older
 examples below. No write Cancel; disruptive controls/normal quit blocked during
 writes. Completion is operation/cycle-aware, not universally immediate readback.
-History add may preserve/rewrite the complete list; reject future/same-day new
-entries; use entered mileage without reading current odometer. Mac Python-source
+History uses local JSON, ADD-only append or explicit replacement; reject future
+and known-local same-day entries; use entered mileage without reading current odometer. Mac Python-source
 functionality is the milestone; packages/signing are deferred. Protocol examples
 remain unverified unless linked to retained source evidence.
 
@@ -17,8 +17,8 @@ remain unverified unless linked to retained source evidence.
 
 > **Current release profile:** [spec 26](26-feature-readiness-spec.md) overrides
 > older controls/scope below: faults from all ECUs, one Clear All button with
-> partial outcomes, history read/add with exact duplicate blocking, and every
-> applicable easy preset. Per-code/per-ECU clear controls, history editing and
+> partial outcomes, local history/cards/JSON/append/explicit replacement, and every
+> applicable easy preset. Per-code/per-ECU clear controls, direct car-entry editing and
 > advanced coding are not first-release requirements. Use [spec 25](25-library-migration-spec.md)
 > for protocol ownership and [doc 27](27-rea-source-guide.md) for source answers.
 
@@ -268,108 +268,30 @@ Each DTC card shows:
 
 ---
 
-## Screen 6: Service History (📋 tab)
+## Screen 6: Local service records, append and explicit replacement
 
-### List view
+[History workflow 28](28-service-history-workflow.md) and D-50–D-55 supersede the
+old history wireframes, speculative options and car-backup/readback requirements.
+The page loads local records offline and never reads or probes a car history list.
+An empty file is not an empty car. Show local/imported/draft/previous-response
+origin, with no synchronization/vehicle-verification claim.
 
-```
-┌──────────────────────────────────────────┐
-│  Service History                         │
-│                                          │
-│  ┌─ 87,000 km · Mar 15 2026 ─────────┐   │
-│  │ Engine oil, Microfilter, Vehicle   │ > │
-│  │ check                              │   │
-│  └────────────────────────────────────┘   │
-│  ┌─ 72,000 km · Mar 02 2025 ─────────┐   │
-│  │ Engine oil, Microfilter, Front     │ > │
-│  │ brakes                             │   │
-│  └────────────────────────────────────┘   │
-│  ┌─ 57,000 km · Feb 18 2024 ─────────┐   │
-│  │ Engine oil, Microfilter, Vehicle   │ > │
-│  │ check, Spark plugs                 │   │
-│  └────────────────────────────────────┘   │
-│                                          │
-│        [+ Add New Service Entry]         │
-│              (green button)              │
-└──────────────────────────────────────────┘
-```
+Required: expandable multi-item cards (date/mileage/garage/status/item chips;
+expanded per-item status/distance/time),14 sourced type choices,1–13 items in one
+record, seven-ASCII-byte garage field, future/known-local duplicate checks and
+simple JSON-only import/export. No .bmwsh/.tst/custom service type or guessed
+coolant/transmission/oil-filter-code 4 choices.
 
-Entries require a verified read-only headunit contract (unresolved; see docs/12).
-Sorted by date descending.
+Default action appends one card with ADD only. Separate erase-and-replace uses
+an explicit reviewed nonempty ordered local list and irreversible-loss
+acknowledgement. Save local snapshot/intent/requests/results; prior car history
+is unavailable, not a fake backup. No standalone erase, hidden replacement
+fallback, automatic rollback/resume/replay or mandatory history reader.
 
-### Detail view (expanded from list)
-
-```
-┌──────────────────────────────────────────┐
-│  ← Back to list                          │
-│                                          │
-│  Service at 87,000 km                    │
-│  Date: March 15, 2026                    │
-│  Dealer: BMW Munich                      │
-│                                          │
-│  Work carried out:                       │
-│  ✓ Engine oil change (5W-30)             │
-│  ✓ Microfilter / cabin filter            │
-│  ✓ Vehicle check (standard scope)        │
-│  ✓ Brake fluid change                    │
-│                                          │
-│  Next service: 102,000 km / Mar 2028     │
-│  Next oil:      97,000 km / Mar 2027     │
-└──────────────────────────────────────────┘
-```
-
-### Add new entry (modal or page)
-
-```
-┌──────────────────────────────────────────┐
-│  ← Cancel          New Service Entry     │
-│                                          │
-│  Date:        [2026-10-25       📅]      │
-│  Mileage:     [87,500           km]      │
-│  Dealer:      [BMW Munich            ]   │
-│                                          │
-│  Services performed:                     │
-│  ☐ Engine oil change                     │
-│  ☐ Microfilter / cabin filter            │
-│  ☐ Air filter                            │
-│  ☐ Fuel filter                           │
-│  ☐ Spark plugs                           │
-│  ☐ Front brake pads                      │
-│  ☐ Rear brake pads                       │
-│  ☐ Brake fluid                           │
-│  ☐ Vehicle check (standard scope)        │
-│  ☐ Vehicle check (extended scope)        │
-│  ☐ Coolant                               │
-│                                          │
-│  Next service due:                       │
-│  Date:    [2028-03-15         📅]        │
-│  Mileage: [102,000           km]        │
-│                                          │
-│  Next oil change due:                    │
-│  Date:    [2027-03-15         📅]        │
-│  Mileage: [97,000            km]         │
-│                                          │
-│  Notes: [                            ]   │
-│                                          │
-│           [ Save to Vehicle ]            │
-│              (green button)              │
-└──────────────────────────────────────────┘
-```
-
-Checkboxes for common BMW service items. Date and mileage pickers.
-Writes require a verified headunit encoder and readback contract (unresolved; see docs/12).
-
----
-
-## Write integrity requirement (owner-confirmed, 2026-10-28)
-
-Coding and history mutations save a durable backup of the original vehicle data,
-retain intended state, then reread and compare before showing success. Fault
-clearing has an explicit no-saved-report exception. On reconnect after interrupted
-writes, reread/compare before user-chosen recovery; never automatically replay.
-History supports add/edit/delete/replace; CBS reads/resets are future scope.
-The historical dialogs below are proposals; do not advertise restore capability
-until a matching-identity vehicle restore and readback path exists.
+During writes block editing/import/navigation/disconnect/normal close and show
+responsive progress; no Cancel. Check final application results and activation,
+show response-confirmed/partial/uncertain states and required iDrive/cycle
+instructions. Coding retains its complete ECU baseline and recovery contract.
 
 ## Screen 7: Coding — shared behavior
 
@@ -605,7 +527,7 @@ backups/2026-10-25_14-22/
 |--------|--------------|--------------|
 | **Vehicle overview** | UDS 0x22 (VIN, I-Level), 0x1A (mileage) | None |
 | **Diagnostics** | UDS 0x19 02 (DTCs by status), 0x19 04/06 (snapshot) | UDS 0x14 (clear) |
-| **Service History** | Read-only contract unresolved (doc 12) | Encoder/readback unresolved (doc 12) |
+| **Service History** | Local JSON only; car reader retired | ADD-only or explicit replacement per workflow 28; worker/journal pending |
 | **Easy Coding** | UDS 0x22 (read CAFD/FDL per ECU) | Verified per-ECU coding contract; no guessed service/DID fallback |
 | **Advanced Coding** | UDS 0x22 (read full SVT + FDL) | UDS 0x2E (WriteDataByIdentifier) |
 

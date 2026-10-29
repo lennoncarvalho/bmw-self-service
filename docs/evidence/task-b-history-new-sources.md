@@ -1,5 +1,13 @@
 # Additional history sources — 2026-10-29
 
+**Product scope supersession (2026-10-29):** D-50–D-55 retire headunit history
+reading and the complete car-history baseline/backup prerequisite. These source
+findings remain historical evidence; reader searches and legacy-file adapters
+below are no longer requested work. Current behavior is local **JSON only**,
+ADD-only append or explicit irreversible erase-and-replace, per
+[workflow28](../28-service-history-workflow.md). No runtime worker is newly
+enabled by this planning change; coding baseline requirements remain intact.
+
 **Primary implementation references, static inspection only.** This investigation
 answers the owner's request to inspect devttys1/bmw-service-manager and the new
 Java package. No app behavior changed, dependency was installed, target app was
