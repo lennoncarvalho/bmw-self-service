@@ -34,6 +34,16 @@ on a fresh `codex/` branch and new PR. Preserve no-automated-suite policy: do no
 create `tests/`, even though offline byte analysis is possible. Keep all car I/O
 in CarWorker threads and source-tool names out of shipped code/assets.
 
+## Implementation planning handoff
+
+The [implementation plan](rea-protocol-recovery-implementation-plan.md) and
+[ordered development tasks](rea-protocol-recovery-tasks.md) turn this research
+roadmap into file-level slices and acceptance gates. Planned from fetched
+`origin/main` `db3c99f` on `codex/task-b-recovery-plan`, after Task A PR #12 merged.
+Task A physical/platform/release acceptance remains independent. B1–B7 remain
+pending; this planning session recovered no new wire contracts and changed no
+app code. Planning verification is recorded below.
+
 ## Execution packages and tracking
 
 | Package | Required deliverable | Status |
@@ -349,3 +359,18 @@ indices parsed. Full `scripts/preflight.sh` passed Ruff lint, Ruff formatting
 and mypy across all 18 app files; `git diff --check` passed. App sources and
 installed dependencies were unchanged. These are documentation/tooling checks,
 not Task A migration acceptance or Task B vehicle feature acceptance.
+
+## Task B implementation-planning verification
+
+Prepared on `codex/task-b-recovery-plan` from fetched `origin/main` `db3c99f`
+(merge of PR #12). Reviewed session handoff, specs 19/20/21/26, source guide 27,
+feature ledger and current Task A integration/caller boundaries. Added file-level
+implementation plan and ordered B1–B7 tasks; updated navigation and merged status.
+No new feature evidence, app implementation, vehicle operation or REA setup is
+claimed. Pending product decisions remain gates for their affected slices.
+
+Full `scripts/preflight.sh` passed: Ruff lint, Ruff formatting (28 files) and
+mypy (28 sources). All 71 local Markdown targets in the five planning/handoff
+files resolved; `git diff --check` passed. No automated suite was added. These
+checks validate planning/document consistency and static baseline only, not
+Task B vehicle behavior or release acceptance.

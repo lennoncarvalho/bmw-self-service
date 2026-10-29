@@ -33,6 +33,9 @@ has an [implementation plan](../tasks/protocol-library-migration.md) and
 code implementation and local review are complete, with remaining physical/platform/release
 acceptance recorded in the [verification record](../tasks/protocol-library-migration-verification.md). Task B is ready for source
 investigation; protocol facts and explicitly pending product decisions gate affected code.
+Task B now has an [implementation plan](../tasks/rea-protocol-recovery-implementation-plan.md)
+and [ordered development tasks](../tasks/rea-protocol-recovery-tasks.md), based on
+main after Task A PR #12 merged. No B feature contract is closed by that planning.
 The first usable slice is connection/vehicle info, all-ECU fault display with
 one Clear All action, local history read/add and all applicable easy presets.
 History editing, advanced coding and CBS are later scope. REA now works for

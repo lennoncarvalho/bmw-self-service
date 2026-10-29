@@ -8,12 +8,14 @@ Read `AGENTS.md`, `.agents/skills/spec-driven-development/SKILL.md`,
 | A — library migration | `tasks/protocol-library-migration.md` | `docs/25-library-migration-spec.md` | One protocol owner/API using udsoncan and selected Scapy HSFZ/doipclient adapters |
 | B — close feature gaps with REA | `tasks/rea-protocol-recovery.md` | `docs/26-feature-readiness-spec.md` | Real vehicle info, all-ECU fault display/single Clear All, history read/add and all applicable easy coding |
 
-Task A code is implemented and locally reviewed on `codex/task-a-library-integration`;
-see `tasks/protocol-library-migration-verification.md` for the API, exact library
-boundary and pending owner-car/platform/release acceptance. Task B should consume
-that API after its PR merges. Task B research can run
-independently; B integration uses A's merged API. Do not invent BMW constants
-inside A or declare the release functional merely because libraries work.
+Task A code is merged into main through PR #12; see
+`tasks/protocol-library-migration-verification.md` for the API, exact library
+boundary and pending owner-car/platform/release acceptance. Task B consumes
+that merged API; Task A acceptance remains pending independently. Follow the
+[Task B implementation plan](tasks/rea-protocol-recovery-implementation-plan.md) and
+[ordered development tasks](tasks/rea-protocol-recovery-tasks.md). Task B research
+can run independently; B integration uses A's merged API. Do not invent BMW
+constants inside A or declare the release functional merely because libraries work.
 History edit/delete/replace and advanced coding are later priority; CBS is
 explicitly future scope. All applicable easy presets are required, not a
 hand-picked subset. Match source-supported model/ECU/software definitions.
@@ -30,7 +32,7 @@ setup based on earlier missing-engine notes. Check per-tool availability only
 when needed; apktool decoding remains unavailable. Reuse retained evidence
 bundles if new-session IDs are absent; do not fabricate `ev_...` references.
 
-Current app baseline: PRs #8/#9 merged. The retained session (doc 23) proves
+Current app baseline: PRs #8/#9/#11/#12 merged. The retained session (doc 23) proves
 HSFZ discovery/session/VIN on the owner's F48 X1 MY2018/NBT. Optional reads were
 rejected, I-level/FA successes were misleading and DTCs reached only the gateway.
 Live history/coding readers are disabled pending evidence. The former add-like
