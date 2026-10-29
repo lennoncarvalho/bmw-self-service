@@ -187,3 +187,12 @@ verify ADD-only preservation/capacity/order and activation/results on the exact
 headunit; continue looking for a real read/storage path. Complete read/backup
 and same-day checking remain unresolved. Screenshots/manual reconstruction are
 not silently substituted for the approved complete baseline. Task B stays open.
+
+## CBS priority update — D-58
+
+The source observations above remain historical evidence; their CBS-later scope
+label is superseded by the owner's2026-10-29priority change. CBS reading/writing
+is required before easy and advanced coding. The exact pinned cbs.py source is
+now the starting porting reference in [the promoted task](../../tasks/future-cbs-research.md).
+This update does not turn upstream vehicle claims into this project's physical
+observations or declare unresolved version fields verified.

@@ -85,7 +85,8 @@ additional configuration/measurement decoders remain pending.
   disconnected/error observations, keep data age visible, and exercise stale/
   unavailable/On/Off cases offline and visually with exact variant coverage.
 
-CBS due-date/distance remains later scope; no history-read investigation resumes.
+CBS reads/writes are now required before coding under D-58; see B-CBS below.
+No history-read investigation resumes.
 
 ## B3a — complete diagnostic reads and coverage
 
@@ -236,6 +237,23 @@ app/history_files.py, ui/service_history_page.py, ui/backups_page.py; docs12/28.
 Exit: B-HIST-W and history B-REC meet workflow 28 without a reader. Local files/
 intent/results are preserved; replacement loss limits and physical acceptance
 remain honest. Coding's separate baseline/readback/recovery requirements remain.
+
+## B-CBS — Condition Based Service reads and writes (D-58)
+
+Depends: exact vehicle/ECU identity and recovered operation contracts; follows
+history work and **precedes B6a/B6b and any advanced coding**. Detailed execution
+checklist: [promoted CBS task](future-cbs-research.md).
+
+- [ ] Pin/review linked cbs.py and related transport/caller code; reconcile actual
+  target PRGs/variants, item ownership, version layouts, read/reset prerequisites.
+- [ ] Implement standalone CBS decoding/reading through CarWorker and existing
+  owner; per-item states, raw bytes, units/sentinels and English due-service UI.
+- [ ] Implement applicable confirmed CBS writes/resets with durable before/intent/
+  requests/results, power/lockout, exact final-response checks and meaningful
+  post-state/cycle verification. No speculative default owner or automatic retry.
+- [ ] Complete byte/error/deadline/partial checks, Qt/DEMO visual verification,
+  independent review and full preflight; record actual physical observations
+  separately. Both reading and writing are required, not research-only closure.
 
 ## B6a — full easy catalog and current coded values
 

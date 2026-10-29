@@ -24,7 +24,8 @@ Required first usable slice: connection and real vehicle information, all-ECU
 fault display with one Clear All action, local JSON history/append/explicit replacement and all
 applicable easy coding reads/writes. No preset subset is accepted as catalog
 completion. Explicit whole-list history replacement is current scope under D-51;
-direct per-record car editing/deletion, advanced coding and CBS remain later.
+direct per-record car editing/deletion and advanced coding remain later.
+CBS reading/writing is required before both coding modes under D-58.
 This task includes evidence, corrected operation specs and implementation PRs,
 not research documents alone. Spec 26 defines completion and pending choices.
 
@@ -278,7 +279,8 @@ implemented, offline-inspected, physically validated, unsupported and unknown.
 Compare coverage with the reference apps; explicitly retain their limitations.
 Add ISTA+ if existing sources leave concrete diagnostics/topology/MIL/CBS gaps;
 inventory the supplied version/data dependencies before planning its engine.
-CBS remains future scope ([existing task](future-cbs-research.md)). ISTA+
+CBS is current scope before coding under D-58
+([implementation task](future-cbs-research.md)). ISTA+
 availability is not a prerequisite for exploiting current APK/PRG material.
 
 Current acceptance validates source launch/offline assets and actual operations
@@ -293,9 +295,10 @@ gaps remain explicit even when static source support is broad.
    In parallel, design the selected-library adapter and verify lifecycle
    compatibility per doc 24; do not rewrite standard transports during REA.
 2. ECU discovery/identity, then vehicle information + complete DTC reads.
-3. Local JSON history/cards and exact live coding reads; no history-reader gate.
-4. Verified mutations and recovery.
-5. Broader source coverage and platform releases.
+3. Local JSON history/cards and mode-specific history execution; no reader gate.
+4. CBS reading and writing, with source-derived completion and interruption handling.
+5. Full applicable easy coding reads/writes and recovery; advanced coding later.
+6. Broader source coverage and platform releases.
 
 Track feature contracts by B-CON/B-INFO/B-DTC-R/B-DTC-W/B-HIST-F/B-HIST-W/
 B-CODE-R/B-CODE-W/B-REC with source/evidence/spec/code/verification links.

@@ -74,7 +74,7 @@ All ignored originals remain research-only, absent from shipped dependencies.
 | S-07 `coding_data/`, `dtc_descriptions.db`, extraction scripts | Definition/label selection, description schema/collisions and packaging | Definitions differ from live coded bytes. Match ECU/software/version; inspect extraction provenance before trusting counts or duplicate resolution. |
 | S-08 `BimmerDaten/decoderPrg.py`, `ediabasx/` | PRG parsing/VM and transport/interpreter reference source | Verify relevant parser/decompiler/VM paths against original files and retained bytes; own repository instructions apply only inside those trees. These are references, not validated app modules. |
 | S-09 `sources/BMW-HU-ServiceManager/HU-ServiceManager.jar` | Independent history job/frontend and English item-catalogue reference | SHA299cf13ac1e16bd5da0c47850e7dbfe369d8c58712c58977dfa5fc618ab69e41. REA ZIP inventory plus static javap21 bytecode: IDENT/ADD/ERASE/RESET through external apijav32; no packaged complete history-list reader recovered. |
-| S-10 [devttys1/bmw-service-manager](https://github.com/devttys1/bmw-service-manager/tree/6c0041bb71674ec52d567c4a6360b5469c048173) | HSFZ writes, file formats, UI ideas, future CBS leads | Pinned commit6c0041bb71674ec52d567c4a6360b5469c048173. README says no history read; probes are experiments. Result-code and distance interpretation conflict with retained PRGs; do not blindly port. PolyForm Noncommercial license. |
+| S-10 [devttys1/bmw-service-manager](https://github.com/devttys1/bmw-service-manager/tree/6c0041bb71674ec52d567c4a6360b5469c048173) | HSFZ writes, file formats, UI ideas, CBS read/write porting source (D-58) | Pinned commit6c0041bb71674ec52d567c4a6360b5469c048173. README says no history read; probes are experiments. Result-code and distance interpretation conflict with retained PRGs; do not blindly port. PolyForm Noncommercial license. |
 
 Original hashes: [local artifact inventory](evidence/local-artifact-inventory.json).
 Libraries: [release inventory](evidence/protocol-library-inventory.json).
@@ -91,7 +91,7 @@ Legacy formats named in the source inventory are research references only.
 
 1. **Owner-supplied ISTA+ with matching diagnostic data/ECU files:** useful next
    source for inventory/variant selection, diagnostic jobs, DTC details, MIL,
-   measurement decoders and future CBS. Inventory version/hash and dependencies
+   measurement decoders and CBS (current priority before coding under D-58). Inventory version/hash and dependencies
    before selecting REA tools; an executable without required data may not answer
    the question. No ISTA+ artifact is currently inventoried in `sources/`.
    BMW's [official diagnostic portal](https://bmwtechinfo.bmwgroup.com/tisUI/?oss_module=ISTA3)

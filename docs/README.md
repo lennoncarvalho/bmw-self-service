@@ -45,8 +45,8 @@ main after Task A PR #12 merged. No B feature contract is closed by that plannin
 The first usable slice is connection/vehicle info, all-ECU fault display with
 one Clear All action, local JSON history/cards with append and explicit erase-
 and-replace, and all applicable easy presets. D-50–D-55 retire history reads and
-legacy-format adapters. Direct per-record car editing/deletion, advanced coding
-and CBS are later scope. [Workflow28](28-service-history-workflow.md) owns the
+legacy-format adapters. Direct per-record car editing/deletion and advanced coding remain later.
+CBS reading/writing is current scope under D-58, before both coding modes. [Workflow28](28-service-history-workflow.md) owns the
 consolidated history behavior, storage boundaries and acceptance checks. REA now works for
 Android inspection; doc 27 records actual evidence and per-tool limits.
 

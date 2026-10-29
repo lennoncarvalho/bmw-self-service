@@ -22,6 +22,8 @@ as versioned contracts under `docs/`, linked here, with exact variant scope.
 | B-HIST-R | Retired under owner D-50; no reader or retrieval probes required | No active reader owner | Removed from release gates, not a recovered protocol claim |
 | B-HIST-F | Sourced local record model/catalogue and JSON/cards per workflow28 | app/service_history.py + app/history_files.py + history page | Planned: JSON only,14types, multi-item cards, no legacy adapters |
 | B-HIST-W | ADD-only append or explicit ERASE/ADD replacement; final results/session/capacity/activation | History CarWorker + separate local journal | ADD codec recovered; mode execution pending. Local snapshot/intent, null prior-car state, known-local dates; no reader gate |
+| B-CBS-R | D-58: linked CBS source + exact target read jobs/decoders | CBS CarWorker + due-service UI | Required before coding; source lead inspected, implementation pending |
+| B-CBS-W | D-58: exact owner/version/reset/write preconditions/results/post-state | CBS write worker + durable before/intent/results | Required before easy/advanced coding; no physical reset authorized by planning |
 | B-CODE-R | S-02/S-07 ECU/software/CAFD match and actual current coded bytes | Coding database/live reader/UI | Definitions available; live reader disabled |
 | B-CODE-W | S-02/S-07 full easy preset applicability and multi-field/block composition | Coding engine/UI + durable state | Unresolved; no arbitrary preset subset |
 | B-REC | Coding exact original ECU bytes/restore; history local intent/results and no blind replay | Coding store + separate history journal + backups UI | No recovery promise for unreadable car history; coding restoration still needs full original data |

@@ -15,8 +15,8 @@ acceptance remains separate. Authority: [spec 26](../docs/26-feature-readiness-s
 Deliver B-CON/B-INFO, all-ECU B-DTC-R and one B-DTC-W Clear All, genuine
 local JSON history/cards plus ADD-only append and explicit erase-and-replace,
 the entire applicable easy coding catalog and B-REC recovery. Headunit history
-read is retired. Direct per-record car editing/deletion, advanced coding and CBS
-stay later scope. [Workflow28](../docs/28-service-history-workflow.md) owns history. Current acceptance is functional personal use from Python 3.13 source on
+read is retired. CBS reading/writing is required before easy/advanced coding (D-58).
+Direct per-record car editing/deletion and advanced coding stay later scope. [Workflow28](../docs/28-service-history-workflow.md) owns history. Current acceptance is functional personal use from Python 3.13 source on
 macOS with broad source-supported F/G/U/I applicability (D-47–D-49/D-57).
 The owner’s F48/NBT is the only physical observation vehicle, not the scope boundary.
 Windows/platform packages, signing and public
@@ -84,11 +84,14 @@ names; proprietary source bundles/keys stay out of Git and shipped assets.
 | B4 | New `app/operation_store.py`: durable bundles/state/recovery eligibility; update `ui/backups_page.py`, docs 13/16/26 | Identity schema + persistence/recovery design; precedes B5b/B6b |
 | B5a | Local project/JSON in app/service_history.py + new app/history_files.py; sourced 14-type catalogue, multi-item cards in ui/service_history_page.py; retire legacy file API | B-HIST-F, D-50/D-54/D-55; no vehicle-reader dependency |
 | B5b | Mode-specific frozen append/replace plan and CarWorker in app/service_history.py; separate v1 history journal in app/history_files.py; history/backups UI | B2 identity + B4 history journal + B5a + B-HIST-W execution/results/cycle evidence; no car-history baseline/read |
+| B-CBS | New app/cbs.py, CBS CarWorkers and due-service Qt section/page; separate durable before/intent/results records; source-supported status and reset/write operations | B2 identity + B-CBS-R/B-CBS-W contracts; after history, before B6a/B6b and any advanced coding (D-58); see future-cbs-research.md |
 | B6a | New `app/coding.py`: live reads/exact matching; update `app/coding_db.py`, `ui/coding_page.py`; catalog accounting in `docs/evidence/easy-preset-coverage.json` | B2 + B-CODE-R and complete source catalog inventory |
 | B6b | Composed write/readback/recovery in `app/coding.py`; update coding/store/backups UI, review `app/security.py` without guessing keys | B4 + B6a + B-CODE-W/restore/cycle/power evidence; D-27–D-31 |
 | B7 | Broad source coverage, Mac source/offline/UI checks, separate available physical observations; update README and docs 15/16/21/26 | All required slices and full applicable catalog accounting; no fleet-hardware dependency (D-57) |
 
-Research into B2/B3 and B5/B6 may advance independently; this is a dependency
+CBS read/write implementation precedes B6a/B6b under D-58. Independent source
+research may still advance; it does not reorder delivery. Research into B2/B3
+and history may advance independently; this is a dependency
 schedule, not authorization to enable partially recovered mutations. Implement
 read slices first. B4 design can advance before all encoders exist, but concrete
 coding raw-state round trips and history local snapshot/intent durability must

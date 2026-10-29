@@ -26,7 +26,8 @@ contains the remaining facts. No product interview gate remains for starting wor
 All applicable easy presets are required. D-50–D-55 retire car-history reading
 and promote explicit erase-and-replace alongside one-entry ADD-only append.
 Use local JSON only, the14sourced service types and expandable multi-item cards.
-Direct per-record car editing/deletion, advanced coding and CBS are later.
+Direct per-record car editing/deletion and advanced coding remain later.
+CBS reading/writing is current scope under D-58, due before both coding modes.
 Reject future/known-local same-day dates and use entered mileage without an
 odometer check. Do not pursue a reader or legacy .bmwsh/.tst adapters. English UI, regional formats (Brazilian/km fallback), simple
 retained/deletable portable backups and full unmasked logs are required.
@@ -156,3 +157,17 @@ DME98_R/FCCU definitions; then diagnostic category/description breadth. Follow
 ordered queue after those branches with local JSON/history journal/cards,
 mode-specific writes and complete easy coding/recovery. None is hardware-blocked.
 No history reader, legacy product adapters or guessed coding baseline is revived.
+
+## CBS priority amendment — D-58 (2026-10-29)
+
+The owner requires CBS **reads and writes before easy and advanced coding**.
+Insert CBS after local/history execution in the ordered queue; do not leave it
+in future scope. Use [the promoted task](tasks/future-cbs-research.md) and pinned
+upstream cbs.py first, then resolve exact variants/versions with supplied source.
+The task includes actual read/write implementation, durable before/intent/results,
+checked completion/post-state, offline/UI verification and independent review.
+History writes and CBS resets are distinct; history reading remains retired.
+
+This documentation-only amendment is on a fresh branch from origin/main,
+independent of PR15. It does not copy, alter or declare merged that PR's vehicle-
+order implementation. Retain PR15's evidence/handoff when reconciling later merges.

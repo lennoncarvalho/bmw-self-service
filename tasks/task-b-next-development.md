@@ -56,11 +56,20 @@ source restriction; not-yet-recovered means an actionable investigation.
    capacity contracts, then implement ADD-only append and explicit one-ERASE
    replacement with frozen plans, durable per-step outcomes and global lockout.
    No automatic retries/replay or invented old-car backup.
-6. **All applicable easy coding (B6a/B6b; R8/R9).** Recover full preset selection,
+6. **CBS reading and writing (B-CBS-R/B-CBS-W; D-58).** Port the concrete
+   source-supported status/read and reset/write behavior through CarWorker and
+   the existing protocol owner. Recover exact item/ECU/version mappings,
+   decode units/sentinels, preserve before/intent/results and verify application
+   completion/post-state as appropriate. Implement confirmed writes with power
+   checks/lockout, no automatic replay and honest uncertain outcomes. Use
+   [the promoted CBS task](future-cbs-research.md) and the pinned linked Python
+   implementation first. Exit: working read and write flows, offline/UI checks
+   and independent review. Due before any easy or advanced coding implementation.
+7. **All applicable easy coding (B6a/B6b; R8/R9).** Recover full preset selection,
    dynamic options, exact current-value bytes, composition, authorization,
    completion/cycle and restoration. Account for the whole source catalogue;
    missing applicable rows are unfinished work, not silently excluded scope.
-7. **Close implementation and review (B7).** Perform meaningful one-off offline
+8. **Close implementation and review (B7).** Perform meaningful one-off offline
    byte/error/deadline checks and visual DEMO/UI inspection, independent review,
    fixes and full scripts/preflight.sh before every push. No tests/ suite.
    Deliver reviewed incremental PRs, distinguishing completed implementation from
@@ -124,3 +133,11 @@ chains and alternate/missing engine definitions. Diagnostic category/description
 reconciliation and local history/writes/coding remain required in order. After
 this increment merges, verify merge/fetch and create another fresh codex/branch;
 do not reuse a merged implementation branch or wait for more cars.
+
+## Owner priority change — D-58
+
+CBS reads **and writes** are current Task B work, ordered after history and before
+easy/advanced coding. Older CBS-later labels are superseded. The existing
+`future-cbs-research.md` path is retained for links but now owns implementation,
+not a deferred research-only item. This documentation branch starts from
+origin/main independently of PR15; no PR15 implementation is copied or modified.
