@@ -115,3 +115,13 @@ MIL selection for DME9FF_R/EDMEI1 from their actual engine readers; reconcile
 missing DME98_R/FCCU PRGs against other supplied sources; recover DoIP engine
 address selection before enabling these MIL requests there. Those are open
 implementation tasks, not hardware dependencies or a final support restriction.
+
+## Post-PR14 block lifecycle trace
+
+[The exact block follow-up](task-b-mil-block-recovery.md) now records the five
+identical STATUS_BLOCK_LESEN paths and the Android fixed-F303 allocation/polling
+contract. It disproves an assumed generic direct branch: disabling definition
+still reads F3nn, not4A69. A fully owned dynamic clear/define/read/cleanup
+operation, with explicit read-only rejection and uncertain-cleanup handling,
+is the next concrete implementation prerequisite. No dynamic mutations or
+additional runtime MIL rows are enabled by that investigation.

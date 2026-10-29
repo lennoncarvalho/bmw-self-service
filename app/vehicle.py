@@ -14,6 +14,7 @@ from typing import Any, cast
 
 from app.protocol.contracts import TransportKind
 from app.resources import resource_path
+from app.vehicle_order import read_vehicle_order
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +256,7 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
     return [
         ("ECU list", inventory),
         ("MIL", lambda conn: read_mil(conn, ecus)),
+        ("Vehicle order", read_vehicle_order),
         (
             "I-Level",
             lambda conn: supported(

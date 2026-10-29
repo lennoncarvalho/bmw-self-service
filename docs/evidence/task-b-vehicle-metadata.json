@@ -1,0 +1,20 @@
+{
+  "asset_sha256": "6f9c5e8ec94a6ffb03c6e9f21d0e972322a9d82de0930b48b275f0b85a1f1567",
+  "editorial_substitutions": {
+    "IST1": {
+      "original": "ISTA simulation tests",
+      "reason": "Keep development tool names out of shipped labels (AGENTS.md)",
+      "replacement": "Diagnostic simulation checks"
+    }
+  },
+  "equipment": 4735,
+  "member": "assets/salapa.enc",
+  "member_sha256": "cb6ada5f6759d18a5db6257f6346275d9866af1172197c374b77815e912a25a7",
+  "plain_sha256": "e1cb1cf0a57fd8dffc60025fd440749ff11de44a11383bfb9a979e7f34c50b3a",
+  "rows": 5640,
+  "source_sha256": "fc6eedeb741cbec49f46c126f8c72dac6a3dd1455f8a993c028695642459b728",
+  "types": {
+    "M": 905,
+    "P": 4735
+  }
+}

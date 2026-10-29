@@ -661,13 +661,6 @@ class MainWindow(QMainWindow):
             f"{getattr(config, 'local_ipv4', None) or 'Unavailable'}"
         )
 
-        # Extract sub-results from FA dict
-        fa_data = results.get("vehicle_order_(fa)")
-        if isinstance(fa_data, dict):
-            results["prod_date"] = fa_data.get("prod_date", "")
-            results["fa_xml"] = fa_data.get("fa_xml", "")
-            results["type_code"] = fa_data.get("type_code", "")
-
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
         self.vehicle_page.set_loading(False)

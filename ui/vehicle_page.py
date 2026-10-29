@@ -70,6 +70,7 @@ class VehiclePage(QWidget):
         self.connection_label = QLabel()
         self.mileage_label = QLabel()
         self.prod_date_label = QLabel()
+        self.order_label = QLabel()
         self.ilevel_label = QLabel()
         self.battery_label = QLabel()
         for label in (
@@ -78,6 +79,7 @@ class VehiclePage(QWidget):
             self.connection_label,
             self.mileage_label,
             self.prod_date_label,
+            self.order_label,
             self.ilevel_label,
             self.battery_label,
         ):
@@ -86,6 +88,21 @@ class VehiclePage(QWidget):
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             card_layout.addWidget(label)
         layout.addWidget(card)
+
+        self.order_button = QPushButton("Show vehicle configuration")
+        self.order_button.setCheckable(True)
+        self.order_button.toggled.connect(self._toggle_order)
+        layout.addWidget(self.order_button)
+        self.order_scroll = QScrollArea()
+        self.order_scroll.setWidgetResizable(True)
+        self.order_scroll.setMaximumHeight(160)
+        self.order_details = QLabel()
+        self.order_details.setWordWrap(True)
+        self.order_details.setTextFormat(Qt.TextFormat.PlainText)
+        self.order_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.order_scroll.setWidget(self.order_details)
+        self.order_scroll.hide()
+        layout.addWidget(self.order_scroll)
 
         self.ecu_count_label = QLabel()
         layout.addWidget(self.ecu_count_label)
@@ -102,6 +119,32 @@ class VehiclePage(QWidget):
         layout.addWidget(self.ecu_scroll, 1)
         layout.addStretch()
 
+    def _toggle_order(self, visible: bool) -> None:
+        self.order_scroll.setVisible(visible)
+        self.order_button.setText(
+            "Hide vehicle configuration" if visible else "Show vehicle configuration"
+        )
+
+    def _populate_order(self, order: dict[str, Any] | None) -> None:
+        self.order_button.setEnabled(order is not None)
+        if order is None:
+            self.order_button.setChecked(False)
+            self.order_details.clear()
+            return
+        sections = order["sections"]
+        lines = [
+            "Options:\n"
+            + (
+                "\n".join(order.get("option_descriptions", sections.get("8", []))) or "None decoded"
+            ),
+            "Section 4 codes: " + (", ".join(sections.get("4", [])) or "None decoded"),
+            "Section 12 codes: " + (", ".join(sections.get("12", [])) or "None decoded"),
+            "Vehicle-order configuration codes; unknown descriptions stay unavailable.",
+        ]
+        if not order["equipment_complete"]:
+            lines.append("Unknown equipment section — decoded codes are incomplete.")
+        self.order_details.setText("\n".join(lines))
+
     def _toggle_details(self, visible: bool) -> None:
         self.ecu_scroll.setVisible(visible)
         self.details_button.setText("Hide ECU details" if visible else "Show ECU details")
@@ -113,6 +156,7 @@ class VehiclePage(QWidget):
         self.observed_label.setText("No current vehicle observation")
         self.refresh_button.setEnabled(False)
         self.details_button.setChecked(False)
+        self.order_button.setChecked(False)
 
     def invalidate(self, reason: str = "Observation is no longer current") -> None:
         """Immediately remove a current MIL color after a disruptive event."""
@@ -190,8 +234,16 @@ class VehiclePage(QWidget):
             else "ECU inventory: unavailable"
         )
         self._populate_ecus(self._ecus)
-        self._fa_xml = results.get("fa_xml", "")
-        self._type_code = results.get("type_code", "")
+        order = results.get("vehicle_order")
+        if isinstance(order, dict):
+            self.order_label.setText(
+                f"Model range: {order['model_range']} · Type key: {order['type_code']}\n"
+                f"Time criterion: {order['time_criterion']} (configuration code)\n"
+                f"Paint: {order['paint_code']} · Upholstery: {order['upholstery_code']}"
+            )
+        else:
+            self.order_label.setText("Vehicle order: unavailable")
+        self._populate_order(order if isinstance(order, dict) else None)
         self._update_age()
 
     def _set_mil(self, on: bool | None, detail: str) -> None:
