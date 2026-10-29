@@ -3,7 +3,8 @@
 Created 2026-10-29 after owner decisions D-21–D-49. This is a factual work queue,
 not new Evidence or completed analysis. [Spec 26](../docs/26-feature-readiness-spec.md)
 owns behavior; [source guide 27](../docs/27-rea-source-guide.md) owns artifact paths,
-known entry points and retained tool evidence. All boxes below remain open.
+known entry points and retained tool evidence. The original ordered questions
+were created open; dated follow-ups record investigation progress.
 Current milestone: functional owner Mac Python-source app, not packaged release.
 
 ## Required output per finding
@@ -149,3 +150,30 @@ Existing REA setup observations are historical; no installation is requested her
 Close an item only with retained evidence and remaining branch limits. The final
 owner-operated read/write checks validate the Mac/F48/NBT milestone; source-backed
 support elsewhere stays distinct from physical validation. No automated suite.
+
+## R6/R7 additional-source investigation — 2026-10-29
+
+Plan executed: pin/fetch relevant OSS source and verify Git blobs; inventory the
+new JAR with REA; statically trace Main/FXML/controller/native boundaries with
+javap; compare record/catalogue/result contracts with current PRGs and app;
+retain reports and record UI ideas. No app/vehicle execution or automated suite.
+See [findings](../docs/evidence/task-b-history-new-sources.md).
+
+- [x] Inspect pinned devttys1/bmw-service-manager and the supplied Java package.
+- [x] Distinguish CBS current-service reads, generic result reads and experimental
+  probes from a complete headunit history reader. Neither source closes B-HIST-R.
+- [x] Recheck conflicting result labels against all four exact original PRGs.
+  Keep the existing checked decoder; do not accept missing-status/01asgenericOK.
+- [x] Corroborate14service-item IDs/labels and seven-byte dealer field independently.
+- [ ] Correct current UI item choices:4is microfilter, not oilfilter; coolant12hex
+  and transmission23hex lack evidence. Preserve unknown existing values.
+- [ ] Establish ADD-only capacity/order/preservation and activation results on exact
+  headunit/software. A no-ERASE code path is not a complete preserving-write proof.
+- [ ] Recover complete car read/storage/backup and same-day detection; do not loosen
+  current baseline guards based on a manual list or unrelated CBS data.
+- [ ] Resolve unsigned-distance and status-label discrepancies per variant using
+  primary job/display/capture evidence before changing semantic input/display rules.
+
+Garage suggestions, readable plan/step journal, accurate expandable cards and
+strict portable format adapters fit current behavior. Offline QR and CBS cards
+are later optional ideas; replay/maps/3D and a browser UI migration are not proposed.
