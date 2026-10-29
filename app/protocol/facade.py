@@ -138,6 +138,10 @@ class DiagnosticConnection:
                 raise ConnectionError(
                     "Vehicle outcome is uncertain; reconnect and reread before recovery"
                 )
+            if result.failure == FailureKind.POLICY:
+                raise PermissionError("This operation is disabled in the read-only session")
+            if result.failure in (FailureKind.INVALID, FailureKind.UNSUPPORTED):
+                raise ValueError("Vehicle operation is invalid or unsupported")
             raise ConnectionError("Vehicle operation failed; reconnect if the connection was lost")
         return result.payload or b""
 

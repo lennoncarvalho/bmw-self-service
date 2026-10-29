@@ -34,3 +34,31 @@ assignments succeed. Full Ruff lint, Ruff formatting and mypy passed across all
 28 app sources; a separate Python 3.13 mypy run also passed. No vehicle requests or network setup are part of this
 review follow-up. Physical/platform/release acceptance remains as recorded in
 the Task A verification document.
+
+## CodeRabbit follow-up
+
+Reviewed CodeRabbit review 5692170550 against `dad94a5`. Both actionable
+inline findings are valid and were reproduced locally on Python 3.13.18:
+
+- 4408128345 (`app/protocol/doip.py`): with only an AliveCheckRequest queued,
+  prepare answered it and then timed out waiting for another message. The
+  diagnostic request remained unsent. Make the idle/pre-send poll consume one
+  frame while keeping active response waits able to dispatch multiple controls.
+- 4408128352 (`app/protocol/facade.py`): POLICY, INVALID and UNSUPPORTED outcomes
+  all raised ConnectionError. Preserve PermissionError for policy and ValueError
+  for invalid/unsupported outcomes; keep timeout/cancel/uncertain behavior.
+
+Verification after edits: one-off socket/bridge alive-check sequences, classified
+exception mapping, both full transport exercises and the full app static gate.
+No automated suite or dependency change is planned. The summary's optional
+docstring/test generation controls are not instructions to run a generator or
+override the owner's no-suite policy; document the changed receive semantics.
+
+CodeRabbit verification observed locally: the lone alive check returns from
+prepare with diagnostic sent=False, and an actual udsoncan bridge subsequently
+sends/receives VIN while handling alive checks before send, during ACK wait and
+during final-response wait. Policy/invalid/unsupported map to their intended
+exception classes; timeout/cancel/uncertain mappings are unchanged. Both full
+transport facade exercises passed with explicit PermissionError expectations.
+Full Ruff lint, formatting and mypy pass over 28 sources; separate Python 3.13
+mypy also passes. These are offline observations, not new vehicle validation.

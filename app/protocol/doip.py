@@ -38,7 +38,8 @@ class DoipAdapter:
     def _send(self, message: Any, ctx: OperationContext) -> None:
         self.stream.send(DoIPClient._pack_doip(2, message.payload_type, message.pack()), ctx)
 
-    def _receive(self, ctx: OperationContext) -> Any:
+    def _receive(self, ctx: OperationContext, *, once: bool = False) -> Any:
+        """Dispatch alive checks, optionally returning after one complete frame."""
         while True:
             raw = self.stream.frame(True, ctx)
             message = self.parser.read_message(raw)
@@ -48,8 +49,9 @@ class DoipAdapter:
                 raise ProtocolFailure(FailureKind.TRANSPORT_REJECTED, raw)
             if isinstance(message, AliveCheckRequest):
                 self._send(AliveCheckResponse(self.tester), ctx)
-            else:
-                return message
+                if not once:
+                    continue
+            return message
 
     def activate(self, ctx: OperationContext, entity: int) -> None:
         """Validate routing identity/status before allowing diagnostics."""
@@ -106,8 +108,10 @@ class DoipAdapter:
                 raise ProtocolFailure(FailureKind.TRANSPORT_REJECTED)
 
     def poll(self, ctx: OperationContext) -> None:
-        """Answer idle alive requests; do not assign stale diagnostics to new work."""
-        message = self._receive(ctx)
+        """Handle one idle control without waiting for an unrelated next frame."""
+        message = self._receive(ctx, once=True)
+        if isinstance(message, AliveCheckRequest):
+            return
         if not isinstance(message, DiagnosticMessagePositiveAcknowledgement):
             raise ConnectionError("Unowned transport response requires reconnect")
 
