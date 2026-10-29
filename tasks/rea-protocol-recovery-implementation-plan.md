@@ -1,19 +1,22 @@
 # Task B — implementation plan
 
-Status: planned, 2026-10-28; no feature contract newly recovered or code implemented.
+Status: product decisions consolidated, 2026-10-29; no feature contract newly recovered or code implemented.
 Planning branch: `codex/task-b-recovery-plan`, from fetched `origin/main`
 `db3c99f`. Task A is present in this baseline; its physical/platform/release
 acceptance remains separate. Authority: [spec 26](../docs/26-feature-readiness-spec.md),
 [research roadmap](rea-protocol-recovery.md), [source guide 27](../docs/27-rea-source-guide.md),
 [decisions 21](../docs/21-product-decisions.md). Execution:
-[ordered tasks](rea-protocol-recovery-tasks.md).
+[ordered tasks](rea-protocol-recovery-tasks.md) and
+[REA investigation checklist](rea-protocol-recovery-investigations.md).
 
 ## Scope and completion
 
 Deliver B-CON/B-INFO, all-ECU B-DTC-R and one B-DTC-W Clear All, genuine
 headunit-local history read/add, the entire applicable easy coding catalog and
 B-REC recovery. History edit/delete/replace, advanced coding and CBS stay later
-scope. No cloud history synchronization, flashing or authorization bypass.
+scope. Current acceptance is functional personal use from Python 3.13 source on
+the owner’s Mac/F48/NBT (D-47–D-49). Windows/platform packages, signing and public
+distribution are deferred. No cloud synchronization, flashing or authorization bypass.
 
 Every enabled operation needs a retained source-to-send-to-decoder contract,
 exact applicability and an implementation/verification link in the
@@ -49,7 +52,8 @@ or zero; transport addresses retain full width.
 Default operation budget is 30 seconds from submission, including queueing,
 session changes, pending responses and readback. Contract-specific exceptions
 need evidence and documentation. A multi-ECU operation needs a published overall
-budget and bounded per-ECU work, cancellation and progress. On ambiguous stream
+budget and bounded per-ECU work, internal interruption handling and progress.
+No user-facing write Cancel; D-30 blocks disruptive controls and normal closing. On ambiguous stream
 failure, respect Task A connection closure; continue reachable targets only
 through a valid connection, with reidentification if reconnection is required.
 Never reuse a desynchronized stream merely to satisfy continue-on-failure.
@@ -70,15 +74,19 @@ names; proprietary source bundles/keys stay out of Git and shipped assets.
 | B3b | Clear All operation in `app/diagnostics.py`; update diagnostics UI and docs 14/16/20 | B3a + B-DTC-W/MIL contracts and applicable owner decisions |
 | B4 | New `app/operation_store.py`: durable bundles/state/recovery eligibility; update `ui/backups_page.py`, docs 13/16/26 | Identity schema + persistence/recovery design; precedes B5b/B6b |
 | B5a | New `app/service_history.py`: genuine read/record codecs; update `ui/service_history_page.py`, docs 12/16 | B2 + B-HIST-R; NBT first |
-| B5b | Add encoder/duplicate/readback flow in `app/service_history.py`; integrate operation store/history UI/backups UI | B4 + B5a + B-HIST-W + history decisions |
+| B5b | Add encoder/date-rule/completion flow in `app/service_history.py`; integrate operation store/history UI/backups UI | B4 + B5a + B-HIST-W/cycle semantics; D-32–D-39 |
 | B6a | New `app/coding.py`: live reads/exact matching; update `app/coding_db.py`, `ui/coding_page.py`; catalog accounting in `docs/evidence/easy-preset-coverage.json` | B2 + B-CODE-R and complete source catalog inventory |
-| B6b | Composed write/readback/recovery in `app/coding.py`; update coding/store/backups UI, review `app/security.py` without guessing keys | B4 + B6a + B-CODE-W + partial-write/voltage decisions |
-| B7 | Source/vehicle coverage, DEMO/UI and package acceptance; update README, docs 15/16/21/26, packaging only as needed | All required slices; outstanding platform/vehicle access recorded |
+| B6b | Composed write/readback/recovery in `app/coding.py`; update coding/store/backups UI, review `app/security.py` without guessing keys | B4 + B6a + B-CODE-W/restore/cycle/power evidence; D-27–D-31 |
+| B7 | Source/vehicle coverage, real owner Mac source acceptance and DEMO/UI; update README, docs 15/16/21/26 | All required slices; owner F48/NBT source flows, full applicable catalog accounting |
 
 Research into B2/B3 and B5/B6 may advance independently; this is a dependency
 schedule, not authorization to enable partially recovered mutations. Implement
 read slices first. B4 design can advance before all encoders exist, but concrete
 raw-state round trips and durable-write checks must precede either mutation.
+D-29 makes completion contract-specific: meaningful readback when supported,
+otherwise checked application response and required cycle instructions. Never
+interpret a pre-cycle old value as failure. Easy mode needs an evidenced restore
+path on established failure; advanced continuation remains later scope.
 B3 clearing is exempt from saved backup/report requirements and does not depend
 on B4. Implementation slices use fresh branches from then-current main and
 separate PRs; this branch contains planning documents only.
@@ -112,51 +120,71 @@ before claiming durability. Backup/intent persistence failure blocks sending.
 |---------------|---------|
 | prepared | Original state and intent durably saved; no mutation sent |
 | sending | Transmission may have started; interruption cannot imply no effect |
-| awaiting-readback | Application response received; state unverified |
+| response-confirmed | Validated application/job completion; no observed-value claim |
+| cycle-required | Operation requires documented ignition/reconnect instructions; link response/observations |
+| awaiting-readback | Meaningful supported verification is pending |
 | verified | Independent readback matches source-evidenced intended semantics |
-| mismatch | Complete readback differs from intended state |
+| mismatch | Meaningful post-prerequisite readback differs from intended state |
 | partial | Known mixed per-target results; retain each target's outcome |
-| uncertain | Send/effect/readback cannot be established; block replay |
-| recovered | Reidentified, reread and verified a user-selected evidenced recovery |
+| uncertain | Required application outcome cannot be established; block replay |
+| recovered | User-selected recovery completed under its response/cycle/verification contract |
 
 Aggregate partial and uncertain states must retain individual target phases;
 no single success flag replaces them. Recovery reidentifies and rereads before
-offering choices. Restore is itself a backed-up/readback-verified mutation.
+offering choices, applying required cycle semantics first. Restore is itself
+a backed-up mutation with evidenced response/cycle/completion checks.
 History append never auto-replays; original/unknown records and unrelated coding
 bits survive. Legacy UI-only backup manifests may be displayed as previews but
 cannot be promoted to eligible vehicle restoration.
 
-## Owner decision gates
+## Resolved product rules and remaining investigations
 
-Do not ask the owner to invent protocol constants. Source-derived constraints
-come first; pending product choices remain pending until answered in doc 21.
+[Doc 21](../docs/21-product-decisions.md) D-21–D-49 settles the interview:
+refuse multiple vehicles, limited VIN troubleshooting, batch page publication,
+conditional assisted setup; distinct MIL/coverage; no write Cancel, app lockout,
+power acknowledgement and easy rollback on established failure; cycle-aware
+completion; preserving history rewrite, no future/same-day additions, free dealer,
+multiple items and entered mileage without odometer validation; untouched Custom
+coding; retained/deletable portable plain backups; English text, system regional
+formats with Brazilian/km fallback and full unmasked logs; Mac source-first use.
 
-| Before affected implementation | Required decision/work |
-|--------------------------------|------------------------|
-| Connection UX | Assess D-13 series picker benefit; multiple-car selection and identity/limited-state presentation |
-| Clear All/MIL UI | MIL presentation when supported, unavailable or unchanged after clear |
-| History add | Chronology, dealer/item/date/distance validation where not fixed by source; exact duplicate rule D-20 already approved |
-| Coding writes/recovery | Multi-ECU partial/uncertain presentation and evidenced voltage preconditions |
-| Backup/release UI | Retention/import/export/privacy choices when that slice needs them; exact app license/distribution materials remain release work |
+No product interview gate remains for this milestone. Recover network need,
+source encoders, exact field constraints, stored-value/cycle/response semantics,
+restore support and power checks through the REA checklist. If a new genuine
+behavior tradeoff appears, state the evidence and bounded choice rather than
+reopening settled requirements. Numeric limits are not preference questions.
 
-These do not block source research or planning. Network elevation/DHCP is a
-separate unresolved product flow, not an implicit connection fallback.
+## Presentation and local data design
+
+Plan `app/formatting.py` for shared locale/distance/date presentation and input
+normalization, with consumers in vehicle/history/coding/diagnostics pages.
+Native units/calendar identity remain intact. Final path/module scope is reviewed
+before implementation. Audit English coverage in `app/coding_db.py`,
+`app/dtc_db.py`, source catalogs, `coding_data/`, `dtc_descriptions.db` and UI;
+use extraction/translation scripts only with retained provenance. Portuguese later.
+
+B4 uses straightforward ordinary unencrypted versioned files, with retained raw
+state and durable baseline/intent. All backups persist until explicit deletion;
+allow portable import/export, validate schema/integrity and gate restoration by
+identity/software/definitions. Import never writes. No password UX or automatic
+pruning. Preserve full diagnostic identifiers in logs/exports; do not commit
+private captures merely to retain evidence. No automatic VIN masking.
 
 ## Verification and completion gates
 
 Each slice retains manual offline byte/codec checks for recovered sequences,
 errors, malformed/truncated responses, deadlines and cancellation; DEMO/UI
 checks are distinct. No automated suite or `tests/`. Review Python correctness,
-Qt lifecycle and vehicle-write integrity with applicable project skills.
+Qt lifecycle and vehicle-write integrity with applicable project skills, applying current
+D-29 over older unconditional readback guidance.
 
 Before every push run full `scripts/preflight.sh`: Ruff lint, Ruff format check
-and mypy over all app/UI/main targets. Run Python 3.13 and relevant packaging
-checks at release integration; package/data/legal closure covers macOS arm64,
-Intel and Windows x64. Record actual results, never inferred coverage.
+and mypy over all app/UI/main targets. Run Python 3.13 source launch on the owner’s Mac. Packaged release/signing,
+Intel Mac and Windows checks remain later milestones (D-48/D-49). Record actual results, never inferred coverage.
 
 Owner-operated acceptance starts with read-only identity/inventory/info/DTCs.
 History/coding/Clear All physical mutation validation requires a separately
-agreed concrete procedure after encoder, prerequisites and readback are reviewed.
-Retain sanitized results and local full captures. One F48/NBT does not establish
+agreed concrete procedure after encoder, prerequisites and contract-specific completion are reviewed.
+Retain source/operation summaries and full unmasked local diagnostic captures. One F48/NBT does not establish
 fleet coverage. B7 remains open for missing required acceptance, even when all
 code and static checks pass.

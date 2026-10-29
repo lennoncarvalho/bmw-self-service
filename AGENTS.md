@@ -20,6 +20,13 @@
    routing is `docs/27-rea-source-guide.md`. REA is now connected; earlier
    missing-engine observations are historical. Do not repeat setup blindly.
 
+The 2026-10-29 owner interview (docs 21/26, D-21–D-49) supersedes older
+conflicting behavior requirements, including universal immediate readback.
+Current milestone: functional personal Mac Python-source use; packages/signing
+and Windows validation are later. D-29 uses contract-specific application/cycle
+completion, D-28/D-30 forbid write Cancel and block disruptive app actions, and
+D-39 removes history odometer validation.
+
 The 2026-10-28 audit overrides older completion labels and contradictory protocol
 examples. Historical REA notes are evidence candidates, not authoritative wire
 contracts. Correct a disproven spec before implementing it; ask the owner about
@@ -272,13 +279,15 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 - Static database support/security flags do not establish that an ECU is safe or
   writable on a particular car. Exact variant, software, authorization and
   verified write/readback behavior are required; the old 117/139 claim is unverified.
-- **Coding/history write screens save a backup first; all mutations require readback.**
+- **Coding/history writes save a backup first; completion follows D-29.**
   Preserve original, intended and observed state separately. This includes
   service history and both coding modes. The owner explicitly exempts fault
   clearing from saved backups/reports. Cleared DTC memory cannot be promised
   restorable.
-- Never report a write as successful based only on an ACK or a positive response.
-  Resolve uncertain/partial outcomes before proposing retry or rollback.
+- A transport ACK alone is insufficient. Under D-29, checked final application
+  responses can establish response-confirmed completion where immediate readback
+  is not meaningful; distinguish it from observed verification and give required
+  cycle instructions. Resolve uncertain/partial outcomes before retry/rollback.
 
 ## GitHub CLI (pushing to this repo)
 

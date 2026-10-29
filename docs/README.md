@@ -31,8 +31,10 @@ Start another session with [SESSION-PROMPT.md](../SESSION-PROMPT.md). Task A
 has an [implementation plan](../tasks/protocol-library-migration.md) and
 [ordered development tasks](../tasks/protocol-library-migration-tasks.md);
 code implementation and local review are complete, with remaining physical/platform/release
-acceptance recorded in the [verification record](../tasks/protocol-library-migration-verification.md). Task B is ready for source
-investigation; protocol facts and explicitly pending product decisions gate affected code.
+acceptance recorded in the [verification record](../tasks/protocol-library-migration-verification.md). Task B product decisions are consolidated (2026-10-29);
+[remaining REA investigations](../tasks/rea-protocol-recovery-investigations.md)
+gate affected operations. Current acceptance is functional Mac Python-source
+use on the owner’s car; Windows/packages/signing are deferred.
 Task B now has an [implementation plan](../tasks/rea-protocol-recovery-implementation-plan.md)
 and [ordered development tasks](../tasks/rea-protocol-recovery-tasks.md), based on
 main after Task A PR #12 merged. No B feature contract is closed by that planning.

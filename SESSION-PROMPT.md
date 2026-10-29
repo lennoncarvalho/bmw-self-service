@@ -16,9 +16,16 @@ that merged API; Task A acceptance remains pending independently. Follow the
 [ordered development tasks](tasks/rea-protocol-recovery-tasks.md). Task B research
 can run independently; B integration uses A's merged API. Do not invent BMW
 constants inside A or declare the release functional merely because libraries work.
-History edit/delete/replace and advanced coding are later priority; CBS is
-explicitly future scope. All applicable easy presets are required, not a
-hand-picked subset. Match source-supported model/ECU/software definitions.
+Current Task B milestone is working personal use from Python 3.13 source on the
+owner's Mac/F48/NBT (D-47–D-49). Windows, packages/signing and public distribution
+are later. [Spec 26](docs/26-feature-readiness-spec.md) is consolidated after the
+2026-10-29 interview; [REA checklist](tasks/rea-protocol-recovery-investigations.md)
+contains the remaining facts. No product interview gate remains for starting work.
+All applicable easy presets are required. History user editing/deletion/replacement,
+advanced coding and CBS are later. Internal preserving whole-list rewrite is
+allowed for add; reject future/same-day dates and use entered mileage without
+an odometer check. English UI, regional formats (Brazilian/km fallback), simple
+retained/deletable portable backups and full unmasked logs are required.
 
 Answers live in `sources/` and its extracted/reference trees, accessed through
 REA for shipped artifacts. **Read `docs/27-rea-source-guide.md`** for artifact
@@ -40,15 +47,20 @@ history request is no longer automatically sent. Read doc 24 for library
 evaluation and exact adapter obligations. Inspect current Git/PR state before
 changes; this baseline does not replace current source review.
 
-Save durable baseline and intent before history/coding mutations, then independent
-readback. Fault clearing requires no saved report/backup. Interrupted writes:
+Save durable baseline and intent before history/coding mutations. D-29 in doc 21
+supersedes unconditional immediate readback: validate application completion,
+recover per-operation ignition-cycle requirements, and distinguish response-confirmed
+completion from observed verification. Easy coding stops/restores on established failure, never on premature old-value
+readback. D-28/D-30 forbid write Cancel and block disruptive actions/normal quit;
+D-31 blocks known insufficient power and permits acknowledgement when unknown.
+Fault clearing requires no saved report/backup. Interrupted writes:
 reidentify, reread/compare, then user-selected recovery; no automatic replay.
 Keep all I/O in CarWorker, partial coverage explicit and DEMO isolated. Source
 support is not universal physical validation; exact ECU/software/definitions
 gate writes. One Clear All is the only fault-clear UI action in this release.
 
-Doc 21 owns product decisions and pending questions. Resolve only questions
-needed for the current slice; continue independent research. No automated suite
+Doc 21 owns product decisions. Resolve technical facts with REA; ask only new
+behavior questions actually exposed by evidence, not already answered choices. No automated suite
 or `tests/`. Full `scripts/preflight.sh` before every push; report Ruff lint,
 formatting and mypy separately and actual hardware/runtime/package coverage.
 

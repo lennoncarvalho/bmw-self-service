@@ -1,5 +1,15 @@
 # UI/UX Specification
 
+Current Task B behavior (2026-10-29): [spec 26](26-feature-readiness-spec.md)
+and D-21–D-49 in [doc 21](21-product-decisions.md) supersede conflicting older
+examples below. No write Cancel; disruptive controls/normal quit blocked during
+writes. Completion is operation/cycle-aware, not universally immediate readback.
+History add may preserve/rewrite the complete list; reject future/same-day new
+entries; use entered mileage without reading current odometer. Mac Python-source
+functionality is the milestone; packages/signing are deferred. Protocol examples
+remain unverified unless linked to retained source evidence.
+
+
 > **2026-10-28 review:** Historical research/design, with unverified or contradicted claims.
 > See [document status](README.md) and [protocol corrections](20-protocol-evidence.md).
 > Completion labels and code examples below are not validated vehicle contracts.

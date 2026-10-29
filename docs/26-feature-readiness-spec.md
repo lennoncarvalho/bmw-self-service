@@ -1,162 +1,180 @@
-# Task B specification — functional BMW diagnostics, history and easy coding
+# Task B specification — functional diagnostics, history and easy coding
 
-Status: ready to start source investigation; wire contracts must be recovered
-before implementing affected operations. Product choices explicitly marked
-pending below must not become assumptions. Task:
-[REA recovery](../tasks/rea-protocol-recovery.md). Sources/tools:
-[doc 27](27-rea-source-guide.md). Runtime foundation:
-[Task A spec](25-library-migration-spec.md).
+Status: product decisions consolidated 2026-10-29; ready for evidence-driven
+implementation. BMW wire contracts remain to be recovered before enabling their
+operations. Authority: [owner decisions 21](21-product-decisions.md).
+[Implementation plan](../tasks/rea-protocol-recovery-implementation-plan.md),
+[development tasks](../tasks/rea-protocol-recovery-tasks.md),
+[REA checklist](../tasks/rea-protocol-recovery-investigations.md),
+[source guide 27](27-rea-source-guide.md).
 
-## Release outcome
+## Current acceptance target
 
-The owner needs ENET connection, real vehicle information and ECU discovery,
-DTC reads/clearing, headunit-local service-history read/add, and live easy
-coding reads/writes for the full applicable source catalog. History edit/delete/
-replace and advanced coding remain eventual requirements but must
-not delay this minimum slice. CBS read/reset remains future scope. Broad
-source-supported F/G/U/I coverage is required as a design/research goal;
-physical acceptance currently uses the owner's F48/NBT, not every BMW.
+A working Python-source application on the owner's Mac and F48/NBT: ENET
+connection, real vehicle information, complete discovered-ECU fault display and
+one Clear All, headunit-local history read/add, every applicable matched easy
+preset and usable backup/recovery. Real owner-operated results are required;
+DEMO, placeholders, source claims and static green gates alone are insufficient.
 
-Research can start independently of Task A. App integration uses Task A's
-merged API and must not create a second transport implementation. Missing
-evidence leads to more source investigation or a precisely recorded blocker;
-permanent “unavailable” placeholders do not satisfy this release outcome.
+Windows is available but deferred. Packaging, signing/notarization, Intel Mac
+validation and public distribution are later milestones (D-47–D-49). Preserve
+cross-platform design and existing legal notices without making release packaging
+an obstacle to working source flows. Broad source-supported F/G/U/I applicability
+remains the research/design goal, not universal physical validation. Advanced
+coding, user-facing history edit/delete/replace and CBS remain later scope.
 
-## Operation specification required before enabling a feature
+Task A PR #12 is merged. Use its single owner/API and selected libraries;
+Task B must not introduce another transport stack or socket consumer. Retain
+Qt Widgets/CarWorker architecture, offline runtime and no automated suite.
 
-Each operation gets a versioned contract with ID, purpose, source artifact/hash,
-exact class/method/job and data dependencies, applicability, ECU/software and
-definition identity, session/security prerequisites, full request sequence,
-response/error codecs, lengths/units/scaling, timing and readback semantics.
-Attach real REA Evidence references and a portable export. Templates and ledger
-rules are in doc 27. Update docs 07/11/12/14/20 with recovered contracts or
-link their exact versioned replacements; never paste hypothetical byte examples
-into production code. Standard library behavior is a Task A concern.
+## Required source contract before an operation is enabled
+
+Retain versioned operation ID, artifact/version/full hash, exact class/method/job
+or instruction, dependency/member identities, actual REA Evidence IDs and
+portable export path/hash. Trace selection → complete request sequence → send →
+dispatch → decoder → displayed result. State endpoint, variant/software/definition,
+session/security prerequisites, field layout/units/scales/sentinels, echoes/errors,
+P2/P2*/overall deadlines, keepalive, interruption and completion/cycle semantics.
+Label static derivation, simulation and actual vehicle observations separately.
+Correct docs 07/11/12/14/20 or link exact replacement contracts. Strings, labels,
+asset decryption and smoke inspection do not close a wire contract.
 
 ## Feature acceptance
 
 | ID | Required behavior | Completion evidence |
 |----|-------------------|---------------------|
-| B-CON | Discover actual transport/entity on selected wired interface, verify VIN/session, enumerate real ECU addresses and software identities | Source-derived connection/inventory branches plus complete retained owner-session traffic; no ASCII-name-only or F000 assumption |
-| B-INFO | Read available mileage, voltage, I-level, FA/model/production metadata using matching job/codec; no fake successful empty value | Source-to-UI trace per field, meaningful decoded values or explicit supported-unavailable reason; explain first session's rejected reads |
-| B-DTC-R | Scan discovered supported ECUs; preserve address/variant, status, descriptions and per-ECU coverage | Correct standard/vendor records, explicit skipped/failed/unsupported counts; no whole-car “no faults” from gateway-only empty data |
-| B-DTC-W | One Clear All button targets all supported discovered ECUs after confirmation; continue on reachable ECUs if another fails, then reread faults and supported MIL | Per-ECU cleared/failed/not-attempted and post-clear results; partial remains partial; no saved report, per-ECU button or per-code button |
-| B-HIST-R | Read the genuine headunit history without mutating it; decode fields/pagination and preserve unknown data | PRG/app trace through every transmitted buffer; NBT first, other headunits separately evidenced |
-| B-HIST-W | Add local history while preserving existing entries and blocking exact duplicates | Complete add encoder, original backup, durable intent, checked response and independent readback comparison; no add routine relabelled read; edit/delete/replace later |
-| B-CODE-R | Show easy presets with actual current ECU values, exact CAFD/software match and unknown/custom states | Data loaders/definition selection/current coded-data read traced together; no directory-first selection or mocks shown as live |
-| B-CODE-W | Support every applicable source easy preset; compose selected changes against one baseline, preserve unrelated bits and verify the result | Multi-field/mask/block encoding, backup/intent/readback and recovery evidence; catalog applicability/exclusions explicit; no UI index used as ECU value |
-| B-REC | Import/display eligible backups and recover interrupted history/coding operations | Match VIN/ECU/software, reread/compare first; only evidenced restore choices; local preview never labelled vehicle restoration |
+| B-CON | Selected wired interface/chassis hint; actual transport/session/VIN; real ECU addresses/software | Source-derived inventory and owner retained session; no chassis-to-transport or fixed-F000/ASCII assumption |
+| B-INFO | Evidenced mileage, voltage, I-level, FA/model/production fields | Source-to-UI trace and meaningful owner values or explicit supported-unavailable reasons; explain original failed reads |
+| B-DTC-R | All discovered supported ECUs, source-supported fault categories/details/descriptions, per-ECU coverage | Correct records and success/failed/unsupported/not-attempted accounting; partial empty scan never means no whole-car faults |
+| B-DTC-W | One confirmed Clear All over identified supported targets, continue reachable targets, reread supported faults/MIL | Named scan gaps; per-target application and post-clear results; no saved backup/report or per-code/per-ECU clear buttons |
+| B-HIST-R | Genuine nonmutating complete headunit history read | NBT first; complete records/unknown fields and pagination from source-to-buffer-to-decoder trace |
+| B-HIST-W | Add one multi-item dated entry without losing existing history | Native append or preserving full-list rewrite; complete backup/intent, date rules, evidenced application completion/cycle instructions |
+| B-CODE-R | Every applicable matched easy preset with actual current values | Exact ECU/software/CAFD and live bytes; complete catalog accounting; untouched Custom values preserved |
+| B-CODE-W | Compose selected presets against one complete baseline; preserve unrelated data | Exact masks/blocks/authorization/encoding, backup/intent, application completion and meaningful verification; easy failure rollback path |
+| B-REC | Portable backup preview/import and eligible restoration/interruption recovery | Identity/integrity compatibility, reidentification and meaningful reread/compare before user-selected recovery; import itself never writes |
 
-For each row, publish source-evidenced, implemented, offline-inspected,
-vehicle-validated, unsupported and unknown separately. Do not make an ECU
-address or DID universal based on one vehicle. Security/session restrictions
-must be represented; no source flag or ECU count proves write authorization.
+Track source-evidenced, implemented, offline-inspected, vehicle-validated,
+unsupported and unknown separately for each variant. All applicable presets
+means the full supplied catalog for matched model/ECU/software, with stable IDs
+and explicit dispositions. An unresolved applicable preset remains open, not a
+silently excluded subset. Fleet hardware validation is not implied by one car.
 
-All easy presets means every preset exposed by the supplied source dataset for
-the matched model/ECU/software, not every preset on every car. Inventory stable
-preset IDs and source applicability, then account for every row as implemented,
-source-restricted, unsupported or unresolved with evidence. An unresolved
-applicable preset is an open release item, not permission to silently shrink
-the catalog. Decrypted definitions alone do not prove live data transport or
-readback. No hand-selected sample may be presented as catalog completion.
+## Connection, initial loading and diagnostics
 
-## Shared state and UI contract
+D-21: refuse connection if multiple vehicles respond on the chosen interface;
+require only one, with no vehicle chooser or first-response selection. D-22:
+responsive gateway without verified VIN permits limited troubleshooting/logs;
+vehicle-dependent operations remain disabled.
 
-- Per field/ECU/feature distinguish loading, available, unavailable/unsupported,
-  failed, cancelled and not attempted. Once VIN/session work, optional failure
-  keeps the connection open (D-12). Gate only dependent operations.
-- Expose capability and exact reason when a write lacks matched definitions,
-  source-supported encoder, complete original data or readback support (D-14).
-  Easy-mode UI must show current/proposed values, affected ECU and change count.
-- Confirmation identifies the target and consequence. No write starts from
-  browsing a page or loading a backup. Keep unrelated reads usable.
-- Diagnostics presents faults grouped by ECU with available source-supported
-  status categories, not only the current confirmed-only filter. One Clear All
-  button acts across supported ECUs. Missing ECUs remain visible as coverage
-  gaps; continue clearing reachable ECUs and report partial outcomes (D-19).
-- Before adding history, reread the current list and compare date, mileage,
-  dealer and service-item identity using documented canonicalization. Block an
-  exact duplicate (D-20). Units/date interpretation must be evidence-backed;
-  do not silently merge distinct service entries or auto-replay an uncertain add.
-- Use CarWorker/QThread for every car operation. Cancel before send prevents
-  it; cancel/disconnect after a mutation may have started produces uncertain
-  outcome, followed by reread/compare. Do not promise atomic multi-ECU changes.
-- Keep local headunit history, BMW backend history and CBS separate. No online
-  synchronization, odometer programming, flashing or security bypass is implied.
+D-23: prefer independent page loading; publish a page's initial results together
+after its batch settles, with explicit failure/unavailable/coverage states. No
+piecemeal field population. Global loading is an acceptable fallback. Verified
+identity remains connected after optional failures (D-12); gate dependent features.
+Assess D-13 chassis-picker simplification using sources; selection is only a hint.
 
-## Backup, write/readback and recovery acceptance
+D-24: normal experience should need chassis and adapter selection without manual
+configuration. Recover reference behavior first; assisted setup is authorized
+conditionally if beneficial and straightforward. Record platform need, owned
+changes/elevation/cleanup; assume neither DHCP necessity nor privileged fallback.
 
-Design a versioned operation bundle for coding/history with independent records:
-baseline (immutable original raw/decoded data), intent, and observed readback.
-Include operation/schema/app version, VIN, transport/ECU/hardware/software and
-definition hashes, field/block identities, units, timestamps, integrity hashes
-and phase/outcome. Write baseline/intent durably before first mutation; disk
-failure blocks the write. Preserve unknown records/bits and the original backup.
+D-25: emissions MIL On / Off / Unavailable is separate from fault count and uses
+an actual supported read. After Clear All show the observed state, including On.
+D-26: incomplete scan coverage permits clearing identified supported targets,
+with gaps named in confirmation. Continue after ECU-local failure on a usable
+stream; respect Task A closure after ambiguous transport failure and explicitly
+account for remaining targets. Never reuse an invalid stream to force continuation.
 
-Record states such as prepared, sending, awaiting-readback, verified, mismatch,
-partial, uncertain and recovered with exact meanings in the implementation
-plan. Acknowledgement alone is never verified success. Compare actual state to
-intent using only source-evidenced normalization. Recovery after reconnect
-reidentifies the car/ECU and rereads before choices; no append auto-replay.
-Restoration is itself a mutation with eligible identity, backup and readback.
-Fault clearing is explicitly exempt from saved backup/report requirements.
+## Definitive writes, completion and recovery
 
-Exact persisted schema/UI labels are implementation design work, not reasons
-to postpone research. Keep UI preferences in QSettings and operation records
-in data files, with independent DEMO/live and per-vehicle storage.
+Before coding/history mutation identify VIN/ECU/software/definitions, read complete
+original data and durably save baseline/intent. Missing original data, unmatched
+encoder or disk failure blocks sending. Confirmation shows target, changes,
+consequences, power requirement and the user's commitment/responsibility.
 
-## Product decisions and remaining detail
+D-28/D-30: no write Cancel. Block disruptive navigation, disconnect, competing
+operations and normal closing throughout write/check/rollback. Keep the GUI
+responsive with progress. External power/cable/process loss still creates actual
+partial/uncertain records and recovery instructions; no false success or replay.
 
-Confirmed in D-16–D-20: all-ECU faults, one Clear All, continue reachable ECUs
-with partial outcomes, all applicable easy presets, history read/add first,
-block exact duplicate entries. No per-ECU/single-code clear UI. Source evidence
-determines the fault statuses/categories actually supported by each ECU.
+D-31: block known insufficient power; if reliable readings are unavailable,
+require acknowledgement of adequate vehicle/device power. Source/platform
+investigation supplies checks and applicable limits, not invented thresholds.
 
-Before affected UI/write implementation, settle precise MIL presentation,
-history chronology and item/dealer field validation, multi-ECU coding partial-
-write presentation and product choices around evidenced voltage limits.
-If source behavior determines a validation rule, record that evidence instead
-of asking the owner to invent protocol details.
+D-29 supersedes universal immediate readback. Recover each operation's final
+application/job result, stored-value visibility and activation/restart semantics.
+When meaningful, independently read and compare. Where a full ignition cycle,
+new connection or unsupported readback prevents immediate verification,
+response-confirmed completion with specific instructions is sufficient. Record
+response-confirmed and observed-verified outcomes distinctly. Transport ACKs
+alone are insufficient. Do not wait indefinitely for a user cycle or roll back
+merely because an old value was read before the required cycle.
 
-These questions do not block evidence collection, inventory recovery, library
-migration or genuinely supported reads. Record responses in doc 21 before
-deriving the affected UI/write behavior. Never treat silence as agreement.
+D-27: easy coding stops and restores operation changes after established failure,
+using an evidenced baseline restore encoder and contract-specific completion
+checks. Failed/unreachable restoration remains explicit; no atomicity guarantee.
+After interruption, reidentify/reread when meaningful (cycle first if required),
+then user-selected recovery (D-08); no blind restoration/replay. Advanced mode,
+when later implemented, continues after definite ECU-local rejection on a healthy
+connection. Both modes share the same underlying verified engine.
 
-## Implementation file map
+## History add rules
 
-| Slice | Existing owners to review/change after the operation contract is recovered |
-|-------|--------------------------------------------------------------------------|
-| Connection/info | `app/connection.py`, `app/worker.py`, `ui/main_window.py`, `ui/vehicle_page.py`; consume Task A's adapter API |
-| DTC display/Clear All | `ui/diagnostics_page.py`, `app/dtc_db.py`, extraction/data provenance and Task A's UDS service API; remove per-code clear UI and assumed group mappings |
-| History read/add | `ui/service_history_page.py`, operation encoding/data files and `ui/backups_page.py`; replace disabled reader/old write assumptions from recovered contract |
-| Full easy catalog | `app/coding_db.py`, `ui/coding_page.py`, `app/security.py`, dataset provenance; exact definitions, current bytes, composition and authorization |
-| Shared backup/readback/recovery | History/coding workers, backup page and versioned data storage; introduce a shared module only after its schema/state design is recorded |
-| Release integration | `main.py`, `requirements.txt`, asset resolution/packaging and docs 15/16/21; preserve source-independent offline app runtime |
+D-32 permits the simplest evidenced native append or full-list read/merge/rewrite.
+Preserve every existing record and unknown field; block if preservation cannot
+be established. Backup alone is not permission to lose records. Internal rewrite
+does not expose user-facing editing/deletion/replacement in this milestone.
 
-Before each slice, list exact new/changed paths in Task B. Extracting network
-operations from page classes into narrowly scoped services is allowed when
-planned/reviewed; do not redesign Qt or introduce another transport stack.
-Research source names may appear in internal docs/evidence, not shipped UI or
-application data. Required third-party legal notices remain part of packaging.
+D-33: picker and operation validation reject future dates. D-35: reject a new
+entry on any existing calendar date, regardless of other fields. Preserve any
+same-day entries already present; never silently shift or merge dates. Recheck
+against fresh complete history before sending.
+
+D-34: dealer/garage is free input within actual field/encoding limits. D-38:
+multiple supported service items in one dated entry. D-39 supersedes D-36:
+write user-entered mileage without a current-odometer read/check. Allow mileage
+conflicting with surrounding history (D-37). Validate actual numeric/unit/range
+encoding only; user accepts entered-mileage responsibility. Optional B-INFO
+mileage remains independent. Never replay an uncertain append/rewrite.
+
+## Coding, local data and presentation
+
+D-40: display existing non-preset values as Custom; preserve untouched original
+bytes. Explicit supported preset selection may replace one. Never encode a UI
+index, select the first definition directory, or infer write permission from flags.
+Compose multi-field/mask/block changes against one baseline, detect conflicts
+and preserve unrelated/unknown data. Modern authorization restrictions stay visible.
+
+D-41/D-42/D-45: simple ordinary unencrypted versioned files; retain all backups
+until explicit user deletion. Explain loss of recovery material without a permanent
+unresolved-backup deletion ban; active write lockout still applies. Allow portable
+export/import with schema/integrity validation; vehicle/ECU/software/definition
+compatibility gates restoration, not local preview. Import alone never mutates.
+
+Keep immutable baseline, intent, responses, observations and restoration events
+separate by operation ID; include identity, units, versions/hashes and timestamps.
+Persist prepared/sending/response-confirmed/cycle-required/verified/mismatch/
+partial/uncertain/recovered states without mislabelling response-only evidence.
+Storage location/schema/durable publication are implementation design, not pending
+product interviews. QSettings is for preferences; isolate DEMO/live/per-vehicle data.
+
+D-43: all UI and user-facing descriptions/catalog labels are English; Portuguese
+later. Resolve translation gaps; do not hide a fault for missing description.
+D-44: system regional date/number formatting and distance-unit defaults where
+practical; Brazilian-format/km fallback, English UI throughout. Preserve native
+values/units and calendar identity. D-46: full unmasked diagnostic logs/exports,
+including VIN; private evidence need not be committed. Runtime remains offline.
 
 ## Delivery and verification
 
-Research sequence: inventory/identity → vehicle info + DTC read/Clear All → history
-read/add/readback → full easy-catalog read/encoder/readback → shared recovery
-and broader variants. Build baseline/readback storage before enabling either
-history or coding mutations; it is a shared dependency, not a final retrofit.
-Use independent PRs for implementation slices, each with corrected specs and
-evidence. [Task B](../tasks/rea-protocol-recovery.md) tracks the work packages.
+Implement B1–B7 from the ordered tasks, on fresh branches/separate PRs as planned.
+Use manual offline byte/codec/error/timing checks and visual DEMO checks without
+creating a suite. Run full `scripts/preflight.sh` before every push: Ruff lint,
+Ruff format check and mypy over all app/UI/main targets. Verify Python 3.13 source
+launch on the owner's Mac and actual vehicle outcomes with retained traffic.
+Agree concrete physical write procedures once encoders/prerequisites/completion
+contracts are reviewable. Packaged/platform/public-release checks are deferred.
 
-Acceptance includes manual offline byte/codec inspection, DEMO/UI checks,
-owner-operated car reads and separately agreed mutation validation. Do not
-create an automated suite. Run all full-app static gates before push. Record
-actual local runtime, Python 3.13/platform packaging checks and absent hardware
-coverage. A fully green gate or one successful car does not certify every row.
-
-## Task A integration handoff
-
-The implemented owner/service API and identity-keyed codec registration pattern
-are recorded in [Task A verification](../tasks/protocol-library-migration-verification.md).
-Use that API once the integration PR merges; no feature creates another socket
-consumer. Task A local library checks do not complete any B feature acceptance.
+No product decisions remain unanswered for starting this milestone. Remaining
+protocol questions are enumerated in the REA checklist; unsupported interim
+states do not satisfy a required feature. Report precise evidence gaps and
+validation limits rather than claiming success from static gates or library reuse.

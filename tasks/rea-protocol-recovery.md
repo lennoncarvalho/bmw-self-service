@@ -1,11 +1,19 @@
 # Task B — source-first BMW protocol and feature recovery
 
+Current functional authority: [spec 26](../docs/26-feature-readiness-spec.md),
+consolidated after owner interview D-21–D-49 on 2026-10-29. Use the
+[implementation plan](rea-protocol-recovery-implementation-plan.md),
+[ordered tasks](rea-protocol-recovery-tasks.md) and
+[remaining REA investigations](rea-protocol-recovery-investigations.md).
+Current acceptance is working personal use from Python source on the owner's Mac;
+Windows/packages/signing are later. No open interview gate blocks source work.
+
 Status: ready for source investigation; not completed reverse engineering.
 Feature acceptance: [spec 26](../docs/26-feature-readiness-spec.md).
 Source/tool/evidence routing: [doc 27](../docs/27-rea-source-guide.md).
 Separate prerequisite runtime task: [Task A](protocol-library-migration.md),
-[spec 25](../docs/25-library-migration-spec.md). Research can start before A;
-app integration targets A's merged API. Do not reimplement its libraries here.
+[spec 25](../docs/25-library-migration-spec.md). Task A PR #12 is merged;
+app integration uses its API. Do not reimplement its libraries here.
 Created 2026-10-28 after [the first retained car session](../docs/23-first-vehicle-session.md).
 Scope: ENET support across source-supported BMW F/G/U/I gateway/ECU/software
 families; retain the existing exclusion of E-series and other adapters.
@@ -53,16 +61,15 @@ app code. Planning verification is recorded below.
 | B2 | Source-derived connection/inventory + vehicle-info contracts, then integration | Pending |
 | B3 | All-ECU faults + one Clear All, partial results, post-clear reread | Pending |
 | B4 | Shared durable baseline/intent/readback storage and recovery state design | Pending; needed before B5/B6 mutations |
-| B5 | Headunit history read/add, exact duplicate block, independent readback | Pending |
-| B6 | Every applicable easy preset: catalog accounting, live values, composed write/readback | Pending |
-| B7 | Owner-operated acceptance, source coverage matrix and platform release closure | Pending |
+| B5 | Headunit history read/add, same-day block, preserving rewrite and cycle-aware completion | Pending |
+| B6 | Every applicable easy preset: catalog/live state, composed write/restore/completion | Pending |
+| B7 | Owner Mac source acceptance and source/vehicle coverage; packaged release later | Pending |
 
 Use [the contract ledger](../docs/evidence/feature-contract-ledger.md), source
 guide 27 and spec 26. For each package record the exact files before code, source
 and portable Evidence links, corrected spec, implementation PR and verification.
-B2/B3 research may proceed while Task A is implemented; integrate through its
-merged API. B5/B6 read research can run independently, but mutations depend on
-B4 and their own complete encoder/readback. A missing applicable easy preset is
+B2/B3 integration uses the merged Task A API. B5/B6 read research can run independently, but mutations depend on
+B4 and their own complete encoder/application/cycle contracts. A missing applicable easy preset is
 an open item, not an acceptable undocumented subset. Do not implement B7's
 claimed results or check completed until actually observed.
 
@@ -271,14 +278,16 @@ write permission from static flags or probe keys/bypasses.
 
 Design shared durable baseline/intended/observed files with VIN, ECU/software,
 raw state, schema version and integrity; all coding/history writes save backup
-first. Fault clearing retains the owner's explicit no-report exception. ACK or
-positive SID alone is insufficient: reread, compare and report mismatches or
-uncertain outcomes. After interruption, reread/compare before user-selected
+first. Fault clearing retains the owner's explicit no-report exception. D-29
+requires final application semantics and meaningful readback when supported,
+otherwise response-confirmed completion with required cycle instructions. A
+transport ACK is insufficient; do not treat a pre-cycle old value as failure. After interruption, reread/compare before user-selected
 recovery; never automatically replay an append. Keep local preview distinct
-from vehicle restoration. Specify cancellation and multi-ECU partial outcomes.
+from vehicle restoration. D-28/D-30 prohibit write Cancel and block disruptive
+controls/normal quit; record multi-ECU partial/uncertain outcomes.
 
-Exit: complete encoder/readback contract per mutation, supported recovery and
-owner-approved behavior for still-open product decisions, followed by scoped
+Exit: complete encoder/application/cycle contract per mutation and supported
+recovery under settled D-21–D-49, followed by scoped
 implementation PRs and owner-operated validation.
 
 ## Phase 6 — broaden coverage and prepare releases
@@ -292,8 +301,8 @@ inventory the supplied version/data dependencies before planning its engine.
 CBS remains future scope ([existing task](future-cbs-research.md)). ISTA+
 availability is not a prerequisite for exploiting current APK/PRG material.
 
-Validate interface behavior and packaged asset closure on macOS/Windows,
-supported runtimes and offline launch. Full Ruff lint, Ruff format and mypy
+Current acceptance validates source launch/offline assets and actual operations
+on the owner’s Mac (D-47–D-49). Windows/Intel/packages/signing remain later work. Full Ruff lint, Ruff format and mypy
 are required before each push; green static checks do not establish car behavior.
 Physical validation currently covers only the owner's car, so fleet validation
 gaps remain explicit even when static source support is broad.
@@ -317,12 +326,11 @@ by the limited tooling smoke inspection.
 Each package ends with retained evidence, corrected specs, implementation plan,
 an isolated PR when implemented, gate results and stated validation limits.
 Do not complete a package on class-name search, UI resemblance or mock success.
-Before UI implementation, resolve only the pending owner decisions it needs:
-MIL presentation, multiple-car selection, history field/chronology rules and
-coding partial-write recovery presentation (doc 21). Clear All scope/partial
-outcomes, full easy catalog, read/add priority and exact duplicate blocking are
-already answered (D-16–D-20). No further car session is required
-to start source analysis.
+Owner decisions D-21–D-49 now settle current product behavior. Remaining
+technical questions belong to the REA checklist: network needs, actual field/
+item constraints, write/restore/completion/cycle contracts and power readings.
+No further car session is needed to start source investigation. Later public
+release decisions do not block the Mac source milestone.
 
 ## Initial planning verification (before owner REA setup)
 
@@ -374,3 +382,20 @@ mypy (28 sources). All 71 local Markdown targets in the five planning/handoff
 files resolved; `git diff --check` passed. No automated suite was added. These
 checks validate planning/document consistency and static baseline only, not
 Task B vehicle behavior or release acceptance.
+
+## Owner interview and spec consolidation — 2026-10-29
+
+Recorded D-21–D-49 and consolidated docs 21/26, implementation plan, ordered
+work and handoff. Current acceptance is functional personal Mac Python-source
+use on the owner's car; packaging/signing/Windows are deferred. Removed old
+product gates for immediate readback, mileage verification, write Cancel,
+exact-duplicate-only additions and backup/locale/log preferences. D-29 now uses
+operation-specific application/cycle/observation semantics. Added the factual
+REA checklist; no new wire contract or feature implementation is claimed.
+
+Verification: full `scripts/preflight.sh` passed Ruff lint, Ruff format check
+(28 files) and mypy (28 sources). All 108 local Markdown targets in changed/new
+documents resolved; D-01–D-49 appear exactly once in the decision register.
+`git diff --check` passed and application sources were unchanged. No automated
+suite, REA analysis, vehicle requests or network setup was performed during
+this interview. Actual Mac/car feature acceptance remains development work.
