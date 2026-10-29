@@ -29,7 +29,9 @@ from PySide6.QtWidgets import (
 
 from app.connection import DoIPConnection, HSFZConnection
 from app.mock_connection import MockConnection
-from app.worker import ConnectWorker, KeepAliveWorker, PostConnectWorker
+from app.resources import resource_path
+from app.uds import UdsServices
+from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
@@ -72,7 +74,7 @@ class MainWindow(QMainWindow):
         self._worker: ConnectWorker | None = None
         self._post_connect_worker: PostConnectWorker | None = None
         self._post_connect_context: tuple[object, str, str] | None = None
-        self._keepalive_worker: KeepAliveWorker | None = None
+        self._keepalive_worker: ProtocolWorker | None = None
         self._retired_workers: list[QThread] = []
         self._closing = False
         self._worker_reap_timer = QTimer(self)
@@ -141,7 +143,7 @@ class MainWindow(QMainWindow):
         layout.addStretch()
 
         gear_btn = QPushButton()
-        gear_btn.setIcon(QIcon("assets/gear.svg"))
+        gear_btn.setIcon(QIcon(str(resource_path("assets/gear.svg"))))
         gear_btn.setIconSize(QSize(20, 20))
         gear_btn.setFixedSize(36, 36)
         gear_btn.setStyleSheet(
@@ -372,78 +374,45 @@ class MainWindow(QMainWindow):
         read_only = self._read_only
 
         def do_connect(cancelled: Event) -> tuple[HSFZConnection | DoIPConnection, str]:
-            """Establish the selected connection with cancellation checks between bounded operations."""
-            from app.connection import discover_zgw
+            """Discover, activate and identify within one setup deadline."""
+            from app.protocol.contracts import OperationContext
+            from app.protocol.discovery import discover_vehicle
 
-            def check_cancelled() -> None:
-                if cancelled.is_set():
-                    raise ConnectionError("Connection cancelled")
-
-            check_cancelled()
-
-            logger.debug("Step 1: UDP discovery on %s", interface)
-            info = discover_zgw(interface, timeout=5.0)
-            check_cancelled()
-
+            setup = OperationContext.create("discovery", 30.0)
+            setup.cancelled = cancelled
+            info = discover_vehicle(interface, setup)
             if info is None:
-                if read_only:
-                    raise ConnectionError(
-                        "Vehicle not found. Check the cable, ignition and Ethernet IPv4 settings. "
-                        "Automatic DHCP/network changes are disabled in this read-only session."
-                    )
-                logger.warning("Discovery failed, trying DHCP fallback")
-                from app.connection import start_dhcp_server
-
-                if start_dhcp_server(interface):
-                    logger.debug("DHCP server started, waiting 10s")
-                    if cancelled.wait(10):
-                        check_cancelled()
-                    info = discover_zgw(interface, timeout=5.0)
-                    check_cancelled()
-                    if info is None:
-                        raise ConnectionError(
-                            "Vehicle not found. Check the ENET cable and ensure ignition is on."
-                        )
-                else:
-                    logger.debug("DHCP denied, waiting 20s for APIPA")
-                    if cancelled.wait(20):
-                        check_cancelled()
-                    info = discover_zgw(interface, timeout=5.0)
-                    check_cancelled()
-                    if info is None:
-                        raise ConnectionError(
-                            "Vehicle not found. DHCP server requires "
-                            "admin/root privileges to assist with "
-                            "IP assignment."
-                        )
-
-            host = info["ip"]
-            logger.info("Step 2: TCP connect to %s", host)
-            conn = (
-                HSFZConnection(host, read_only=read_only)
-                if series == "F"
-                else DoIPConnection(host, read_only=read_only)
+                raise ConnectionError(
+                    "Vehicle not found. Check the cable, ignition and Ethernet IPv4 settings."
+                )
+            connection_type = HSFZConnection if info["transport"] == "hsfz" else DoIPConnection
+            conn = connection_type(
+                info["ip"],
+                read_only=read_only,
+                local_ip=info["local_ip"],
+                entity=int(info.get("logical_addr", "16")),
             )
-
-            if not conn.connect():
-                raise ConnectionError("Failed to connect to vehicle at " + host)
-
+            context = OperationContext(conn.trace_id, setup.deadline, cancelled=cancelled)
             try:
-                check_cancelled()
-                if isinstance(conn, DoIPConnection) and not conn.activate_routing():
-                    raise ConnectionError("Vehicle declined diagnostic routing activation")
-                check_cancelled()
-                logger.info("Step 3: reading vehicle identity")
-                conn.send_uds(0x10, bytes([0x10, 0x03]))
-                check_cancelled()
-                resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x90]))
-                check_cancelled()
-                if len(resp) != 20 or resp[:3] != b"\x62\xf1\x90":
-                    raise ConnectionError("Vehicle did not return a valid VIN response")
+                conn.connect(context)
+                if isinstance(conn, DoIPConnection):
+                    conn.activate_routing(
+                        OperationContext(conn.trace_id, setup.deadline, cancelled=cancelled)
+                    )
+
+                def identify(services: UdsServices, active: OperationContext) -> bytes:
+                    services.change_session(3, active)
+                    return services.read_data_by_identifier(0xF190, active)
+
+                resp = conn.run_operation(
+                    conn.entity,
+                    identify,
+                    context=OperationContext(conn.trace_id, setup.deadline, cancelled=cancelled),
+                )
                 vin = resp[3:].decode("ascii")
-                if len(vin) != 17 or not vin.isalnum():
-                    raise ConnectionError("Vehicle returned an invalid VIN")
-                return (conn, vin)
+                if vin != info["vin"]:
+                    raise ConnectionError("Discovery and diagnostic vehicle identities differ")
+                return conn, vin
             except Exception:
                 conn.disconnect()
                 raise
@@ -579,7 +548,13 @@ class MainWindow(QMainWindow):
         def _read_ilevel(conn):
             resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
             if resp[0] == 0x62:
-                return resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
+                try:
+                    value = resp[3:].decode("ascii").strip("\x00 ")
+                except UnicodeDecodeError as exc:
+                    raise ValueError("Vehicle software level has no verified text decoder") from exc
+                if not value or not value.isprintable():
+                    raise ValueError("Vehicle software level has no verified text decoder")
+                return value
             raise ValueError(f"Unexpected response SID: 0x{resp[0]:02X}")
 
         # -- FA / Vehicle Order (0xF100 then 0xFC00 fallback) -----------------
@@ -612,6 +587,8 @@ class MainWindow(QMainWindow):
                 if tc:
                     type_code = tc.group(1)
 
+            if not fa_xml:
+                raise ValueError("Vehicle order is unavailable: no supported response")
             return {
                 "fa_xml": fa_xml,
                 "prod_date": prod_date,
@@ -771,28 +748,24 @@ class MainWindow(QMainWindow):
         logger.warning("Post-connect data load failed: %s", error_msg)
 
     def _start_keepalive(self) -> None:
-        """Run scheduled transport and session I/O on a background worker."""
-        self._stop_keepalive()
+        """Monitor the single owner; it services all keepalive traffic itself."""
         conn = self._connection
-        if not isinstance(conn, (HSFZConnection, DoIPConnection)):
-            return  # DEMO has no socket or heartbeat lifecycle.
-        worker = KeepAliveWorker(conn)
-        self._keepalive_worker = worker
-        worker.connection_lost.connect(self._on_keepalive_lost)
-        worker.error.connect(self._on_keepalive_error)
-        worker.start()
+        if isinstance(conn, (HSFZConnection, DoIPConnection)):
+            self._keepalive_worker = conn.worker
+            conn.worker.error.connect(self._on_keepalive_error)
+            conn.worker.finished.connect(self._on_protocol_finished)
 
-    @Slot(object)
-    def _on_keepalive_lost(self, connection: object) -> None:
-        if not self._closing and self._connection is connection:
+    @Slot()
+    def _on_protocol_finished(self) -> None:
+        """Reflect a tainted/closed stream even when its command failed cleanly."""
+        if self.sender() is self._keepalive_worker and not self._closing:
             self._on_connection_lost()
 
     @Slot(str)
     def _on_keepalive_error(self, message: str) -> None:
-        worker = self.sender()
-        if worker is self._keepalive_worker and isinstance(worker, KeepAliveWorker):
-            logger.warning("Keepalive worker stopped unexpectedly: %s", message)
-            self._on_keepalive_lost(worker.connection)
+        if self.sender() is self._keepalive_worker and not self._closing:
+            logger.warning("Protocol owner stopped: %s", message)
+            self._on_connection_lost()
 
     def _on_connection_lost(self) -> None:
         """T-12: Handle lost connection with reconnect dialog.
@@ -827,7 +800,7 @@ class MainWindow(QMainWindow):
             self._retire_worker(worker)
 
     def _retire_worker(self, worker: QThread) -> None:
-        if isinstance(worker, (KeepAliveWorker, ConnectWorker)):
+        if isinstance(worker, (ProtocolWorker, ConnectWorker)):
             worker.stop()
         else:
             worker.requestInterruption()
@@ -897,6 +870,10 @@ class MainWindow(QMainWindow):
                 worker = getattr(page, "_worker", None)
                 if isinstance(worker, QThread):
                     self._retire_worker(worker)
+        from app.protocol.facade import protocol_workers
+
+        for worker in protocol_workers():
+            self._retire_worker(worker)
         self._reap_workers()
         if self._retired_workers:
             event.ignore()
@@ -912,6 +889,13 @@ class MainWindow(QMainWindow):
         for worker in (self._worker, self._post_connect_worker):
             if worker is not None:
                 self._retire_worker(worker)
+        for page in (self.diag_page, self.history_page, self.coding_page):
+            for name in ("_worker", "_coding_reader", "_coding_writer"):
+                worker = getattr(page, name, None)
+                if isinstance(worker, QThread):
+                    self._retire_worker(worker)
+                    setattr(page, name, None)
+            page._connection = None
         self._worker = None
         self._post_connect_worker = None
         self._post_connect_context = None

@@ -1,0 +1,68 @@
+{
+  "recorded_on": "2026-10-28",
+  "base_revision": "18a8b34",
+  "status": "code implemented and locally reviewed; physical/platform/release acceptance pending",
+  "runtime": "Python 3.13.18; secondary gate runtime Python 3.15.2",
+  "platform": "macOS arm64",
+  "releases": [
+    {
+      "project": "udsoncan",
+      "version": "1.26.1",
+      "sha256": "c1bd6cc54d6c1124c0eafeff2ffaab48bfeb7d0d2576959f21840c37e96dfb9a",
+      "selected_sources": [
+        {
+          "path": "udsoncan/client.py",
+          "sha256": "8da14b0757fb7fe6fc134030689a4219a38403e08d8adc585907a16f52ea951a"
+        },
+        {
+          "path": "udsoncan/connections.py",
+          "sha256": "0828361c00f06f87b6234e9d62bf5c720abef11edba8a1804c088973cc258133"
+        }
+      ]
+    },
+    {
+      "project": "doipclient",
+      "version": "1.2.2",
+      "sha256": "5169b732434f5c949d585b354c048ecbfdbad7a51e32192a852d1c451deac90f",
+      "selected_sources": [
+        {
+          "path": "doipclient/client.py",
+          "sha256": "86c3955a48bafeae6498f6ef4a9c0e49b0b4713e94dcc3120d3ce2a77e78467f"
+        },
+        {
+          "path": "doipclient/connectors.py",
+          "sha256": "8ffdd8e22305fa3d969e1284976acb0751c414d8294f23c8ab2a0b30141b27e1"
+        }
+      ]
+    },
+    {
+      "project": "scapy",
+      "version": "2.8.0",
+      "sha256": "abf855145ee829a42b2eb28983cd6a0a52b12a31d3f861cb7be36791195ed9aa",
+      "selected_sources": [
+        {
+          "path": "scapy/contrib/automotive/bmw/hsfz.py",
+          "sha256": "9edf8ec9b1d26a0ee8bc57b80e3ab353e5948c6b668a51b891724e8d0f05c2ab"
+        }
+      ]
+    }
+  ],
+  "verification_record": "tasks/protocol-library-migration-verification.md",
+  "retained_capture_sha256": "ecd7d39b5dc1d889354819ded4e410fb21ff729df743fc7d48b5123dc5ae24fa",
+  "checks": {
+    "ruff_lint": "passed full app",
+    "ruff_format": "passed full app",
+    "mypy": "passed full app on local and Python 3.13 runtimes",
+    "pip_audit": "no known vulnerabilities in fresh target environment",
+    "hsfz_doip_synthetic_socket_exercises": "passed; no vehicle traffic",
+    "demo_visual": "connected vehicle page inspected",
+    "package": "macOS arm64 onedir build and outside-checkout startup passed"
+  },
+  "pending": [
+    "owner F48 read-only run",
+    "DoIP hardware",
+    "Windows x64 packaging",
+    "macOS Intel packaging",
+    "exact app license and release source materials"
+  ]
+}

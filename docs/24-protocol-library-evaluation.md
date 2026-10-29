@@ -5,6 +5,17 @@ Owner decision: GPL-compatible app distribution is acceptable. Reuse existing
 protocol implementations where they satisfy the app's contract; do not rewrite
 standard UDS/DoIP/HSFZ simply because the current app did so.
 
+## Implementation disposition (2026-10-28)
+
+The selected releases are now integrated. See the [verification record](../tasks/protocol-library-migration-verification.md)
+for exact scope and each candidate gate. Scapy HSFZ codecs and doipclient
+Parser/message types are reused with bounded ordinary TCP and control dispatch;
+their high-level socket wrappers are not instantiated. udsoncan alone owns
+standard UDS service validation/pending/timing. This refines the original wrapper
+recommendation below; source findings there remain the reason for this boundary.
+Fresh target Python 3.13 and local arm64 packaging were checked; physical and
+other-platform acceptance remain pending. It does not recover BMW operations.
+
 ## Recommendation
 
 | Layer | Preferred candidate | Decision |

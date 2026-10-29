@@ -1,21 +1,23 @@
 """Single-executor operation queue for staged protocol migration (spec 25).
 
-This foundation is not connected to live transports. Future adapters execute
-only inside run(), hosted by ProtocolWorker, and must honor context deadlines.
+Adapters execute only inside run(), hosted by ProtocolWorker. Idle controls,
+sessions and complete UDS transactions share this executor and absolute budgets.
 """
 
 import logging
+import time
 from collections.abc import Callable
 from concurrent.futures import Future
 from dataclasses import dataclass
-from queue import Queue
-from threading import Lock, get_ident
+from queue import Empty, Queue
+from threading import Event, Lock, get_ident
 
 from app.protocol.contracts import (
     FailureKind,
     OperationCancelled,
     OperationContext,
     OperationOutcome,
+    ProtocolFailure,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,15 +49,22 @@ class ProtocolOwner:
     cannot safely interrupt an arbitrary blocking third-party function.
     """
 
-    def __init__(self, generation: str, close_transport: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        generation: str,
+        close_transport: Callable[[], None],
+        idle: Callable[[], None] | None = None,
+    ) -> None:
         """Prepare an unopened owner; construction never starts threads or I/O."""
         if not generation:
             raise ValueError("Connection generation is required")
         self.generation = generation
         self._close_transport = close_transport
+        self._idle = idle
         self._queue: Queue[_Command | None] = Queue()
         self._lock = Lock()
         self._closing = False
+        self.stop_event = Event()
         self._started = False
         self._executor: int | None = None
         self._active: OperationHandle | None = None
@@ -89,6 +98,7 @@ class ProtocolOwner:
             if self._closing:
                 return
             self._closing = True
+            self.stop_event.set()
             if self._active is not None:
                 self._active.cancel()
             self._queue.put(None)
@@ -98,9 +108,21 @@ class ProtocolOwner:
         context = handle.context
         if context.sent and context.mutation:
             failure = FailureKind.UNCERTAIN
+        logger.debug(
+            "Operation failure conn=%s operation=%s kind=%s sent=%s",
+            context.generation,
+            context.operation_id,
+            failure,
+            context.sent,
+        )
         handle.completion.set_result(
             OperationOutcome(
-                context.operation_id, context.generation, failure=failure, sent=context.sent
+                context.operation_id,
+                context.generation,
+                failure=failure,
+                sent=context.sent,
+                ecu=context.ecu,
+                request_id=context.request_id,
             )
         )
 
@@ -113,7 +135,12 @@ class ProtocolOwner:
             self._executor = get_ident()
         try:
             while True:
-                command = self._queue.get()
+                try:
+                    command = self._queue.get(timeout=0.05)
+                except Empty:
+                    if self._idle is not None:
+                        self._idle()
+                    continue
                 if command is None:
                     break
                 handle = command.handle
@@ -124,6 +151,12 @@ class ProtocolOwner:
                     self._complete(handle, FailureKind.CLOSED)
                     continue
                 context = handle.context
+                logger.debug(
+                    "Operation begin conn=%s operation=%s remaining=%.3f",
+                    context.generation,
+                    context.operation_id,
+                    context.deadline - time.monotonic(),
+                )
                 try:
                     context.remaining()
                     payload = command.operation(context)
@@ -136,7 +169,42 @@ class ProtocolOwner:
                             context.generation,
                             payload=payload,
                             sent=context.sent,
+                            ecu=context.ecu,
+                            request_id=context.request_id,
                         )
+                    )
+                except ProtocolFailure as exc:
+                    logger.debug(
+                        "Service failure conn=%s operation=%s kind=%s",
+                        context.generation,
+                        context.operation_id,
+                        exc.kind,
+                        exc_info=True,
+                    )
+                    if exc.reconnect:
+                        self.request_close()
+                    handle.completion.set_result(
+                        OperationOutcome(
+                            context.operation_id,
+                            context.generation,
+                            payload=exc.raw,
+                            failure=(
+                                FailureKind.UNCERTAIN
+                                if exc.reconnect and context.mutation
+                                else exc.kind
+                            ),
+                            sent=context.sent,
+                            ecu=context.ecu,
+                            request_id=context.request_id,
+                        )
+                    )
+                except PermissionError:
+                    self._complete(handle, FailureKind.POLICY)
+                except ValueError:
+                    if context.sent:
+                        self.request_close()
+                    self._complete(
+                        handle, FailureKind.INVALID if context.sent else FailureKind.UNSUPPORTED
                     )
                 except OperationCancelled:
                     if context.sent:
@@ -146,6 +214,10 @@ class ProtocolOwner:
                     if context.sent:
                         self.request_close()
                     self._complete(handle, FailureKind.TIMEOUT)
+                except ConnectionError:
+                    self.request_close()
+                    logger.debug("Transport lost operation=%s", context.operation_id, exc_info=True)
+                    self._complete(handle, FailureKind.CONNECTION_LOST)
                 except Exception:
                     if context.sent:
                         self.request_close()
@@ -156,6 +228,13 @@ class ProtocolOwner:
                     )
                     self._complete(handle, FailureKind.FAILED)
                 finally:
+                    logger.debug(
+                        "Operation end conn=%s operation=%s elapsed=%.3f sent=%s",
+                        context.generation,
+                        context.operation_id,
+                        time.monotonic() - context.created_at,
+                        context.sent,
+                    )
                     with self._lock:
                         self._active = None
         finally:

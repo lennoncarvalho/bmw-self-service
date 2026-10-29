@@ -1,6 +1,7 @@
 # Task A — migrate standard protocols to libraries
 
-Status: A1 owner/context foundation implemented on 2026-10-28; live migration pending.
+Status: library migration coded and locally reviewed on 2026-10-28;
+physical/platform/release acceptance pending.
 See [implementation verification](protocol-library-migration-verification.md) for exact scope.
 Spec: [doc 25](../docs/25-library-migration-spec.md).
 Evaluation and artifact hashes: [doc 24](../docs/24-protocol-library-evaluation.md).
@@ -60,6 +61,14 @@ New application files, to be created only during implementation:
 | `app/protocol/udsoncan_connection.py` | BaseConnection bridge exposing separate send/receive to the chosen adapter under the active owner context. No independent UDS transaction loop. |
 | `app/protocol/hsfz.py` | Scapy HSFZ framing/socket adapter, discovery, interface binding, bounded control dispatch and raw transport logs. |
 | `app/protocol/doip.py` | doipclient adapter, discovery/activation, target addressing, bounded control/diagnostic dispatch and raw transport logs. |
+
+Implementation refinement (2026-10-28): add `app/protocol/stream.py` for the
+bounded shared socket envelope, `discovery.py` for explicit dual-transport
+source-bound discovery, and `facade.py` for public scheduling/lifecycle. Add
+`app/resources.py` and update resource consumers in the main/coding/diagnostics
+pages and the startup DTC database path so package verification can launch
+outside the source working directory (`app/dtc_db.py`; no query/schema changes).
+The owner is Qt-free; `app/worker.py` hosts its QThread and imports no facade.
 
 Existing application edits: `app/connection.py` becomes the public connection
 facade while retaining network-interface helpers; `app/uds.py` becomes the typed
