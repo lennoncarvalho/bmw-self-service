@@ -153,8 +153,10 @@ destructive rewriting from the Lite path.
   source EcuActivity.Q0 → AngelEyesBrightnessCodingOptionActivity/a0 chooses
   functions from current DRL module/DRL_Idx/POLI matrices. Type0 also needs all
   applicability predicates (ID8, series, excluded variants, definition functions).
-- Real emissions MIL endpoint/decoder: a bounded sensor search found no genuine
-  MIL read; a warning-indicator-requested fault bit is insufficient.
+- Real emissions MIL matching/decoder/validation: a later
+  [PRG investigation](task-b-dashboard-read-findings.md) found ISMIL4A69 for exact
+  MEVD variants. This is a concrete read lead, not universal/owner-car validation;
+  a warning-indicator-requested DTC bit remains insufficient.
 - DoIP inventory/address mapping, remaining optional vehicle information,
   missing source data and full regional presentation acceptance.
 - Owner Mac/car execution and write validation. Local venv is Python3.15.2,

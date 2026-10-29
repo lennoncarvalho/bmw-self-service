@@ -46,6 +46,12 @@ and CBS are later scope. [Workflow28](28-service-history-workflow.md) owns the
 consolidated history behavior, storage boundaries and acceptance checks. REA now works for
 Android inspection; doc 27 records actual evidence and per-tool limits.
 
+[Dashboard read findings](evidence/task-b-dashboard-read-findings.md) record
+D-56's richer overview/MIL priority, source-backed voltage/software/inventory,
+real optional sensor definitions and a new exact-variant MIL PRG lead. Static
+source evidence is separate from owner-car acceptance; green never follows from
+an empty/partial DTC scan.
+
 ## Original documents reviewed
 
 | Document | Current standing / correction |

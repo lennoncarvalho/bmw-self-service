@@ -73,6 +73,18 @@ failed/unsupported/not-attempted counts and complete discovered-target accountin
 Output: one confirmed Clear All, named coverage gaps, continued reachable targets,
 per-ECU results and On/Off/Unavailable MIL (D-19/D-25/D-26). No saved report/backup.
 
+#### R3/R5 dashboard finding — 2026-10-29
+
+A new format-aware PRG search recovered ISMIL/STAT_MIL_EIN_WERT at DID4A69 for
+MEVD172/172Y/1725, with STATUS_LESEN using22. This supersedes the earlier bounded
+APK-sensor negative as a blanket absence claim. Complete exact engine matching,
+response/validity/prerequisite extraction and physical comparison before enabling;
+no general DME9FF/F48/fleet support follows. Full hashes/rows/disassembly and real
+sensor metadata for mileage/temperatures/RPM are in
+[dashboard findings](../docs/evidence/task-b-dashboard-read-findings.md).
+D-56 prioritizes the real green/red/grey MIL on the first page with core vehicle
+information; other telemetry belongs in a bounded optional expansion.
+
 ### R6 — retired reader investigation; local JSON/model contract instead
 
 B-HIST-R is retired by D-50. Stop read/retrieval/DID/probe searches; no complete

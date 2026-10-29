@@ -1,0 +1,24 @@
+{
+  "original_apk_sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5",
+  "local_directory": "/Users/lennon/BMW-Tool/investigations/task-b-dashboard-20261029",
+  "decoder_reference_sha256": "64c1f45870a922b7c905f7b3fc180bef3c7c7382c732d041d50b886be4ad2cae",
+  "files_sha256": {
+    "android-evidence.json": "a6bca9a5f8e4c239ab3ae2dccbb0b6a7b728cd3efbe570ca1f45cfd36243e6be",
+    "mil-prg-candidate-search.json": "68bba80d4bc480c50989269348a8be24d1f7259295e0b45068d64c653d860346",
+    "find_dashboard_sources.py": "fe8afdcde8a289887e8bce68bc5df2c1a0a8b2f0daeb786780cc7c695562519a",
+    "MEVD172Y.prg.STATUS_LESEN.txt": "2d409508cae0c801efbaf0df5d08f5b72be48a64904b564050473db966f9f365",
+    "dashboard_asset_candidates.py": "7f4f1bf94c40cf5ac1af7b44e4716870673ef59ab1fb0c21189f173189a7f73a",
+    "MEVD172.prg.tables-comments.json": "c6218350226eb8a1284e1e75d2030a9183b0cf52b8263f100fc09ca89a7a37d6",
+    "MEVD172.prg.STATUS_LESEN.txt": "b994dd7806a1bcaa5e3fd5ba759f0ad6193e1252d839761a0970d463a43c1665",
+    "asset-candidates.json": "fd477cb708d7de0f47f114925ced1c1d971a9ba8947195599568e44c7ec477eb",
+    "MEVD1725.prg.tables-comments.json": "58a8ee146fa21f12152455eada45f9f22da1675305dc6daa424af5116e0a6fa8",
+    "MEVD1725.prg.STATUS_LESEN.txt": "9d80b09bb4e4f8010a2ef7393d3f539b5e6840084cddab1e219b8cd6336f5b6a",
+    "MEVD172Y.prg.tables-comments.json": "6c356090eac67faaf9f6e42e99023aa5c93529ba925f4de2fa025067f83db3e9",
+    "DME9FF_R.prg.tables-comments.json": "7a2c2ecc866b14c07bf59524a61fe6f426a723388f20eab9ba34bcbeece747e9"
+  },
+  "limitations": [
+    "Static findings only; no vehicle requests",
+    "Exact MIL applicability/response/validity still requires complete recovery",
+    "Keyword hits are not supported operations"
+  ]
+}

@@ -87,6 +87,15 @@ with gaps named in confirmation. Continue after ECU-local failure on a usable
 stream; respect Task A closure after ambiguous transport failure and explicitly
 account for remaining targets. Never reuse an invalid stream to force continuation.
 
+D-56 prioritizes a richer overview after connection: verified identity, supported
+vehicle/configuration/mileage/software/voltage and ECU coverage, plus a prominent
+MIL green Off/red On/grey unavailable or stale with text and observation age.
+Unknown model/build/odometer values are not guessed. The new
+[dashboard source findings](evidence/task-b-dashboard-read-findings.md) contain
+real sensor definitions and an exact-variant MIL PRG lead; the full matching/
+decoder/owner validation contract is not yet complete. Batch initial publication,
+background bounded refresh and post-Clear-All actual MIL reads remain required.
+
 ## Definitive writes, completion and recovery
 
 Before coding mutation identify VIN/ECU/software/definitions, read complete

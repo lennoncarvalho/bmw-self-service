@@ -86,6 +86,16 @@ requires **JSON only**; the earlier proposed legacy-file adapters are withdrawn.
 concrete. No new product interview is required to remove the obsolete reader
 prerequisite; actual encoder/session/capacity/result facts still need evidence.
 
+## Dashboard emphasis — D-56 (2026-10-29)
+
+The owner wants the first connected page to show as much useful supported car
+information as possible, particularly a **green/red MIL indicator**. Green means
+an actual supported ECU report of MIL Off; red means On; grey with explanatory
+text means unavailable/not read/stale, never inferred Off from zero DTCs. Keep
+identity/configuration and technical details organized in expandable groups.
+Unknown data stays unavailable and optional failures retain the valid connection.
+See [dashboard source findings](evidence/task-b-dashboard-read-findings.md).
+
 ## Precedence and implementation interpretation
 
 - D-50–D-55 supersede history-read, complete car-history backup, legacy-format

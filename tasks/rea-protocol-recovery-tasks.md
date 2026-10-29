@@ -51,6 +51,36 @@ Files: `app/vehicle.py` (new), `app/worker.py`, `app/uds.py`, `ui/main_window.py
 Exit: B-CON/B-INFO code and contract trace complete for enabled branches;
 physical acceptance remains marked pending until actually observed.
 
+## B2 dashboard enrichment — D-56 / MIL priority
+
+Source/limitations: [dashboard findings](../docs/evidence/task-b-dashboard-read-findings.md).
+This is planned work, not a new validated car-read claim.
+
+- [ ] Expand the first page from VIN to identified model/configuration when
+  supported, valid mileage, integration levels, supply voltage and ECU identities/
+  coverage, with inline technical details and source-aware unavailable states.
+- [ ] Prioritize real engine MIL in the initial overview batch, independent of
+  opening Diagnostics: green Off, red On, grey unsupported/not-read/stale plus
+  text/icon/timestamp. Never use fault count, the generic DTC warning bit or a
+  lamp-actuation command as MIL. Verified nonapplicability is not green Off.
+- [ ] Finish exact MIL applicability/endpoint/response/validity from the new
+  MEVD172/172Y/1725 ISMIL4A69 PRG lead; independently bind engine variant/software.
+  Do not apply it to DME9FF or every BMW. Retain exact positive/negative/sentinel
+  handling and owner comparison to iDrive/cluster before physical validation.
+- [ ] Recover vehicle/FA identity and actual odometer separately from engineering
+  lifetime/regeneration mileage; never fabricate model/build/options from hints.
+- [ ] Add supported oil/coolant temperatures, RPM and other useful measurements
+  in an expanded optional area only after source-to-decoder validation. Avoid a
+  connect-time sweep of thousands of engineering sensors or2C dynamic writes.
+- [ ] Publish the initial bounded page batch together under D-23; prioritize core
+  identity/MIL and account for optional failure/time budget without disconnecting
+  a verified car. Background manual refresh must respect write/clear lockout.
+- [ ] Reread the actual MIL after Clear All; never force green. Clear old VIN/
+  disconnected/error observations, keep data age visible, and exercise stale/
+  unavailable/On/Off cases offline and visually with exact variant coverage.
+
+CBS due-date/distance remains later scope; no history-read investigation resumes.
+
 ## B3a — complete diagnostic reads and coverage
 
 Depends: B2 inventory + B-DTC-R. Files: new `app/diagnostics.py`,
