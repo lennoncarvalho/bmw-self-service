@@ -138,6 +138,8 @@ class UdsServices:
             sid = payload[0]
             if sid == 0x10 and len(payload) == 2:
                 response = self.client.change_session(payload[1])
+            elif payload == b"\x11\x01":
+                response = self.client.ecu_reset(1)
             elif sid == 0x22 and len(payload) == 3:
                 did = int.from_bytes(payload[1:], "big")
                 self.client.config["data_identifiers"].setdefault(did, RawCodec)

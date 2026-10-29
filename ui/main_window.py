@@ -113,6 +113,8 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.coding_page)
 
         self.history_page = ServiceHistoryPage()
+        self.history_page.can_mutate = self._can_start_mutation
+        self.history_page.mutation_active.connect(self._set_mutation_active)
         self.stack.addWidget(self.history_page)
 
         self.backups_page = BackupsPage()
@@ -530,7 +532,7 @@ class MainWindow(QMainWindow):
             self.vehicle_page.set_loading(False)
             ecus = connection.data.get("svt_ecus", [])
             self.diag_page.set_connection(connection, ecus)
-            self.history_page.set_connection(connection)
+            self.history_page.set_connection(connection, ecus)
             self.coding_page.set_connection(connection, ecus)
             self.hide_spinner()
             logger.info("Connected successfully (demo=%s)", self._demo_mode)
@@ -671,6 +673,7 @@ class MainWindow(QMainWindow):
             if isinstance(refreshed_ecus, dict):
                 refreshed_ecus = refreshed_ecus.get("ecus", [])
             self.diag_page.set_connection(connection, refreshed_ecus)
+            self.history_page.set_targets(refreshed_ecus)
             return
 
         # Report any errors with a single friendly dialog
@@ -708,7 +711,7 @@ class MainWindow(QMainWindow):
         if isinstance(ecus, dict):
             ecus = ecus.get("ecus", [])
         self.diag_page.set_connection(self._connection, ecus)
-        self.history_page.set_connection(self._connection)
+        self.history_page.set_connection(self._connection, ecus)
         self.coding_page.set_connection(self._connection, ecus)
 
         self.hide_spinner()
@@ -962,6 +965,7 @@ class MainWindow(QMainWindow):
         return (
             not self._mutation_active
             and not self.history_page.is_busy()
+            and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
             and not self.coding_page.is_reading()
             and (worker is None or not worker.isRunning())
         )

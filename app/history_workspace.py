@@ -65,7 +65,17 @@ def _validate(workspace: object) -> dict[str, Any]:
         if (
             not isinstance(row, dict)
             or not {"id", "origin"} <= row.keys()
-            or row.keys() - {"id", "origin", "source_vin", "source_workspace"}
+            or row.keys()
+            - {
+                "id",
+                "origin",
+                "source_vin",
+                "source_workspace",
+                "write_state",
+                "last_operation",
+                "source_write_state",
+                "source_last_operation",
+            }
         ):
             raise ValueError("Invalid history workspace entry provenance")
         identity = row["id"]
@@ -80,6 +90,30 @@ def _validate(workspace: object) -> dict[str, Any]:
         identities.add(identity)
         if row["origin"] not in ("draft", "imported"):
             raise ValueError("History editor records must be drafts or imports")
+        if "write_state" in row and row["write_state"] not in (
+            "accepted",
+            "uncertain",
+            "rejected",
+            "unattempted",
+        ):
+            raise ValueError("Invalid local history write state")
+        if "last_operation" in row and (
+            not isinstance(row["last_operation"], str)
+            or uuid.UUID(row["last_operation"]).hex != row["last_operation"]
+        ):
+            raise ValueError("Invalid local history operation identity")
+        if "source_write_state" in row and row["source_write_state"] not in (
+            "accepted",
+            "uncertain",
+            "rejected",
+            "unattempted",
+        ):
+            raise ValueError("Invalid source history write state")
+        if "source_last_operation" in row and (
+            not isinstance(row["source_last_operation"], str)
+            or uuid.UUID(row["source_last_operation"]).hex != row["source_last_operation"]
+        ):
+            raise ValueError("Invalid source history operation identity")
         if "source_workspace" in row:
             _key(row["source_workspace"])
         if (
