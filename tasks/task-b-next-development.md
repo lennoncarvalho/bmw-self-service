@@ -48,19 +48,30 @@ source restriction; not-yet-recovered means an actionable investigation.
    description catalogue and Clear All against all recovered selection branches;
    finish gaps in applicability, target accounting, negatives and post-clear
    reads. Exit: per-target outcomes and full source-category accounting.
-4. **Local history, independent of car access (B4/B5a).** Implement the separate
+4. **Local history, independent of car access (B4/B5a), implemented.** The separate
    durable history journal, versioned JSON-only files, fourteen service choices,
-   multi-item cards and date/VIN/conflict rules in workflow28. Keep the coding
+   multi-item cards and date/VIN/conflict rules follow workflow28. Keep the coding
    backup validator intact. No reader, legacy adapters or current-odometer gate.
-5. **History writes (B5b; R7).** Finish exact headunit session/result/reset/
-   capacity contracts, then implement ADD-only append and explicit one-ERASE
-   replacement with frozen plans, durable per-step outcomes and global lockout.
+5. **History writes (B5b; R7), implemented; physical validation pending.** ADD-only
+   append and explicit one-ERASE replacement use exact headunit session/result/
+   reset contracts, frozen plans, durable per-step outcomes and global lockout.
+   Capacity rejection stops execution without fallback; physical capacity and
+   visibility observations remain pending. See [implementation](task-b-history-write-implementation.md).
    No automatic retries/replay or invented old-car backup.
-6. **All applicable easy coding (B6a/B6b; R8/R9).** Recover full preset selection,
+6. **CBS reading and writing (B-CBS-R/B-CBS-W; D-58).** Port the concrete
+   source-supported status/read and reset/write behavior through CarWorker and
+   the existing protocol owner. Recover exact item/ECU/version mappings,
+   decode units/sentinels, preserve before/intent/results and verify application
+   completion/post-state as appropriate. Implement confirmed writes with power
+   checks/lockout, no automatic replay and honest uncertain outcomes. Use
+   [the promoted CBS task](future-cbs-research.md) and the pinned linked Python
+   implementation first. Exit: working read and write flows, offline/UI checks
+   and independent review. Due before any easy or advanced coding implementation.
+7. **All applicable easy coding (B6a/B6b; R8/R9).** Recover full preset selection,
    dynamic options, exact current-value bytes, composition, authorization,
    completion/cycle and restoration. Account for the whole source catalogue;
    missing applicable rows are unfinished work, not silently excluded scope.
-7. **Close implementation and review (B7).** Perform meaningful one-off offline
+8. **Close implementation and review (B7).** Perform meaningful one-off offline
    byte/error/deadline checks and visual DEMO/UI inspection, independent review,
    fixes and full scripts/preflight.sh before every push. No tests/ suite.
    Deliver reviewed incremental PRs, distinguishing completed implementation from
@@ -90,9 +101,9 @@ See [review dispositions](pr-13-review-followup.md) for every Robin/CodeRabbit
 finding and current-slice fixes. Preserve these boundaries in the next coding
 session:
 
-- B5a/B5b must replace the intentionally disabled history send boundary with the
-  separate local journal and mode-specific workers. Do not re-enable it merely
-  because an ADD encoder exists. Vehicle history reading remains retired.
+- B5a/B5b now implement the separate local journal and mode-specific workers;
+  physical validation remains pending. Preserve exact identity, frozen plans and
+  checked results. Vehicle history reading remains retired.
 - `SERVICE_TYPES` in app/service_history.py is the shared fourteen-type catalogue;
   legacy sample parsing now lives only in scripts/inspect_history_format.py.
   JSON/card work reuses the catalogue; it must not restore legacy interchange.
@@ -125,6 +136,15 @@ reconciliation and local history/writes/coding remain required in order. After
 this increment merges, verify merge/fetch and create another fresh codex/branch;
 do not reuse a merged implementation branch or wait for more cars.
 
+## Owner priority change — D-58
+
+CBS reads **and writes** are current Task B work, ordered after history and before
+easy/advanced coding. Older CBS-later labels are superseded. The existing
+`future-cbs-research.md` path is retained for links but now owns implementation,
+not a deferred research-only item. PR15 merged at b62243f; continued development
+uses PR16’s codex/task-b-cbs-priority branch updated with origin/main at the
+owner’s request. Do not open new PRs without explicit owner instruction.
+
 ## Post-PR14 vehicle-order checkpoint
 
 PR14 merge verified at dcb70a6, new branch codex/task-b-vehicle-order from fetched
@@ -145,3 +165,32 @@ all five original job paths and Android allocation/stop behavior. Alternate/miss
 four engines remain source work. Queue1–3also retains actual DoIP full-width
 mapping/newer U artifacts, actual odometer/model/build measurements and diagnostic
 category/description reconciliation. History/coding follow in the existing order.
+
+
+## PR16 implementation continuation — local history editor
+
+PR15 merged at b62243f (2026-10-29T20:12:28Z). At the owner's request, switched
+cleanly to codex/task-b-cbs-priority and merged fetched origin/main, preserving
+both PR15's code/fixes and D-58. No new PR is authorized; continue this existing
+PR16 branch until the owner directs otherwise. Do not merge it.
+
+Local JSON history/editor/workspaces are implemented; read
+`tasks/task-b-local-history-implementation.md` before repeating this work.
+JSON-only bounded import/export,14service choices, editable multi-item cards,
+unknown/conflict preservation, explicit VIN association and isolated offline/
+live/DEMO durable projects have offline/Qt/DEMO and independent-review evidence.
+Editor persistence remains separate from the implemented B4 history-operation
+journal. Frozen append/replacement plans and mode-specific write workers are
+implemented with exact headunit identity/session/result/reset handling and durable
+per-step outcomes; physical validation remains pending. Read
+[the history implementation](task-b-history-write-implementation.md)
+and [the execution contract](../docs/evidence/task-b-history-write-contract.md).
+CBS read **and write** follows before coding.
+
+Queue1–3also retains real DoIP/newer U sources, odometer/model/build/measurements,
+diagnostic category/description reconciliation and remaining MIL branches.
+Independent code review confirms the five older engines can use existing
+run_operation for exclusive clear/define/read/cleanup; explicit2C service support,
+confirmed UI action/global lockout, reserved cleanup budget and per-step uncertain
+outcomes remain required. Do not put dynamic-DID writes in normal overview refresh.
+No additional physical vehicles are a prerequisite for these implementation tasks.

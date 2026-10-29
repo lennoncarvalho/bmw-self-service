@@ -36,14 +36,14 @@ Unknown existing data is preserved locally, with new-entry validation separate.
 The owner has retired history read/retrieval research under D-50. No complete
 reader was recovered in the inspected sources; this is not a universal statement
 about all possible BMW access. Do not require read/backup/readback before enabling
-an otherwise reviewed history writer. CBS remains a separate later feature.
+an otherwise reviewed history writer. CBS reading/writing follows history before coding under D-58.
 
 [Workflow28](28-service-history-workflow.md) is the current product/data/UI
 contract: local **JSON only**, multi-item cards, one-entry ADD without ERASE, or
 explicit acknowledged ERASE followed by the reviewed full replacement list.
 Source .bmwsh/.tst formats remain research-only; no product adapters are planned.
-The local file parser currently in app/service_history.py is an implementation
-artifact to retire from the runtime API, not a promised import feature.
+Legacy-format parsers are development tooling only. app/history_files.py now
+implements the JSON-only product interchange contract.
 
 Identify the headunit and exact encoder, durably save local project/intent/raw
 request plan with prior vehicle history null, then validate each final business

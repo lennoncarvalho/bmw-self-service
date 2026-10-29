@@ -200,7 +200,7 @@ See [findings](../docs/evidence/task-b-history-new-sources.md).
 
 D-55 now requires multi-item cards and JSON only; the earlier legacy-format
 adapter idea is withdrawn. A readable plan/step journal fits the current flow.
-Garage suggestions/QR are not required; CBS stays later. Replay/maps/3D and a
+Garage suggestions/QR are not required; CBS is promoted before coding by D-58. Replay/maps/3D and a
 browser UI migration are not proposed.
 
 ## Post-PR13 R2/R3/R5 implementation checkpoint
@@ -220,6 +220,15 @@ browser UI migration are not proposed.
 Source evidence: docs/evidence/task-b-topology-selection.md and
  docs/evidence/task-b-mil-breadth.md. Execution/review:
  tasks/task-b-topology-verification.md. Reuse these findings before new tracing.
+
+## CBS read/write promotion — D-58
+
+Use [CBS implementation task](future-cbs-research.md) before easy/advanced coding.
+Inspect pinned cbs.py read_cbs/read_item/decode/reset_payload/reset_cbs plus
+transport/callers and target CBS jobs. Resolve exact owning ECU/version, reset
+preconditions, unknown flags/status, final echoes and meaningful post-state.
+Implement both reads and writes through the existing owner, with durable state
+and no automatic retry. Earlier CBS-later notes are historical/superseded.
 
 ## Post-PR14 R2/R3/R5 recovery
 

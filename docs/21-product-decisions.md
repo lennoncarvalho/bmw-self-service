@@ -23,7 +23,7 @@ D-01–D-20 originated before this interview; D-21–D-55 were answered on
 | D-06 | Review and correct specifications/tooling first, then review the pending connection PR and current code |
 | D-07 | Ask about feature behavior rather than silently adopting assumptions |
 | D-08 | After interrupted coding, reidentify/reread/compare when meaningful (cycle first under D-29). History instead uses D-52 journal/manual iDrive inspection and separately confirmed new action. Never automatically replay. |
-| D-09 | History scope is now D-51: append and explicit whole-list replacement, with local draft editing. Direct per-record car edit/delete and CBS remain later. |
+| D-09 | History scope is now D-51: append and explicit whole-list replacement, with local draft editing. Direct per-record car edit/delete remains later; CBS is promoted by D-58. |
 | D-10 | No automated tests for now; retain the existing no-suite policy |
 | D-11 | No saved backup/report is required before clearing faults |
 | D-12 | Once VIN and diagnostic communication are verified, optional read failures do not disconnect the car; explicitly mark unavailable fields and incomplete ECU coverage |
@@ -117,6 +117,28 @@ do not start it before merge or reuse the merged branch. This supersedes earlier
 instructions to keep PR13 draft until all Task B work is finished. No merge is
 authorized for the agent.
 
+## CBS reading and writing priority — D-58 (2026-10-29)
+
+The owner promotes Condition Based Service **reading and writing** into current
+Task B scope, due **before both easy and advanced coding**. This supersedes all
+older CBS-later/deferred wording, including D-09 and the former future-CBS task.
+The existing connection/diagnostics and history order remains; insert CBS after
+history execution and before B6a/B6b. Advanced coding remains later than easy
+coding, and CBS precedes it as well.
+
+Use the owner's linked [CBS implementation](https://github.com/devttys1/bmw-service-manager/blob/6c0041bb71674ec52d567c4a6360b5469c048173/bmw_service_manager/cbs.py)
+as a concrete read/reset porting reference. Recover and implement all applicable
+source-supported CBS read/write branches; do not reduce this to a documentation
+or read-only feature. Reset is a CBS mutation, distinct from writing headunit
+service history. Inspect actual preconditions, exact ECU/software/version,
+requests, decoders and application completion before enabling writes. The
+reference's uncertainties and observed vehicle scope remain explicit, not
+universal validation. This priority change does not authorize a physical reset.
+
+Use [the promoted CBS task](../tasks/future-cbs-research.md) for source anchors,
+implementation acceptance and remaining technical facts. No broad product
+interview is a prerequisite; resolve technical questions through source recovery.
+
 ## Precedence and implementation interpretation
 
 - D-50–D-55 supersede history-read, complete car-history backup, legacy-format
@@ -188,5 +210,5 @@ Retain existing Widgets UI conventions; no redesign is required. English coverag
 locale handling, full logs and simple durable backup files are development tasks.
 No automated suite is authorized. New behavior questions discovered through REA
 must be recorded specifically, not filled with assumptions or used to reopen
-already answered choices. Later advanced coding, history editing/CBS and public
-release choices do not block this milestone.
+already answered choices. CBS read/write priority is now governed by D-58.
+Later advanced coding, history editing and public release choices do not block this milestone.

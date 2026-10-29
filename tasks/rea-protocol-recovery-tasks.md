@@ -85,7 +85,8 @@ additional configuration/measurement decoders remain pending.
   disconnected/error observations, keep data age visible, and exercise stale/
   unavailable/On/Off cases offline and visually with exact variant coverage.
 
-CBS due-date/distance remains later scope; no history-read investigation resumes.
+CBS reads/writes are now required before coding under D-58; see B-CBS below.
+No history-read investigation resumes.
 
 ## B3a — complete diagnostic reads and coverage
 
@@ -159,22 +160,22 @@ Depends: B-HIST-F and D-50/D-54/D-55; no car/read/reader dependency. Files:
 app/service_history.py, new app/history_files.py, ui/service_history_page.py;
 [workflow 28](../docs/28-service-history-workflow.md) owns the concrete contract.
 
-- [ ] Retire B-HIST-R and remove automatic ServiceHistoryReadWorker/page-load
+- [x] Retire B-HIST-R and remove automatic ServiceHistoryReadWorker/page-load
   calls and exploratory probes. Loading/reconnecting shows local records only;
   empty local files never imply an empty car. No further reader investigation.
-- [ ] Centralize all 14 evidenced type IDs/English labels for model/selector/cards;
+- [x] Centralize all 14 evidenced type IDs/English labels for model/selector/cards;
   remove Oilfilter4/coolant12hex/transmission23hex guesses. No custom item or
   silent engine-oil fallback. Support1–13 items per dated entry and 7 ASCII dealer
   bytes with explicit BMW/independent flag; retain entered mileage/native units.
-- [ ] Implement schema_version 1/vin/entries project JSON in app/history_files.py:
+- [x] Implement schema_version 1/vin/entries project JSON in app/history_files.py:
   strict structure/types/version/size/duplicate-key/nonfinite checks; offline null
   VIN, explicit association and mismatched-VIN send blocking. No legacy adapters,
   QR or imported execution directives. Retire unused runtime legacy-file API.
-- [ ] Preserve structurally valid unknown fields/conflicting records for preview/
+- [x] Preserve structurally valid unknown fields/conflicting records for preview/
   export; clearly block unsupported/future/duplicate replacement data from sending.
   Atomic deterministic export, explicit project/file overwrite and all-or-nothing
   import failure must preserve the current project. Verify portable round-trips.
-- [ ] Build expandable multi-item cards using widget children: date/mileage/garage/
+- [x] Build expandable multi-item cards using widget children: date/mileage/garage/
   status/chips/origin/outcome summary, each item's status/detail on expansion,
   and clear local draft/imported/previous-response states. All items in one card
   are encoded as one dated record. Local edits/deletes never affect the car.
@@ -184,11 +185,17 @@ app/service_history.py, new app/history_files.py, ui/service_history_page.py;
   accepted/uncertain prior journal date. Replacement validates uniqueness within
   its list, not against old ledger dates that it intentionally rewrites. State
   that unseen car dates cannot be checked; never shift/merge/drop dates silently.
-- [ ] Verify empty/offline/unbound/mismatchedVIN/conflict/DEMO/live separation,
+- [x] Verify empty/offline/unbound/mismatchedVIN/conflict/DEMO/live separation,
   settled page publication, card expansion and zero car I/O during file actions.
 
 Exit: B-HIST-F usable with JSON only,14 sourced choices and multi-item cards;
 B-HIST-R retired, no car-history backup/reader promise or dependency.
+
+Local editor checkpoint: `tasks/task-b-local-history-implementation.md` records
+implemented JSON/cards/workspace behavior and independent verification. Checked
+items above describe local behavior; previous-response/uncertain outcome cards,
+known journal dates and actual send gating remain in B5b/B4 extension. No vehicle
+history reader or fake baseline is introduced.
 
 ## B5b — one-entry append and explicit erase-and-replace
 
@@ -236,6 +243,23 @@ app/history_files.py, ui/service_history_page.py, ui/backups_page.py; docs12/28.
 Exit: B-HIST-W and history B-REC meet workflow 28 without a reader. Local files/
 intent/results are preserved; replacement loss limits and physical acceptance
 remain honest. Coding's separate baseline/readback/recovery requirements remain.
+
+## B-CBS — Condition Based Service reads and writes (D-58)
+
+Depends: exact vehicle/ECU identity and recovered operation contracts; follows
+history work and **precedes B6a/B6b and any advanced coding**. Detailed execution
+checklist: [promoted CBS task](future-cbs-research.md).
+
+- [ ] Pin/review linked cbs.py and related transport/caller code; reconcile actual
+  target PRGs/variants, item ownership, version layouts, read/reset prerequisites.
+- [ ] Implement standalone CBS decoding/reading through CarWorker and existing
+  owner; per-item states, raw bytes, units/sentinels and English due-service UI.
+- [ ] Implement applicable confirmed CBS writes/resets with durable before/intent/
+  requests/results, power/lockout, exact final-response checks and meaningful
+  post-state/cycle verification. No speculative default owner or automatic retry.
+- [ ] Complete byte/error/deadline/partial checks, Qt/DEMO visual verification,
+  independent review and full preflight; record actual physical observations
+  separately. Both reading and writing are required, not research-only closure.
 
 ## B6a — full easy catalog and current coded values
 

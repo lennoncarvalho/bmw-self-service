@@ -1,7 +1,9 @@
 # Service history — local JSON, append and explicit replacement
 
-Status: approved product scope consolidated 2026-10-29; implementation tasks
-remain open. Authority: D-50–D-55 in [owner decisions21](21-product-decisions.md).
+Status: approved product scope consolidated 2026-10-29; local JSON/editor and
+isolated workspace persistence, history-operation journal and mode-specific write
+workers implemented. Physical validation remains pending. Authority: D-50–D-55 in
+[owner decisions21](21-product-decisions.md).
 This supersedes earlier history-read/complete-car-backup gates in spec 26, plans,
 tasks and skill examples. [Native/PRG evidence](evidence/task-b-history-deep-investigation.md)
 and [additional-source comparison](evidence/task-b-history-new-sources.md) retain
@@ -222,9 +224,11 @@ storage design, not a pending owner or implementation choice.
 
 ## Acceptance and remaining facts
 
-Planning is complete; runtime page/workers/storage are not implemented by this
-scope change. Existing mutation guards stay until the mode-specific worker,
-identity/prerequisites, durable journal, response handling and review are ready.
+The runtime page, local storage, separate operation journal and mode-specific
+append/replacement workers are implemented. Exact identity/prerequisites, durable
+per-step outcomes and checked application responses gate execution; physical
+validation remains pending. See [implementation](../tasks/task-b-history-write-implementation.md)
+and [source-backed execution contract](evidence/task-b-history-write-contract.md).
 B-HIST-R is retired and must not be resurrected as a release prerequisite.
 
 Offline/manual checks: JSON round-trip/errors/conflicts/unknowns/VIN/atomic I/O;
@@ -240,3 +244,35 @@ loss acknowledgement. Record exact headunit/software, wire results and observed
 on-screen outcome separately. Unknown headunit capacity/order/session/reset
 facts remain research/validation work; a capacity rejection must never auto-erase.
 Missing coding/MIL/DoIP work still keeps Task B open. No universal BMW claim.
+
+
+## Local editor implementation checkpoint — PR16 continuation
+
+`app/history_files.py` implements v1 project parsing/validation and deterministic
+compact atomic export. Limits are1MiB,1000entries,255 structurally preserved items
+per entry, depth16,50000nodes and4096characters per string. Sendability remains
+1–13items with sourced numeric/ASCII/date rules. Imported future/unknown/status/
+duplicate records remain visible/exportable; editing does not silently normalize
+their values. Existing future dates may remain unchanged while resolving other
+conflicts; a newly chosen future date cannot be saved. Unknown fields are retained.
+
+`app/history_workspace.py` stores separate hashed local editor envelopes under
+`~/BMW-Tool/history/projects`: offline, live-VIN, demo-VIN and demo-unbound (the
+supplied DEMO fixture has only a short identifier). Full-record integrity hashes,
+stable draft IDs and import/copy provenance are separate from interchange data.
+These editor envelopes are **not** mutation journals or coding backups. No
+accepted/uncertain outcomes are manufactured from imported claims. Explicit VIN
+association preserves original source VIN/workspace; loading never rebinds a file.
+
+The Widgets page works offline, uses25cards per page in original file order,
+expands all item values and provides local edit/remove/import/export/reload.
+File work runs in retained background workers; stale modal actions are rejected,
+corrupt initial state cannot silently become an editable empty fallback, and
+shutdown waits nonblockingly for one worker owner. Coding validators stay intact.
+
+See [implementation and verification](../tasks/task-b-local-history-implementation.md).
+The subsequent B5b/B4 history extension implements the separate operation journal,
+prior-operation date accounting, frozen append/replacement plans, business results
+and write completion/reset handling; physical validation remains pending. See
+[the implementation](../tasks/task-b-history-write-implementation.md). CBS read/write
+follows history and precedes coding under D-58.

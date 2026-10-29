@@ -45,8 +45,8 @@ main after Task A PR #12 merged. No B feature contract is closed by that plannin
 The first usable slice is connection/vehicle info, all-ECU fault display with
 one Clear All action, local JSON history/cards with append and explicit erase-
 and-replace, and all applicable easy presets. D-50–D-55 retire history reads and
-legacy-format adapters. Direct per-record car editing/deletion, advanced coding
-and CBS are later scope. [Workflow28](28-service-history-workflow.md) owns the
+legacy-format adapters. Direct per-record car editing/deletion and advanced coding remain later.
+CBS reading/writing is current scope under D-58, before both coding modes. [Workflow28](28-service-history-workflow.md) owns the
 consolidated history behavior, storage boundaries and acceptance checks. REA now works for
 Android inspection; doc 27 records actual evidence and per-tool limits.
 
@@ -140,3 +140,16 @@ equipment labels, with explicit source scope and no inferred build date/trim.
 remaining five readers to fixedF303configuration/ownership/cleanup work; those
 mutations are not enabled by the overview increment. See
 [increment verification](../tasks/task-b-vehicle-order-verification.md).
+
+
+## PR16 continuation — local history editor
+
+PR15 is merged at b62243f. PR16's codex/task-b-cbs-priority branch now includes
+that main baseline and implements local JSON history/editor workspaces, preserving
+D-58's CBS-before-coding order. See [implementation/verification](../tasks/task-b-local-history-implementation.md).
+The separate history-operation journal and ADD-only/explicit replacement workers
+are also implemented; physical validation remains pending. See
+[history execution implementation](../tasks/task-b-history-write-implementation.md).
+These journals preserve local intent/results, not unknown prior car history or a
+coding baseline. CBS reads/writes follow before coding. No new PR is authorized
+without an explicit owner request.

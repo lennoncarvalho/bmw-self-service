@@ -1,4 +1,4 @@
-# Task B specification — functional diagnostics, history and easy coding
+# Task B specification — functional diagnostics, history, CBS and easy coding
 
 Status: product decisions consolidated 2026-10-29; ready for evidence-driven
 implementation. BMW wire contracts remain to be recovered before enabling their
@@ -13,7 +13,8 @@ operations. Authority: [owner decisions 21](21-product-decisions.md).
 A working Python-source application on macOS with broad source-supported BMW
 F/G/U/I ENET applicability: connection, real vehicle information, complete
 discovered-ECU fault display and one Clear All, local JSON history with append/
-explicit replacement, all applicable matched easy presets and usable recovery.
+explicit replacement, CBS reading/writing before coding, all applicable matched
+easy presets and usable recovery.
 Under D-57 only the owner's F48/NBT is available for physical tests. Recover and
 implement other source-supported branches without waiting for other vehicles.
 Source contracts, implementation, offline verification and physical observations
@@ -26,7 +27,8 @@ cross-platform design and existing legal notices without making release packagin
 an obstacle to working source flows. Broad source-supported F/G/U/I applicability
 is required implementation scope under D-57, not a claim of universal physical
 validation. Advanced
-coding, direct per-record car-history edit/delete and CBS remain later scope.
+coding and direct per-record car-history edit/delete remain later scope.
+CBS reading and writing are current scope under D-58, due before both coding modes.
 Explicit whole-list replacement is now required under D-51; see
 [history workflow 28](28-service-history-workflow.md).
 
@@ -57,6 +59,8 @@ asset decryption and smoke inspection do not close a wire contract.
 | B-HIST-R | Retired by D-50; no vehicle history reader or readback requirement | No further reader/probe pursuit; unavailability is a product constraint, not a pending release gate |
 | B-HIST-F | Local multi-item cards and simple JSON import/export | Strict versioned JSON, retained conflicts/unknown fields, VIN binding, file-only provenance; no legacy adapters |
 | B-HIST-W | Append one multi-item entry or explicitly erase/write a reviewed local list | No ERASE in append; explicit irreversible replacement; durable local snapshot/intent/results, known-local date checks, application/cycle completion; no car-history-backup claim |
+| B-CBS-R | Read applicable Condition Based Service items with actual remaining distance/time, due date, availability/counters and explicit unknowns | Exact ECU/version/item selection, checked response/decoder/units/sentinels, per-item coverage and before-state; headunit history is independent |
+| B-CBS-W | Confirmed source-supported CBS writes/resets before coding | Exact owning ECU/version/preconditions, frozen intent, durable before/results, power/lockout, checked application completion and meaningful post-state/cycle handling; no guessed owner, automatic replay or promised counter rollback |
 | B-CODE-R | Every applicable matched easy preset with actual current values | Exact ECU/software/CAFD and live bytes; complete catalog accounting; untouched Custom values preserved |
 | B-CODE-W | Compose selected presets against one complete baseline; preserve unrelated data | Exact masks/blocks/authorization/encoding, backup/intent, application completion and meaningful verification; easy failure rollback path |
 | B-REC | Coding backup/restoration plus honest history local journals/interruption handling | Coding retains complete original ECU bytes; history has null prior-car state, no automatic rollback/replay; JSON import itself never writes |
@@ -243,6 +247,23 @@ memories respond. D-26 still permits identified supported targets to clear, with
 topology gaps named. Full-width DoIP/U/I selection, remaining MIL readers,
 vehicle-order/odometer/model fields and subsequent queue items remain concrete
 source/implementation work; no new physical validation is implied.
+
+## CBS priority and acceptance — D-58
+
+CBS reading and writing precede easy and advanced coding. Port the concrete
+linked reference through the existing owner/CarWorker, retaining its exact source
+identity and independently resolving ambiguous flags/version behavior. Unknown
+items remain visible; never send to a guessed default ECU merely to test ownership.
+Record supported writes/resets and source restrictions by actual ECU/software.
+Reset before-state is evidence, not a guaranteed restorable coding baseline.
+Recover actual reset completion, post-read/cycle and interruption behavior; do
+not report a transport ACK as completion. No automatic resets on page load,
+retry after uncertain outcomes or history-writing/CBS coupling.
+
+Implementation acceptance and source anchors: [CBS task](../tasks/future-cbs-research.md).
+Source recovery, offline byte/error checks, visual Qt/DEMO verification,
+independent review and full preflight are required; physical observations stay
+separate, and no additional vehicle is a development dependency.
 
 ## Packed vehicle-order increment
 
