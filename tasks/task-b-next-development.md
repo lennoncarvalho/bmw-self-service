@@ -124,3 +124,24 @@ chains and alternate/missing engine definitions. Diagnostic category/description
 reconciliation and local history/writes/coding remain required in order. After
 this increment merges, verify merge/fetch and create another fresh codex/branch;
 do not reuse a merged implementation branch or wait for more cars.
+
+## Post-PR14 vehicle-order checkpoint
+
+PR14 merge verified at dcb70a6, new branch codex/task-b-vehicle-order from fetched
+origin/main. Gateway3F06 packed vehicle order and4735English passenger-equipment
+labels are implemented in the settled overview with explicit unknown/incomplete
+states. No trim/build date is inferred. Exact45source-category groups and their
+U/I/DoIP limits are recorded in the metadata evidence. See
+[verification](task-b-vehicle-order-verification.md),
+[vehicle-order contract](../docs/evidence/task-b-vehicle-order.md) and
+[metadata/category accounting](../docs/evidence/task-b-vehicle-metadata.md).
+
+The next MIL software task is now concrete: implement fixedF303 clear/define/read
+under one exclusive multi-request lifecycle with bounded cleanup and honest
+uncertain outcomes, preserving --read-only's2Crejection. The current overview
+still uses the53direct-scalar rows; this increment does not enable mutations.
+[Recovered block lifecycle](../docs/evidence/task-b-mil-block-recovery.md) includes
+all five original job paths and Android allocation/stop behavior. Alternate/missing
+four engines remain source work. Queue1–3also retains actual DoIP full-width
+mapping/newer U artifacts, actual odometer/model/build measurements and diagnostic
+category/description reconciliation. History/coding follow in the existing order.

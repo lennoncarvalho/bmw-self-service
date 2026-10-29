@@ -30,13 +30,11 @@ class WelcomePage(QWidget):
 
     SERIES_OPTIONS = [
         ("", "-- Select your BMW series --"),
-        ("F", "F-series (2011-2019): 1-7 Series, X1-X6, M2-M6"),
-        ("G", "G-series (2018+): 1-8 Series, X1-X7, M2-M8"),
-        ("U", "U-series (2023+): XM, iX, U11 X1"),
-        ("I", "I-series (2013+): i3, i4, i5, i7, iX1, iX3"),
+        ("F", "F-series chassis"),
+        ("G", "G-series chassis"),
+        ("U", "U-series chassis"),
+        ("I", "BMW i / electric models"),
     ]
-
-    SERIES_PROTOCOL = {"F": "HSFZ", "G": "DoIP", "U": "DoIP", "I": "DoIP"}
 
     INSTRUCTIONS = [
         "Press the Start/Stop button once (without pressing the brake) to enter ignition mode",

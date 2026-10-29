@@ -156,3 +156,30 @@ DME98_R/FCCU definitions; then diagnostic category/description breadth. Follow
 ordered queue after those branches with local JSON/history journal/cards,
 mode-specific writes and complete easy coding/recovery. None is hardware-blocked.
 No history reader, legacy product adapters or guessed coding baseline is revived.
+
+## Post-PR14 vehicle-order increment — 2026-10-29
+
+PR14 merged at dcb70a6 (19:06:05Z), including refreshed diagnostic target/revision
+fixes. Clean worktree, fetched origin/main, new branch
+`codex/task-b-vehicle-order`. The packed gateway3F06 read is implemented in the
+settled overview worker: model range/type key/time criterion/paint/upholstery,
+ordered optional configuration sections and raw response preservation. Time
+criterion remains a configuration code, not a physical production date.
+4735exact passenger equipment codes have English descriptions, with unknown
+codes retained; no guessed trim or model lookup. Read
+`tasks/task-b-vehicle-order-verification.md` and the linked source evidence
+before repeating work. The supplied45series groups are fully accounted; i3/i8
+use the F interface category and i4/iX3 the inherited G category. There is no
+explicit U/I20 group or DoIP logical-address converter in those supplied paths.
+
+Next concrete work: full-width DoIP mapping/newer U source branch from a matching
+artifact, remaining odometer/exact model/build measurements and diagnostic
+category/description reconciliation. Five older MIL block readers are now traced
+to fixedF303 clear/define/read; see `docs/evidence/task-b-mil-block-recovery.md`.
+Implement exclusive whole-sequence ownership, bounded response-confirmed cleanup
+and visible uncertainty before enabling these diagnostic configuration mutations;
+operation_scope alone only shares a deadline. Preserve --read-only rejection of2C.
+DME9FF_R/EDMEI1 alternate MIL and DME98_R/FCCU missing definitions remain source
+work. These are implementation/source tasks, not waits for more cars. Then
+continue local JSON/history journal/cards, mode-specific history writes and full
+applicable coding/recovery in the ordered queue. No new physical observations.

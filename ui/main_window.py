@@ -641,6 +641,7 @@ class MainWindow(QMainWindow):
             return  # connection changed, results are stale
         if self._closing or not getattr(connection, "alive_ok", True):
             self.vehicle_page.invalidate("Connection lost — reconnect before refreshing")
+            self.vehicle_page.invalidate_order()
             self.vehicle_page.set_loading(False)
             self.vehicle_page.refresh_button.setEnabled(False)
             self._overview_refresh = False
@@ -660,13 +661,6 @@ class MainWindow(QMainWindow):
             f"{getattr(config, 'host', 'Unavailable')} · Local interface: "
             f"{getattr(config, 'local_ipv4', None) or 'Unavailable'}"
         )
-
-        # Extract sub-results from FA dict
-        fa_data = results.get("vehicle_order_(fa)")
-        if isinstance(fa_data, dict):
-            results["prod_date"] = fa_data.get("prod_date", "")
-            results["fa_xml"] = fa_data.get("fa_xml", "")
-            results["type_code"] = fa_data.get("type_code", "")
 
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
@@ -729,6 +723,7 @@ class MainWindow(QMainWindow):
             return  # connection changed, error is stale
         self.hide_spinner()
         self.vehicle_page.invalidate("Overview read failed — refresh or reconnect")
+        self.vehicle_page.invalidate_order()
         self.vehicle_page.set_loading(False)
         if self._closing or not getattr(connection, "alive_ok", True):
             self.vehicle_page.refresh_button.setEnabled(False)
