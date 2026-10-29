@@ -1,5 +1,11 @@
 # Infrastructure readiness contract
 
+Current history scope is [workflow28](docs/28-service-history-workflow.md), under
+D-50–D-55: local JSON/cards, ADD-only append or explicit erase-and-replace, local
+snapshot/intent/results with null prior vehicle history. No history reader or
+car-history backup/readback gate, legacy adapters or invented service IDs.
+Coding still requires complete original ECU data and its recovery contract.
+
 Updated 2026-10-28. Existing implementation requires review, not rebuilding from
 scratch. Earlier checked criteria and “39 tests” references were unsupported.
 Current separate development contracts are [Task A/spec 25](docs/25-library-migration-spec.md)
@@ -30,15 +36,16 @@ and skills; it does not certify or alter runtime vehicle behavior.
   Once VIN and diagnostic communication are verified, keep the connection despite
   optional read failures and show unavailable fields/incomplete ECU coverage (D-12).
 - Permit supported reads on identified but unverified ECU/software variants;
-  disable unverified writes until their exact definitions and write/readback flow
-  are supported. Missing prerequisites disable dependent operations (D-14).
+  disable unverified writes until their exact encoder and completion contract
+  are supported (coding reads/restore; history response-confirmed under D-50). Missing prerequisites disable dependent operations (D-14).
 - Keep every car I/O operation off the GUI thread, including keepalive and
   recovery. Cancellation/disconnect must actually settle outstanding work and
   prevent stale updates after reconnect.
 - Use exact ECU/software and definition identity. Do not probe guessed writes,
   choose first-available coding variants or infer FA/SVT binary layouts as XML.
-- Save a durable backup before coding/history writes; persist intended state
-  and observed readback separately. Report success only after validation.
+- Save a complete original ECU backup before coding. History saves local JSON/
+  intent/results and discloses unreadable prior car state. Keep completion
+  response-confirmed versus independently observed; no history readback claim.
 - DEMO must be explicit and isolated from real connection/recovery state.
 - Preserve useful logs, actionable user errors and per-ECU failure results.
 - Resolve dependencies/assets for fresh installs and launch outside the checkout.

@@ -73,6 +73,8 @@ All ignored originals remain research-only, absent from shipped dependencies.
 | S-06 `bimmerlink_extracted/`, `bimmercode_extracted/` | Existing smali/resources/assets and simulation examples | Reuse focused reads; verify file/member provenance against original APK. Simulations are examples, not physical support proof. |
 | S-07 `coding_data/`, `dtc_descriptions.db`, extraction scripts | Definition/label selection, description schema/collisions and packaging | Definitions differ from live coded bytes. Match ECU/software/version; inspect extraction provenance before trusting counts or duplicate resolution. |
 | S-08 `BimmerDaten/decoderPrg.py`, `ediabasx/` | PRG parsing/VM and transport/interpreter reference source | Verify relevant parser/decompiler/VM paths against original files and retained bytes; own repository instructions apply only inside those trees. These are references, not validated app modules. |
+| S-09 `sources/BMW-HU-ServiceManager/HU-ServiceManager.jar` | Independent history job/frontend and English item-catalogue reference | SHA299cf13ac1e16bd5da0c47850e7dbfe369d8c58712c58977dfa5fc618ab69e41. REA ZIP inventory plus static javap21 bytecode: IDENT/ADD/ERASE/RESET through external apijav32; no packaged complete history-list reader recovered. |
+| S-10 [devttys1/bmw-service-manager](https://github.com/devttys1/bmw-service-manager/tree/6c0041bb71674ec52d567c4a6360b5469c048173) | HSFZ writes, file formats, UI ideas, future CBS leads | Pinned commit6c0041bb71674ec52d567c4a6360b5469c048173. README says no history read; probes are experiments. Result-code and distance interpretation conflict with retained PRGs; do not blindly port. PolyForm Noncommercial license. |
 
 Original hashes: [local artifact inventory](evidence/local-artifact-inventory.json).
 Libraries: [release inventory](evidence/protocol-library-inventory.json).
@@ -80,6 +82,12 @@ Vehicle session: [doc 23](23-first-vehicle-session.md); raw capture and its
 preserved copy remain local with the SHA-256 recorded there.
 
 ## Additional sources when a concrete gap remains
+
+D-50 retires history-reader/probe research; do not request or inspect additional
+artifacts solely to chase that retired gate. History writer identity/encoding/
+capacity/results/activation remain factual work. [Workflow28](28-service-history-workflow.md)
+requires local JSON only, sourced items/cards and explicit append/replacement.
+Legacy formats named in the source inventory are research references only.
 
 1. **Owner-supplied ISTA+ with matching diagnostic data/ECU files:** useful next
    source for inventory/variant selection, diagnostic jobs, DTC details, MIL,
@@ -125,3 +133,12 @@ bundles/raw sources stay local. Export before ending an analysis session. Close
 any opened native target after export; target-free Android calls do not require
 opening a native target. No car writes or binary execution is implied by static
 inspection or by this handoff.
+
+## New history sources — 2026-10-29
+
+[Comparison and actionable findings](evidence/task-b-history-new-sources.md) and
+[retained identities](evidence/task-b-history-new-sources-manifest.json) cover the
+owner's OSS URL and added Java package. Both support investigating ADD without
+ERASE; neither closes complete headunit history read/backup. Their matching14item
+catalogues expose unsupported choices in the current UI. No target/car execution,
+foreign runtime dependency, source-code port or live-write enablement occurred.

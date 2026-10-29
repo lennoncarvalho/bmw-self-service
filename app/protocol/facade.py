@@ -57,6 +57,7 @@ class DiagnosticConnection:
         self.local_ip = local_ip
         self.entity = entity
         self.read_only = read_only
+        self.verified_vin = ""
         self.trace_id = uuid.uuid4().hex
         self.adapter: HsfzAdapter | DoipAdapter | None = None
         self._services: dict[int, UdsServices] = {}

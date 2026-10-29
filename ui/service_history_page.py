@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.service_history import SERVICE_TYPES
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -37,19 +38,7 @@ logger = logging.getLogger(__name__)
 class AddServiceDialog(QDialog):
     """Modal form for adding a new service entry."""
 
-    SERVICE_ITEMS = [
-        ("Engine oil change", 0x01),
-        ("Oil filter", 0x04),
-        ("Cabin filter / microfilter", 0x04),
-        ("Engine air filter", 0x0B),
-        ("Spark plugs", 0x0A),
-        ("Front brake pads", 0x02),
-        ("Rear brake pads", 0x06),
-        ("Brake fluid", 0x03),
-        ("Vehicle check (standard)", 0x64),
-        ("Coolant", 0x12),
-        ("Transmission fluid", 0x23),
-    ]
+    SERVICE_ITEMS = SERVICE_TYPES
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the service-history page with separate displayed and pending entries."""
@@ -65,6 +54,7 @@ class AddServiceDialog(QDialog):
 
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
+        self.date_edit.setMaximumDate(QDate.currentDate())
         self.date_edit.setDate(QDate.currentDate())
         form.addRow("Date:", self.date_edit)
 
@@ -81,7 +71,7 @@ class AddServiceDialog(QDialog):
         layout.addLayout(form)
 
         # Service items checkboxes
-        items_label = QLabel("Services performed:")
+        items_label = QLabel("Services performed (select 1–13):")
         items_label.setStyleSheet("font-weight: bold; margin-top: 8px;")
         layout.addWidget(items_label)
 
@@ -115,10 +105,10 @@ class AddServiceDialog(QDialog):
 
     def _on_item_toggled(self) -> None:
         """Enable OK only when at least one service item is checked."""
-        any_checked = any(cb.isChecked() for cb in self.checkboxes.values())
+        count = sum(cb.isChecked() for cb in self.checkboxes.values())
         ok_btn = self._button_box.button(QDialogButtonBox.StandardButton.Ok)
         if ok_btn is not None:
-            ok_btn.setEnabled(any_checked)
+            ok_btn.setEnabled(1 <= count <= 13)
 
 
 class ServiceHistoryPage(QWidget):
@@ -209,6 +199,8 @@ class ServiceHistoryPage(QWidget):
             "QPushButton:hover { background: #27AE60; }"
         )
         self._write_btn.clicked.connect(self._on_write_clicked)
+        self._write_btn.setEnabled(False)
+        self._write_btn.setToolTip("Vehicle history writes are not implemented yet")
         bar_layout.addWidget(self._write_btn)
         layout.addWidget(self._write_bar)
 
@@ -224,7 +216,7 @@ class ServiceHistoryPage(QWidget):
         if hasattr(self._connection, "data") and self._connection.data:
             self._unavailable_reason = ""
             self.add_btn.setEnabled(True)
-            self._write_btn.setEnabled(True)
+            self._write_btn.setEnabled(False)
             entries = self._connection.data.get("service_history", [])
             self._entries = sorted(entries, key=lambda e: e.get("date", ""), reverse=True)
             self._render()
@@ -232,16 +224,14 @@ class ServiceHistoryPage(QWidget):
 
         # No evidenced live read contract exists. In particular, the old
         # 31 01 A0 81 request may start an add routine; never send it as a read.
-        self._unavailable_reason = (
-            "Service history unavailable: the vehicle read operation has not been verified."
-        )
+        self._unavailable_reason = "Vehicle history cannot be read. Local JSON editing, append and replacement are not implemented yet."
         self._entries = []
         self._pending_writes = []
         self.add_btn.setEnabled(False)
         self.erase_btn.setVisible(False)
         self._write_btn.setEnabled(False)
         self._write_bar.setVisible(False)
-        logger.warning("History live read skipped: verified read protocol unavailable")
+        logger.info("Vehicle history read retired; local history workflow is not implemented yet")
         self._render()
 
     def _on_history_loaded(self, entries: list[dict]) -> None:
@@ -377,6 +367,14 @@ class ServiceHistoryPage(QWidget):
         if not data.get("items"):
             return
 
+        if any(entry.get("date") == data["date"] for entry in self._entries):
+            QMessageBox.information(
+                self,
+                "Date already recorded",
+                "An entry already exists on this date. A second entry on the same day cannot be added.",
+            )
+            return
+
         # Prepend and re-sort by date descending, then re-render
         self._entries.append(data)
         self._entries.sort(key=lambda e: e.get("date", ""), reverse=True)
@@ -401,7 +399,7 @@ class ServiceHistoryPage(QWidget):
 
     def _on_entry_written(self, _result: object = None) -> None:
         """Re-load history after a successful write."""
-        self._write_btn.setEnabled(True)
+        self._write_btn.setEnabled(False)
         self.add_btn.setEnabled(True)
         self._pending_writes = []
         self._update_pending_label()
@@ -418,30 +416,15 @@ class ServiceHistoryPage(QWidget):
             self._write_bar.setVisible(False)
 
     def _on_write_clicked(self) -> None:
-        """Write all pending service entries to the car with confirmation."""
-        count = len(self._pending_writes)
-        if count == 0 or self._connection is None:
-            return
-        reply = QMessageBox.question(
-            self,
-            "Write to Car",
-            f"Write {count} new service entr{'y' if count == 1 else 'ies'} to the vehicle?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-        self.add_btn.setEnabled(False)
-        self._write_btn.setEnabled(False)
-        self._worker = ServiceHistoryWriteWorker(self._connection, self._pending_writes)
-        self._worker.result_ready.connect(self._on_entry_written)
-        self._worker.error.connect(self._on_write_error)
-        self._worker.start()
+        """Keep the unfinished live write boundary unavailable."""
+        # The forthcoming journal-backed append/replacement workers own sending.
+        # Keep this boundary closed even if a stale callback exposes the button.
+        logger.info("Vehicle history write unavailable: implementation pending")
 
     def _on_write_error(self, msg: str) -> None:
         """Handle write failure — re-enable buttons, preserve pending entries."""
         self.add_btn.setEnabled(True)
-        self._write_btn.setEnabled(True)
+        self._write_btn.setEnabled(False)
         logger.warning("Service history write failed: %s", msg)
         QMessageBox.warning(
             self,
@@ -524,139 +507,32 @@ class ServiceHistoryPage(QWidget):
 
 # ---- Workers ----
 
-# Service history DIDs extracted from NBT.PRG via BimmerDaten disassembly.
-# Reference: docs/12-service-history-wire-format.md
-_SERVICE_HISTORY_ADD_DID = 0xA081
-_SERVICE_HISTORY_ERASE_DID = 0xA080
-
-# Item code mapping from AddServiceDialog.SERVICE_ITEMS
-_ITEM_CODES: dict[str, int] = {
-    "Engine oil change": 0x01,
-    "Oil filter": 0x04,
-    "Cabin filter / microfilter": 0x04,
-    "Engine air filter": 0x0B,
-    "Spark plugs": 0x0A,
-    "Front brake pads": 0x02,
-    "Rear brake pads": 0x06,
-    "Brake fluid": 0x03,
-    "Vehicle check (standard)": 0x64,
-    "Coolant": 0x12,
-    "Transmission fluid": 0x23,
-}
-
-
-def _build_service_args(entry: dict) -> str:
-    """Build the argument string for service history write.
-
-    Format (docs/12:16): Day;Month;Year;CorrCnt;Km;Flag;Dealer;Status;Count;Code;Status;Dist;Time;...
-
-    Args:
-        entry: Dict from AddServiceDialog.get_data() with date, mileage_km, dealer, items.
-
-    Returns:
-        Semicolon-delimited argument string.
-    """
-    date_str = entry.get("date", "")
-    # Parse yyyy-mm-dd
-    try:
-        parts = date_str.split("-")
-        day = int(parts[2]) if len(parts) > 2 else 1
-        month = int(parts[1]) if len(parts) > 1 else 1
-        year = int(parts[0]) if len(parts) > 0 else 2026
-    except (ValueError, IndexError):
-        day, month, year = 1, 1, 2026
-
-    km = entry.get("mileage_km", 0)
-    dealer = (entry.get("dealer") or "Independent").replace(";", ",")
-    dealer = dealer.encode("ascii", errors="replace").decode("ascii")
-    items = entry.get("items", [])
-
-    args = f"{day};{month};{year};0;{km};0;{dealer};0x1;{len(items)};"
-    for label in items:
-        code = _ITEM_CODES.get(label, 0x01)
-        args += f"{code};0x1;0;0;"
-    return args
-
 
 class ServiceHistoryReadWorker(CarWorker):
-    """Reserved for a separately evidenced, read-only headunit history contract."""
+    """Reserved for a recovered, read-only headunit history contract."""
 
     def do_work(self) -> list[dict]:
-        """Fail closed without sending the former unverified add-routine request."""
-        raise NotImplementedError("Vehicle service-history reading is not verified yet")
+        """Do not send the old unverified add routine as a read."""
+        raise PermissionError("Vehicle service-history reading is not recovered")
 
 
 class ServiceHistoryWriteWorker(CarWorker):
-    """Write a service entry to headunit via UDS 0x2E WriteDataByIdentifier.
-
-    T-6: Uses 0x2E (corrected per docs/12:181-186).
-    STEUERN jobs use WriteDataByIdentifier, not RoutineControl.
-    """
-
-    HEADUNIT_ADDR = 0x63
+    """Reserved for journal-backed append or explicit replacement (workflow28)."""
 
     def __init__(self, connection: Any, entry_or_entries: dict | list[dict]) -> None:
-        """Build the service-history page with separate displayed and pending entries."""
         super().__init__(connection)
-        if isinstance(entry_or_entries, list):
-            self.entries = entry_or_entries
-        else:
-            self.entries = [entry_or_entries]
+        self.entries = entry_or_entries
 
     def do_work(self) -> bool:
-        # Extended session
-        self.connection.send_uds(self.HEADUNIT_ADDR, bytes([0x10, 0x03]))
-        for entry in self.entries:
-            self.progress.emit(f"Writing service entry ({entry.get('date', '?')})...")
-            args = _build_service_args(entry)
-            did_high = (_SERVICE_HISTORY_ADD_DID >> 8) & 0xFF
-            did_low = _SERVICE_HISTORY_ADD_DID & 0xFF
-            payload = bytes([0x2E, did_high, did_low]) + args.encode("ascii")
-            resp = self.connection.send_uds(self.HEADUNIT_ADDR, payload)
-            if resp[0] == 0x6E:
-                continue
-            if resp[0] == 0x7F:
-                nrc = resp[2] if len(resp) > 2 else 0
-                raise ConnectionError(f"Headunit rejected write: NRC 0x{nrc:02X}")
-            raise ConnectionError(f"Unexpected response: 0x{resp[0]:02X}")
-        return True
+        """Reject the former guessed ASCII/DID encoder at the worker boundary."""
+        raise PermissionError(
+            "History writes require an implemented local journal and supported execution contract"
+        )
 
 
 class ServiceHistoryEraseWorker(CarWorker):
-    """Erase entire service history via UDS 0x2E with DID 0xA080.
-
-    T-8: No arguments needed — just the DID.
-    """
-
-    HEADUNIT_ADDR = 0x63
+    """Standalone history erase is outside the append/replacement product scope."""
 
     def do_work(self) -> bool:
-        self.connection.send_uds(self.HEADUNIT_ADDR, bytes([0x10, 0x03]))
-        did_high = (_SERVICE_HISTORY_ERASE_DID >> 8) & 0xFF
-        did_low = _SERVICE_HISTORY_ERASE_DID & 0xFF
-        resp = self.connection.send_uds(
-            self.HEADUNIT_ADDR,
-            bytes([0x2E, did_high, did_low]),
-        )
-        if resp[0] == 0x6E:
-            return True
-        if resp[0] == 0x7F:
-            nrc = resp[2] if len(resp) > 2 else 0
-            raise ConnectionError(f"Erase rejected: NRC 0x{nrc:02X}")
-        raise ConnectionError(f"Unexpected erase response: 0x{resp[0]:02X}")
-
-
-def _parse_service_record(data: bytes) -> dict | None:
-    """Parse a binary service record into a dict. Best-effort ASCII extraction."""
-    try:
-        text = data.decode("ascii", errors="ignore").strip("\x00")
-        parts = text.split(";")
-        if len(parts) >= 2:
-            return {
-                "date": parts[0].strip(),
-                "mileage_km": int(parts[1]) if parts[1].strip().isdigit() else 0,
-                "items": parts[2].split("|") if len(parts) > 2 else [],
-            }
-    except (ValueError, IndexError):
-        pass
-    return None
+        """Never send the former unverified erase DID."""
+        raise PermissionError("Vehicle history erase is unavailable")

@@ -19,6 +19,22 @@
    recovery (`tasks/rea-protocol-recovery.md`, spec 26). Source/tool/evidence
    routing is `docs/27-rea-source-guide.md`. REA is now connected; earlier
    missing-engine observations are historical. Do not repeat setup blindly.
+6. D-57 requires broad source-supported F/G/U/I implementation; only the owner's
+   F48/NBT is available for physical tests. Do not make other cars a development
+   dependency or stop at that variant. Keep physical observations separate.
+   `tasks/task-b-next-development.md` owns continuation after the owner merges
+   PR13: verify merge, fetch origin, then create a fresh branch from origin/main.
+
+The 2026-10-29 owner interview (docs 21/26, D-21–D-49) supersedes older
+conflicting behavior requirements, including universal immediate readback.
+Current milestone: functional personal Mac Python-source use; packages/signing
+and Windows validation are later. D-29 uses contract-specific application/cycle
+completion, D-28/D-30 forbid write Cancel and block disruptive app actions, and
+D-39 removes history odometer validation. D-50–D-55 now retire history reading,
+require local JSON only and sourced service types/multi-item cards, and permit
+ADD-only append or explicit erase-and-replace with an honest local journal.
+See docs/28-service-history-workflow.md; old complete car-history baseline/
+readback prerequisites do not apply to history. Coding requirements remain.
 
 The 2026-10-28 audit overrides older completion labels and contradictory protocol
 examples. Historical REA notes are evidence candidates, not authoritative wire
@@ -27,6 +43,18 @@ product decisions that remain unclear. Do not infer vehicle support from year
 or chassis letter alone. The first retained session establishes HSFZ/VIN on the
 owner's setup, with failed optional reads and incomplete DTC coverage; see
 `docs/23-first-vehicle-session.md` and `tasks/rea-protocol-recovery.md`.
+
+## Fundamental implementation rule — source recovery
+
+The owner reaffirmed on 2026-10-29 that this project reconstructs behavior from
+software in `sources/` using REA. Recover and reuse the classes, encrypted and
+decrypted data, databases, request engines and variant selection paths; do not
+replace that investigation with guessed constants or an F48-only implementation.
+Aim for the full F/G/U/I ENET coverage represented by the supplied artifacts.
+Trace each enabled branch to the exact artifact and decoder. Source breadth is
+not a claim that every BMW/ECU/software combination has been physically tested.
+Proceed unattended through implementation, independent review, corrections,
+verification and a PR; unresolved facts are research work, not owner questions.
 
 ## Project identity
 
@@ -266,19 +294,25 @@ pyinstaller --onefile --windowed --name "BMW Self Service" \
 ## Key constraints
 
 - **No admin/root for diagnostics.** Only initial ENET interface config + DHCP server need elevation.
+- **REA is development-only.** Use it to recover behavior/data and implement
+  standalone Python contracts. No research tools, source executables, providers
+  or runtime REA service may be required by the app or included in its bundle.
 - **Offline capable.** All databases embedded in the binary. No internet beyond ENET cable.
 - **ENET cable only.** No Bluetooth, no WiFi OBD adapters, no K+DCAN.
 - **F/G/U/I-series only (2011+).** No E-series.
 - Static database support/security flags do not establish that an ECU is safe or
   writable on a particular car. Exact variant, software, authorization and
   verified write/readback behavior are required; the old 117/139 claim is unverified.
-- **Coding/history write screens save a backup first; all mutations require readback.**
-  Preserve original, intended and observed state separately. This includes
-  service history and both coding modes. The owner explicitly exempts fault
-  clearing from saved backups/reports. Cleared DTC memory cannot be promised
-  restorable.
-- Never report a write as successful based only on an ACK or a positive response.
-  Resolve uncertain/partial outcomes before proposing retry or rollback.
+- **Coding saves a complete vehicle baseline; history saves local state/intent.**
+  D-50–D-55 retire history reads: prior car history is unavailable, never a dummy
+  baseline or a guaranteed restorable backup. Preserve local JSON/requests/results
+  before history writes; explicit replacement warns of irreversible missing data.
+  No .bmwsh/.tst adapters or reader/probe pursuit. Coding retains original ECU
+  data/restore checks. Fault clearing stays exempt from saved backups/reports.
+- A transport ACK alone is insufficient. Under D-29, checked final application
+  responses can establish response-confirmed completion where immediate readback
+  is not meaningful; distinguish it from observed verification and give required
+  cycle instructions. Resolve uncertain/partial outcomes before retry/rollback.
 
 ## GitHub CLI (pushing to this repo)
 

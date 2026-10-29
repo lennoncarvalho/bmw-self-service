@@ -10,6 +10,10 @@ gateway-only ([diagnosis](docs/23-first-vehicle-session.md)). Live history/codin
 remain unavailable; writes and rollback are not production validated.
 Next development is split into [library migration](tasks/protocol-library-migration.md)
 and [REA feature recovery](tasks/rea-protocol-recovery.md), with separate specs.
+History is planned as local JSON/cards with ADD-only append or explicit erase-
+and-replace; vehicle history reading is retired. See
+[the workflow](docs/28-service-history-workflow.md). Current live history workers
+remain disabled until that execution/journal work is implemented.
 Use [the session handoff](SESSION-PROMPT.md) and [source guide](docs/27-rea-source-guide.md).
 Start with [the documentation index](docs/README.md),
 [readiness audit](docs/19-audit-and-readiness.md) and
@@ -58,7 +62,9 @@ python3 main.py
 
 > This is the existing UI flow, not a validated connection procedure. Capture
 > fresh debug logs for the next read-only validation. Do not use real-car
-> coding/history actions before resolving the write/readback blockers in the audit.
+> coding actions before their baseline/restore gates are met, or history actions
+> before the mode/journal/result gates in [workflow28](docs/28-service-history-workflow.md)
+> are implemented and reviewed. History reading is no longer a prerequisite.
 
 ### DEMO mode
 

@@ -7,7 +7,7 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 import logging
 from collections.abc import Callable
 from threading import Event
-from typing import Any, cast
+from typing import Any
 
 from PySide6.QtCore import QSize, Qt, QThread, QTimer, Slot
 from PySide6.QtGui import QAction, QCloseEvent, QIcon
@@ -30,7 +30,6 @@ from PySide6.QtWidgets import (
 from app.connection import DoIPConnection, HSFZConnection
 from app.mock_connection import MockConnection
 from app.resources import resource_path
-from app.uds import UdsServices
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
@@ -74,9 +73,12 @@ class MainWindow(QMainWindow):
         self._worker: ConnectWorker | None = None
         self._post_connect_worker: PostConnectWorker | None = None
         self._post_connect_context: tuple[object, str, str] | None = None
+        self._overview_refresh = False
+        self._overview_identity = ("", "")
         self._keepalive_worker: ProtocolWorker | None = None
         self._retired_workers: list[QThread] = []
         self._closing = False
+        self._mutation_active = False
         self._worker_reap_timer = QTimer(self)
         self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
@@ -98,9 +100,13 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.welcome_page)
 
         self.vehicle_page = VehiclePage()
+        self.vehicle_page.refresh_requested.connect(self._refresh_overview)
         self.stack.addWidget(self.vehicle_page)
 
         self.diag_page = DiagnosticsPage()
+        self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
+        self.diag_page.mutation_active.connect(self._set_mutation_active)
+        self.diag_page.can_mutate = self._can_start_mutation
         self.stack.addWidget(self.diag_page)
 
         self.coding_page = CodingPage()
@@ -235,10 +241,12 @@ class MainWindow(QMainWindow):
 
     def _show_spinner_cancel(self) -> None:
         """G-13: Show cancel button after 10s."""
-        self._cancel_btn.setVisible(True)
+        self._cancel_btn.setVisible(not self._mutation_active)
 
     def _show_retry_dialog(self) -> None:
         """G-13: Show retry dialog after 30s timeout."""
+        if self._mutation_active:
+            return
         self.hide_spinner()
         reply = QMessageBox.question(
             self,
@@ -282,6 +290,8 @@ class MainWindow(QMainWindow):
     # ---- Gear menu ----
 
     def _show_gear_menu(self) -> None:
+        if self._mutation_active:
+            return
         menu = QMenu(self)
 
         self._demo_action = QAction("Enable DEMO Mode", self)
@@ -336,7 +346,11 @@ class MainWindow(QMainWindow):
             getattr(self._connection, "trace_id", "demo/disconnected"),
             self._read_only,
         )
-        self.stack.setCurrentIndex(index + 1)
+        if not self._mutation_active:
+            self.stack.setCurrentIndex(index + 1)
+            page = self.stack.currentWidget()
+            if page in (self.diag_page, self.coding_page):
+                page.activate()
 
     # ---- Connection flow ----
 
@@ -365,10 +379,7 @@ class MainWindow(QMainWindow):
     def _connect_real(self, series: str, interface: str) -> None:
         """Discover and identify the vehicle using a cancellable background connection attempt."""
         logger.info(
-            "Connecting: series=%s interface=%s proto=%s",
-            series,
-            interface,
-            {chr(70): "HSFZ", chr(71): "DoIP", chr(85): "DoIP", chr(73): "DoIP"}.get(series, "?"),
+            "Connecting: chassis_hint=%s interface=%s; transport from discovery", series, interface
         )
         self.show_spinner(f"Searching for vehicle on {interface}...")
         read_only = self._read_only
@@ -400,18 +411,40 @@ class MainWindow(QMainWindow):
                         OperationContext(conn.trace_id, setup.deadline, cancelled=cancelled)
                     )
 
-                def identify(services: UdsServices, active: OperationContext) -> bytes:
-                    services.change_session(3, active)
-                    return services.read_data_by_identifier(0xF190, active)
-
-                resp = conn.run_operation(
-                    conn.entity,
-                    identify,
-                    context=OperationContext(conn.trace_id, setup.deadline, cancelled=cancelled),
+                # Keep the retained gateway VIN path; the recovered source also
+                # identifies through the body controller. Only final rejections
+                # allow the alternate endpoint on the same healthy stream.
+                vin = ""
+                endpoints = (
+                    (conn.entity, 0x40) if isinstance(conn, HSFZConnection) else (conn.entity,)
                 )
-                vin = resp[3:].decode("ascii")
-                if vin != info["vin"]:
+                for endpoint in dict.fromkeys(endpoints):
+                    outcome = conn.request(
+                        endpoint,
+                        b"\x22\xf1\x90",
+                        context=OperationContext(
+                            conn.trace_id, setup.deadline, cancelled=cancelled
+                        ),
+                    )
+                    if outcome.failure is None and outcome.payload:
+                        vin = outcome.payload[3:].decode("ascii")
+                        if len(vin) == 17 and vin.isalnum() and vin != "0" * 17:
+                            break
+                        vin = ""
+                    elif outcome.failure is not None:
+                        from app.protocol.contracts import FailureKind
+
+                        if outcome.failure != FailureKind.NEGATIVE:
+                            break
+                if not conn.alive_ok:
+                    raise ConnectionError("Connection closed while identifying the vehicle")
+                if not vin:
+                    logger.warning(
+                        "Gateway connected but VIN unverified; limited troubleshooting only"
+                    )
+                elif info.get("vin") and vin != info["vin"]:
                     raise ConnectionError("Discovery and diagnostic vehicle identities differ")
+                conn.verified_vin = vin
                 return conn, vin
             except Exception:
                 conn.disconnect()
@@ -454,6 +487,9 @@ class MainWindow(QMainWindow):
         """Configure page capabilities before exposing navigation and loading optional data."""
         self._connection = connection
         self._connected = True
+        self._overview_identity = (vin, series)
+        self._overview_refresh = False
+        self.vehicle_page.reset()
         if not getattr(connection, "data", None):
             # Clear DEMO/default page state before navigation can expose it.
             # These live setters only display unavailable capabilities; no I/O.
@@ -491,6 +527,7 @@ class MainWindow(QMainWindow):
         # Mock mode: load data directly from MockConnection (no UDS needed)
         if hasattr(connection, "data") and connection.data:
             self.vehicle_page.load_data(connection, series)
+            self.vehicle_page.set_loading(False)
             ecus = connection.data.get("svt_ecus", [])
             self.diag_page.set_connection(connection, ecus)
             self.history_page.set_connection(connection)
@@ -499,9 +536,23 @@ class MainWindow(QMainWindow):
             logger.info("Connected successfully (demo=%s)", self._demo_mode)
             return
 
+        if not vin:
+            self.vehicle_page.populate({}, series, "Unverified")
+            self.hide_spinner()
+            for btn in self.nav_group.buttons():
+                btn.setEnabled(False)
+            self.stack.setCurrentWidget(self.vehicle_page)
+            QMessageBox.information(
+                self,
+                "Limited connection",
+                "The gateway responds, but the vehicle VIN could not be verified. Vehicle operations are unavailable. Check ignition, cable and the session log, then reconnect.",
+            )
+            return
+
         # Real car: start PostConnectWorker to read vehicle data
         # sequentially (with queue progress shown in spinner).
         self.show_spinner("Reading vehicle data...")
+        self.vehicle_page.set_loading(True)
         tasks = self._build_post_connect_tasks(vin)
         self._post_connect_worker = PostConnectWorker(connection, tasks)
         self._post_connect_context = (connection, vin, series)
@@ -524,6 +575,30 @@ class MainWindow(QMainWindow):
         self._retire_worker(worker)
         self._on_post_connect_finished(result, connection, vin, series)
 
+    @Slot()
+    def _refresh_overview(self) -> None:
+        """Refresh one settled overview without restarting other page operations."""
+        if (
+            self._connection is None
+            or self._closing
+            or self._mutation_active
+            or self._post_connect_worker is not None
+            or not getattr(self._connection, "alive_ok", True)
+        ):
+            return
+        if self._demo_mode:
+            self.vehicle_page.load_data(self._connection)
+            return
+        vin, series = self._overview_identity
+        self._overview_refresh = True
+        self.vehicle_page.set_loading(True)
+        self._post_connect_context = (self._connection, vin, series)
+        worker = PostConnectWorker(self._connection, self._build_post_connect_tasks(vin))
+        self._post_connect_worker = worker
+        worker.result_ready.connect(self._on_post_connect_result)
+        worker.error.connect(self._on_post_connect_worker_error)
+        worker.start()
+
     @Slot(str)
     def _on_post_connect_worker_error(self, message: str) -> None:
         worker = self.sender()
@@ -544,118 +619,9 @@ class MainWindow(QMainWindow):
         Fallback logic lives inside each task function.
         """
 
-        # -- I-Level (0xF18A from ZGW) ----------------------------------------
-        def _read_ilevel(conn):
-            resp = conn.send_uds(0x10, bytes([0x22, 0xF1, 0x8A]), timeout=5.0)
-            if resp[0] == 0x62:
-                try:
-                    value = resp[3:].decode("ascii").strip("\x00 ")
-                except UnicodeDecodeError as exc:
-                    raise ValueError("Vehicle software level has no verified text decoder") from exc
-                if not value or not value.isprintable():
-                    raise ValueError("Vehicle software level has no verified text decoder")
-                return value
-            raise ValueError(f"Unexpected response SID: 0x{resp[0]:02X}")
+        from app.vehicle import post_connect_tasks
 
-        # -- FA / Vehicle Order (0xF100 then 0xFC00 fallback) -----------------
-        def _read_fa(conn):
-            """Returns a dict with fa_xml, prod_date, type_code."""
-            import re as _re
-
-            fa_xml = ""
-            for fa_did in (0xF100, 0xFC00):
-                try:
-                    resp = conn.send_uds(
-                        0x10,
-                        bytes([0x22, (fa_did >> 8) & 0xFF, fa_did & 0xFF]),
-                        timeout=5.0,
-                    )
-                    if resp[0] == 0x62:
-                        fa_xml = resp[3:].decode("ascii", errors="ignore").strip("\x00 ")
-                        break
-                except Exception:
-                    pass
-
-            prod_date = ""
-            type_code = ""
-            if fa_xml:
-                m = _re.search(r"<ProductionDate>(\d{4})</ProductionDate>", fa_xml)
-                if m:
-                    pd = m.group(1)
-                    prod_date = f"20{pd[2:]}-{pd[:2]}"
-                tc = _re.search(r"<TypeCode>(\w+)</TypeCode>", fa_xml)
-                if tc:
-                    type_code = tc.group(1)
-
-            if not fa_xml:
-                raise ValueError("Vehicle order is unavailable: no supported response")
-            return {
-                "fa_xml": fa_xml,
-                "prod_date": prod_date,
-                "type_code": type_code,
-            }
-
-        # -- Mileage: try KOMBI 0x1A, then ZGW 0x22 0xF406 --------------------
-        def _read_mileage(conn):
-            # Primary: KOMBI (0x60) via 0x1A ReadDynamicallyDefineDataIdentifier
-            try:
-                resp = conn.send_uds(0x60, bytes([0x1A, 0x00]), timeout=5.0)
-                if resp[0] == 0x5A and len(resp) >= 5:
-                    mileage_raw = int.from_bytes(resp[3:7], "big")
-                    return f"{mileage_raw:,} km"
-            except Exception:
-                pass
-
-            # Fallback: ZGW via ReadDataByIdentifier 0xF406
-            resp = conn.send_uds(
-                0x10,
-                bytes([0x22, 0xF4, 0x06]),
-                timeout=5.0,
-            )
-            if resp[0] == 0x62 and len(resp) >= 7:
-                mileage_raw = int.from_bytes(resp[3:7], "big")
-                # BMW encodes mileage in 10s of km
-                mileage_val = mileage_raw // 10
-                return f"{mileage_val:,} km"
-            raise ValueError(f"Could not read mileage (resp SID: 0x{resp[0]:02X})")
-
-        # -- Battery voltage: try DME (0x12), then ZGW (0x10) -----------------
-        def _read_battery(conn):
-            for ecu in (0x12, 0x10):
-                try:
-                    resp = conn.send_uds(
-                        ecu,
-                        bytes([0x22, 0xF4, 0x0C]),
-                        timeout=5.0,
-                    )
-                    if resp[0] == 0x62 and len(resp) >= 5:
-                        voltage_raw = int.from_bytes(resp[3:5], "big")
-                        return f"{voltage_raw / 10.0:.1f}V"
-                except Exception:
-                    continue
-            raise ValueError("Could not read battery voltage from any ECU")
-
-        # -- SVT ECU list (0xF000 from ZGW) -----------------------------------
-        def _read_svt(conn):
-            resp = conn.send_uds(
-                0x10,
-                bytes([0x22, 0xF0, 0x00]),
-                timeout=10.0,
-            )
-            if resp[0] == 0x62:
-                from ui.vehicle_page import _parse_svt_response
-
-                return _parse_svt_response(resp)
-            raise ValueError(f"Unexpected SVT response SID: 0x{resp[0]:02X}")
-
-        tasks: list[tuple[str, object]] = [
-            ("I-Level", _read_ilevel),
-            ("Vehicle Order (FA)", _read_fa),
-            ("Mileage", _read_mileage),
-            ("Battery voltage", _read_battery),
-            ("ECU list", _read_svt),
-        ]
-        return cast("list[tuple[str, Callable[[Any], object]]]", tasks)
+        return post_connect_tasks()
 
     @Slot(object)
     def _on_post_connect_finished(
@@ -673,9 +639,27 @@ class MainWindow(QMainWindow):
         """
         if self._connection is not connection:
             return  # connection changed, results are stale
+        if self._closing or not getattr(connection, "alive_ok", True):
+            self.vehicle_page.invalidate("Connection lost — reconnect before refreshing")
+            self.vehicle_page.set_loading(False)
+            self.vehicle_page.refresh_button.setEnabled(False)
+            self._overview_refresh = False
+            return
 
         results: dict = result.get("results", {})
         errors: dict = result.get("errors", {})
+        if "mil" in errors:
+            results["mil"] = {
+                "on": None,
+                "detail": "MIL could not be read — check ignition, connection and session log",
+            }
+        config = getattr(connection, "config", None)
+        kind = getattr(connection, "kind", "Unknown transport")
+        results["connection_info"] = (
+            f"Transport: {getattr(kind, 'value', kind)} · Gateway: "
+            f"{getattr(config, 'host', 'Unavailable')} · Local interface: "
+            f"{getattr(config, 'local_ipv4', None) or 'Unavailable'}"
+        )
 
         # Extract sub-results from FA dict
         fa_data = results.get("vehicle_order_(fa)")
@@ -686,6 +670,10 @@ class MainWindow(QMainWindow):
 
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
+        self.vehicle_page.set_loading(False)
+        if self._overview_refresh:
+            self._overview_refresh = False
+            return
 
         # Report any errors with a single friendly dialog
         if errors:
@@ -708,7 +696,11 @@ class MainWindow(QMainWindow):
                 "Other features remain available.",
             )
 
-        if self._connection is not connection or self._closing:
+        if (
+            self._connection is not connection
+            or self._closing
+            or not getattr(connection, "alive_ok", True)
+        ):
             return  # A modal message can deliver disconnect/reconnect events.
 
         # Now start secondary workers (DTC read, service history, coding).
@@ -732,6 +724,13 @@ class MainWindow(QMainWindow):
         if connection is not None and self._connection is not connection:
             return  # connection changed, error is stale
         self.hide_spinner()
+        self.vehicle_page.invalidate("Overview read failed — refresh or reconnect")
+        self.vehicle_page.set_loading(False)
+        if self._closing or not getattr(connection, "alive_ok", True):
+            self.vehicle_page.refresh_button.setEnabled(False)
+        if self._overview_refresh:
+            self._overview_refresh = False
+            return
         QMessageBox.warning(
             self,
             "Data Load Failed",
@@ -772,6 +771,11 @@ class MainWindow(QMainWindow):
 
         Reference: docs/16-ui-spec.md error matrix (line 578).
         """
+        self.vehicle_page.invalidate("Connection lost")
+        self.vehicle_page.refresh_button.setEnabled(False)
+        if self._mutation_active:
+            logger.warning("Connection lost during mutation; waiting for explicit outcomes")
+            return
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Connection lost")
         self._stop_keepalive()
@@ -800,6 +804,7 @@ class MainWindow(QMainWindow):
             self._retire_worker(worker)
 
     def _retire_worker(self, worker: QThread) -> None:
+        worker.setProperty("retired_by_main", True)
         if isinstance(worker, (ProtocolWorker, ConnectWorker)):
             worker.stop()
         else:
@@ -863,6 +868,9 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Keep worker objects alive while cooperative shutdown completes."""
+        if self._mutation_active:
+            event.ignore()
+            return
         if not self._closing:
             self._closing = True
             self._on_disconnect()
@@ -884,6 +892,11 @@ class MainWindow(QMainWindow):
     # ---- Disconnect ----
 
     def _on_disconnect(self) -> None:
+        if self._mutation_active:
+            return
+        self.vehicle_page.reset()
+        self._overview_identity = ("", "")
+        self._overview_refresh = False
         logger.info("Disconnecting from vehicle...")
         self._stop_keepalive()
         for worker in (self._worker, self._post_connect_worker):
@@ -941,6 +954,37 @@ class MainWindow(QMainWindow):
             "This tool is not affiliated with BMW AG.\n"
             "Use at your own risk.",
         )
+
+    def _can_start_mutation(self) -> bool:
+        """Only commit after background page reads have settled."""
+        worker = self._post_connect_worker
+        return (
+            not self._mutation_active
+            and not self.coding_page.is_reading()
+            and (worker is None or not worker.isRunning())
+        )
+
+    @Slot(bool)
+    def _set_mutation_active(self, active: bool) -> None:
+        """Keep the GUI responsive while blocking disruptive app actions."""
+        self._mutation_active = active
+        self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
+        if active:
+            self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
+        elif self._connected:
+            QTimer.singleShot(0, self._refresh_overview)
+        for btn in self.nav_group.buttons():
+            btn.setEnabled(self._connected and not active)
+        self._cancel_btn.setVisible(False)
+        if (
+            not active
+            and self._connection is not None
+            and not getattr(self._connection, "alive_ok", True)
+        ):
+            QTimer.singleShot(0, self._on_connection_lost)
+        if active:
+            self._spinner_cancel_timer.stop()
+            self._spinner_retry_timer.stop()
 
     # ---- Public API ----
 

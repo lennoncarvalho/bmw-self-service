@@ -1,5 +1,10 @@
 # Initial audit and readiness findings
 
+Later owner scopeD-50–D-55 retires history reading and full old-car-history backup
+requirements; [workflow28](28-service-history-workflow.md) governs JSON-only local
+records, append and explicit replacement. Findings below remain the historical
+audit; they do not reinstate the retired reader gate or loosen coding backups.
+
 Date: 2026-10-28. Baseline: `129d181d5ab4ca770e89de59ecb5189e6f9643a6`,
 branch `fix/hsfz-ack-handling`, clean index/worktree before this audit.
 At the initial audit, [PR #8](https://github.com/lennoncarvalho/bmw-self-service/pull/8)

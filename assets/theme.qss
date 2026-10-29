@@ -368,3 +368,15 @@ QDateEdit {
     padding: 8px 12px;
     min-height: 24px;
 }
+/* Connection overview: color always accompanies an explicit MIL label. */
+QLabel#milStatus {
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    background: #242430;
+    color: #a0a0a0;
+}
+QLabel#milStatus[milState="on"] { color: #ff6666; background: #382020; }
+QLabel#milStatus[milState="off"] { color: #66cc88; background: #203328; }
+QLabel#overviewCaption { color: #a0a0a0; font-size: 12px; }

@@ -1,4 +1,4 @@
-"""Coding database — decrypt and query BimmerCode .enc files.
+"""Coding database — decrypt and query the embedded vehicle coding files.
 
 Loads the curated coding database from coding_data/ at startup.
 Each ECU has a root index (curated presets) and CAFD variants
@@ -19,14 +19,14 @@ from Crypto.Cipher import AES
 
 logger = logging.getLogger(__name__)
 
-# AES-256-CBC key and IV extracted from BimmerCode's ExternalLib
+# AES-128-CBC material for the embedded vehicle coding data
 # Reference: docs/08-encryption-key.md
 _KEY = bytes.fromhex("244326462948404D635166546A576E5A")
 _IV = bytes.fromhex("7639792442264529482B4D6251655468")
 
 
 def _decrypt_enc(filepath: str) -> bytes:
-    """Decrypt a BimmerCode .enc file. Returns decompressed plaintext bytes."""
+    """Decrypt an embedded coding file. Returns decompressed plaintext bytes."""
     with open(filepath, "rb") as f:
         encrypted = f.read()
     cipher = AES.new(_KEY, AES.MODE_CBC, _IV)
@@ -51,11 +51,11 @@ def _parse_strings(filepath: str) -> dict[str, str]:
 
 
 class CodingDatabase:
-    """Load and query the BimmerCode curated coding database.
+    """Load and query the curated vehicle coding database.
 
     Usage:
         db = CodingDatabase("coding_data")
-        db.load_ecu("000024C3", "008-004-002")  # FEM variant
+        db.load_ecu("000024C3", "008-004-002")  # Exact data variant
         presets = db.get_presets("000024C3")
         current = db.get_current_value(presets[0], cafd_bytes, "000024C3", "008-004-002")
     """
