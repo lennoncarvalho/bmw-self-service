@@ -256,6 +256,19 @@ class VehiclePage(QWidget):
             if isinstance(mil, dict)
             else "No verified read contract for this ECU"
         )
+        engine = results.get("engine_data")
+        speeds = [
+            item.get("value")
+            for item in (engine if isinstance(engine, list) else [])
+            if item.get("label") == "Engine speed"
+        ]
+        if self._mil_on is True and speeds == [0.0]:
+            # Owner F48 (DME_BX8), 2026-10-29: key-on with the engine stopped reported 1.
+            detail += (
+                "\nEngine not running (0 1/min): with the key on and the engine stopped the "
+                "lamp is normally lit as a bulb check. Start the engine and refresh to read "
+                "the running state."
+            )
         self._set_mil(self._mil_on, detail)
         self.mil_read_button.setVisible(
             isinstance(mil, dict) and mil.get("action") == "dynamic-block"
