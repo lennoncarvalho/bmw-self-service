@@ -5,7 +5,6 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 """
 
 import logging
-import time
 from collections.abc import Callable
 from threading import Event
 from typing import Any
@@ -33,7 +32,6 @@ from PySide6.QtWidgets import (
 
 from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
-from app.mil_block import MilBlockReadWorker
 from app.mock_connection import MockConnection
 from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
@@ -86,9 +84,6 @@ class MainWindow(QMainWindow):
         self._closing = False
         self._mutation_active = False
         self._overview_ecus: list[dict] = []
-        self._mil_worker: MilBlockReadWorker | None = None
-        # Last explicit dynamic-slot MIL observation; a refresh never repeats the sequence.
-        self._block_mil: tuple[object, dict] | None = None
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
         self._cbs_journal = CbsJournalStore()
         self._worker_reap_timer = QTimer(self)
@@ -113,7 +108,6 @@ class MainWindow(QMainWindow):
 
         self.vehicle_page = VehiclePage()
         self.vehicle_page.refresh_requested.connect(self._refresh_overview)
-        self.vehicle_page.mil_read_requested.connect(self._start_mil_block_read)
         self.vehicle_page.cbs_panel.read_requested.connect(self._start_cbs_read)
         self.vehicle_page.cbs_panel.reset_requested.connect(self._start_cbs_reset)
         self.stack.addWidget(self.vehicle_page)
@@ -676,19 +670,6 @@ class MainWindow(QMainWindow):
             }
         overview_ecus = results.get("ecu_list")
         self._overview_ecus = overview_ecus if isinstance(overview_ecus, list) else []
-        mil = results.get("mil")
-        if (
-            isinstance(mil, dict)
-            and mil.get("action") == "dynamic-block"
-            and self._block_mil is not None
-            and self._block_mil[0] is connection
-        ):
-            kept = {**self._block_mil[1], "action": "dynamic-block"}
-            if time.monotonic() - kept.get("observed_clock", -60.0) >= 60:
-                # A stale value is dropped, but a failure or cleanup warning stays visible.
-                kept.pop("observed_clock", None)
-                kept["on"] = None
-            results["mil"] = kept
         config = getattr(connection, "config", None)
         kind = getattr(connection, "kind", "Unknown transport")
         results["connection_info"] = (
@@ -699,11 +680,6 @@ class MainWindow(QMainWindow):
 
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
-        self.vehicle_page.mil_read_button.setEnabled(
-            not self._read_only
-            and not getattr(connection, "read_only", False)
-            and not self._mutation_active
-        )
         self.vehicle_page.set_loading(False)
         if self._overview_refresh:
             self._overview_refresh = False
@@ -936,7 +912,6 @@ class MainWindow(QMainWindow):
         if self._mutation_active:
             return
         self.vehicle_page.reset()
-        self._block_mil = None
         self._overview_ecus = []
         if self._cbs_worker is not None:
             self._retire_worker(self._cbs_worker)
@@ -1008,89 +983,11 @@ class MainWindow(QMainWindow):
         return (
             not self._mutation_active
             and self._cbs_worker is None
-            and self._mil_worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
             and not self.coding_page.is_reading()
             and (worker is None or not worker.isRunning())
         )
-
-    @Slot()
-    def _start_mil_block_read(self) -> None:
-        """Run the confirmed dynamic-slot MIL sequence under the global lockout."""
-        connection = self._connection
-        if self._read_only or getattr(connection, "read_only", False):
-            QMessageBox.information(
-                self,
-                "Read-Only Session",
-                "This MIL read temporarily changes engine diagnostic configuration "
-                "and is disabled in read-only mode.",
-            )
-            return
-        if (
-            connection is None
-            or self._demo_mode
-            or self._mil_worker is not None
-            or not getattr(connection, "alive_ok", False)
-            or not self._can_start_mutation()
-        ):
-            QMessageBox.information(
-                self,
-                "MIL Read Unavailable",
-                "Wait for the current vehicle operation to finish, then retry.",
-            )
-            return
-        answer = QMessageBox.question(
-            self,
-            "Read MIL from Engine",
-            "This engine reports its MIL condition only through a temporary diagnostic "
-            "data slot (F303). The app will clear the slot, define it from the MIL "
-            "condition, read it once and clear it again.\n\n"
-            "No coding or service data is changed. Other vehicle actions are blocked "
-            "for the few seconds this takes.\n\nContinue?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
-            QMessageBox.StandardButton.Cancel,
-        )
-        if (
-            answer != QMessageBox.StandardButton.Yes
-            or connection is not self._connection
-            or self._mil_worker is not None
-            or not getattr(connection, "alive_ok", False)
-            or not self._can_start_mutation()
-        ):
-            return
-        worker = MilBlockReadWorker(connection, self._overview_ecus)
-        self._mil_worker = worker
-        self._set_mutation_active(True)
-        worker.result_ready.connect(self._on_mil_block_result)
-        worker.error.connect(self._on_mil_block_error)
-        worker.finished.connect(self._on_mil_block_finished)
-        worker.start()
-
-    @Slot(object)
-    def _on_mil_block_result(self, result: dict) -> None:
-        worker = self.sender()
-        if worker is not self._mil_worker or self._connection is not worker.connection:
-            return
-        self._block_mil = (worker.connection, result)
-        self.vehicle_page.show_mil_result(result)
-        if result.get("cleanup") not in ("accepted", "not-needed"):
-            QMessageBox.warning(self, "Engine Data Slot Not Cleared", str(result.get("detail")))
-
-    @Slot(str)
-    def _on_mil_block_error(self, message: str) -> None:
-        if self.sender() is self._mil_worker:
-            self.vehicle_page.show_mil_result({"on": None, "detail": message})
-
-    @Slot()
-    def _on_mil_block_finished(self) -> None:
-        worker = self.sender()
-        if worker is not self._mil_worker:
-            return
-        self._mil_worker = None
-        assert isinstance(worker, QThread)
-        self._retire_worker(worker)
-        self._set_mutation_active(False)
 
     @Slot()
     def _start_cbs_read(self) -> None:
@@ -1246,9 +1143,6 @@ class MainWindow(QMainWindow):
         self._mutation_active = active
         self.history_page.setEnabled(not active)
         self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
-        self.vehicle_page.mil_read_button.setEnabled(
-            self._connected and not active and not self._read_only
-        )
         self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")

@@ -46,10 +46,9 @@ Gateway `22 3F07` announced 19 ECUs; every `22 F150` matched an exact catalogue 
    MIL lamp on"), while DME `19 02 0C` returned no pending/confirmed records and
    `22 402B` decoded ≈12.0 V. **Owner confirmed 2026-10-30: engine off,
    ignition/key on** during this session. `B_mil = 1` is therefore consistent
-   with the key-on bulb check, not with a stored emissions fault. The overview
-   now adds that context only when the MIL condition is ON and the exact engine
-   speed measurement reads 0 1/min; it never infers MIL from fault counts.
-   A running-engine observation is still pending.
+   with the key-on bulb check, not with a stored emissions fault. Under owner
+   decision D-59 the indicator now follows engine fault memory instead: this
+   session's DME `59 02 FF` (no records) shows OFF.
 4. Supply voltage: `402B` 31-byte layout decoded on both reads (≈12.0 V).
 5. `19 15` is rejected with `7F 19 12` on 17 of 19 ECUs; DME and DSC answer
    `59 15 FF` with no records. `0x40` and `0x29` used `7F xx 78` before final

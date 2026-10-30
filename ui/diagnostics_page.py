@@ -471,13 +471,13 @@ class DiagnosticsPage(QWidget):
 
     @Slot(object, str)
     def set_mil_observation(self, on: object, detail: str) -> None:
-        """Mirror the independent overview observation, never infer from fault count."""
+        """Mirror the overview's engine fault-memory indicator (D-59)."""
         state = "on" if on is True else "off" if on is False else "unknown"
         text = "ON" if on is True else "OFF" if on is False else "Unavailable"
         self._mil_indicator.setText("")
         self._mil_label.setObjectName("milStatus")
         self._mil_label.setStyleSheet("")
-        self._mil_label.setText(f"Emissions MIL: {text} · {detail}")
+        self._mil_label.setText(f"Check engine (MIL): {text} · {detail}")
         self._mil_label.setWordWrap(True)
         self._mil_label.setTextFormat(Qt.TextFormat.PlainText)
         self._mil_label.setProperty("milState", state)
@@ -489,18 +489,11 @@ class DiagnosticsPage(QWidget):
 
 
 def _decode_dtc_status(status: int) -> str:
-    """Decode a UDS DTC status byte into human-readable text."""
-    labels = (
-        "Test failed",
-        "Test failed this cycle",
-        "Pending",
-        "Confirmed",
-        "Test not completed since last clear",
-        "Test failed since last clear",
-        "Test not completed this cycle",
-        "Warning indicator requested",
-    )
-    return (
-        ", ".join(label for bit, label in enumerate(labels) if status & (1 << bit))
-        or "No status bits set"
-    )
+    """Present a UDS status byte as ISTA does: present, stored (confirmed) or not confirmed."""
+    if status & 0x01:
+        state = "Present (active)"
+    elif status & 0x08:
+        state = "Stored, not present now (confirmed)"
+    else:
+        state = "Not confirmed"
+    return state + (" · warning lamp requested" if status & 0x80 else "")

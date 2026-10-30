@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from udsoncan import DidCodec, DynamicDidDefinition, Request, Response
+from udsoncan import DidCodec, Request, Response
 from udsoncan.BaseService import BaseService
 from udsoncan.client import Client
 from udsoncan.exceptions import (
@@ -154,22 +154,6 @@ class UdsServices:
                 did = int.from_bytes(payload[1:3], "big")
                 self.client.config["data_identifiers"].setdefault(did, RawCodec)
                 response = self.client.write_data_by_identifier(did, payload[3:])
-            elif sid == 0x2C and len(payload) == 4 and payload[1] == 3:
-                response = self.client.clear_dynamically_defined_did(
-                    int.from_bytes(payload[2:], "big")
-                )
-            elif sid == 0x2C and payload[1:2] == b"\x01" and len(payload) in range(8, 260, 4):
-                # Define-by-identifier records are BE16 source DID, position, size.
-                definition = DynamicDidDefinition()
-                for offset in range(4, len(payload), 4):
-                    definition.add(
-                        source_did=int.from_bytes(payload[offset : offset + 2], "big"),
-                        position=payload[offset + 2],
-                        memorysize=payload[offset + 3],
-                    )
-                response = self.client.dynamically_define_did(
-                    int.from_bytes(payload[2:4], "big"), definition
-                )
             elif sid == 0x31 and len(payload) >= 4:
                 response = self.client.routine_control(
                     int.from_bytes(payload[2:4], "big"), payload[1], payload[4:]

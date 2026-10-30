@@ -14,80 +14,68 @@ from typing import Any, cast
 
 from app.protocol.contracts import TransportKind
 from app.resources import resource_path
+from app.uds import decode_dtc_records
 from app.vehicle_order import read_vehicle_order
 
 logger = logging.getLogger(__name__)
 
 
-def mil_contracts() -> dict[str, dict[str, Any]]:
-    """Load exact engine selection and read dispositions from embedded definitions."""
-    path = resource_path("coding_data/mil_contracts.json")
-    with path.open("rb") as stream:
-        raw = stream.read(65537)
-    if len(raw) > 65536:
-        raise ValueError("MIL definitions exceed their supported size")
-    data = json.loads(raw)
-    if data.get("schema") != 1 or not isinstance(data.get("engines"), dict):
-        raise ValueError("Unsupported MIL definition format")
-    if any(not isinstance(row, dict) for row in data["engines"].values()):
-        raise ValueError("Invalid MIL engine definition")
-    return cast(dict[str, dict[str, Any]], data["engines"])
+# D-59 (owner, 2026-10-30): the overview indicator follows engine fault memory, as
+# ISTA presents it, not the ECU's lamp command (which is lit at key-on, engine off).
+ENGINE_ADDRESSES = ("0x12", "0x13")
+ACTIVE = 0x01  # ISO 14229 testFailed: fault present now
+CONFIRMED = 0x08  # ISO 14229 confirmedDTC: fault stored as confirmed
 
 
-def decode_mil(response: bytes, did: int = 0x4A69) -> bool:
-    """Decode one exact scalar MIL condition; unknown request values stay unavailable."""
-    data = did_data(response, did)
-    if len(data) != 1 or data[0] not in (0, 1):
-        raise ValueError("Vehicle MIL response has an unsupported value or shape")
-    return data[0] == 1
+def fault_state(status: int) -> str:
+    """Summarize one DTC status byte the way ISTA presents a stored fault."""
+    if status & ACTIVE:
+        return "present"
+    if status & CONFIRMED:
+        return "stored"
+    return "not-confirmed"
 
 
-def select_mil_contract(ecus: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Return the unique identified engine and its exact definition, or explain why not."""
-    engines = [row for row in ecus if row.get("addr") == "0x12"]
-    if len(engines) != 1 or engines[0].get("identified") is not True:
-        raise LookupError("No unique identified engine for an emissions MIL read")
-    engine = engines[0]
-    contract = mil_contracts().get(engine.get("address_index", ""), {})
-    if contract.get("name") != engine.get("name"):
-        raise LookupError("No verified MIL read contract for the identified engine")
-    state = contract.get("state")
-    if state not in ("scalar-boolean", "dynamic-block"):
-        reasons = {
-            "missing-definition": "MIL engine definition is not present in the supplied data",
-            "no-direct-mil-row": "MIL direct-read mapping is not recovered for this engine",
-        }
-        raise LookupError(reasons.get(str(state), "MIL engine decoder is unavailable"))
-    did = contract.get("did")
-    if type(did) is not int or not 0 <= did <= 0xFFFF:
-        raise ValueError("Invalid MIL read definition")
-    return engine, contract
+def read_engine_faults(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
+    """Red when an engine ECU stores a present or confirmed fault (D-59).
 
-
-def read_mil(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
-    """Read an actual MIL condition only after an exact engine definition match.
-
-    Dynamic-slot engines need a confirmed, exclusive configuration sequence
-    (app/mil_block.py); ordinary overview refresh never defines a DID.
+    Uses the same `19 02 0C` read as the fault scan. Green needs every responding
+    engine ECU read successfully; an unread engine leaves the indicator unavailable.
     """
-    if getattr(connection, "kind", None) != TransportKind.HSFZ:
-        return {"on": None, "detail": "MIL mapping for this transport is not yet implemented"}
-    try:
-        engine, contract = select_mil_contract(ecus)
-    except LookupError as exc:
-        return {"on": None, "detail": str(exc)}
-    did = contract["did"]
-    if contract["state"] == "dynamic-block":
-        return {
-            "on": None,
-            "detail": f"Engine {engine['name']} reports MIL only through a temporary data "
-            "definition — use Read MIL to run it",
-            "action": "dynamic-block",
-        }
-    on = decode_mil(connection.send_uds(0x12, b"\x22" + did.to_bytes(2, "big"), timeout=30.0), did)
+    engines = [
+        row
+        for row in ecus
+        if row.get("addr") in ENGINE_ADDRESSES
+        and row.get("identity_state", "identified") in ("identified", "unmatched-variant")
+    ]
+    if not engines:
+        return {"on": None, "detail": "Engine ECU not found in this session"}
+    counts = {"present": 0, "stored": 0, "not-confirmed": 0}
+    names = []
+    for row in engines:
+        name = str(row.get("name") or row["addr"])
+        names.append(name)
+        if not connection.alive_ok:
+            return {"on": None, "detail": f"Engine {name} fault memory was not read"}
+        response = connection.send_uds(int(row["addr"], 16), b"\x19\x02\x0c", timeout=30.0)
+        try:
+            records = decode_dtc_records(response)
+        except ValueError:
+            return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
+        for _code, status in records:
+            counts[fault_state(status)] += 1
+    serious = counts["present"] + counts["stored"]
+    parts = []
+    if counts["present"]:
+        parts.append(f"{counts['present']} present")
+    if counts["stored"]:
+        parts.append(f"{counts['stored']} confirmed, not present now")
+    if counts["not-confirmed"]:
+        parts.append(f"{counts['not-confirmed']} not confirmed")
+    summary = ", ".join(parts) or "no stored faults"
     return {
-        "on": on,
-        "detail": f"Engine {engine['name']} reports the MIL condition; not a physical lamp check",
+        "on": serious > 0,
+        "detail": f"Engine {' / '.join(names)}: {summary}",
         "observed_clock": time.monotonic(),
     }
 
@@ -391,7 +379,7 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
 
     return [
         ("ECU list", inventory),
-        ("MIL", lambda conn: read_mil(conn, ecus)),
+        ("MIL", lambda conn: read_engine_faults(conn, ecus)),
         ("Mileage", lambda conn: supported(conn, lambda active: read_odometer(active, ecus))),
         (
             "Engine data",

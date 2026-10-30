@@ -39,7 +39,7 @@ D-01–D-20 originated before this interview; D-21–D-55 were answered on
 | D-22 | If the gateway responds but VIN cannot be verified, offer limited troubleshooting with connection details/logs; vehicle-dependent operations remain disabled. |
 | D-23 | Avoid displaying partial data and filling it in later. Prefer independent page loading if feasible; publish each page's initial result together. One global loading state is an acceptable fallback. |
 | D-24 | Normal connection should match the reference experience: select chassis type and Ethernet adapter without manual configuration. App-assisted network setup is conditionally authorized if investigation establishes that it is beneficial and straightforward to implement. |
-| D-25 | Display emissions MIL On / Off / Unavailable separately from fault count, using a verified MIL read. After Clear All show the newly observed status even if it remains On. |
+| D-25 | *Superseded by D-59 for the indicator source.* Display MIL On / Off / Unavailable; after Clear All show the newly observed status even if it remains On. |
 | D-26 | Clear All remains available for identified, supported ECUs when scan coverage is incomplete; confirmation explicitly names coverage gaps. |
 | D-27 | Advanced coding continues with subsequent ECUs after a definite ECU-local write rejection on a healthy connection. Easy coding stops and reverts all changes in the operation on failure. Advanced mode remains later scope. |
 | D-28 | No user-facing Cancel during a write. The user commits definitively after warning/confirmation and accepts responsibility for keeping both vehicle and host device sufficiently powered throughout the operation. |
@@ -85,6 +85,17 @@ requires **JSON only**; the earlier proposed legacy-file adapters are withdrawn.
 [History workflow 28](28-service-history-workflow.md) makes these decisions
 concrete. No new product interview is required to remove the obsolete reader
 prerequisite; actual encoder/session/capacity/result facts still need evidence.
+
+## Engine fault indicator — D-59 (2026-10-30)
+
+Owner: faults are presented as ISTA does — present/active, or stored but not
+confirmed. The check-engine (MIL) indicator is red when the engine ECU has a
+present or confirmed fault; engine running or stopped must not change it. The
+indicator therefore follows engine fault memory (`19 02 0C` at 0x12/0x13: status
+bit 0 present or bit 3 confirmed), green only when every responding engine ECU
+was read with neither, grey when not read. The ECU lamp command (4A69/F303,
+lit at key-on with the engine off) is no longer read or shown. Fault rows use
+present / stored (confirmed) / not confirmed labels.
 
 ## Dashboard emphasis — D-56 (2026-10-29)
 
