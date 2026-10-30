@@ -1,0 +1,942 @@
+{
+  "engines": {
+    "D70BX7A0": [
+      {
+        "add": 0.0,
+        "did": 16896,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.389105,
+        "prg_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+        "signed": false,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": -3276.7,
+        "did": 17066,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 0.1,
+        "prg_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+        "signed": false,
+        "size": 2,
+        "unit": "C"
+      },
+      {
+        "add": 0.0,
+        "did": 19476,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.004578,
+        "prg_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22869,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.5,
+        "prg_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+        "signed": false,
+        "size": 2,
+        "unit": "rpm"
+      }
+    ],
+    "D72N47A0": [
+      {
+        "add": 0.0,
+        "did": 16896,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.389105,
+        "prg_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+        "signed": false,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": 0.0,
+        "did": 19476,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.004578,
+        "prg_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22869,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.5,
+        "prg_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+        "signed": false,
+        "size": 2,
+        "unit": "rpm"
+      }
+    ],
+    "D73N57A0": [
+      {
+        "add": 0.0,
+        "did": 16896,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.389105,
+        "prg_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+        "signed": false,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": 0.0,
+        "did": 19476,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.004578,
+        "prg_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22869,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.5,
+        "prg_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+        "signed": false,
+        "size": 2,
+        "unit": "rpm"
+      }
+    ],
+    "D73N57E0": [
+      {
+        "add": 0.0,
+        "did": 16896,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.389105,
+        "prg_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+        "signed": false,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": 0.0,
+        "did": 19476,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.004578,
+        "prg_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22869,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.5,
+        "prg_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+        "signed": false,
+        "size": 2,
+        "unit": "rpm"
+      }
+    ],
+    "D75BX7A0": [
+      {
+        "add": 0.0,
+        "did": 16896,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.389105,
+        "prg_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+        "signed": false,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": -3276.7,
+        "did": 17066,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 0.1,
+        "prg_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+        "signed": false,
+        "size": 2,
+        "unit": "C"
+      },
+      {
+        "add": 0.0,
+        "did": 19476,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.004578,
+        "prg_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22869,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.5,
+        "prg_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+        "signed": false,
+        "size": 2,
+        "unit": "rpm"
+      }
+    ],
+    "D83BX7C0": [
+      {
+        "add": 0.0,
+        "did": 16896,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.38910506,
+        "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+        "signed": false,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": -100.0,
+        "did": 17947,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.01,
+        "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+        "signed": false,
+        "size": 2,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18234,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.015625,
+        "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": -100.0,
+        "did": 19296,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 0.01,
+        "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+        "signed": false,
+        "size": 2,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -273.14,
+        "did": 20646,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.1,
+        "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+        "signed": false,
+        "size": 2,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 22869,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.5,
+        "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      }
+    ],
+    "D94BX7A0": [
+      {
+        "add": 0.0,
+        "did": 16974,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 20.0,
+        "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+        "signed": true,
+        "size": 2,
+        "unit": "mV"
+      },
+      {
+        "add": 0.0,
+        "did": 17506,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.01,
+        "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+        "signed": true,
+        "size": 2,
+        "unit": "km/h"
+      }
+    ],
+    "DME8FF_R": [
+      {
+        "add": -273.14,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.1,
+        "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+        "signed": true,
+        "size": 2,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 2.0,
+        "label": "Engine speed",
+        "mul": 1.0,
+        "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+        "signed": true,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.01,
+        "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+        "signed": true,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": -40.0,
+        "did": 21778,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.5,
+        "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "DME_BX8": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 65536.0,
+        "label": "Speed",
+        "mul": 512.0,
+        "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "MEVD172": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "MEVD1724": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "MEVD1725": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "MEVD172Y": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "MSD87_R0": [
+      {
+        "add": -47.99999857,
+        "did": 16900,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -47.99999857,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 17410,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 0.1,
+        "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+        "signed": true,
+        "size": 2,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 1.0,
+        "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.25600001,
+        "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      }
+    ],
+    "N63TU_R0": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "S55": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ],
+    "S63TU_R0": [
+      {
+        "add": -48.0,
+        "did": 17152,
+        "div": 1.0,
+        "label": "Coolant",
+        "mul": 0.75,
+        "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": 0.0,
+        "did": 18439,
+        "div": 1.0,
+        "label": "Engine speed",
+        "mul": 0.25,
+        "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+        "signed": false,
+        "size": 2,
+        "unit": "1/min"
+      },
+      {
+        "add": 0.0,
+        "did": 19121,
+        "div": 1.0,
+        "label": "Speed",
+        "mul": 0.0078125,
+        "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+        "signed": false,
+        "size": 2,
+        "unit": "km/h"
+      },
+      {
+        "add": 0.0,
+        "did": 22549,
+        "div": 1.0,
+        "label": "Battery",
+        "mul": 0.0942,
+        "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+        "signed": false,
+        "size": 1,
+        "unit": "V"
+      },
+      {
+        "add": -48.0,
+        "did": 22551,
+        "div": 1.0,
+        "label": "Ambient",
+        "mul": 0.75,
+        "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      },
+      {
+        "add": -60.0,
+        "did": 22562,
+        "div": 1.0,
+        "label": "Oil",
+        "mul": 1.0,
+        "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+        "signed": false,
+        "size": 1,
+        "unit": "\u00b0C"
+      }
+    ]
+  },
+  "schema": 1,
+  "source_sha256": "6ee2a245e42508efb6b67f69452dd0748781027dce8e8f8e0b18a86a7caa4d10"
+}

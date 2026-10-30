@@ -208,6 +208,49 @@ def read_odometer(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, obje
     return None
 
 
+def engine_measurements() -> dict[str, list[dict[str, Any]]]:
+    """Load exact engine measurement rows (scripts/recover_engine_measurements.py)."""
+    path = resource_path("coding_data/engine_measurements.json")
+    with path.open("rb") as stream:
+        raw = stream.read(262145)
+    if len(raw) > 262144:
+        raise ValueError("Engine measurement definitions exceed their supported size")
+    data = json.loads(raw)
+    if data.get("schema") != 1 or not isinstance(data.get("engines"), dict):
+        raise ValueError("Unsupported engine measurement format")
+    return cast(dict[str, list[dict[str, Any]]], data["engines"])
+
+
+def decode_measurement(response: bytes, row: dict[str, Any]) -> float:
+    """Decode one exact big-endian table value: raw x MUL / DIV + ADD."""
+    data = did_data(response, int(row["did"]))
+    if len(data) != row["size"]:
+        raise ValueError("Engine measurement has an unsupported shape")
+    raw = int.from_bytes(data, "big", signed=bool(row["signed"]))
+    return float(raw * row["mul"] / row["div"] + row["add"])
+
+
+def read_engine_data(connection: Any, ecus: list[dict[str, Any]]) -> list[dict[str, object]] | None:
+    """Read core engine values for an exactly identified definition; failures stay per item."""
+    engines = [row for row in ecus if row.get("addr") == "0x12" and row.get("identified") is True]
+    if len(engines) != 1:
+        return None
+    rows = engine_measurements().get(str(engines[0].get("name")))
+    if not rows:
+        return None
+    values: list[dict[str, object]] = []
+    for row in rows:
+        item: dict[str, object] = {"label": row["label"], "unit": row["unit"], "value": None}
+        if connection.alive_ok:
+            try:
+                response = connection.send_uds(0x12, b"\x22" + int(row["did"]).to_bytes(2, "big"))
+                item["value"] = decode_measurement(response, row)
+            except ValueError:
+                logger.warning("Engine measurement unavailable did=%04X", row["did"], exc_info=True)
+        values.append(item)
+    return values
+
+
 class DiagnosticCatalog:
     """Exact address/variant definitions and English fault descriptions."""
 
@@ -350,6 +393,10 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
         ("ECU list", inventory),
         ("MIL", lambda conn: read_mil(conn, ecus)),
         ("Mileage", lambda conn: supported(conn, lambda active: read_odometer(active, ecus))),
+        (
+            "Engine data",
+            lambda conn: supported(conn, lambda active: read_engine_data(active, ecus)),
+        ),
         ("Vehicle order", read_vehicle_order),
         (
             "I-Level",

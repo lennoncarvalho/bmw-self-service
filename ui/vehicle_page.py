@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from time import monotonic
 from typing import Any
 
-from PySide6.QtCore import QLocale, Qt, QTimer, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -18,6 +18,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ui.regional import regional_locale
 
 
 class VehiclePage(QWidget):
@@ -81,6 +83,7 @@ class VehiclePage(QWidget):
         self.order_label = QLabel()
         self.ilevel_label = QLabel()
         self.battery_label = QLabel()
+        self.engine_label = QLabel()
         for label in (
             self.model_label,
             self.vin_label,
@@ -90,6 +93,7 @@ class VehiclePage(QWidget):
             self.order_label,
             self.ilevel_label,
             self.battery_label,
+            self.engine_label,
         ):
             label.setWordWrap(True)
             label.setTextFormat(Qt.TextFormat.PlainText)
@@ -221,7 +225,7 @@ class VehiclePage(QWidget):
         )
         mileage = results.get("mileage")
         if isinstance(mileage, dict):
-            mileage = f"{QLocale.system().toString(int(mileage['km']))} km ({mileage['source']})"
+            mileage = f"{regional_locale().toString(int(mileage['km']))} km ({mileage['source']})"
         self.mileage_label.setText(f"Odometer: {mileage or 'Unavailable'}")
         self.prod_date_label.setText(f"Build date: {results.get('prod_date') or 'Unavailable'}")
         self.ilevel_label.setText(
@@ -230,6 +234,12 @@ class VehiclePage(QWidget):
         self.battery_label.setText(
             f"Supply voltage: {results.get('battery_voltage') or 'Unavailable'}"
         )
+        engine = results.get("engine_data")
+        self.engine_label.setVisible(isinstance(engine, list))
+        if isinstance(engine, list):
+            self.engine_label.setText(
+                "Engine: " + " · ".join(self._measurement(item) for item in engine)
+            )
         mil = results.get("mil")
         self._mil_on = mil.get("on") if isinstance(mil, dict) else None
         if type(self._mil_on) is not bool:
@@ -272,6 +282,19 @@ class VehiclePage(QWidget):
             self.order_label.setText("Vehicle order: unavailable")
         self._populate_order(order if isinstance(order, dict) else None)
         self._update_age()
+
+    @staticmethod
+    def _measurement(item: dict[str, Any]) -> str:
+        value, unit = item.get("value"), str(item.get("unit", ""))
+        if not isinstance(value, (int, float)):
+            return f"{item.get('label')} unavailable"
+        if unit == "mV":
+            value, unit = value / 1000, "V"
+        unit = {"C": "°C", "rpm": "1/min"}.get(unit, unit)
+        decimals = 0 if unit == "1/min" else 1
+        return (
+            f"{item.get('label')} {regional_locale().toString(float(value), 'f', decimals)} {unit}"
+        )
 
     def _set_mil(self, on: bool | None, detail: str) -> None:
         state = "on" if on is True else "off" if on is False else "unknown"

@@ -27,13 +27,9 @@ from PySide6.QtWidgets import (
 
 from app.service_history import SERVICE_TYPES
 from app.worker import CarWorker
+from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
-
-
-def _regional_locale() -> QLocale:
-    locale = QLocale.system()
-    return QLocale("pt_BR") if locale.language() == QLocale.Language.C else locale
 
 
 def _label(text: str) -> QLabel:
@@ -58,7 +54,7 @@ class AddServiceDialog(QDialog):
         self.date_edit = QDateEdit()
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setDisplayFormat(
-            _regional_locale().dateFormat(QLocale.FormatType.ShortFormat)
+            regional_locale().dateFormat(QLocale.FormatType.ShortFormat)
         )
         self.date_edit.setDateRange(
             QDate(1, 1, 1),
@@ -527,7 +523,7 @@ class ServiceHistoryPage(QWidget):
             box = QVBoxLayout(card)
             meta = self.workspace["records"][index]
             day = QDate.fromString(entry["date"], "yyyy-MM-dd")
-            locale = _regional_locale()
+            locale = regional_locale()
             box.addWidget(
                 _label(
                     f"{locale.toString(day, QLocale.FormatType.ShortFormat)} · {locale.toString(entry['mileage_km'])} km · {entry['dealer']}"
