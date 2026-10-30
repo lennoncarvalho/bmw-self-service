@@ -19,7 +19,8 @@ class HsfzAdapter:
         self.read_only = read_only
         self.tester = tester
         # ECUs whose timed-out read still owes one final reply (spec 25 invariant 2).
-        self.abandoned: set[int] = set()
+        # Address -> monotonic expiry; after it the connection must be replaced.
+        self.abandoned: dict[int, float] = {}
 
     def _late(self, packet: HSFZ, raw: bytes) -> bool:
         """Consume an abandoned read's reply; only a final reply resolves it."""
@@ -27,7 +28,7 @@ class HsfzAdapter:
             return False
         payload = raw[8:]
         if not (len(payload) == 3 and payload[0] == 0x7F and payload[2] == 0x78):
-            self.abandoned.discard(packet.source)
+            self.abandoned.pop(packet.source, None)
         logger.info("Late reply consumed ecu=0x%02X data=%s", packet.source, payload.hex(" "))
         return True
 

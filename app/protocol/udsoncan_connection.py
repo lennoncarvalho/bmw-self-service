@@ -50,7 +50,10 @@ class UdsConnection(BaseConnection):
             raise ConnectionError("No active diagnostic operation")
         self.adapter.prepare(self.context)
         if self.quarantined:
-            if self.ecu.address in getattr(self.adapter, "abandoned", ()):
+            expiry = getattr(self.adapter, "abandoned", {}).get(self.ecu.address)
+            if expiry is not None:
+                if time.monotonic() >= expiry:
+                    raise ConnectionError("Late diagnostic reply never arrived; reconnect")
                 # Never send while the earlier reply could still be misattributed.
                 raise ProtocolFailure(FailureKind.TIMEOUT, reconnect=False)
             self.quarantined = False

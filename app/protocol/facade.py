@@ -27,6 +27,8 @@ from app.uds import UdsServices
 
 logger = logging.getLogger(__name__)
 _live: set["DiagnosticConnection"] = set()
+# A quarantined ECU's late reply must arrive within this bound, or the stream is replaced.
+LATE_REPLY_LIMIT = 30.0
 _live_lock = Lock()
 
 
@@ -297,7 +299,7 @@ class DiagnosticConnection:
         services = self._services.get(ecu.address)
         if services is None or not services.bridge.waiting:
             return False
-        adapter.abandoned.add(ecu.address)
+        adapter.abandoned[ecu.address] = time.monotonic() + LATE_REPLY_LIMIT
         services.bridge.quarantined = True
         services.keepalive_enabled = False
         logger.warning(

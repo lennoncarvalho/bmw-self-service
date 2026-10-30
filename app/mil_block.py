@@ -100,14 +100,22 @@ class MilBlockReadWorker(CarWorker):
             nonlocal in_flight
             in_flight = step
             payload = requests.get(step, b"\x22\xf1\x50")
+            # specific_send assigns a new request ID only when bytes are sent.
+            request_id = ctx.request_id
             try:
                 response = bytes(services.invoke(payload, ctx))
             except ProtocolFailure as exc:
+                if ctx.request_id == request_id:
+                    in_flight = ""
                 if exc.kind != FailureKind.NEGATIVE or exc.reconnect:
                     raise
                 in_flight = ""
                 self._record(step, "rejected", payload, exc.raw)
                 return None
+            except BaseException:
+                if ctx.request_id == request_id:
+                    in_flight = ""  # blocked or expired before sending: not attempted
+                raise
             in_flight = ""
             return response
 
@@ -204,8 +212,13 @@ class MilBlockReadWorker(CarWorker):
         elif states.get("identity") == "changed":
             detail = "Engine identity changed — refresh the overview before reading MIL"
             result["on"] = None
-        elif any(state == "rejected" for state in states.values()):
-            step = next(row for row in self.steps if row["state"] == "rejected")
+        elif states.get("read") == "invalid":
+            detail = "Engine returned an unsupported MIL value"
+            result["on"] = None
+        elif any(row["state"] == "rejected" and row["step"] != "cleanup" for row in self.steps):
+            step = next(
+                row for row in self.steps if row["state"] == "rejected" and row["step"] != "cleanup"
+            )
             detail = f"Engine rejected the MIL {step['step']} request ({step['response']})"
             result["on"] = None
         else:
