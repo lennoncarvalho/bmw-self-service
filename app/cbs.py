@@ -136,11 +136,61 @@ def decode_cbs_response(response: bytes, version: str) -> list[dict[str, Any]]:
     return [decode_record(data[i : i + RECORD], version) for i in range(0, len(data), RECORD)]
 
 
-def reset_request(item: int) -> bytes:
-    """Default record: availability 100, count +1 (0x1F), all other fields unchanged."""
+RESET_POLICIES = frozenset({"default", "dsc25-plain", "routine-6.3"})
+# DSC_25 CBS_RESET 0x0E8892: these SVK versions (22 F101 bytes 0x29-0x2B) need an
+# extra sequence that also clears all DSC fault memory; that path is not enabled.
+DSC25_EXTRA_SVK = frozenset(
+    {bytes.fromhex("340501"), bytes.fromhex("010804"), bytes.fromhex("010B03")}
+)
+# DSC_25 tests a fixed 22 1001 position per item (0x0E9278): data offset of the record.
+DSC25_RECORD_INDEX = {0x02: 0, 0x06: 1}
+# D94BX7A0 TAB_CBS_RETURN_CODE general codes (6.3 routine reset).
+ROUTINE_CODES = {
+    0x01: "invalid odometer",
+    0x02: "invalid on-board date",
+    0x03: "invalid coding",
+    0x04: "ECU not initialised or in the wrong state",
+    0x05: "vehicle moving",
+    0x06: "reset not allowed for this item type",
+    0x07: "substitute value active",
+    0x09: "service counter not between 1 and 250",
+    0x0A: "target date out of range",
+    0x0B: "remaining distance out of range",
+}
+
+
+def reset_request(item: int, policy: str = "default") -> bytes:
+    """Encode the owner's recovered reset for one item.
+
+    Default/DSC_25 plain path: 2E 1001 record with availability 100, count +1
+    (0x1F) and every other field unchanged. 6.3 (D94BX7A0): routine 31 01 1000
+    with reset type 0x02, the PRG table's only "Standardreset", and no value.
+    """
     if not 0 <= item <= 0xFF:
         raise ValueError("Invalid CBS item")
+    if policy == "routine-6.3":
+        return bytes.fromhex("31011000") + bytes((item,)) + bytes.fromhex("02FFFFFF")
+    if policy not in ("default", "dsc25-plain"):
+        raise ValueError("No recovered reset for this CBS owner")
     return bytes.fromhex("2E100101") + bytes((item,)) + bytes.fromhex("641F80000FFF0F3FFF00")
+
+
+def check_reset_reply(policy: str, reply: bytes) -> tuple[str, str]:
+    """Classify a final reset reply: accepted, rejected (final, nothing applied) or uncertain."""
+    if policy == "routine-6.3":
+        if reply[:2] == b"\x7f\x31" and len(reply) == 3:
+            return "rejected", f"ECU rejected the reset routine ({reply.hex()})"
+        if len(reply) != 8 or reply[:4] != b"\x71\x01\x10\x00":
+            return "uncertain", "Unexpected reset routine reply"
+        if reply[4] == 0 and reply[5] == 0:
+            return "accepted", ""
+        reason = ROUTINE_CODES.get(reply[4], f"general code 0x{reply[4]:02X}")
+        return "rejected", f"ECU refused the reset: {reason} (component code 0x{reply[5]:02X})"
+    if reply == b"\x6e\x10\x01":
+        return "accepted", ""
+    if reply[:2] == b"\x7f\x2e" and len(reply) == 3:
+        return "rejected", "ECU rejected the reset"
+    return "uncertain", "Unexpected reset reply"
 
 
 def cbs_targets(ecus: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -191,7 +241,11 @@ def read_cbs(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, Any]:
                     **record,
                     "label": labels.get(key, f"CBS item 0x{key}"),
                     "owner": owner,
-                    "resettable": owner["reset"] == "default" and key not in blocked_items,
+                    "resettable": (
+                        owner["reset"] in RESET_POLICIES
+                        and key not in blocked_items
+                        and (owner["reset"] != "dsc25-plain" or record["item"] in (2, 6))
+                    ),
                 }
             )
     seen: dict[int, int] = {}
@@ -388,7 +442,7 @@ class CbsResetPlan:
             "item": {"id": f"{self.item:02X}", "label": self.label},
             "before_raw": self.before_raw,
             "before_provenance": "read-in-this-connection",
-            "request": reset_request(self.item).hex(),
+            "request": reset_request(self.item, self.owner["reset"]).hex(),
             "completion": "exact 6E1001, then re-read after settle",
         }
 
@@ -400,8 +454,11 @@ def plan_reset(vin: str, item: dict[str, Any]) -> CbsResetPlan:
     if not item.get("resettable"):
         raise PermissionError("This CBS item has no source-supported reset")
     owner = item["owner"]
-    if owner.get("reset") != "default" or owner.get("version") not in ("5", "6"):
+    policy = owner.get("reset")
+    if policy not in RESET_POLICIES or (policy == "routine-6.3") != (owner.get("version") == "6.3"):
         raise PermissionError("This CBS owner has no source-supported reset")
+    if policy == "dsc25-plain" and int(item["item"]) not in DSC25_RECORD_INDEX:
+        raise PermissionError("This DSC software defines a reset only for brake pads")
     return CbsResetPlan(vin, dict(owner), int(item["item"]), str(item["label"]), str(item["raw"]))
 
 
@@ -447,7 +504,8 @@ class CbsResetWorker(CarWorker):
         ):
             raise PermissionError("CBS reset requires power acknowledgement and the same session")
         owner = plan.owner
-        request = reset_request(plan.item)
+        policy = owner["reset"]
+        request = reset_request(plan.item, policy)
         path = self.store.prepare(plan.intent())
         self.report["path"] = str(path)
         catalog = DiagnosticCatalog()
@@ -484,6 +542,37 @@ class CbsResetWorker(CarWorker):
             matches = [rec for rec in records if rec["item"] == plan.item]
             return matches[0] if len(matches) == 1 else None
 
+        def dsc25_plain_allowed(services: Any, ctx: OperationContext, before: bytes) -> bool:
+            """DSC_25 CBS_RESET uses the plain write unless SVK and record select its extra path."""
+            svk = exchange(services, ctx, "svk", b"\x22\xf1\x01")
+            if svk[:3] != b"\x62\xf1\x01" or len(svk) < 0x2C:
+                record("changed", "svk", b"\x22\xf1\x01", svk, "Software version unavailable")
+                return False
+            record("read", "svk", b"\x22\xf1\x01", svk)
+            if svk[0x29:0x2C] not in DSC25_EXTRA_SVK:
+                return True
+            # The job reads a fixed record position, not the item ID; require both to agree.
+            start = 3 + RECORD * DSC25_RECORD_INDEX[plan.item]
+            fixed = before[start : start + RECORD]
+            if (
+                len(fixed) == RECORD
+                and fixed[0] == plan.item
+                and int.from_bytes(fixed[1:3], "big", signed=True) > 0
+            ):
+                return True
+            record(
+                "blocked",
+                "svk",
+                b"\x22\xf1\x01",
+                svk,
+                "This DSC software needs an extra sequence that also clears DSC fault memory",
+            )
+            self.report["reset_reason"] = (
+                "This DSC software version needs an extra reset sequence that also clears all "
+                "DSC fault memory; that sequence is not enabled"
+            )
+            return False
+
         def execute(services: Any, ctx: OperationContext) -> bytes:
             identity = exchange(services, ctx, "identity", b"\x22\xf1\x50")
             try:
@@ -510,17 +599,14 @@ class CbsResetWorker(CarWorker):
                 )
                 return b""
             record("accepted", "before", b"\x22\x10\x01", before)
+            if policy == "dsc25-plain" and not dsc25_plain_allowed(services, ctx, before):
+                return b""
             record("sending", "reset", request)
             reply = exchange(services, ctx, "reset", request)
-            if reply != b"\x6e\x10\x01":
-                rejected = reply[:2] == b"\x7f\x2e" and len(reply) == 3
-                record(
-                    "rejected" if rejected else "uncertain",
-                    "reset",
-                    request,
-                    reply,
-                    "ECU rejected the reset" if rejected else "Unexpected reset reply",
-                )
+            verdict, reason = check_reset_reply(policy, reply)
+            if verdict != "accepted":
+                record(verdict, "reset", request, reply, reason)
+                self.report["reset_reason"] = reason
                 return b""
             state["accepted"] = True
             record("accepted", "reset", request, reply)
@@ -556,7 +642,9 @@ class CbsResetWorker(CarWorker):
     def _outcome(self, state: dict[str, Any], failure: str) -> tuple[str, str]:
         events = {(e["step"], e["state"]) for e in self.report["events"]}
         if ("reset", "rejected") in events:
-            return "rejected", "The ECU rejected the reset request"
+            return "rejected", self.report.get("reset_reason") or "The ECU rejected the reset"
+        if ("svk", "blocked") in events:
+            return "not-started", self.report["reset_reason"]
         if not state["sent"]:
             if ("identity", "changed") in events or ("before", "changed") in events:
                 return "not-started", "Service status changed; read it again before resetting"
@@ -574,6 +662,10 @@ class CbsResetWorker(CarWorker):
                 records, before = [], {}
             match = [rec for rec in records if rec["item"] == self.plan.item]
             if len(match) == 1 and match[0]["availability"] == 100:
+                limit = 250 if self.plan.owner["version"] == "6.3" else 30
+                saturated = before.get("count") is not None and before["count"] >= limit
+                if saturated:
+                    before["count"] = None  # no source wrap rule; require an observed change
                 if before.get("count") is not None and match[0]["count"] == before["count"] + 1:
                     return "verified", "Reset accepted; the re-read shows 100 % and the next count"
                 if before.get("count") is None and match[0]["raw"] != self.plan.before_raw:

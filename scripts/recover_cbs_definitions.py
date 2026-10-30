@@ -16,6 +16,11 @@ from pathlib import Path
 DEFAULT_RESET = "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
 # Delivery state and development boards are not user services.
 NOT_RESETTABLE = {0xE0, 0xE1, 0xFF}
+# Recovered non-default branches: policy name and the contract section proving it.
+SPECIAL_RESETS = {
+    "DSC_25": ("dsc25-plain", "reset_dsc25_conditional"),
+    "D94BX7A0": ("routine-6.3", "reset_63_routine"),
+}
 
 
 def build(contract_path: Path, catalog_path: Path, output: Path) -> None:
@@ -34,13 +39,16 @@ def build(contract_path: Path, catalog_path: Path, output: Path) -> None:
             raise ValueError(f"Unreviewed CBS read: {name}")
         template = (variant.get("reset_request_template") or [None, None])[1]
         disposition = variant["disposition"]
-        reset = (
-            "default"
-            if disposition.startswith("read+reset implementable (default template)")
+        if (
+            disposition.startswith("read+reset implementable (default template)")
             and template == DEFAULT_RESET
             and version in ("5", "6")
-            else "blocked"
-        )
+        ):
+            reset = "default"
+        elif name in SPECIAL_RESETS and contract.get(SPECIAL_RESETS[name][1]):
+            reset = SPECIAL_RESETS[name][0]
+        else:
+            reset = "blocked"
         definitions[name] = {
             "address": int(variant["address"], 16),
             "version": version,

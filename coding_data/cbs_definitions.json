@@ -59,9 +59,9 @@
     "D94BX7A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read implementable (CBS6.3); reset via routine 31 01 10 00 recovered statically, separate branch",
+      "disposition": "read implementable (CBS6.3); reset via routine 31 01 10 00 II 02 FF FF FF with GG/KK completion (reset_63_routine; recovered statically, not yet enabled)",
       "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
-      "reset": "blocked",
+      "reset": "routine-6.3",
       "version": "6.3"
     },
     "DME8FF_L": {
@@ -107,9 +107,9 @@
     "DSC_25": {
       "address": 41,
       "detail": false,
-      "disposition": "read implementable (CBS5); reset BLOCKED: SVK-conditioned extra sequence unresolved",
+      "disposition": "read implementable (CBS5); reset = conditional sequence reset_dsc25_conditional (recovered statically, not yet enabled)",
       "prg_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
-      "reset": "blocked",
+      "reset": "dsc25-plain",
       "version": "5"
     },
     "DSC_G11": {
@@ -219,7 +219,7 @@
     "KOMBSP21": {
       "address": 96,
       "detail": false,
-      "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset job in PRG",
+      "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset request in any supplied artifact (reset_kombsp21)",
       "prg_sha256": "20603da513132ee750561c56bf099834315306da1ab0d51c70ff56e92fd04706",
       "reset": "blocked",
       "version": "6.3"
@@ -388,5 +388,5 @@
     "FF"
   ],
   "schema": 1,
-  "source_sha256": "91e93aad1fc0410de7acfb607ef570a35d8a664c12ff3080575dd65edc0f6085"
+  "source_sha256": "2e35e4c0c56cf2fc64e633291483d50002a7e5c61d4b2b7987db910881933fcd"
 }

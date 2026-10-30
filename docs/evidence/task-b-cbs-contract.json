@@ -72,7 +72,13 @@
   "j6.g0.h.a.b (22 10 01 to address)": "ev_5efc6d5706a334f43d4b4da91662793152973bc55d689cedb1240a256b8e8a70",
   "j6.b.j (record split 12/8 bytes)": "ev_0813415b478fbabd831b06ed372c26b25fa333a159a01603b77264c33ceb5764",
   "j6.b.<init> (field decode)": "ev_68c461951eefe09e38fce3f58afa3d871b96f7e1170838857674359e8a5ca703",
-  "j6.v.X (reads 0x12, then 0x29, 0x60 via v$b0/v$b0$a smali)": "ev_6d348ff4088700b1695b347010874b7242eb1f14b68149c658f953bfbeadf853"
+  "j6.v.X (reads 0x12, then 0x29, 0x60 via v$b0/v$b0$a smali)": "ev_6d348ff4088700b1695b347010874b7242eb1f14b68149c658f953bfbeadf853",
+  "j6.h.d (record type: 8-byte only for fixed E-series SGBD list, else 12-byte)": "ev_e9f3113a0bba8c715c8ea9b6664652269afb9db4bcf4be6c7703a5ad304c3f52",
+  "j6.g0.i.b (reset builder, re-read 2026-10-30; 9-byte form for 8-byte type only)": "ev_9c6e94ec2a58fcd983c8b1b45ffae8a0a1632720cec925ff834c91b40f4a062a",
+  "j6.b.h (item filter 1,2,3,4,6,10,17,100)": "ev_3f433cc5acef88d5ef1f08aba013d7b331032209642c3e270ae338992b1f73f3",
+  "j6.b.i (hide count > 30)": "ev_135f7f5b46ba6750a12568e011974739cf909b49b617a4640b4316192d80f47a",
+  "j6.g0.k0 (adapter timeout then reset; no item branch)": "ev_d4adc84795f9c508a3b2e76702c7c2cc9b18667143684358a52182ae470b4720",
+  "ServiceActivity.a0 (reset any listed record)": "ev_22e95aa2be9c48d3ee763e21f647dbe329fad9dbf1c765f1cde03f0f78a77df8"
  },
  "read": {
   "request": "22 10 01",
@@ -111,6 +117,29 @@
    "reset_ok": "0x0E6EBD S3[0]==S2[0]+0x40 then SA/TA checks; 0x0E736A OKAY",
    "nrc_0x21_retry": "0x0E6E4F compare NRC '!'(0x21) -> resend loop",
    "detail_read": "0x0E7394 {22 10 02} 3-byte records; reason table TAB_RUECK_GRUND"
+  },
+  "status_flags_63": {
+   "source": "D94BX7A0.prg CBS_DATEN_LESEN 0x23E747..0x23E861: (rec[3] >> 4) & 0x0F -> CBS_STATUS_FLAG_DOP",
+   "table": {
+    "0x0": "Status ok",
+    "0x1": "Messung basiert auf Ersatzwerten",
+    "0x2": "Status ok und Baukasten Client",
+    "0x3": "Baukasten Client und Messung basiert auf Ersatzwerten",
+    "0x4": "CBS Daten manipuliert",
+    "0x5": "CBS Daten manipuliert und Messung basiert auf Ersatzwerten",
+    "0x6": "CBS Daten manipuliert und Baukasten Client",
+    "0x7": "CBS Daten manipuliert, Messung basiert auf Ersatzwerten und Baukasten Client",
+    "0x8-0xF": "Signal ungueltig"
+   },
+   "note": "CBS_STATUS_FLAG (bit table 0x01 show .. 0x80 invalid) is used only by STATUS_CBS_HISTORIENSPEICHER_LESEN (0x243832, 0x2443FE), not by CBS_DATEN_LESEN"
+  },
+  "service_count_range": {
+   "v5_v6": "rec[4] & 0x1F; 0 'bisher kein Service', 0x1F 'nicht erlaubt', else count (KOMBRDCT 0x0E4335..0x0E44E3); bits 5-7 never decoded",
+   "6.3": "full byte; >= 0xFA not allowed; routine GG 0x09 'Servicezaehler ist nicht zwischen 1 und 250'",
+   "reset_argument": "CBS_ANZAHL_SERVICE 0-30 explicit, 31 = +1 (range check < 0x20, DSC_25 0x0E7365)",
+   "wrap": "no tester-side wrap/saturate/reject logic in any supplied PRG or BimmerLink; ECU behaviour at 30 (+1) or 250 unresolved",
+   "verification_rule": "before-count 30 (v5/v6) or >= 250 (6.3): do not expect before+1; require availability 100 and report observed after-count",
+   "bimmerlink_filter": "j6.b.i hides count > 30 (== 0x1F 'nicht erlaubt'); presentation only"
   }
  },
  "reset_default": {
@@ -133,7 +162,12 @@
    "5",
    "6"
   ],
-  "owner": "ECU whose own 22 10 01 response contained the item"
+  "owner": "ECU whose own 22 10 01 response contained the item",
+  "bimmerlink_short_form": {
+   "request": "2E 10 01 01 II 64 1F FF FF",
+   "used_when": "j6.h.d returns the 8-byte record type: fixed E-series SGBD name list (EDMEM12, IHKA60, ME9E65_6, ME9K_NG4, DSC_85, D50M47A, D50M57*, MS_S65*, IHKA56, KOMBRR*, N73*, IHKA70, MEV9N46, IHKS56, DXC8*, KOMBI65, D51MM670, KOMB65_2, D50M47B1, DDE50K47, MS450DS0, IHKR89, ME9N62*, IHKA65, D60TMCA, DSC_60PP, DXC_83, IHKA60_2, DSC_MK60, IHKA89, IHS_56, EDME82, KOMB60, DSC_60, DSC_E65, MV1722, MEV17_2N)",
+   "f_g_u_i": "every other SGBD (incl. DSC_25, D94BX7A0, KOMBSP21) gets the 15-byte default; no item-, DSC- or 6.3-specific branch"
+  }
  },
  "reset_63_routine": {
   "prg": "D94BX7A0.prg",
@@ -150,7 +184,64 @@
    "0x07": "availability correction",
    "0x08": "display reset (KOMBSP21/DME9FF_R table only)",
    "0x0A": "restore delivery state"
-  }
+  },
+  "job": "D94BX7A0.prg CBS_RESET 0x219880..0x21C18E",
+  "session_security": "none sent by the job",
+  "args": {
+   "SUBFUNC": {
+    "STR/0x01": "31 01 10 00 FF FF FF FF FF template (0x219DAD)",
+    "RRR/0x03": "31 03 10 00 (0x219E1E)",
+    "default": "RRR (0x2198A2)"
+   },
+   "CBS_ID": "CBS_6_3_KENNUNG name or number -> byte 4 (0x21A29C/0x21A3AA); mandatory for STR",
+   "CBS_RESETART": "TAB_RESET_ART ART name or number -> byte 5 (0x21A7D2/0x21A8EC); mandatory for STR, no default",
+   "CBS_WERT": "unsigned long <= 0xFFFFFF, big-endian bytes 6-8 (0x21AB0A..0x21ABE1); absent -> FF FF FF"
+  },
+  "reset_types_d94": {
+   "0x01": "plant / Werksreset",
+   "0x02": "standard / Standardreset",
+   "0x03": "service_counter / Korrekturreset Servicezaehler",
+   "0x04": "time / Korrekturreset Zieltermin",
+   "0x05": "distance / Korrekturreset Restweg",
+   "0x06": "forecast_distance / Korrekturreset Restwegprognose",
+   "0x07": "availability / Korrekturreset Verfuegbarkeit",
+   "0x0A": "rda / Anlieferzustand herstellen",
+   "0xFF": "not defined"
+  },
+  "standard_user_reset": {
+   "TT": "0x02",
+   "VV": "FF FF FF",
+   "label": "source-labelled (TAB_RESET_ART text); no caller trace in supplied artifacts"
+  },
+  "response_checks": "SID 0x71 + address (macro); len == 8 else TOO_LESS/TOO_MUCH; bytes 2-3 == 10 00 else INCORRECT_DATA_IDENTIFIER; GG byte 4, KK byte 5, reserve bytes 6-7; JOB_STATUS OKAY regardless of GG/KK (0x21B125..0x21C166)",
+  "gg_table": {
+   "0x00": "Okay, keine Verhinderungsgruende",
+   "0x01": "ungueltiger km-Stand",
+   "0x02": "ungueltiges Borddatum",
+   "0x03": "ungueltige Codierung",
+   "0x04": "SG nicht initialisiert oder im falschen Zustand",
+   "0x05": "Fahrzeug im fahrenden Zustand",
+   "0x06": "Reset bei CBR nicht erlaubt",
+   "0x07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+   "0x09": "Servicezaehler ist nicht zwischen 1 und 250",
+   "0x0A": "Zieltermin ausserhalb des gueltigen Wertebereichs",
+   "0x0B": "Restweg ist ausserhalb des gueltigen Wertebereichs",
+   "0xFE": "keine Angabe",
+   "0xFF": "Wert ungueltig"
+  },
+  "kk_table": {
+   "0x00": "Okay, keine Verhinderungsgruende",
+   "0xFE": "keine Angabe",
+   "0xFF": "ungueltig"
+  },
+  "results_required": false,
+  "results_note": "job never chains STR -> RRR; 31 03 10 00 re-reads the same 8-byte layout (71 03 10 00 GG KK RR RR); use only to resolve an uncertain start, never as replay",
+  "not_sent": "STEUERN_CBS_DATEN_SICHERN 31 01 F0 ED (not linked to CBS_RESET by any source)",
+  "app_sequence": [
+   "31 01 10 00 II 02 FF FF FF -> require 71 01 10 00 GG KK RR RR, len 8, GG == 00 and KK == 00 (response-confirmed)",
+   "other GG/KK -> rejected with table text",
+   "after 5 s: 22 10 01 at 0x12 (6.3 layout) for observed verification"
+  ]
  },
  "reset_detail_v6": {
   "request": "22 10 02",
@@ -1102,7 +1193,7 @@
     "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
    ],
    "owner_f48_observed_identity": null,
-   "disposition": "read implementable (CBS5); reset BLOCKED: SVK-conditioned extra sequence unresolved"
+   "disposition": "read implementable (CBS5); reset = conditional sequence reset_dsc25_conditional (recovered statically, not yet enabled)"
   },
   {
    "prg": "EDMEI1.prg",
@@ -3609,7 +3700,7 @@
     "31 01 10 00 FF FF FF FF FF"
    ],
    "owner_f48_observed_identity": null,
-   "disposition": "read implementable (CBS6.3); reset via routine 31 01 10 00 recovered statically, separate branch"
+   "disposition": "read implementable (CBS6.3); reset via routine 31 01 10 00 II 02 FF FF FF with GG/KK completion (reset_63_routine; recovered statically, not yet enabled)"
   },
   {
    "prg": "KOMBSP21.prg",
@@ -3650,7 +3741,7 @@
    ],
    "reset_request_template": null,
    "owner_f48_observed_identity": null,
-   "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset job in PRG"
+   "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset request in any supplied artifact (reset_kombsp21)"
   },
   {
    "prg": "DME9FF_R.prg",
@@ -3827,5 +3918,110 @@
   "kombrr_2.prg",
   "mev9n45.prg",
   "msd85y-i-500.prg"
- ]
+ ],
+ "reset_dsc25_conditional": {
+  "prg": "DSC_25.prg",
+  "job": "CBS_RESET 0x0E6F79..0x0EBD71",
+  "target": "0x29 (hard-coded in every send)",
+  "session_security": "none",
+  "send_macro": "positive iff resp[0] == req[0]+0x40 and SA/TA match; 7F xx 21 -> wait 1 + bounded resend; other failure -> JobResult text then eoj (later steps not sent)",
+  "conditions": [
+   {
+    "at": "0x0E831D",
+    "test": "request byte 6 (service count) == 0x01",
+    "then": "PLAIN"
+   },
+   {
+    "at": "0x0E8390",
+    "send": "22 F1 01",
+    "expect": "62",
+    "on_fail": "end, nothing written"
+   },
+   {
+    "at": "0x0E8892",
+    "test": "resp[0x29..0x2B] (resp[0]=0x62) not in [34 05 01, 01 08 04, 01 0B 03]",
+    "then": "PLAIN",
+    "meaning": "version main.sub.patch of SVK entry index 2 when resp[0x0A] bit7 set (SVK_LESEN 0x012994..0x012C00); raw compare only"
+   },
+   {
+    "at": "0x0E8D76",
+    "send": "22 10 01",
+    "expect": "62",
+    "on_fail": "end, nothing written"
+   },
+   {
+    "at": "0x0E9278",
+    "test": "item 0x02: int16(resp[4..5]); item 0x06: int16(resp[16..17]); other items: unassigned (undefined)",
+    "then": "PLAIN if > 0",
+    "note": "record IDs not checked; 0x8000 (-32768) takes EXT, 0x7FFF takes PLAIN"
+   }
+  ],
+  "EXT": [
+   {
+    "at": "0x0E9658",
+    "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+    "positive_sid": "6E"
+   },
+   {
+    "at": "0x0E9A1C",
+    "request": "86 00 02",
+    "positive_sid": "C6",
+    "meaning": "ResponseOnEvent stop, eventWindowTime 02 (= STEUERN_ROE_STOP 0x0D7862)"
+   },
+   {
+    "at": "0x0E9F2E",
+    "request": "31 01 03 04 00",
+    "positive_sid": "71",
+    "meaning": "routine 0x0304 Trigger_Dummy_DTC, param 00 = application (ZFS_01 0x058001; AMPT07/RSE_01 DEBUG_DMCLIENT_TRIGGERDTCENTRY)"
+   },
+   {
+    "at": "0x0EA442",
+    "request": "14 FF FF FF",
+    "positive_sid": "54",
+    "meaning": "clear all DTCs"
+   },
+   {
+    "at": "0x0EA956",
+    "wait": 2,
+    "unit": "BEST wait (seconds)"
+   },
+   {
+    "at": "0x0EAAF3",
+    "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+    "positive_sid": "6E"
+   },
+   {
+    "at": "0x0EAEB7",
+    "request": "86 05 02",
+    "positive_sid": "C6",
+    "meaning": "ResponseOnEvent start, eventWindowTime 02 (= STEUERN_ROE_START 0x0D9A8A)"
+   }
+  ],
+  "PLAIN": {
+   "at": "0x0EB3B9",
+   "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+   "positive_sid": "6E",
+   "note": "skipped when EXT ran (flag S0[0x0E])"
+  },
+  "purpose": "hypothesis: worn-pad latch (DTC 0x480A11/0x480A12) on these DSC software versions blocks the reset; bytes/order are primary",
+  "app_rules": [
+   "items 0x02/0x06 only; require fresh 22 10 01 record 0 ID == 02 (item 2) or record 1 ID == 06 (item 6), else block",
+   "22 F1 01 must be 62 F1 01 with length >= 0x2C, else block",
+   "PLAIN: same completion as reset_default",
+   "EXT: explicit confirmation naming side effects (all DSC DTCs cleared, dummy DTC triggered, ROE stopped/restarted); each step once; first failure = partial, name last positive step; ignition cycle instruction after ROE stop without restart; no automatic replay (D-28); completion = 6E (2nd write) and final C6, then 5 s re-read"
+  ]
+ },
+ "reset_kombsp21": {
+  "disposition": "blocked",
+  "reason": "no reset request in any supplied artifact",
+  "evidence": [
+   "KOMBSP21.prg: 65 jobs; CBS jobs only CBS_DATEN_LESEN 0x0E1C5B and STATUS_CBS_HISTORIENSPEICHER_LESEN 0x0E578C",
+   "XOR-decoded KOMBSP21.prg contains no '2E 10 01' and no '31 01 10 00' / '31 03 10 00'",
+   "SG_FUNKTIONEN: no RID 0x1000, no DID 0x1001; CBS rows 0xD10A CBS_KM_PRO_JAHR, 0xD120 CBS_SERVICE_AKTIVIERUNG (22;2E)",
+   "TAB_RESET_ART (adds 0x08 display / Anzeige-Reset) used only by the history job (0x0E6B01); TAB_CBS_RETURN_CODE_* present but no job tabsets them",
+   "all 2478 supplied PRG/GRP: '31 01 10 00' only in D94BX7A0.prg",
+   "BimmerLink would send the 15-byte 2E default (type o); not defined by the KOMBSP21 PRG"
+  ],
+  "next_source": "newer KOMBSP21 SGBD or ISTA test module calling routine 0x1000 on 0x60"
+ }
 }
