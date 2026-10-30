@@ -230,3 +230,21 @@ run_operation for exclusive clear/define/read/cleanup; explicit2C service suppor
 confirmed UI action/global lockout, reserved cleanup budget and per-step uncertain
 outcomes remain required. Do not put dynamic-DID writes in normal overview refresh.
 No additional physical vehicles are a prerequisite for these implementation tasks.
+
+
+## CBS/MIL/odometer increment — 2026-10-30
+
+PR15 and PR16 are merged (`85ed2ad`). Fresh branch `codex/task-b-cbs-mil` from
+fetched origin/main; no PR is authorized yet. REA MCP now also runs in Claude
+Code. Implemented and checked offline (see
+[tasks/task-b-cbs-mil-implementation.md](tasks/task-b-cbs-mil-implementation.md)):
+- CBS read and confirmed reset for 44 exact definitions (owner by response, no
+  default owner, durable intent before send, exact `6E 10 01`, settle re-read).
+- Owned F303 MIL for the five older engines (explicit action, checked cleanup).
+- Odometer (cluster D122 or KOMB01/25 D10D−D114; BDC copy) and 83 engine values.
+- Owner-session fixes: per-ECU late-reply quarantine (bounded 30 s) instead of
+  dropping the connection, and the I-level trailer.
+
+Next: owner-operated read-only CBS/odometer observation, then one confirmed
+reset; remaining CBS branches (DSC_25, D94 6.3, KOMBSP21); diagnostics
+reconciliation; easy coding. DoIP mapping needs a new source (none supplied).
