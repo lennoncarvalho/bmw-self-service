@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from time import monotonic
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QLocale, Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -219,7 +219,10 @@ class VehiclePage(QWidget):
         self.connection_label.setText(
             str(results.get("connection_info") or "Connection unavailable")
         )
-        self.mileage_label.setText(f"Odometer: {results.get('mileage') or 'Unavailable'}")
+        mileage = results.get("mileage")
+        if isinstance(mileage, dict):
+            mileage = f"{QLocale.system().toString(int(mileage['km']))} km ({mileage['source']})"
+        self.mileage_label.setText(f"Odometer: {mileage or 'Unavailable'}")
         self.prod_date_label.setText(f"Build date: {results.get('prod_date') or 'Unavailable'}")
         self.ilevel_label.setText(
             f"Software integration levels: {results.get('i-level') or 'Unavailable'}"

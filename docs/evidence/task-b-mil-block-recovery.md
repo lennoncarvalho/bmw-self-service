@@ -1,9 +1,14 @@
 # Older-engine MIL block lifecycle recovery — 2026-10-29
 
-Status: **primary implementation reference**, source recovery only. No new MIL
-requests are enabled in this increment. The current runtime still enables the
-53 exact engine rows / 17 definitions in [the breadth record](task-b-mil-breadth.md).
-The remaining nine exact rows remain concrete implementation/source tasks.
+Status: **primary implementation reference**; **implemented 2026-10-30** in
+`app/mil_block.py` (commit 152df53) as an explicit confirmed action. The
+generator now fingerprints `STATUS_BLOCK_LESEN` against the reviewed hash below
+and marks the five rows `dynamic-block` (DID 4A69, slot F303). Overview refresh
+still never defines a DID. Offline fake-gateway checks cover exact wire order,
+pending replies, exclusivity, rejection/invalid/timeout/cleanup outcomes and
+read-only rejection; see `tasks/task-b-cbs-mil-implementation.md`. No physical
+observation exists for these engines (the owner's car uses direct DME_BX8).
+DME9FF_R/EDMEI1 alternate MIL and DME98_R/FCCU definitions remain source work.
 
 ## Exact block source
 

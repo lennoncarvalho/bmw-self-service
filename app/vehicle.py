@@ -137,6 +137,77 @@ def decode_voltage(response: bytes) -> float:
     return int.from_bytes(response[5:7], "big") * 0.00025 + 6.0
 
 
+# Exact cluster/body definitions selected by F150 address-index (T_GRTB
+# ZuordnungsTabelleUDS); see docs/evidence/task-b-odometer-identity-doip.md.
+CLUSTER_DISPLAYED = frozenset({"KOMBRDCT", "KOMB_G11", "KOMBSP18", "KOMBSP21"})  # 22 D122
+CLUSTER_ABSOLUTE = frozenset({"KOMB01", "KOMB25"})  # STATUS_GWSZ_ANZEIGE: D10D - D114
+BODY_COPY = frozenset({"BDC", "BDC_G11", "FEM_20"})  # STATUS_KILOMETERSTAND: 22 1700
+
+
+def decode_displayed_odometer(response: bytes) -> int:
+    """Decode cluster D122, km x1; FFFFFFFF is treated as invalid (hypothesis)."""
+    data = did_data(response, 0xD122)
+    if len(data) != 4 or data == b"\xff\xff\xff\xff":
+        raise ValueError("Cluster odometer has an unsupported value or shape")
+    return int.from_bytes(data, "big")
+
+
+def decode_absolute_odometer(absolute: bytes, offset: bytes) -> int:
+    """Displayed km = D10D RAM counter - D114 display offset, as STATUS_GWSZ_ANZEIGE."""
+    counter = did_data(absolute, 0xD10D)
+    shift = did_data(offset, 0xD114)
+    if len(counter) not in (4, 8) or len(shift) != 1 or counter[:4] == b"\xff\xff\xff\xff":
+        raise ValueError("Cluster odometer has an unsupported value or shape")
+    value = int.from_bytes(counter[:4], "big") - shift[0]
+    if value < 0:
+        raise ValueError("Cluster odometer offset exceeds its counter")
+    return value
+
+
+def decode_body_odometer(response: bytes) -> int:
+    """Decode the body controller's redundant copy, valid range 0-16777214 km."""
+    data = did_data(response, 0x1700)
+    if len(data) != 4 or int.from_bytes(data, "big") > 16777214:
+        raise ValueError("Body controller odometer has an unsupported value or shape")
+    return int.from_bytes(data, "big")
+
+
+def read_odometer(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object] | None:
+    """Read the displayed odometer from an exact cluster, else the body controller copy.
+
+    Only exactly identified definitions are used; unknown variants stay unavailable.
+    The definitions fix the unit as km and the value is never converted.
+    """
+    names = {row.get("addr"): row.get("name") for row in ecus if row.get("identified") is True}
+    cluster, body = names.get("0x60"), names.get("0x40")
+    failure: Exception | None = None
+    try:
+        if cluster in CLUSTER_DISPLAYED:
+            return {
+                "km": decode_displayed_odometer(connection.send_uds(0x60, b"\x22\xd1\x22")),
+                "source": f"instrument cluster {cluster}",
+            }
+        if cluster in CLUSTER_ABSOLUTE:
+            absolute = connection.send_uds(0x60, b"\x22\xd1\x0d")
+            offset = connection.send_uds(0x60, b"\x22\xd1\x14")
+            return {
+                "km": decode_absolute_odometer(absolute, offset),
+                "source": f"instrument cluster {cluster}",
+            }
+    except ValueError as exc:
+        failure = exc
+        logger.warning("Cluster odometer unavailable; trying body controller", exc_info=True)
+    if body in BODY_COPY and connection.alive_ok:
+        return {
+            "km": decode_body_odometer(connection.send_uds(0x40, b"\x22\x17\x00")),
+            "source": f"body controller {body} stored copy",
+        }
+    if failure is not None:
+        raise failure
+    logger.info("No recovered odometer definition cluster=%s body=%s", cluster, body)
+    return None
+
+
 class DiagnosticCatalog:
     """Exact address/variant definitions and English fault descriptions."""
 
@@ -278,6 +349,7 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
     return [
         ("ECU list", inventory),
         ("MIL", lambda conn: read_mil(conn, ecus)),
+        ("Mileage", lambda conn: supported(conn, lambda active: read_odometer(active, ecus))),
         ("Vehicle order", read_vehicle_order),
         (
             "I-Level",
