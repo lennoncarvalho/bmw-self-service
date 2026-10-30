@@ -1147,17 +1147,15 @@ class MainWindow(QMainWindow):
         if reset:
             self._set_mutation_active(False)
         self.vehicle_page.cbs_panel.set_busy(self._mutation_active)
-        if (
-            isinstance(worker, CbsResetWorker)
-            and self._connection is worker.connection
-            and worker.report["state"]
-            in (
-                "verified",
-                "response-confirmed",
-                "rejected",
-            )
-        ):
-            QTimer.singleShot(0, self._start_cbs_read)
+        if isinstance(worker, CbsResetWorker) and self._connection is worker.connection:
+            # Always replace the rows the reset was planned from; a closed
+            # connection clears them instead of leaving stale reset actions.
+            if getattr(worker.connection, "alive_ok", False):
+                QTimer.singleShot(0, self._start_cbs_read)
+            else:
+                self.vehicle_page.cbs_panel.clear(
+                    "Connection closed — reconnect and read service status"
+                )
 
     @Slot(object)
     def _start_cbs_reset(self, item: dict) -> None:

@@ -59,7 +59,19 @@ owner/udsoncan/HSFZ stack against a scripted local fake gateway.
 - Mutation probes (V1): removing the abort guard, widening the MIL value set, letting a pending reply resolve quarantine, disabling quarantine, accepting any `6E`, skipping the before-record check, and dropping the duplicate block each failed a check. The cleanup-reserve budget is not probed.
 - `scripts/preflight.sh` passes: ruff check, ruff format --check, mypy over app/ ui/ main.py.
 
-Independent review of 152df53 found 1 Medium and 4 Low issues; all are fixed (35edb75 and ddd0dd0). The CBS review result is recorded below when complete.
+Independent review of 152df53 found 1 Medium and 4 Low issues; all are fixed (35edb75 and ddd0dd0).
+
+Independent review of the CBS commit found 1 High, 3 Medium and 4 Low issues; all are fixed in the next commit:
+- **High:** a reset could run with an unverified VIN. A valid VIN is now required at planning and in the worker.
+- **Medium:**
+  - The outcome was "verified" when the count was the sentinel and nothing changed.
+  - Partial owner coverage now blocks every reset, because ownership is unproven.
+  - The CBS read now has one 30 s overall deadline.
+- **Low:**
+  - "Uncertain" is reported only after the reset bytes were actually transmitted.
+  - A negative identity reply no longer drops the connection.
+  - The v6 `22 10 02` reason is decoded and shown, and the wording distinguishes "no re-read" from "unchanged".
+  - The CBS rows are always re-read, or cleared, after any reset outcome.
 
 ## Remaining (source or physical, not hardware-blocked development)
 

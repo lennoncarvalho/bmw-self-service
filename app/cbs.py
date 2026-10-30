@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
+from app.history_files import valid_vin
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
 from app.resources import resource_path
 from app.vehicle import DiagnosticCatalog, did_data
@@ -31,6 +32,18 @@ MAX_RECORD_BYTES = 1024 * 1024
 SETTLE_SECONDS = 5.0
 RESET_STATES = frozenset({"accepted", "rejected", "uncertain", "invalid", "changed", "failed"})
 FINAL_STATES = frozenset({"verified", "response-confirmed", "rejected", "uncertain", "not-started"})
+# v6 CBS_RESET_DETAIL_LESEN reasons (KOMBRDCT TAB_RUECK_GRUND, see the contract).
+DETAIL_REASONS = {
+    0x00: "no reason recorded",
+    0x01: "invalid odometer",
+    0x02: "invalid on-board date",
+    0x03: "invalid coding",
+    0x04: "ECU not initialised",
+    0x05: "vehicle moving",
+    0x06: "reset not allowed for this item type",
+    0x07: "substitute value active",
+    0x08: "vehicle in parked/residing state",
+}
 INSTRUCTIONS = (
     "A CBS reset cannot be undone by this app. If the outcome is uncertain, reconnect "
     "and read service status before any new reset."
@@ -151,14 +164,19 @@ def read_cbs(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, Any]:
     blocked_items = set(data["not_resettable"])
     owners: list[dict[str, Any]] = []
     items: list[dict[str, Any]] = []
+    deadline = time.monotonic() + 30.0
     for target in cbs_targets(ecus):
         owner = {k: target[k] for k in ("name", "address", "version", "index", "reset")}
-        if not connection.alive_ok:
-            owners.append({**owner, "state": "not-attempted-connection-closed"})
+        remaining = deadline - time.monotonic()
+        if not connection.alive_ok or remaining <= 0:
+            reason = "connection-closed" if not connection.alive_ok else "budget-exhausted"
+            owners.append({**owner, "state": f"not-attempted-{reason}"})
             continue
         response = b""
         try:
-            response = connection.send_uds(target["address"], b"\x22\x10\x01")
+            response = connection.send_uds(
+                target["address"], b"\x22\x10\x01", context=connection.context(remaining)
+            )
             records = decode_cbs_response(response, target["version"])
         except (ValueError, TimeoutError, ConnectionError) as exc:
             # One owner's failure never hides the others; a lost stream stops the rest.
@@ -179,11 +197,16 @@ def read_cbs(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, Any]:
     seen: dict[int, int] = {}
     for record in items:
         seen[record["item"]] = seen.get(record["item"], 0) + 1
+    complete = all(owner["state"] == "read" for owner in owners)
     for record in items:
         if seen[record["item"]] > 1:
             # No source rule picks a winner between owners; never guess one.
             record["resettable"] = False
             record["notes"].append("Reported by more than one ECU; reset blocked")
+        elif not complete and record["resettable"]:
+            # An unread owner could also hold this item; ownership is not established.
+            record["resettable"] = False
+            record["notes"].append("Not every CBS owner could be read; reset blocked")
     return {"owners": owners, "items": items, "observed_clock": time.monotonic()}
 
 
@@ -372,6 +395,8 @@ class CbsResetPlan:
 
 def plan_reset(vin: str, item: dict[str, Any]) -> CbsResetPlan:
     """Freeze a reset only for a resettable item read from its owner in this session."""
+    if not valid_vin(vin):
+        raise PermissionError("A verified vehicle identity is required before a CBS reset")
     if not item.get("resettable"):
         raise PermissionError("This CBS item has no source-supported reset")
     owner = item["owner"]
@@ -413,6 +438,7 @@ class CbsResetWorker(CarWorker):
         connection, plan = self.connection, self.plan
         if (
             not self.power_acknowledged
+            or not valid_vin(plan.vin)
             or getattr(connection, "power_sufficient", None) is False
             or connection.read_only
             or connection.kind != TransportKind.HSFZ
@@ -441,12 +467,17 @@ class CbsResetWorker(CarWorker):
 
         def exchange(services: Any, ctx: OperationContext, step: str, payload: bytes) -> bytes:
             state["step"] = step
+            # specific_send assigns a new request ID only when bytes are transmitted.
+            request_id = ctx.request_id
             try:
                 return bytes(services.invoke(payload, ctx))
             except ProtocolFailure as exc:
                 if exc.kind != FailureKind.NEGATIVE or exc.reconnect:
                     raise
                 return bytes(exc.raw)
+            finally:
+                if step == "reset":
+                    state["sent"] = ctx.request_id != request_id
 
         def find(response: bytes) -> dict[str, Any] | None:
             records = decode_cbs_response(response, owner["version"])
@@ -455,7 +486,10 @@ class CbsResetWorker(CarWorker):
 
         def execute(services: Any, ctx: OperationContext) -> bytes:
             identity = exchange(services, ctx, "identity", b"\x22\xf1\x50")
-            match = catalog.identify(owner["address"], identity)
+            try:
+                match = catalog.identify(owner["address"], identity)
+            except ValueError:
+                match = {}
             if match.get("address_index") != owner["index"] or match.get("name") != owner["name"]:
                 record(
                     "changed", "identity", b"\x22\xf1\x50", identity, "Owner ECU identity changed"
@@ -472,12 +506,11 @@ class CbsResetWorker(CarWorker):
                     "before",
                     b"\x22\x10\x01",
                     before,
-                    "CBS state changed since it was shown",
+                    "CBS state could not be read or changed since it was shown",
                 )
                 return b""
             record("accepted", "before", b"\x22\x10\x01", before)
             record("sending", "reset", request)
-            state["sent"] = True
             reply = exchange(services, ctx, "reset", request)
             if reply != b"\x6e\x10\x01":
                 rejected = reply[:2] == b"\x7f\x2e" and len(reply) == 3
@@ -497,6 +530,7 @@ class CbsResetWorker(CarWorker):
             record("read", "after", b"\x22\x10\x01", after)
             if owner["version"] == "6":
                 detail = exchange(services, ctx, "detail", b"\x22\x10\x02")
+                self.report["reset_detail"] = detail.hex()
                 record("read", "detail", b"\x22\x10\x02", detail)
             return b""
 
@@ -539,14 +573,36 @@ class CbsResetWorker(CarWorker):
             except ValueError:
                 records, before = [], {}
             match = [rec for rec in records if rec["item"] == self.plan.item]
-            if (
-                len(match) == 1
-                and match[0]["availability"] == 100
-                and (before.get("count") is None or match[0]["count"] == before["count"] + 1)
-            ):
-                return "verified", "Reset accepted and the re-read shows 100 % and the next count"
+            if len(match) == 1 and match[0]["availability"] == 100:
+                if before.get("count") is not None and match[0]["count"] == before["count"] + 1:
+                    return "verified", "Reset accepted; the re-read shows 100 % and the next count"
+                if before.get("count") is None and match[0]["raw"] != self.plan.before_raw:
+                    return (
+                        "verified",
+                        "Reset accepted; the re-read shows 100 % and a changed record",
+                    )
+            reason = self._detail_reason()
+            return (
+                "response-confirmed",
+                "Reset accepted by the ECU, but the re-read does not show the new state yet"
+                + (f" (ECU reports: {reason})" if reason else "")
+                + " — read service status again later",
+            )
         return (
             "response-confirmed",
-            "Reset accepted by the ECU; the re-read did not show the new state yet — read "
-            "service status again later",
+            "Reset accepted by the ECU; no re-read was obtained — reconnect and read "
+            "service status",
         )
+
+    def _detail_reason(self) -> str:
+        """Decode the v6 per-item reset reason (3-byte records), if one was read."""
+        raw = bytes.fromhex(self.report.get("reset_detail", ""))
+        if raw[:3] != b"\x62\x10\x02" or (len(raw) - 3) % 3:
+            return ""
+        for offset in range(3, len(raw), 3):
+            if raw[offset] == self.plan.item:
+                code = raw[offset + 1]
+                if 0x80 <= code <= 0xBF:
+                    return f"sensor-specific reason 0x{code:02X}"
+                return DETAIL_REASONS.get(code, f"reason 0x{code:02X}")
+        return ""
