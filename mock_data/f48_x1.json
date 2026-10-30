@@ -163,5 +163,25 @@
       "description": "Dynamic Stability Control",
       "addr": "0x29"
     }
+  ],
+  "cbs": [
+    {
+      "name": "DME_BX8",
+      "address": "0x12",
+      "version": "5",
+      "response": "6210010104E201033EFF051B0C0000"
+    },
+    {
+      "name": "KOMB25",
+      "address": "0x60",
+      "version": "5",
+      "response": "621001030190020264FF081CFF00001107D001015AFF0B1B180000"
+    },
+    {
+      "name": "DSC_I1",
+      "address": "0x29",
+      "version": "6",
+      "response": "621001020D4801004628031C10000006FF6A010150FF021AFF0000"
+    }
   ]
 }

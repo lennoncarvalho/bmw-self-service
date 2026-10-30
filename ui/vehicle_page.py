@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ui.cbs_panel import CbsPanel
 from ui.regional import regional_locale
 
 
@@ -116,6 +117,9 @@ class VehiclePage(QWidget):
         self.order_scroll.hide()
         layout.addWidget(self.order_scroll)
 
+        self.cbs_panel = CbsPanel()
+        layout.addWidget(self.cbs_panel)
+
         self.ecu_count_label = QLabel()
         layout.addWidget(self.ecu_count_label)
         self.details_button = QPushButton("Show ECU details")
@@ -164,6 +168,7 @@ class VehiclePage(QWidget):
     def reset(self) -> None:
         """Discard all facts and MIL observations from the previous session."""
         self.populate({}, vin="Unavailable")
+        self.cbs_panel.clear("Service status not read in this session")
         self._observed_at = None
         self.observed_label.setText("No current vehicle observation")
         self.refresh_button.setEnabled(False)
