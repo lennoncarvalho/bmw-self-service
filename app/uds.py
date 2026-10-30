@@ -158,7 +158,7 @@ class UdsServices:
                 response = self.client.routine_control(
                     int.from_bytes(payload[2:4], "big"), payload[1], payload[4:]
                 )
-            elif payload == b"\x19\x15":
+            elif payload in (b"\x19\x15", b"\x19\x17\x0c\x01"):
                 # Source ECU variants use both standard and legacy permanent-memory
                 # layouts. Feature decoder validates their exact record boundaries.
                 response = self.client.send_request(Request.from_payload(payload))

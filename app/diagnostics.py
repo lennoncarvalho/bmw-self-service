@@ -6,17 +6,57 @@ five-minute batch budget. No automatic
 retry follows a timeout or ambiguous stream; later targets remain not attempted.
 """
 
+import json
 import logging
 import time
-from typing import Any
+from functools import cache
+from typing import Any, cast
 
 from app.protocol.contracts import FailureKind
+from app.resources import resource_path
 from app.uds import decode_dtc_records
 from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
 MEMORIES = {"Fault": b"\x19\x02\x0c", "Information": b"\x22\x20\x00", "Permanent": b"\x19\x15"}
+INFO_CLEAR = b"\x31\x01\x0f\x06"
+
+
+@cache
+def memory_variants() -> dict[str, dict[str, Any]]:
+    """Per-variant memory requests from the PRG scan (scripts/recover_diagnostic_memory_variants)."""
+    path = resource_path("coding_data/diagnostic_memory_variants.json")
+    with path.open("rb") as stream:
+        raw = stream.read(1048577)
+    if len(raw) > 1048576:
+        raise ValueError("Diagnostic memory definitions exceed their supported size")
+    data = json.loads(raw)
+    if data.get("schema") != 1 or not isinstance(data.get("variants"), dict):
+        raise ValueError("Unsupported diagnostic memory definition format")
+    return cast(dict[str, dict[str, Any]], data["variants"])
+
+
+def memory_requests(name: str) -> tuple[dict[str, bytes | None], bool]:
+    """Return each memory's read request (None = not defined) and whether a PRG decided it.
+
+    Variants without a supplied PRG keep the diagnostics application's uniform requests.
+    """
+    row = memory_variants().get(name)
+    if row is None:
+        return dict(MEMORIES), False
+    info = row["info"]
+    return {
+        "Fault": MEMORIES["Fault"],
+        "Information": bytes.fromhex(info) if info else None,
+        "Permanent": MEMORIES["Permanent"] if row["permanent"] else None,
+    }, True
+
+
+def info_clear_request(name: str) -> bytes | None:
+    """Information-memory clear routine, unless the variant's PRG defines none."""
+    row = memory_variants().get(name)
+    return INFO_CLEAR if row is None or row["info_clear"] else None
 
 
 def decode_memory(response: bytes, memory: str) -> list[tuple[int, int]]:
@@ -25,7 +65,12 @@ def decode_memory(response: bytes, memory: str) -> list[tuple[int, int]]:
         if len(response) < 3 or response[:2] != b"\x59\x02" or (len(response) - 3) % 4:
             raise ValueError("Invalid fault-memory records or echo")
         return decode_dtc_records(response)
-    if memory == "Information":
+    if memory == "Information" and response[:2] == b"\x59\x17":
+        # IS_LESEN 19 17 0C 01: memory-selection echo and availability mask precede records.
+        if len(response) < 4 or response[2] != 0x01:
+            raise ValueError("Invalid information-memory response")
+        records = response[4:]
+    elif memory == "Information":
         records = did_data(response, 0x2000)
     elif memory == "Permanent":
         if response[:2] != b"\x59\x15":
@@ -86,7 +131,8 @@ class DiagnosticReadWorker(CarWorker):
             address = int(str(ecu["addr"]), 0)
             name = str(ecu.get("name", f"ECU {address:02X}"))
             supported = bool(ecu.get("identified") and ecu.get("uds"))
-            for memory, payload in MEMORIES.items():
+            requests, decided = memory_requests(name)
+            for memory, payload in requests.items():
                 row = {
                     "name": name,
                     "addr": address,
@@ -94,7 +140,11 @@ class DiagnosticReadWorker(CarWorker):
                     "state": "not-attempted",
                     "origin": ecu.get("origin", "gateway"),
                 }
+                row["prg_decided"] = decided
                 coverage.append(row)
+                if supported and payload is None:
+                    row["state"] = "not-applicable"
+                    continue
                 if not supported:
                     row["state"] = (
                         "unidentified" if not ecu.get("identified") else "unsupported-protocol"
@@ -103,6 +153,7 @@ class DiagnosticReadWorker(CarWorker):
                 if self.isInterruptionRequested() or not self.connection.alive_ok:
                     continue
                 self.progress.emit(f"Reading {name}: {memory.lower()} memory...")
+                assert payload is not None
                 response, state = exchange(self.connection, address, payload, deadline)
                 row["state"] = state
                 if response is None:
@@ -132,8 +183,14 @@ class DiagnosticReadWorker(CarWorker):
             self.coverage_known
             and bool(self.ecus)
             and all(
-                row["state"] == "read"
-                or (row["memory"] != "Fault" and row["state"] == "unsupported")
+                row["state"] in ("read", "not-applicable")
+                # Without a PRG the memory's existence is unknown; with one, a
+                # rejection means that defined memory was not read.
+                or (
+                    row["memory"] != "Fault"
+                    and row["state"] == "unsupported"
+                    and not row["prg_decided"]
+                )
                 for row in coverage
             )
         )
@@ -166,10 +223,14 @@ class DiagnosticClearWorker(CarWorker):
             if not ecu.get("identified") or not ecu.get("uds"):
                 continue
             address = int(str(ecu["addr"]), 0)
+            reads, _decided = memory_requests(str(ecu["name"]))
+            info_clear = info_clear_request(str(ecu["name"]))
             for memory, payload in (
                 ("Fault", b"\x14\xff\xff\xff"),
-                ("Information", b"\x31\x01\x0f\x06"),
+                ("Information", info_clear),
             ):
+                if payload is None:
+                    continue
                 if memory == "Information" and not any(
                     row["addr"] == address and row["memory"] == memory and row["state"] == "read"
                     for row in self.coverage
@@ -193,7 +254,9 @@ class DiagnosticClearWorker(CarWorker):
                 )
                 if row["response"] != "accepted" or not self.connection.alive_ok:
                     continue
-                observed, state = exchange(self.connection, address, MEMORIES[memory], deadline)
+                reread = reads[memory]
+                assert reread is not None
+                observed, state = exchange(self.connection, address, reread, deadline)
                 row["observed"] = state
                 if observed is not None:
                     try:
