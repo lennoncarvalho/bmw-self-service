@@ -66,7 +66,7 @@ class DiagnosticConnection:
         self._active: OperationContext | None = None
         self._caller = local()
         self._closed = Event()
-        self._owner = ProtocolOwner(self.trace_id, self._close, self._idle)
+        self._owner = ProtocolOwner(self.trace_id, self._close, self._idle, self._quarantine)
         from app.worker import ProtocolWorker
 
         self.worker = ProtocolWorker(self._owner)
@@ -277,6 +277,35 @@ class DiagnosticConnection:
             return response
 
         return self._call(exchange, ctx, accept_negative=True)
+
+    def _quarantine(self, context: OperationContext) -> bool:
+        """Keep the stream after a timed-out pure read on intact HSFZ framing.
+
+        HSFZ replies carry the ECU source address, so the late reply is consumed
+        by address and that ECU stays blocked until it arrives. Mutations, partial
+        frames and DoIP still invalidate the connection (spec 25 invariant 2).
+        """
+        adapter = self.adapter
+        ecu = context.ecu
+        if (
+            not isinstance(adapter, HsfzAdapter)
+            or context.mutation
+            or ecu is None
+            or adapter.stream.buffer
+        ):
+            return False
+        services = self._services.get(ecu.address)
+        if services is None or not services.bridge.waiting:
+            return False
+        adapter.abandoned.add(ecu.address)
+        services.bridge.quarantined = True
+        services.keepalive_enabled = False
+        logger.warning(
+            "Read timed out; connection kept, ecu=0x%02X blocked until its late reply conn=%s",
+            ecu.address,
+            self.trace_id,
+        )
+        return True
 
     def _idle(self) -> None:
         if self.adapter is None:

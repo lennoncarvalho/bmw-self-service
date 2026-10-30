@@ -42,28 +42,48 @@ def decode_mil(response: bytes, did: int = 0x4A69) -> bool:
     return data[0] == 1
 
 
-def read_mil(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
-    """Read an actual MIL condition only after an exact engine definition match."""
-    if getattr(connection, "kind", None) != TransportKind.HSFZ:
-        return {"on": None, "detail": "MIL mapping for this transport is not yet implemented"}
+def select_mil_contract(ecus: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Return the unique identified engine and its exact definition, or explain why not."""
     engines = [row for row in ecus if row.get("addr") == "0x12"]
     if len(engines) != 1 or engines[0].get("identified") is not True:
-        return {"on": None, "detail": "No unique identified engine for an emissions MIL read"}
+        raise LookupError("No unique identified engine for an emissions MIL read")
     engine = engines[0]
     contract = mil_contracts().get(engine.get("address_index", ""), {})
     if contract.get("name") != engine.get("name"):
-        return {"on": None, "detail": "No verified MIL read contract for the identified engine"}
+        raise LookupError("No verified MIL read contract for the identified engine")
     state = contract.get("state")
-    if state != "scalar-boolean":
+    if state not in ("scalar-boolean", "dynamic-block"):
         reasons = {
             "missing-definition": "MIL engine definition is not present in the supplied data",
             "no-direct-mil-row": "MIL direct-read mapping is not recovered for this engine",
-            "block-reader-not-yet-traced": "MIL block-reader contract still requires recovery",
         }
-        return {"on": None, "detail": reasons.get(str(state), "MIL engine decoder is unavailable")}
+        raise LookupError(reasons.get(str(state), "MIL engine decoder is unavailable"))
     did = contract.get("did")
     if type(did) is not int or not 0 <= did <= 0xFFFF:
         raise ValueError("Invalid MIL read definition")
+    return engine, contract
+
+
+def read_mil(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
+    """Read an actual MIL condition only after an exact engine definition match.
+
+    Dynamic-slot engines need a confirmed, exclusive configuration sequence
+    (app/mil_block.py); ordinary overview refresh never defines a DID.
+    """
+    if getattr(connection, "kind", None) != TransportKind.HSFZ:
+        return {"on": None, "detail": "MIL mapping for this transport is not yet implemented"}
+    try:
+        engine, contract = select_mil_contract(ecus)
+    except LookupError as exc:
+        return {"on": None, "detail": str(exc)}
+    did = contract["did"]
+    if contract["state"] == "dynamic-block":
+        return {
+            "on": None,
+            "detail": f"Engine {engine['name']} reports MIL only through a temporary data "
+            "definition — use Read MIL to run it",
+            "action": "dynamic-block",
+        }
     on = decode_mil(connection.send_uds(0x12, b"\x22" + did.to_bytes(2, "big"), timeout=30.0), did)
     return {
         "on": on,
@@ -92,8 +112,10 @@ def decode_inventory(response: bytes) -> tuple[int, ...]:
 
 def decode_ilevel(response: bytes) -> str:
     """Decode the three eight-byte integration levels returned by gateway 100B."""
+    # The coding source requires at least three blocks and ignores any trailer
+    # (FSeriesVehicleInterface s0$c.b); the owner's F48 gateway returns 15 more.
     data = did_data(response, 0x100B)
-    if len(data) != 24:
+    if len(data) < 24:
         raise ValueError("Vehicle software level has an unsupported format")
     levels = []
     for offset in (0, 8, 16):

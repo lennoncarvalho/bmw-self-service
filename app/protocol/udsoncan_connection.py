@@ -7,7 +7,13 @@ import uuid
 from udsoncan.connections import BaseConnection
 from udsoncan.exceptions import TimeoutException
 
-from app.protocol.contracts import EcuIdentity, OperationContext, TransportAdapter
+from app.protocol.contracts import (
+    EcuIdentity,
+    FailureKind,
+    OperationContext,
+    ProtocolFailure,
+    TransportAdapter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +27,8 @@ class UdsConnection(BaseConnection):
         self.ecu = ecu
         self.context: OperationContext | None = None
         self.waiting = False
+        # A timed-out read whose late reply the adapter will consume by source address.
+        self.quarantined = False
 
     def open(self) -> "UdsConnection":
         """The owning facade opens transport before constructing this bridge."""
@@ -36,11 +44,17 @@ class UdsConnection(BaseConnection):
 
     def empty_rxqueue(self) -> None:
         """Reject unfinished ownership instead of draining fragments or late replies."""
-        if self.waiting:
+        if self.waiting and not self.quarantined:
             raise ConnectionError("Outstanding diagnostic request requires reconnect")
         if self.context is None:
             raise ConnectionError("No active diagnostic operation")
         self.adapter.prepare(self.context)
+        if self.quarantined:
+            if self.ecu.address in getattr(self.adapter, "abandoned", ()):
+                # Never send while the earlier reply could still be misattributed.
+                raise ProtocolFailure(FailureKind.TIMEOUT, reconnect=False)
+            self.quarantined = False
+            self.waiting = False
 
     def empty_txqueue(self) -> None:
         """No additional transmit queue exists outside the owner."""

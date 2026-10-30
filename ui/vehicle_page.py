@@ -24,6 +24,7 @@ class VehiclePage(QWidget):
     """Vehicle facts and an independently observed emissions MIL indicator."""
 
     refresh_requested = Signal()
+    mil_read_requested = Signal()
     mil_changed = Signal(object, str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -58,6 +59,13 @@ class VehiclePage(QWidget):
         self.mil_label.setWordWrap(True)
         self.mil_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.mil_label)
+        self.mil_read_button = QPushButton("Read MIL from engine…")
+        self.mil_read_button.setToolTip(
+            "Temporarily defines an engine data slot, reads the MIL and clears the slot"
+        )
+        self.mil_read_button.clicked.connect(self.mil_read_requested)
+        self.mil_read_button.hide()
+        layout.addWidget(self.mil_read_button, 0, Qt.AlignmentFlag.AlignLeft)
         self.observed_label = QLabel()
         self.observed_label.setObjectName("overviewCaption")
         layout.addWidget(self.observed_label)
@@ -163,6 +171,14 @@ class VehiclePage(QWidget):
         self._mil_on = None
         self._set_mil(None, reason)
 
+    def show_mil_result(self, mil: dict[str, Any]) -> None:
+        """Publish an explicitly requested MIL observation without other overview facts."""
+        on = mil.get("on")
+        self._mil_on = on if type(on) is bool else None
+        clock = mil.get("observed_clock")
+        self._mil_clock = float(clock) if isinstance(clock, (int, float)) else monotonic()
+        self._set_mil(self._mil_on, str(mil.get("detail", "")))
+
     def invalidate_order(self) -> None:
         """Discard configuration details after a fatal overview read failure."""
         self.order_label.setText("Vehicle order: unavailable")
@@ -223,6 +239,9 @@ class VehiclePage(QWidget):
             else "No verified read contract for this ECU"
         )
         self._set_mil(self._mil_on, detail)
+        self.mil_read_button.setVisible(
+            isinstance(mil, dict) and mil.get("action") == "dynamic-block"
+        )
         ecus = results.get("ecu_list")
         self._ecus = ecus if isinstance(ecus, list) else []
         identified = sum(row.get("identified") is True for row in self._ecus)
