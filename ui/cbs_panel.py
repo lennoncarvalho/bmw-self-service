@@ -102,11 +102,16 @@ class CbsPanel(QWidget):
         if item.get("count") is not None:
             parts.append(f"services done {item['count']}")
         owner = item["owner"]
+        version = (
+            f", CBS {owner['version']}" if owner.get("version") not in (None, "unknown") else ""
+        )
         lines = [
             " · ".join(parts),
-            f"Owner: {owner['name']} (0x{owner['address']:02X}, CBS {owner['version']}) · "
-            f"record {item['raw']}",
+            f"Owner: {owner['name']} (0x{owner['address']:02X}{version}) · "
+            f"record {item.get('raw') or 'unavailable'}",
         ]
+        if item.get("job_text") and item["job_text"] != item["label"]:
+            lines.append(f"ECU job text: {item['job_text']}")
         if item.get("notes"):
             lines.append("; ".join(item["notes"]))
         if owner.get("reset") == "demo":
@@ -121,10 +126,14 @@ class CbsPanel(QWidget):
         self._resets_allowed = resets_allowed
         owners = result.get("owners", [])
         coverage = (
-            ", ".join(f"{o['name']} 0x{o['address']:02X}: {o['state']}" for o in owners)
-            or "no ECU with a recovered CBS reader was identified"
+            "\n".join(
+                f"{o['name']} 0x{o['address']:02X}: {o['state']}"
+                + (f" — {o['source']}" if o.get("source") else "")
+                for o in owners
+            )
+            or "no ECU with a CBS reader was identified"
         )
-        self.status_label.setText((note + "\n" if note else "") + f"Sources: {coverage}")
+        self.status_label.setText((note + "\n" if note else "") + f"Sources:\n{coverage}")
         for item in result.get("items", []):
             frame = QFrame()
             frame.setObjectName("card")

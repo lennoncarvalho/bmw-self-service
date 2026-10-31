@@ -1139,7 +1139,9 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self,
             "Service Reset Outcome",
-            f"Outcome: {report['state']}\n{report['detail']}\n\n{report['instructions']}"
+            f"Outcome: {report['state']}\n{report['detail']}\n"
+            + (f"Sent by: {report['execution']}\n" if report.get("execution") else "")
+            + f"\n{report['instructions']}"
             + persistence,
         )
 
