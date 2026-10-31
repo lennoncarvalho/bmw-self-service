@@ -81,6 +81,33 @@ D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-archi
    - KIS reader for model ECU lists (`BORDNETZTEILNEHMER`).
    - GRP→PRG variant selection through the interpreter.
    - Build script producing the bundled compact database for F056 plus F20/F30/F15/F25/G20/G30/G05/G01 (job files + ECU lists + provenance hashes). Runtime prefers the bundle, then falls back to the user folder.
+   - **Status 2026-10-30: implemented and verified offline (no vehicle traffic).**
+     - Code:
+       - `app/ista_data.py`: `IstaDataSource` with `BundleProvider` (`ista_bundle/`) then `FolderProvider` (user ISTA folder, QSettings `ista/folder`). API: `job_file(name)`/`locate(name)` (case-insensitive file name or unambiguous stem, returns the file and the job directory of the same provider), `series_ecus(series)` (`F48`, `F048` or main series `F056`), `available_series()`, `main_series()`. `load_job_file(engine, name)` loads into `JobEngine` with that directory; `app/ediabas.py` is unchanged.
+       - `validate_ista_folder()` accepts the install root or `Rheingold/`; it requires `Ecu/` with PRG and GRP files, `t_grtb.prg` and at least one `PSdZ/kiswb/<series>/KIS.script`. The data version is read from `SQLiteDBs/*.sqlite` table `RG_VERSION_*` (read-only URI, smallest database first): `4.29.14 (ENGB)` here.
+       - `scripts/build_ista_bundle.py <ISTA folder>` writes `ista_bundle/` (git-ignored): `series/<main>.json`, `ecu/*.prg|*.grp`, `manifest.json` (format 1; SHA-256 per file; SHA-256 of `KIS.script`, `KIS.data`, `brref.xml`, `t_grtb.prg`; data version; series map; requested→main series; absent files).
+       - Gear menu → **ECU Job Data...** (`ui/ista_settings_dialog.py`): bundle status, choose/validate/clear the folder. An invalid choice is not saved; a non-4.29 version is flagged.
+     - Data formats [observed]:
+       - **KIS is HSQLDB, not SQLite.** `kiswb/<main>/KIS.{properties,script,data}`, `version=2.5.1` (F001/F020/F025/F056/S15A/S15C/S18A) or `2.5.0` (F010/I001/K001/KE01/KS01/RR21), `readonly=true`, `SET FILES SCALE 32`. Every database defines `KIS.BORDNETZTEILNEHMER(ID INTEGER identity, NAME VARCHAR(26), DIAGNOSEADRESSE INTEGER, BESCHREIBUNG VARCHAR(1024), HAS_GWT CHARACTER(1), PK(ID))`; `SET TABLE KIS.BORDNETZTEILNEHMER INDEX '<pk root> 0 <rows>'`.
+       - A row at `root × scale` in `KIS.data` is: int32 BE size; AVL node (balance, left, right, parent; int32 BE, 0 = none); then per column a 1-byte present flag (1/0) and an int32 BE value or an int32 BE byte length plus Java modified UTF-8. The reader walks the primary-key tree, requires the exact `CREATE` text, rejects cycles and out-of-file positions, and requires the node count to equal the index row count.
+       - Cross-check: for all 13 kiswb databases the Python rows equal HSQLDB JDBC output (`kis.jar`, `readonly=true;files_readonly=true`; KIS file timestamps unchanged). Mutating the node size, the column order or the `CREATE` text makes the reader fail.
+       - `DIAGNOSEADRESSE` is decimal; `NAME` is a KIS logistic name (`DME-84T1-DME`), not a job file name. F056: 78 rows, 43 addresses; `HAS_GWT=Y` only on `BDC-LR01-GATEWAY` (0x10).
+       - Series map: `PSdZ/mapping/brref.xml` `mainSeries/series`. Requested series → KIS main series: F056→F056 (F48 is in F056), F020→F020, F030→F020, F015→F025, F025→F025, G020→S18A, G005→S18A, G030→S15A, G001→S15A. None absent. There is no separate F030/F015/G0xx KIS database.
+       - GRP→PRG candidates: `Ecu/t_grtb.prg` table `ZUORDNUNGSTABELLEUDS(ADR_INDEX "AA IIIIII", SGBD, GRUPPE, BAUREIHE, STEUERGERAET, VERANTWORTUNG)`, 621 rows (one `?? ??????` terminator). Each group serves exactly one address. `BAUREIHE` is the series a row was introduced with, not where the variant is used (`KOMB25` rows say F20/F25/F80/I01/F56, yet F048 uses it), so the bundle does not filter by it.
+       - Job files reference external table files by name (`T_GRTB` in groups; `T_PCOD`, `T_SCOD`, `T_MSA` in variants) and USES files. ISTA 4.29 lacks the USES files `_bfh_ext`, `_bfs_ext`, `_cas4`, `_fah_ext`, `_fas_ext` (used by `bfh_01/12`, `bfs_01/12`, `cas4_2`, `fah_01/12`, `fas_01`).
+     - Bundle from `sources/ISTA_4.29.1x` (main series F020, F025, F056, S15A, S18A):
+       - ECU lists: F020 119 rows/53 addresses, F025 128/67, F056 78/43, S15A 140/76, S18A 102/66.
+       - Job files: every group serving a listed address (121 groups), every variant those groups can resolve to, `t_grtb`, `t_pcod`, `t_scod`, `t_msa`: 507 files, 553.1 MiB (ISTA `Ecu/` is 1.0 GB). Every bundled group resolves within the bundle. 86 variants named by `t_grtb` for these groups are not in ISTA 4.29 either.
+     - Verification (scratchpad `m2/m2_check.py`, 29/29; M1 `m1/m1_check.py` still passes):
+       - Manifest hashes match all 507 files; no unlisted file.
+       - The owner's 19 inventory addresses (01 06 0D 10 12 18 29 2C 30 40 43 44 56 60 61 63 67 6D 78) are all in the F056 list, each with a bundled group. The F056 list has 24 more addresses: 07 0B 14 15 19 1A 1D 22 24 2D 31 32 34 35 37 3A 3F 49 50 51 5D 5E 5F 71.
+       - `g_motor.grp`, `dme_bx8.prg`, `komb25.prg` resolve from the bundle and, with an empty bundle, from the user folder. The bundle wins when both have a file; the folder supplies files and series (I001) the bundle lacks.
+       - Through `load_job_file` + `JobEngine.resolve_variant()` on the fake gateway with the owner's replies: bundle `g_motor.grp` → `DME_BX8`, bundle `g_kombi.grp` → `KOMB25`, folder `g_motor` → `DME_BX8`.
+       - Offscreen render of the dialog: empty, rejected (`/tmp`, not saved) and valid states; the setting persists and clears.
+     - Gaps:
+       - The bundle is the address-complete superset for the five main series, not the variants of a specific car; per-car narrowing needs DiagDocDb data.
+       - The packaged app does not yet include `ista_bundle/` (PyInstaller `--add-data` is a later packaging step).
+       - Not wired into any app feature (M4).
 3. **Owner trace (M3).**
    - Replay the owner's F48 EDIABAS trace through the fake gateway.
    - Compare the interpreter's results with ISTA's for identification, faults and CBS.
@@ -103,5 +130,5 @@ D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-archi
 
 ## Waiting on the owner
 
-- `DiagDocDb.sqlite` from the working ISTA 4.29 machine.
+- `DiagDocDb.sqlite` from the working ISTA 4.29 machine. The copy now in `sources/ISTA_4.29.1x/Rheingold/SQLiteDBs/` (5.9 GB) has no SQLite header and does not open ("file is not a database"); it appears encrypted.
 - An EDIABAS `ApiTrace=3`/`IfhTrace=3` trace of ISTA identifying the F48, reading faults and opening the CBS screen (no resets).
