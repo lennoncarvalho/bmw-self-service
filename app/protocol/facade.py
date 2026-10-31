@@ -27,6 +27,8 @@ from app.uds import UdsServices
 
 logger = logging.getLogger(__name__)
 _live: set["DiagnosticConnection"] = set()
+# A quarantined ECU's late reply must arrive within this bound, or the stream is replaced.
+LATE_REPLY_LIMIT = 30.0
 _live_lock = Lock()
 
 
@@ -66,7 +68,7 @@ class DiagnosticConnection:
         self._active: OperationContext | None = None
         self._caller = local()
         self._closed = Event()
-        self._owner = ProtocolOwner(self.trace_id, self._close, self._idle)
+        self._owner = ProtocolOwner(self.trace_id, self._close, self._idle, self._quarantine)
         from app.worker import ProtocolWorker
 
         self.worker = ProtocolWorker(self._owner)
@@ -257,8 +259,15 @@ class DiagnosticConnection:
         timeout: float = 30.0,
         *,
         context: OperationContext | None = None,
+        raw: bool = False,
+        grant: frozenset[int] = frozenset(),
     ) -> bytes:
-        """Temporary raw compatibility through the owner's sole udsoncan client."""
+        """Temporary raw compatibility through the owner's sole udsoncan client.
+
+        ``raw`` selects the job-interpreter path (see ``UdsServices.invoke``):
+        reads by default, other services only if in ``grant``, and the adapter's
+        read-only check still applies at the final send.
+        """
         ctx = (
             context
             or (self._active if self._executor == get_ident() else None)
@@ -271,12 +280,41 @@ class DiagnosticConnection:
             ctx.cancelled = scope.cancelled
 
         def exchange(active: OperationContext) -> bytes:
-            response = self._service(ecu_addr).invoke(payload, active)
+            response = self._service(ecu_addr).invoke(payload, active, raw=raw, grant=grant)
             if payload[:1] == b"\x10" and response[:1] == b"\x50":
                 self._last_session[ecu_addr] = time.monotonic()
             return response
 
         return self._call(exchange, ctx, accept_negative=True)
+
+    def _quarantine(self, context: OperationContext) -> bool:
+        """Keep the stream after a timed-out pure read on intact HSFZ framing.
+
+        HSFZ replies carry the ECU source address, so the late reply is consumed
+        by address and that ECU stays blocked until it arrives. Mutations, partial
+        frames and DoIP still invalidate the connection (spec 25 invariant 2).
+        """
+        adapter = self.adapter
+        ecu = context.ecu
+        if (
+            not isinstance(adapter, HsfzAdapter)
+            or context.mutation
+            or ecu is None
+            or adapter.stream.buffer
+        ):
+            return False
+        services = self._services.get(ecu.address)
+        if services is None or not services.bridge.waiting:
+            return False
+        adapter.abandoned[ecu.address] = time.monotonic() + LATE_REPLY_LIMIT
+        services.bridge.quarantined = True
+        services.keepalive_enabled = False
+        logger.warning(
+            "Read timed out; connection kept, ecu=0x%02X blocked until its late reply conn=%s",
+            ecu.address,
+            self.trace_id,
+        )
+        return True
 
     def _idle(self) -> None:
         if self.adapter is None:

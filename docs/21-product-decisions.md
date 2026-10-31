@@ -39,7 +39,7 @@ D-01–D-20 originated before this interview; D-21–D-55 were answered on
 | D-22 | If the gateway responds but VIN cannot be verified, offer limited troubleshooting with connection details/logs; vehicle-dependent operations remain disabled. |
 | D-23 | Avoid displaying partial data and filling it in later. Prefer independent page loading if feasible; publish each page's initial result together. One global loading state is an acceptable fallback. |
 | D-24 | Normal connection should match the reference experience: select chassis type and Ethernet adapter without manual configuration. App-assisted network setup is conditionally authorized if investigation establishes that it is beneficial and straightforward to implement. |
-| D-25 | Display emissions MIL On / Off / Unavailable separately from fault count, using a verified MIL read. After Clear All show the newly observed status even if it remains On. |
+| D-25 | *Superseded by D-59 for the indicator source.* Display MIL On / Off / Unavailable; after Clear All show the newly observed status even if it remains On. |
 | D-26 | Clear All remains available for identified, supported ECUs when scan coverage is incomplete; confirmation explicitly names coverage gaps. |
 | D-27 | Advanced coding continues with subsequent ECUs after a definite ECU-local write rejection on a healthy connection. Easy coding stops and reverts all changes in the operation on failure. Advanced mode remains later scope. |
 | D-28 | No user-facing Cancel during a write. The user commits definitively after warning/confirmation and accepts responsibility for keeping both vehicle and host device sufficiently powered throughout the operation. |
@@ -85,6 +85,70 @@ requires **JSON only**; the earlier proposed legacy-file adapters are withdrawn.
 [History workflow 28](28-service-history-workflow.md) makes these decisions
 concrete. No new product interview is required to remove the obsolete reader
 prerequisite; actual encoder/session/capacity/result facts still need evidence.
+
+## Read/write strictness and popular coding — D-65–D-66 (2026-10-30)
+
+- **D-65 — Relaxed reads, strict writes.** Reads may use best-effort decoders
+  from available sources (job files, coding data, public documentation) and
+  show values with a source label instead of withholding them until fully
+  traced. Writes keep the full contract: exact identity/definition match,
+  complete backup, confirmation, power acknowledgement, journal, lockout,
+  checked completion, readback/restore and no replay.
+- **D-67 — Learn-by-diff rejected (2026-10-30).** The owner does not want to
+  capture options by trial on the car; that code was removed. The easiest route
+  to a ready-made option catalogue (using the BimmerCode/ISTA coding data) is
+  left for another coder, because Claude did not take it
+  ([claude-session-limitations.md](claude-session-limitations.md)). The recovered
+  write sequence ([task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md))
+  and the popular-coding list are inputs for that work.
+- **D-66 — Popular coding subset (supersedes D-64's deferral; byte-map source
+  superseded by D-67).** Following the
+  BimmerCode model, implement a small curated set of popular codings that public
+  sources confirm exist, only for best-selling models (F48 first, then common
+  F/G). Byte maps are learned on the owner's car: snapshot the ECU's complete
+  coding, apply the option once with the owner's own BimmerCode, snapshot again
+  and store the exact ECU/coding-version/byte/mask/old/new diff as the app's
+  own preset (owner-labelled). Presets apply only to the exact coding version
+  they were learned on. Other data sources may be added later by the owner.
+
+## ISTA job engine and data — D-60–D-64 (2026-10-30)
+
+Owner interview after the ISTA 4.29.15 analysis
+([architecture](evidence/ista-4.29-architecture.md),
+[online research](evidence/ista-online-research.md)):
+
+- **D-60 — Target ISTA 4.29.** Support exactly what ISTA 4.29 covers (HSFZ over
+  ENET). Newer ISTA/models are a documented later upgrade, not current scope.
+- **D-61 — Run ISTA job files.** Diagnostics execute ECU PRG/GRP jobs by name
+  (identification, FS_LESEN/FS_LOESCHEN, CBS_DATEN_LESEN/CBS_RESET, STATUS_*),
+  using the repo's ediabasx C11 interpreter completed with an HSFZ transport
+  and called from Python through a small shim on the existing protocol owner.
+  ediabasx is PolyForm Noncommercial: acceptable because of D-63.
+- **D-62 — Hybrid data.** A build script converts the owner's F48 (F056) plus
+  common F/G platforms (F20/F30/F15/F25, G20/G30/G05/G01) into a compact
+  bundled database; every other model falls back to a user-provided ISTA 4.29
+  folder (Ecu job files and PSdZ KIS ECU lists) chosen in the app.
+- **D-63 — Personal use only.** No public or commercial release is planned.
+- **D-64 — Coding deferred** (later revised by D-66). Status note: ISTA 4.29's
+  CAFD/fafp files are encrypted and were not used in this increment.
+- **Migration.** Hand-written fault, CBS, odometer and measurement code is
+  replaced by the equivalent ISTA jobs once the owner's F48 EDIABAS trace
+  matches, keeping the app's write safety: confirmation, power acknowledgement,
+  durable journal, global lockout, read-only rejection, no replay.
+- **Next features after the engine:** fault details, live values from each job
+  file's result tables, and selected service functions rebuilt from their job
+  calls. An ISTA-style colored ECU tree was not selected.
+
+## Engine fault indicator — D-59 (2026-10-30)
+
+Owner: faults are presented as ISTA does — present/active, or stored but not
+confirmed. The check-engine (MIL) indicator is red when the engine ECU has a
+present or confirmed fault; engine running or stopped must not change it. The
+indicator therefore follows engine fault memory (`19 02 0C` at 0x12/0x13: status
+bit 0 present or bit 3 confirmed), green only when every responding engine ECU
+was read with neither, grey when not read. The ECU lamp command (4A69/F303,
+lit at key-on with the engine off) is no longer read or shown. Fault rows use
+present / stored (confirmed) / not confirmed labels.
 
 ## Dashboard emphasis — D-56 (2026-10-29)
 

@@ -54,6 +54,7 @@ class ProtocolOwner:
         generation: str,
         close_transport: Callable[[], None],
         idle: Callable[[], None] | None = None,
+        quarantine: Callable[[OperationContext], bool] | None = None,
     ) -> None:
         """Prepare an unopened owner; construction never starts threads or I/O."""
         if not generation:
@@ -61,6 +62,7 @@ class ProtocolOwner:
         self.generation = generation
         self._close_transport = close_transport
         self._idle = idle
+        self._quarantine = quarantine
         self._queue: Queue[_Command | None] = Queue()
         self._lock = Lock()
         self._closing = False
@@ -211,7 +213,9 @@ class ProtocolOwner:
                         self.request_close()
                     self._complete(handle, FailureKind.CANCELLED)
                 except TimeoutError:
-                    if context.sent:
+                    if context.sent and not (
+                        self._quarantine is not None and self._quarantine(context)
+                    ):
                         self.request_close()
                     self._complete(handle, FailureKind.TIMEOUT)
                 except ConnectionError:

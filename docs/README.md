@@ -107,6 +107,35 @@ Do not edit ignored reference checkouts to fix our documentation. The inventory
 is in [reference provenance](evidence/reference-markdown-inventory.json).
 Their own agent instructions apply only when working inside those trees.
 
+## Session limitations and the easy source path
+
+[claude-session-limitations.md](claude-session-limitations.md) records work this
+assistant was asked for but did not do — chiefly the "easy source path" of
+decrypting/deriving from BimmerCode's encrypted coding database, ISTA 4.29 CAFD,
+ISTA `DiagDocDb.sqlite` and BimmerCode's security-access code. These are limits of
+one session, not project rules; other coders may take that path. Its last section,
+"Gaps that the easy source path would close", maps each affected gap to its source
+and expected result. Gaps annotated across the docs/tasks link back to it.
+
+## ISTA 4.29 and other evidence documents
+
+These `evidence/` records are not in the per-document tables above:
+[ISTA 4.29 architecture](evidence/ista-4.29-architecture.md),
+[ISTA online research](evidence/ista-online-research.md),
+[feature contract ledger](evidence/feature-contract-ledger.md),
+[CBS contract](evidence/task-b-cbs-contract.md),
+[coding write sequence](evidence/task-b-coding-write-sequence.md),
+[diagnostic breadth](evidence/task-b-diagnostic-breadth.md),
+[odometer/identity/DoIP](evidence/task-b-odometer-identity-doip.md),
+[history deep investigation](evidence/task-b-history-deep-investigation.md),
+[history new sources](evidence/task-b-history-new-sources.md),
+[history write contract](evidence/task-b-history-write-contract.md),
+[owner session 2026-10-29](evidence/task-b-owner-session-20261029.md) and
+[popular F48 codings](evidence/popular-coding-f48.md). Related tasks:
+[ISTA job-engine plan](../tasks/ista-job-engine-plan.md),
+[future CBS research](../tasks/future-cbs-research.md),
+[CBS/MIL implementation](../tasks/task-b-cbs-mil-implementation.md).
+
 ## Implementation slice — 2026-10-29
 
 REA-backed connection/inventory/diagnostics, exact-identity coding snapshots and

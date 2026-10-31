@@ -14,6 +14,9 @@ from PySide6.QtGui import QAction, QCloseEvent, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -27,13 +30,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
+from app.ista_jobs import remember_ista_folder
 from app.mock_connection import MockConnection
 from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
+from ui.ista_settings_dialog import IstaSettingsDialog
 from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
@@ -79,6 +85,11 @@ class MainWindow(QMainWindow):
         self._retired_workers: list[QThread] = []
         self._closing = False
         self._mutation_active = False
+        self._overview_ecus: list[dict] = []
+        self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
+        self._cbs_journal = CbsJournalStore()
+        # Job data folder is read here; CarWorkers must not create QSettings.
+        remember_ista_folder()
         self._worker_reap_timer = QTimer(self)
         self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
@@ -101,6 +112,8 @@ class MainWindow(QMainWindow):
 
         self.vehicle_page = VehiclePage()
         self.vehicle_page.refresh_requested.connect(self._refresh_overview)
+        self.vehicle_page.cbs_panel.read_requested.connect(self._start_cbs_read)
+        self.vehicle_page.cbs_panel.reset_requested.connect(self._start_cbs_reset)
         self.stack.addWidget(self.vehicle_page)
 
         self.diag_page = DiagnosticsPage()
@@ -309,6 +322,10 @@ class MainWindow(QMainWindow):
         backups_action = QAction("Backups...", self)
         backups_action.triggered.connect(self._on_backups)
         menu.addAction(backups_action)
+
+        job_data_action = QAction("ECU Job Data...", self)
+        job_data_action.triggered.connect(self._on_job_data)
+        menu.addAction(job_data_action)
 
         about_action = QAction("About", self)
         about_action.triggered.connect(self._on_about)
@@ -659,6 +676,8 @@ class MainWindow(QMainWindow):
                 "on": None,
                 "detail": "MIL could not be read — check ignition, connection and session log",
             }
+        overview_ecus = results.get("ecu_list")
+        self._overview_ecus = overview_ecus if isinstance(overview_ecus, list) else []
         config = getattr(connection, "config", None)
         kind = getattr(connection, "kind", "Unknown transport")
         results["connection_info"] = (
@@ -901,6 +920,10 @@ class MainWindow(QMainWindow):
         if self._mutation_active:
             return
         self.vehicle_page.reset()
+        self._overview_ecus = []
+        if self._cbs_worker is not None:
+            self._retire_worker(self._cbs_worker)
+            self._cbs_worker = None
         self._overview_identity = ("", "")
         self._overview_refresh = False
         logger.info("Disconnecting from vehicle...")
@@ -950,6 +973,9 @@ class MainWindow(QMainWindow):
         if idx >= 0:
             self.stack.setCurrentIndex(idx)
 
+    def _on_job_data(self) -> None:
+        IstaSettingsDialog(self).exec()
+
     def _on_about(self) -> None:
         QMessageBox.about(
             self,
@@ -967,11 +993,162 @@ class MainWindow(QMainWindow):
         worker = self._post_connect_worker
         return (
             not self._mutation_active
+            and self._cbs_worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
             and not self.coding_page.is_reading()
             and (worker is None or not worker.isRunning())
         )
+
+    @Slot()
+    def _start_cbs_read(self) -> None:
+        """Read CBS from identified owners; DEMO decodes its simulated snapshot."""
+        connection = self._connection
+        panel = self.vehicle_page.cbs_panel
+        if connection is None or self._cbs_worker is not None or self._mutation_active:
+            return
+        if self._demo_mode:
+            data = getattr(connection, "data", {}) or {}
+            panel.show_result(
+                demo_cbs(data),
+                resets_allowed=False,
+                note="DEMO — simulated records; reset is not available",
+            )
+            return
+        if not getattr(connection, "alive_ok", False):
+            panel.clear("Connection lost — reconnect before reading service status")
+            return
+        worker = CbsReadWorker(connection, self._overview_ecus)
+        self._cbs_worker = worker
+        panel.set_busy(True, "read")
+        worker.result_ready.connect(self._on_cbs_read)
+        worker.error.connect(self._on_cbs_error)
+        worker.finished.connect(self._on_cbs_finished)
+        worker.start()
+
+    @Slot(object)
+    def _on_cbs_read(self, result: dict) -> None:
+        worker = self.sender()
+        if worker is not self._cbs_worker or self._connection is not worker.connection:
+            return
+        read_only = self._read_only or getattr(self._connection, "read_only", False)
+        self.vehicle_page.cbs_panel.show_result(
+            result,
+            resets_allowed=not read_only,
+            note="Read-only session — resets disabled" if read_only else "",
+        )
+
+    @Slot(str)
+    def _on_cbs_error(self, message: str) -> None:
+        if self.sender() is self._cbs_worker:
+            self.vehicle_page.cbs_panel.clear(message)
+
+    @Slot()
+    def _on_cbs_finished(self) -> None:
+        worker = self.sender()
+        if worker is not self._cbs_worker:
+            return
+        self._cbs_worker = None
+        assert isinstance(worker, QThread)
+        self._retire_worker(worker)
+        reset = isinstance(worker, CbsResetWorker)
+        if reset:
+            self._set_mutation_active(False)
+        self.vehicle_page.cbs_panel.set_busy(self._mutation_active)
+        if isinstance(worker, CbsResetWorker) and self._connection is worker.connection:
+            # Always replace the rows the reset was planned from; a closed
+            # connection clears them instead of leaving stale reset actions.
+            if getattr(worker.connection, "alive_ok", False):
+                QTimer.singleShot(0, self._start_cbs_read)
+            else:
+                self.vehicle_page.cbs_panel.clear(
+                    "Connection closed — reconnect and read service status"
+                )
+
+    @Slot(object)
+    def _start_cbs_reset(self, item: dict) -> None:
+        """Confirm one source-supported reset, freeze its plan and run it under lockout."""
+        connection = self._connection
+        if (
+            connection is None
+            or self._demo_mode
+            or self._read_only
+            or getattr(connection, "read_only", False)
+            or not getattr(connection, "alive_ok", False)
+            or not self._can_start_mutation()
+        ):
+            QMessageBox.information(
+                self, "Reset Unavailable", "Wait for the current vehicle operation, then retry."
+            )
+            return
+        try:
+            plan = plan_reset(getattr(connection, "verified_vin", ""), item)
+        except PermissionError as exc:
+            QMessageBox.information(self, "Reset Unavailable", str(exc))
+            return
+        owner = item["owner"]
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Reset Service Item")
+        layout = QVBoxLayout(dialog)
+        text = QLabel(
+            f"Reset “{item['label']}” in {owner['name']} (0x{owner['address']:02X}, CBS "
+            f"{owner['version']})?\n\nThe ECU sets availability to 100 % and counts one more "
+            "service; it then recalculates the next due values. Other fields are sent as "
+            "“unchanged”. This cannot be undone by the app. The current record is saved "
+            "locally first.\n\nThis is separate from the headunit service history."
+        )
+        text.setWordWrap(True)
+        layout.addWidget(text)
+        power = QCheckBox("Battery charger connected or supply voltage is stable")
+        layout.addWidget(power)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        ok.setText("Reset")
+        ok.setEnabled(False)
+        power.toggled.connect(ok.setEnabled)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        if (
+            dialog.exec() != QDialog.DialogCode.Accepted
+            or connection is not self._connection
+            or not self._can_start_mutation()
+        ):
+            return
+        worker = CbsResetWorker(
+            connection, plan, self._cbs_journal, power_acknowledged=power.isChecked()
+        )
+        self._cbs_worker = worker
+        self._set_mutation_active(True)
+        worker.result_ready.connect(self._on_cbs_reset)
+        worker.error.connect(self._on_cbs_reset_error)
+        worker.finished.connect(self._on_cbs_finished)
+        worker.start()
+
+    @Slot(object)
+    def _on_cbs_reset(self, report: dict) -> None:
+        if self.sender() is not self._cbs_worker:
+            return
+        persistence = (
+            "\n\nThe local operation record could not be saved; see the session log."
+            if report["persistence_failed"]
+            else f"\n\nRecord: {report['path']}"
+        )
+        QMessageBox.information(
+            self,
+            "Service Reset Outcome",
+            f"Outcome: {report['state']}\n{report['detail']}\n"
+            + (f"Sent by: {report['execution']}\n" if report.get("execution") else "")
+            + f"\n{report['instructions']}"
+            + persistence,
+        )
+
+    @Slot(str)
+    def _on_cbs_reset_error(self, message: str) -> None:
+        if self.sender() is self._cbs_worker:
+            QMessageBox.warning(self, "Service Reset Not Started", message)
 
     @Slot(bool)
     def _set_mutation_active(self, active: bool) -> None:
@@ -979,6 +1156,7 @@ class MainWindow(QMainWindow):
         self._mutation_active = active
         self.history_page.setEnabled(not active)
         self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
+        self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
         elif self._connected:

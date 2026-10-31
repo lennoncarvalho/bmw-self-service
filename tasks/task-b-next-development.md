@@ -71,6 +71,11 @@ source restriction; not-yet-recovered means an actionable investigation.
    dynamic options, exact current-value bytes, composition, authorization,
    completion/cycle and restoration. Account for the whole source catalogue;
    missing applicable rows are unfinished work, not silently excluded scope.
+   - Easy source path (not taken by Claude; left for another coder): BimmerCode
+     `coding_data/*.enc` (key in `app/coding_db.py`) or ISTA CAFD → the named preset
+     catalogue and the 12 missing F48 ECU definitions; BimmerCode
+     `de.appomotive.bimmercode.e.*` → security-access seed/key for writes. See
+     [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 8. **Close implementation and review (B7).** Perform meaningful one-off offline
    byte/error/deadline checks and visual DEMO/UI inspection, independent review,
    fixes and full scripts/preflight.sh before every push. No tests/ suite.
@@ -194,3 +199,21 @@ run_operation for exclusive clear/define/read/cleanup; explicit2C service suppor
 confirmed UI action/global lockout, reserved cleanup budget and per-step uncertain
 outcomes remain required. Do not put dynamic-DID writes in normal overview refresh.
 No additional physical vehicles are a prerequisite for these implementation tasks.
+
+
+## CBS/MIL/odometer increment — 2026-10-30
+
+PR15 and PR16 are merged (`85ed2ad`). Fresh branch `codex/task-b-cbs-mil` from
+fetched origin/main; no PR is authorized yet. REA MCP now also runs in Claude
+Code. Implemented and checked offline (see
+[tasks/task-b-cbs-mil-implementation.md](tasks/task-b-cbs-mil-implementation.md)):
+- CBS read and confirmed reset for 44 exact definitions (owner by response, no
+  default owner, durable intent before send, exact `6E 10 01`, settle re-read).
+- Owned F303 MIL for the five older engines (explicit action, checked cleanup).
+- Odometer (cluster D122 or KOMB01/25 D10D−D114; BDC copy) and 83 engine values.
+- Owner-session fixes: per-ECU late-reply quarantine (bounded 30 s) instead of
+  dropping the connection, and the I-level trailer.
+
+Next: owner-operated read-only CBS/odometer observation, then one confirmed
+reset; remaining CBS branches (DSC_25, D94 6.3, KOMBSP21); diagnostics
+reconciliation; easy coding. DoIP mapping needs a new source (none supplied).

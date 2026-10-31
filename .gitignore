@@ -11,12 +11,13 @@ __pycache__/
 # Build artifacts
 dist/
 build/
+native/build/
 *.spec
 
 # Reverse-engineered sources — not shipped, not committed
 sources/
 BimmerDaten/
-ediabasx/
+/ediabasx/
 
 # Extracted data — kept locally, not in repo
 bimmercode_extracted/
@@ -43,3 +44,5 @@ node_modules/
 
 # Logs
 *.log
+# Personal-build job files and ECU lists from an ISTA folder (D-62/D-63)
+ista_bundle/

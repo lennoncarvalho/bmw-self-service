@@ -1,3 +1,8 @@
+> **2026-10-30, D-59:** the app no longer reads or shows the ECU lamp command
+> (4A69 / F303). The overview indicator follows engine fault memory. This record
+> is retained as source research; `coding_data/mil_contracts.json` remains only
+> as input to `scripts/recover_engine_measurements.py`.
+
 # MIL source catalogue expansion — 2026-10-29
 
 Status: **primary implementation reference**, implemented and exercised offline.

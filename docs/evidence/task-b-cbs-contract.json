@@ -1,0 +1,4027 @@
+{
+ "schema": 1,
+ "created": "2026-10-30",
+ "status": "primary implementation reference (static); no vehicle traffic",
+ "artifacts": {
+  "bimmerlink_apk": {
+   "path": "sources/BimmerLink_v2.36.1.apk",
+   "sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5"
+  },
+  "t_grtb": {
+   "path": "sources/Ecu/T_GRTB.PRG",
+   "sha256": "c66b5eb7361c2cb230d7f947fa742c311e522d89efa94161519dc761bfecb7ee",
+   "table": "ZUORDNUNGSTABELLEUDS"
+  },
+  "g_kombi_grp": {
+   "path": "sources/Ecu/G_KOMBI.grp",
+   "sha256": "00fd99e2e53a79fc9fd4f6b0d73d80f4c65289f536a42ec2f8dca4e13e3b79ae",
+   "ident_request": "IDENTIFIKATION @0x000249 {83 FF FF 22 F1 50} -> tabsetex ZuordnungsTabelleUDS in t_grtb"
+  },
+  "app_catalogue": {
+   "path": "coding_data/diagnostic_catalog.json.gz",
+   "sha256": "c988392c26b75e57551139b6cd82662befad808112025d568908348837bb44ab",
+   "agreement": "113/114 T_GRTB rows for CBS PRGs identical; sole diff 12 0F2E00 DME9FF_R vs DME98_R (no CBS job either way)"
+  },
+  "prg_parser": {
+   "path": "BimmerDaten/decoderPrg.py",
+   "sha256": "64c1f45870a922b7c905f7b3fc180bef3c7c7382c732d041d50b886be4ad2cae"
+  },
+  "upstream": {
+   "repo": "devttys1/bmw-service-manager",
+   "commit": "6c0041bb71674ec52d567c4a6360b5469c048173",
+   "license": "PolyForm Noncommercial 1.0.0",
+   "files": {
+    "cbs.py": {
+     "sha256": "c8e0d2f6585553bd57a9691a6c1ec17e64823d76ba2081fa70b496c045547679"
+    },
+    "hsfz.py": {
+     "sha256": "792e100983eaca051386c9c5935725ee69532b934af526a75b52b25c9c139811"
+    },
+    "simulator.py": {
+     "sha256": "16321d798e76506dc68916aa0ebe6dc0a5b2886d65d5e9996c369d722a1e7a09"
+    },
+    "__main__.py": {
+     "sha256": "c0b3ed9325f075434c28ed1c0445aecbc806c2d7df7d1faba7520a3561088277"
+    },
+    "headunit.py": {
+     "sha256": "b061d51c66a4c0d23f6337409ff2a4000d59eb062bebc2d3bcd41bf50bfdaaa5"
+    },
+    "bmw_service_manager_web.py": {
+     "sha256": "cf2470fa1121ad21f29eb46a40e763153f73e8f212f102f2641ddde1d239814b"
+    },
+    "tests_test_headunit.py": {
+     "sha256": "5364f5510c2593bd041bcd9b7815c28185dabc820cf5d3ee09ee41ddf25f10f8"
+    }
+   },
+   "git_blobs": {
+    "cbs.py": "f69332631214eef2573c3b9509b500e0ac7a8719",
+    "hsfz.py": "755550f260d1da181465d975413d21f0404e9658",
+    "simulator.py": "1ebe14cbbc8837346f640f0e290a92889f7d545a",
+    "web.py": "5411946577f99dfd8cdf9c5e4971959e12004d52"
+   }
+  },
+  "rea_bundle": {
+   "path": "/Users/lennon/BMW-Tool/investigations/task-b-cbs-20261030/rea-evidence.json",
+   "sha256": "8d641abf6f4ab828f842984834eafff091bfd179471e98d394f3bf5ed2494a59",
+   "records": 16
+  }
+ },
+ "rea_evidence": {
+  "j6.g0.i.b (reset request builder)": "ev_6611523c264ede3a9ac711ca03468e3d13d770e73bf7130b9207e2ce586d18db",
+  "j6.g0.i.a.b (positive 0x6E -> 5000 ms -> success)": "ev_e27c40a4c93d4923155329c547ef0d388792b5f8b92c2738ab17e7c9e7c07e38",
+  "j6.g0.h.a.b (22 10 01 to address)": "ev_5efc6d5706a334f43d4b4da91662793152973bc55d689cedb1240a256b8e8a70",
+  "j6.b.j (record split 12/8 bytes)": "ev_0813415b478fbabd831b06ed372c26b25fa333a159a01603b77264c33ceb5764",
+  "j6.b.<init> (field decode)": "ev_68c461951eefe09e38fce3f58afa3d871b96f7e1170838857674359e8a5ca703",
+  "j6.v.X (reads 0x12, then 0x29, 0x60 via v$b0/v$b0$a smali)": "ev_6d348ff4088700b1695b347010874b7242eb1f14b68149c658f953bfbeadf853",
+  "j6.h.d (record type: 8-byte only for fixed E-series SGBD list, else 12-byte)": "ev_e9f3113a0bba8c715c8ea9b6664652269afb9db4bcf4be6c7703a5ad304c3f52",
+  "j6.g0.i.b (reset builder, re-read 2026-10-30; 9-byte form for 8-byte type only)": "ev_9c6e94ec2a58fcd983c8b1b45ffae8a0a1632720cec925ff834c91b40f4a062a",
+  "j6.b.h (item filter 1,2,3,4,6,10,17,100)": "ev_3f433cc5acef88d5ef1f08aba013d7b331032209642c3e270ae338992b1f73f3",
+  "j6.b.i (hide count > 30)": "ev_135f7f5b46ba6750a12568e011974739cf909b49b617a4640b4316192d80f47a",
+  "j6.g0.k0 (adapter timeout then reset; no item branch)": "ev_d4adc84795f9c508a3b2e76702c7c2cc9b18667143684358a52182ae470b4720",
+  "ServiceActivity.a0 (reset any listed record)": "ev_22e95aa2be9c48d3ee763e21f647dbe329fad9dbf1c765f1cde03f0f78a77df8"
+ },
+ "read": {
+  "request": "22 10 01",
+  "positive": "62 10 01 + N*12-byte records",
+  "record_bytes": {
+   "0": "item id",
+   "1-2": "remaining, signed BE16 (v5/v6 'x 10 km' when unit=1; 6.3 value*10 km)",
+   "3": "low nibble unit (0 %,1 distance,2 days[v5/v6]); high nibble status flags",
+   "4": "service count (&0x1F v5/v6; full byte 6.3)",
+   "5": "availability %",
+   "6": "forecast distance x1000 km",
+   "7": "low nibble due month; bit4 show (v6/6.3); bit5 CBS(1)/CBR(0) (v6/6.3)",
+   "8": "due year since 2000 (&0x3F v5/v6; full byte 6.3)",
+   "9": "forecast months",
+   "10": "not decoded v5/v6; 6.3 &0x3F target day",
+   "11": "reserve"
+  },
+  "kombrdct_offsets": {
+   "CBS_INFO_static_version": "0x0E183B 'CBS 6' / 0x0E189D '0x06' (no ECU traffic)",
+   "read_request": "0x0E18CC move S1,{22 10 01}",
+   "read_target": "0x0E1B71 L0=0x60",
+   "record_count": "0x0E22E3..0x0E231A (len-3)/12; 0x0E2443 ERROR_ECU_RESPONSE_TOO_LESS_DATA if not exact",
+   "item": "+0",
+   "rmmi": "0x0E3C30..0x0E3CD6 (b1<<8)+b2, signed int; 0x0E3DAE 0x8000 invalid; 0x0E3E2B 0x7FFF no info",
+   "unit": "0x0E3EF5 +3 &0x0F",
+   "status": "0x0E4166 +3 &0xF0",
+   "count": "0x0E42FC +4 &0x1F (0x1F not allowed, 0 none yet)",
+   "availability": "0x0E454F +5; 0xFD no info, 0xFE new ECU, 0xFF invalid",
+   "forecast_km": "0x0E4A57 +6 x1000 km; 0xFF invalid",
+   "month_flags": "0x0E47C1 +7 &0x0F month; 0x0E49DA &0x30 / &0x20 CBS-vs-CBR; 0x0E4E42 &0x10 show",
+   "year": "0x0E4F89 +8 &0x3F (+2000; 0 not relevant; 0x3F invalid)",
+   "forecast_months": "0x0E51DE +9 (0 not relevant, 0xFF invalid)",
+   "reserve": "0x0E5456 +11",
+   "reset_template": "0x0E556B {2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00}",
+   "reset_send_target": "0x0E6C02 L0=0x60",
+   "reset_ok": "0x0E6EBD S3[0]==S2[0]+0x40 then SA/TA checks; 0x0E736A OKAY",
+   "nrc_0x21_retry": "0x0E6E4F compare NRC '!'(0x21) -> resend loop",
+   "detail_read": "0x0E7394 {22 10 02} 3-byte records; reason table TAB_RUECK_GRUND"
+  },
+  "status_flags_63": {
+   "source": "D94BX7A0.prg CBS_DATEN_LESEN 0x23E747..0x23E861: (rec[3] >> 4) & 0x0F -> CBS_STATUS_FLAG_DOP",
+   "table": {
+    "0x0": "Status ok",
+    "0x1": "Messung basiert auf Ersatzwerten",
+    "0x2": "Status ok und Baukasten Client",
+    "0x3": "Baukasten Client und Messung basiert auf Ersatzwerten",
+    "0x4": "CBS Daten manipuliert",
+    "0x5": "CBS Daten manipuliert und Messung basiert auf Ersatzwerten",
+    "0x6": "CBS Daten manipuliert und Baukasten Client",
+    "0x7": "CBS Daten manipuliert, Messung basiert auf Ersatzwerten und Baukasten Client",
+    "0x8-0xF": "Signal ungueltig"
+   },
+   "note": "CBS_STATUS_FLAG (bit table 0x01 show .. 0x80 invalid) is used only by STATUS_CBS_HISTORIENSPEICHER_LESEN (0x243832, 0x2443FE), not by CBS_DATEN_LESEN"
+  },
+  "service_count_range": {
+   "v5_v6": "rec[4] & 0x1F; 0 'bisher kein Service', 0x1F 'nicht erlaubt', else count (KOMBRDCT 0x0E4335..0x0E44E3); bits 5-7 never decoded",
+   "6.3": "full byte; >= 0xFA not allowed; routine GG 0x09 'Servicezaehler ist nicht zwischen 1 und 250'",
+   "reset_argument": "CBS_ANZAHL_SERVICE 0-30 explicit, 31 = +1 (range check < 0x20, DSC_25 0x0E7365)",
+   "wrap": "no tester-side wrap/saturate/reject logic in any supplied PRG or BimmerLink; ECU behaviour at 30 (+1) or 250 unresolved",
+   "verification_rule": "before-count 30 (v5/v6) or >= 250 (6.3): do not expect before+1; require availability 100 and report observed after-count",
+   "bimmerlink_filter": "j6.b.i hides count > 30 (== 0x1F 'nicht erlaubt'); presentation only"
+  }
+ },
+ "reset_default": {
+  "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+  "fields": {
+   "3": "count of records = 01",
+   "4": "item",
+   "5": "availability 100",
+   "6": "services 31 (= +1)",
+   "7-8": "remaining 0x8000 = unchanged",
+   "9": "unit 0x0F unchanged",
+   "10": "forecast km 0xFF unchanged",
+   "11": "due month 0x0F unchanged (v6: |0x10 = show flag when CHOV arg=1)",
+   "12": "due year 0x3F unchanged",
+   "13": "forecast months 0xFF unchanged",
+   "14": "reserve 00"
+  },
+  "positive": "6E 10 01",
+  "versions": [
+   "5",
+   "6"
+  ],
+  "owner": "ECU whose own 22 10 01 response contained the item",
+  "bimmerlink_short_form": {
+   "request": "2E 10 01 01 II 64 1F FF FF",
+   "used_when": "j6.h.d returns the 8-byte record type: fixed E-series SGBD name list (EDMEM12, IHKA60, ME9E65_6, ME9K_NG4, DSC_85, D50M47A, D50M57*, MS_S65*, IHKA56, KOMBRR*, N73*, IHKA70, MEV9N46, IHKS56, DXC8*, KOMBI65, D51MM670, KOMB65_2, D50M47B1, DDE50K47, MS450DS0, IHKR89, ME9N62*, IHKA65, D60TMCA, DSC_60PP, DXC_83, IHKA60_2, DSC_MK60, IHKA89, IHS_56, EDME82, KOMB60, DSC_60, DSC_E65, MV1722, MEV17_2N)",
+   "f_g_u_i": "every other SGBD (incl. DSC_25, D94BX7A0, KOMBSP21) gets the 15-byte default; no item-, DSC- or 6.3-specific branch"
+  }
+ },
+ "reset_63_routine": {
+  "prg": "D94BX7A0.prg",
+  "start": "31 01 10 00 ID TT VV VV VV (TT from TAB_RESET_ART, VV default FF FF FF)",
+  "results": "31 03 10 00",
+  "positive": "71 01 10 00 GG KK RR RR (len 8; GG general return code, KK component return code; 00 = OK)",
+  "reset_types": {
+   "0x01": "plant",
+   "0x02": "standard",
+   "0x03": "service counter correction",
+   "0x04": "target date correction",
+   "0x05": "remaining distance correction",
+   "0x06": "forecast distance correction",
+   "0x07": "availability correction",
+   "0x08": "display reset (KOMBSP21/DME9FF_R table only)",
+   "0x0A": "restore delivery state"
+  },
+  "job": "D94BX7A0.prg CBS_RESET 0x219880..0x21C18E",
+  "session_security": "none sent by the job",
+  "args": {
+   "SUBFUNC": {
+    "STR/0x01": "31 01 10 00 FF FF FF FF FF template (0x219DAD)",
+    "RRR/0x03": "31 03 10 00 (0x219E1E)",
+    "default": "RRR (0x2198A2)"
+   },
+   "CBS_ID": "CBS_6_3_KENNUNG name or number -> byte 4 (0x21A29C/0x21A3AA); mandatory for STR",
+   "CBS_RESETART": "TAB_RESET_ART ART name or number -> byte 5 (0x21A7D2/0x21A8EC); mandatory for STR, no default",
+   "CBS_WERT": "unsigned long <= 0xFFFFFF, big-endian bytes 6-8 (0x21AB0A..0x21ABE1); absent -> FF FF FF"
+  },
+  "reset_types_d94": {
+   "0x01": "plant / Werksreset",
+   "0x02": "standard / Standardreset",
+   "0x03": "service_counter / Korrekturreset Servicezaehler",
+   "0x04": "time / Korrekturreset Zieltermin",
+   "0x05": "distance / Korrekturreset Restweg",
+   "0x06": "forecast_distance / Korrekturreset Restwegprognose",
+   "0x07": "availability / Korrekturreset Verfuegbarkeit",
+   "0x0A": "rda / Anlieferzustand herstellen",
+   "0xFF": "not defined"
+  },
+  "standard_user_reset": {
+   "TT": "0x02",
+   "VV": "FF FF FF",
+   "label": "source-labelled (TAB_RESET_ART text); no caller trace in supplied artifacts"
+  },
+  "response_checks": "SID 0x71 + address (macro); len == 8 else TOO_LESS/TOO_MUCH; bytes 2-3 == 10 00 else INCORRECT_DATA_IDENTIFIER; GG byte 4, KK byte 5, reserve bytes 6-7; JOB_STATUS OKAY regardless of GG/KK (0x21B125..0x21C166)",
+  "gg_table": {
+   "0x00": "Okay, keine Verhinderungsgruende",
+   "0x01": "ungueltiger km-Stand",
+   "0x02": "ungueltiges Borddatum",
+   "0x03": "ungueltige Codierung",
+   "0x04": "SG nicht initialisiert oder im falschen Zustand",
+   "0x05": "Fahrzeug im fahrenden Zustand",
+   "0x06": "Reset bei CBR nicht erlaubt",
+   "0x07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+   "0x09": "Servicezaehler ist nicht zwischen 1 und 250",
+   "0x0A": "Zieltermin ausserhalb des gueltigen Wertebereichs",
+   "0x0B": "Restweg ist ausserhalb des gueltigen Wertebereichs",
+   "0xFE": "keine Angabe",
+   "0xFF": "Wert ungueltig"
+  },
+  "kk_table": {
+   "0x00": "Okay, keine Verhinderungsgruende",
+   "0xFE": "keine Angabe",
+   "0xFF": "ungueltig"
+  },
+  "results_required": false,
+  "results_note": "job never chains STR -> RRR; 31 03 10 00 re-reads the same 8-byte layout (71 03 10 00 GG KK RR RR); use only to resolve an uncertain start, never as replay",
+  "not_sent": "STEUERN_CBS_DATEN_SICHERN 31 01 F0 ED (not linked to CBS_RESET by any source)",
+  "app_sequence": [
+   "31 01 10 00 II 02 FF FF FF -> require 71 01 10 00 GG KK RR RR, len 8, GG == 00 and KK == 00 (response-confirmed)",
+   "other GG/KK -> rejected with table text",
+   "after 5 s: 22 10 01 at 0x12 (6.3 layout) for observed verification"
+  ]
+ },
+ "reset_detail_v6": {
+  "request": "22 10 02",
+  "record": "item, reason, reserve (3 bytes)",
+  "reasons": {
+   "0x00": "none",
+   "0x01": "invalid odometer",
+   "0x02": "invalid on-board date",
+   "0x03": "invalid coding",
+   "0x04": "ECU not initialised / wrong state",
+   "0x05": "vehicle moving",
+   "0x06": "reset not allowed for CBR",
+   "0x07": "reset not allowed with active substitute value",
+   "0x08": "vehicle in 'Wohnen' (parked/residing) state",
+   "0x80-0xBF": "sensor-application-specific preventer 1-63",
+   "0xFE": "no info",
+   "0xFF": "invalid"
+  }
+ },
+ "items": [
+  {
+   "id": "0x01",
+   "short": "Oel",
+   "de": "Motoroel",
+   "en": "Engine oil"
+  },
+  {
+   "id": "0x02",
+   "short": "Br_v",
+   "de": "Bremsbelaege vorne",
+   "en": "Front brake pads"
+  },
+  {
+   "id": "0x03",
+   "short": "Brfl",
+   "de": "Bremsfluessigkeit",
+   "en": "Brake fluid"
+  },
+  {
+   "id": "0x04",
+   "short": "Filt",
+   "de": "Mikrofilter",
+   "en": "Microfilter (MSD85L6_EA table only)"
+  },
+  {
+   "id": "0x05",
+   "short": "Bsi",
+   "de": "Service Inclusive",
+   "en": "Service Inclusive"
+  },
+  {
+   "id": "0x06",
+   "short": "Br_h",
+   "de": "Bremsbelaege hinten",
+   "en": "Rear brake pads"
+  },
+  {
+   "id": "0x07",
+   "short": "Dpf/Opf/Pf",
+   "de": "(Diesel)partikelfilter",
+   "en": "Particulate filter"
+  },
+  {
+   "id": "0x08",
+   "short": "Soh",
+   "de": "State of Health",
+   "en": "Battery state of health"
+  },
+  {
+   "id": "0x09",
+   "short": "QMV",
+   "de": "QMV-H-Oel",
+   "en": "QMV-H oil (MSD85L6_EA only)"
+  },
+  {
+   "id": "0x0A",
+   "short": "Zuend",
+   "de": "Zuendkerzen/Gluehkerzen",
+   "en": "Spark plugs / glow plugs"
+  },
+  {
+   "id": "0x0D",
+   "short": "NOx_a",
+   "de": "NOx-Additiv",
+   "en": "NOx additive"
+  },
+  {
+   "id": "0x10",
+   "short": "ZKrz",
+   "de": "Zuendkerzen",
+   "en": "Spark plugs (MSD85L6_EA only)"
+  },
+  {
+   "id": "0x11",
+   "short": "Sic",
+   "de": "Sichtpruefung/Fahrzeug-Check",
+   "en": "Vehicle check"
+  },
+  {
+   "id": "0x12",
+   "short": "Kfl",
+   "de": "Kuehlfluessigkeit",
+   "en": "Coolant (MSD85L6_EA only)"
+  },
+  {
+   "id": "0x13",
+   "short": "H2",
+   "de": "H2-Check",
+   "en": "H2 check (MSD85L6_EA only)"
+  },
+  {
+   "id": "0x14",
+   "short": "Ueb",
+   "de": "Uebergabedurchsicht",
+   "en": "Pre-delivery inspection"
+  },
+  {
+   "id": "0x15",
+   "short": "Efk",
+   "de": "Einfahrkontrolle",
+   "en": "Running-in check"
+  },
+  {
+   "id": "0x16",
+   "short": "DAD",
+   "de": "Additiv fuer Partikelfilter",
+   "en": "Particulate-filter additive (MSD85L6_EA only)"
+  },
+  {
+   "id": "0x17",
+   "short": "Wf",
+   "de": "Wasserfilter",
+   "en": "Water filter"
+  },
+  {
+   "id": "0x20",
+   "short": "TUV",
+   "de": "§Fahrzeuguntersuchung",
+   "en": "Statutory vehicle inspection"
+  },
+  {
+   "id": "0x21",
+   "short": "AU",
+   "de": "§Abgasuntersuchung",
+   "en": "Statutory emissions test"
+  },
+  {
+   "id": "0x23",
+   "short": "Oel_a/Goel/DKG",
+   "de": "Getriebeoel",
+   "en": "Transmission oil"
+  },
+  {
+   "id": "0x31",
+   "short": "Reif",
+   "de": "Reifenalter",
+   "en": "Tyre age"
+  },
+  {
+   "id": "0x32",
+   "short": "Kup",
+   "de": "Kupplung",
+   "en": "Clutch"
+  },
+  {
+   "id": "0x33",
+   "short": "Gdf",
+   "de": "Gasdruckdaempfer Frontklappe (Fussgaengerschutz)",
+   "en": "Bonnet gas struts (pedestrian protection)"
+  },
+  {
+   "id": "0x34",
+   "short": "Verb",
+   "de": "Verbandskasten",
+   "en": "First-aid kit"
+  },
+  {
+   "id": "0x35",
+   "short": "Tir_f",
+   "de": "Tire Fit",
+   "en": "Tyre sealant kit"
+  },
+  {
+   "id": "0x36",
+   "short": "Kat",
+   "de": "Katalysator",
+   "en": "Catalytic converter"
+  },
+  {
+   "id": "0x37",
+   "short": "Sto",
+   "de": "Stossdaempfer",
+   "en": "Shock absorbers"
+  },
+  {
+   "id": "0x64",
+   "short": "Sic_v",
+   "de": "Sichtpruefung/Fahrzeug-Check verknuepft",
+   "en": "Vehicle check (linked)"
+  },
+  {
+   "id": "0xE0",
+   "short": "Cbs_e",
+   "de": "CBS Evalboard",
+   "en": "CBS evaluation board (development)"
+  },
+  {
+   "id": "0xE1",
+   "short": "Cbr_e",
+   "de": "CBR Evalboard",
+   "en": "CBR evaluation board (development)"
+  },
+  {
+   "id": "0xFF",
+   "short": "rda",
+   "de": "Anlieferzustand",
+   "en": "Delivery state (not a service item; v6 reset rejects 'rda')"
+  }
+ ],
+ "variants": [
+  {
+   "prg": "AEP2.prg",
+   "sha256": "12befaf0209faff46215ca141cd5576ed8d5709b49a030f20209c726e5dad4b7",
+   "size": 1470197,
+   "ecu_comment": "AEP",
+   "revision": "1.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0ED00A",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0ED30A",
+     "request_template": [
+      "0x0ED30D",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0F20C5",
+     "request_template": [
+      "0x0F20C8",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0ED30D",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0F20C8",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "CMEDIA.prg",
+   "sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
+   "size": 1541563,
+   "ecu_comment": "Combox_Media",
+   "revision": "2.018",
+   "cbs_version": "5",
+   "address": "0x36",
+   "catalogue_address_index_rows": [
+    "36 0F15D0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0EAEB7",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0EB1B7",
+     "request_template": [
+      "0x0EB1BA",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0EFF72",
+     "request_template": [
+      "0x0EFF75",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0EB1BA",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0EFF75",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "D70BX7A0.prg",
+   "sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+   "size": 4606931,
+   "ecu_comment": "SGBD für N47O1, N57O1, B47U0/O0 (DDE7.01, DDE7.41) verwendet in F15, F20, F30, F56, F45 (UDS, MV)",
+   "revision": "25.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1F90",
+    "12 0F1FA0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x096721",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x096A21",
+     "request_template": [
+      "0x096A24",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x09B961",
+     "request_template": [
+      "0x09B964",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DATEN_LESEN": {
+     "addr": "0x0F3F65",
+     "request_template": [
+      "0x0F3F82",
+      "22 40 50"
+     ]
+    },
+    "STATUS_CBS_DATEN_SICHERN": {
+     "addr": "0x16FE22",
+     "request_template": [
+      "0x16FE32",
+      "31 03 F0 ED"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x170722",
+     "request_template": [
+      "0x1708AE",
+      "22 40 4F"
+     ]
+    },
+    "STEUERN_CBS_DATEN_SICHERN": {
+     "addr": "0x2184B9",
+     "request_template": [
+      "0x2184C9",
+      "31 01 F0 ED"
+     ]
+    }
+   },
+   "read_request": [
+    "0x096A24",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x09B964",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "D72N47A0.prg",
+   "sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+   "size": 4011029,
+   "ecu_comment": "SGBD für N47TÜ/N57TÜ (DDE7.21/7.01/7.41) verwendet in F0x, F1x, F2x, F3x (UDS, MV, FlexRay)",
+   "revision": "24.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1740",
+    "12 0F18A0",
+    "12 0F1920"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x09177A",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x091A7A",
+     "request_template": [
+      "0x091A7D",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0969BA",
+     "request_template": [
+      "0x0969BD",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x1425F5",
+     "request_template": [
+      "0x142781",
+      "22 40 4F"
+     ]
+    },
+    "CBS_RESET_DATEN_LESEN": {
+     "addr": "0x1CBE09",
+     "request_template": [
+      "0x1CBE26",
+      "22 40 50"
+     ]
+    },
+    "STEUERN_CBS_DATEN_SICHERN": {
+     "addr": "0x21CB65",
+     "request_template": [
+      "0x21CB75",
+      "31 01 F0 ED"
+     ]
+    },
+    "STATUS_CBS_DATEN_SICHERN": {
+     "addr": "0x21D114",
+     "request_template": [
+      "0x21D124",
+      "31 03 F0 ED"
+     ]
+    }
+   },
+   "read_request": [
+    "0x091A7D",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0969BD",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "D72VDA0A.PRG",
+   "sha256": "6b8d4fce86458d1db98cc9e0286a5b21453d2359bb5a1955c12fb439abee110c",
+   "size": 2545088,
+   "ecu_comment": "SGBD für N47TÜ (DDE7.21) verwendet in F10 (UDS, MV, FlexRay)",
+   "revision": "0.421",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x07F549",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x07F849",
+     "request_template": [
+      "0x07F84C",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x084604",
+     "request_template": [
+      "0x084607",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x07F84C",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x084607",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "D73N57A0.prg",
+   "sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+   "size": 3147494,
+   "ecu_comment": "SGBD für N57 (DDE7.3) verwendet in F01, F10",
+   "revision": "15.006",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F10A0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x08EDFC",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x08F0FC",
+     "request_template": [
+      "0x08F0FF",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x09403C",
+     "request_template": [
+      "0x09403F",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x08F0FF",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x09403F",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "D73N57E0.prg",
+   "sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+   "size": 4052239,
+   "ecu_comment": "SGBD für N57 (DDE7.31) verwendet in F0x, F1x, F2x, F3x",
+   "revision": "24.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F17B0",
+    "12 0F17B4",
+    "12 0F17B8",
+    "12 0F17BC",
+    "12 0F1EF0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x091723",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x091A23",
+     "request_template": [
+      "0x091A26",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x096963",
+     "request_template": [
+      "0x096966",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x146E74",
+     "request_template": [
+      "0x147000",
+      "22 40 4F"
+     ]
+    },
+    "CBS_RESET_DATEN_LESEN": {
+     "addr": "0x1CC2A7",
+     "request_template": [
+      "0x1CC2C4",
+      "22 40 50"
+     ]
+    },
+    "STEUERN_CBS_DATEN_SICHERN": {
+     "addr": "0x21D003",
+     "request_template": [
+      "0x21D013",
+      "31 01 F0 ED"
+     ]
+    },
+    "STATUS_CBS_DATEN_SICHERN": {
+     "addr": "0x21D5B2",
+     "request_template": [
+      "0x21D5C2",
+      "31 03 F0 ED"
+     ]
+    }
+   },
+   "read_request": [
+    "0x091A26",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x096966",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "D73V8RCA.PRG",
+   "sha256": "29874a82be9e5c59f345eb3d1952a0ebcbbcc7e7a4e347117f3960a77fd5d419",
+   "size": 2683748,
+   "ecu_comment": "SGBD für N57 (DDE7.3) verwendet in F01, F10",
+   "revision": "7.003",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x07F543",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x07F843",
+     "request_template": [
+      "0x07F846",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0845FE",
+     "request_template": [
+      "0x084601",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x07F846",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x084601",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "D75BX7A0.prg",
+   "sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+   "size": 4711790,
+   "ecu_comment": "SGBD für N47T1, N57T1-S1, B47T0 (DDE7.31, DDE7.51) verwendet in F15, F20, F25, F30",
+   "revision": "25.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1F70",
+    "12 0F1F80"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x096709",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x096A09",
+     "request_template": [
+      "0x096A0C",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x09B949",
+     "request_template": [
+      "0x09B94C",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DATEN_LESEN": {
+     "addr": "0x0FCD07",
+     "request_template": [
+      "0x0FCD24",
+      "22 40 50"
+     ]
+    },
+    "STATUS_CBS_DATEN_SICHERN": {
+     "addr": "0x178BC4",
+     "request_template": [
+      "0x178BD4",
+      "31 03 F0 ED"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x1794C4",
+     "request_template": [
+      "0x179650",
+      "22 40 4F"
+     ]
+    },
+    "STEUERN_CBS_DATEN_SICHERN": {
+     "addr": "0x2286F2",
+     "request_template": [
+      "0x228702",
+      "31 01 F0 ED"
+     ]
+    }
+   },
+   "read_request": [
+    "0x096A0C",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x09B94C",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DME_BX8.prg",
+   "sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+   "size": 4201487,
+   "ecu_comment": "Digitale Motor Elektronik",
+   "revision": "23.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1D20",
+    "12 0F1D22",
+    "12 0F1D24",
+    "12 0F1D26"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0E3045",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0E3345",
+     "request_template": [
+      "0x0E3348",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E8285",
+     "request_template": [
+      "0x0E8288",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x1072CA",
+     "request_template": [
+      "0x1072DA",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x139BDC",
+     "request_template": [
+      "0x139BEC",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x14DB0E",
+     "request_template": [
+      "0x14DB1E",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x163E78",
+     "request_template": [
+      "0x163E88",
+      "10 03"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0E3348",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E8288",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": "0x12 0F1D22",
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_01.prg",
+   "sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+   "size": 1294538,
+   "ecu_comment": "Dynamische Stabilitäts Control Steuergerät",
+   "revision": "2.025",
+   "cbs_version": "5",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F1060"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0D2DB3",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0D30B3",
+     "request_template": [
+      "0x0D30B6",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0D7FF3",
+     "request_template": [
+      "0x0D7FF6",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0D30B6",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0D7FF6",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_10.prg",
+   "sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+   "size": 1419718,
+   "ecu_comment": "Dynamische Stabilitäts Control - Generation 9",
+   "revision": "3.001",
+   "cbs_version": "5",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F1BD0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0D9376",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0D9676",
+     "request_template": [
+      "0x0D9679",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0DE5B6",
+     "request_template": [
+      "0x0DE5B9",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0D9679",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0DE5B9",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_25.prg",
+   "sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+   "size": 1352189,
+   "ecu_comment": "Dynamische Stabilitätskontrolle",
+   "revision": "9.002",
+   "cbs_version": "5",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F1620",
+    "29 0F1860",
+    "29 0F18F0",
+    "29 0F1F30"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0E1EBE",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0E21BE",
+     "request_template": [
+      "0x0E21C1",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E6F79",
+     "request_template": [
+      "0x0E6F7C",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0E21C1",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E6F7C",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read implementable (CBS5); reset = conditional sequence reset_dsc25_conditional (recovered statically, not yet enabled)"
+  },
+  {
+   "prg": "EDMEI1.prg",
+   "sha256": "54affb2706cdb7b6edf2584ab0255a07d03f5b458818a60027324db3fddc4f54",
+   "size": 1635031,
+   "ecu_comment": "Elektrische Digitale Motorelektronik",
+   "revision": "15.001",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F19E0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DDBC3",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DDEC3",
+     "request_template": [
+      "0x0DDEC6",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E2E03",
+     "request_template": [
+      "0x0E2E06",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DDEC6",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E2E06",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "EHC_01.prg",
+   "sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
+   "size": 1381923,
+   "ecu_comment": "1-Achs-Luftfeder",
+   "revision": "1.013",
+   "cbs_version": "5",
+   "address": "0x38",
+   "catalogue_address_index_rows": [
+    "38 0F1110"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0FA428",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0FA728",
+     "request_template": [
+      "0x0FA72B",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0FF668",
+     "request_template": [
+      "0x0FF66B",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0FA72B",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0FF66B",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "KOMB01.prg",
+   "sha256": "014a0730df2b993380aff00afabd7794b2672cbf171ae3390feb1ed0ffb122b1",
+   "size": 1781223,
+   "ecu_comment": "Instrumentenkombi",
+   "revision": "32.003",
+   "cbs_version": "5",
+   "address": "0x60",
+   "catalogue_address_index_rows": [
+    "60 0F1160",
+    "60 0F2070",
+    "60 0F2080",
+    "60 0F25E0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0D82A0",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0D85A0",
+     "request_template": [
+      "0x0D85A3",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0DD4E0",
+     "request_template": [
+      "0x0DD4E3",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBS_SERVICE_AKTIVIERUNG": {
+     "addr": "0x0F5F1F",
+     "request_template": [
+      "0x0F5F22",
+      "22 62 10"
+     ]
+    },
+    "STEUERN_CBS_SERVICE_AKTIVIERUNG": {
+     "addr": "0x0F88C1",
+     "request_template": [
+      "0x0F88C4",
+      "2E D1 20"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0D85A3",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0DD4E3",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "KOMB25.prg",
+   "sha256": "38c3b5de88402bef28c2697b0c03615e79097a03d29640e22b60c071f5f1a688",
+   "size": 1860096,
+   "ecu_comment": "Instrumentenkombi Basis",
+   "revision": "28.002",
+   "cbs_version": "5",
+   "address": "0x60",
+   "catalogue_address_index_rows": [
+    "60 0F1630",
+    "60 0F1634",
+    "60 0F1638",
+    "60 0F163C",
+    "60 0F1C30",
+    "60 0F2440",
+    "60 0F2450"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DCE86",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DD186",
+     "request_template": [
+      "0x0DD189",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E20C6",
+     "request_template": [
+      "0x0E20C9",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBS_SERVICE_AKTIVIERUNG": {
+     "addr": "0x0F5D1D",
+     "request_template": [
+      "0x0F5D20",
+      "22 62 10"
+     ]
+    },
+    "STEUERN_CBS_SERVICE_AKTIVIERUNG": {
+     "addr": "0x10EBA3",
+     "request_template": [
+      "0x10EBA6",
+      "2E D1 20"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DD189",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E20C9",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": "0x60 0F1630",
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "LMV_01.prg",
+   "sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
+   "size": 1187997,
+   "ecu_comment": "Längsmomentverteilung",
+   "revision": "7.003",
+   "cbs_version": "5",
+   "address": "0x19",
+   "catalogue_address_index_rows": [
+    "19 0F1480"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x068655",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x068955",
+     "request_template": [
+      "0x068958",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x06D895",
+     "request_template": [
+      "0x06D898",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x068958",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x06D898",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MEVD172.prg",
+   "sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+   "size": 3462026,
+   "ecu_comment": "Motorelektronik ME V17.2 6 Zylinder N55",
+   "revision": "9.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F13F0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x06E74C",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x06EA4C",
+     "request_template": [
+      "0x06EA4F",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x07398C",
+     "request_template": [
+      "0x07398F",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x08AC6D",
+     "request_template": [
+      "0x08AC7D",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x0AC021",
+     "request_template": [
+      "0x0AC031",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x0DFBA5",
+     "request_template": [
+      "0x0DFBB5",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x1159C2",
+     "request_template": [
+      "0x1159D2",
+      "10 03"
+     ]
+    }
+   },
+   "read_request": [
+    "0x06EA4F",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x07398F",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MEVD1724.prg",
+   "sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+   "size": 4906254,
+   "ecu_comment": "Motorelektronik ME V17.2.4 4 Zylinder N20",
+   "revision": "13.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1810"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x06E762",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x06EA62",
+     "request_template": [
+      "0x06EA65",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0739A2",
+     "request_template": [
+      "0x0739A5",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x0A25ED",
+     "request_template": [
+      "0x0A25FD",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x0D1FFF",
+     "request_template": [
+      "0x0D200F",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x0F2F4D",
+     "request_template": [
+      "0x0F2F5D",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x107AD4",
+     "request_template": [
+      "0x107AE4",
+      "10 03"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x1A5CD9",
+     "request_template": [
+      "0x1A5CE9",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x06EA65",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0739A5",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MEVD1725.prg",
+   "sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+   "size": 3627718,
+   "ecu_comment": "Motorelektronik ME V17.25 4 Zylinder N13",
+   "revision": "8.016",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F17F0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x054B35",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x054E35",
+     "request_template": [
+      "0x054E38",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x059D75",
+     "request_template": [
+      "0x059D78",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x066F48",
+     "request_template": [
+      "0x066F58",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x0B466C",
+     "request_template": [
+      "0x0B467C",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x0C9923",
+     "request_template": [
+      "0x0C9933",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x0F2E95",
+     "request_template": [
+      "0x0F2EA5",
+      "10 03"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x184E93",
+     "request_template": [
+      "0x184EA3",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x054E38",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x059D78",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MEVD172Y.prg",
+   "sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+   "size": 5429281,
+   "ecu_comment": "Motorelektronik MEVD17.2 / MEVD17.2.6 / MEVD17.2.G für N55 6 Zylinder MSA/Hybrid im BN2020",
+   "revision": "11.004",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1910"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x06E7A1",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x06EAA1",
+     "request_template": [
+      "0x06EAA4",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0739E1",
+     "request_template": [
+      "0x0739E4",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x0AF1D9",
+     "request_template": [
+      "0x0AF1E9",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x0DEBEB",
+     "request_template": [
+      "0x0DEBFB",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x102632",
+     "request_template": [
+      "0x102642",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x12C40A",
+     "request_template": [
+      "0x12C41A",
+      "10 03"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x137B75",
+     "request_template": [
+      "0x137B85",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x06EAA4",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0739E4",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MSD85L6.prg",
+   "sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+   "size": 3381130,
+   "ecu_comment": "MSD85 fuer N63 mit EWS4 oder CAS in Fahrzeugen der Baureihe L6",
+   "revision": "11.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1090"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x031144",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x031444",
+     "request_template": [
+      "0x031447",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x036384",
+     "request_template": [
+      "0x036387",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x0B9232",
+     "request_template": [
+      "0x0B9242",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x031447",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x036387",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MSD85L6_EA.prg",
+   "sha256": "4d481d45c6fb915167c08e7911eeb0dcc21a0b6bb940c07e3b602c1426123f5c",
+   "size": 1121362,
+   "ecu_comment": "MSD85 fuer N63 mit EWS4 oder CAS in Fahrzeugen der Baureihe L6",
+   "revision": "1.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x01C8CA",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x01CDDE",
+     "request_template": [
+      "0x01CDE1",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x024C21",
+     "request_template": [
+      "0x024C24",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x01CDE1",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x024C24",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "excluded: no UDS address-index row in T_GRTB/app catalogue; divergent item table"
+  },
+  {
+   "prg": "MSD85YL6.prg",
+   "sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+   "size": 3121529,
+   "ecu_comment": "MSD85 Hybrid fuer N63 mit EWS4 oder CAS in Fahrzeugen der Baureihe L6",
+   "revision": "4.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1780"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x01E3F2",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x01E6F2",
+     "request_template": [
+      "0x01E6F5",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x023632",
+     "request_template": [
+      "0x023635",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x0A6113",
+     "request_template": [
+      "0x0A6123",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x01E6F5",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x023635",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MSD87.prg",
+   "sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+   "size": 3203360,
+   "ecu_comment": "MSD87 fuer N53 und N54 mit EWS4 oder CAS in Fahrzeugen",
+   "revision": "11.001",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1370"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x03115B",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x03145B",
+     "request_template": [
+      "0x03145E",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x03639B",
+     "request_template": [
+      "0x03639E",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x124CFC",
+     "request_template": [
+      "0x124D0C",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x03145E",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x03639E",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MSD87_R0.prg",
+   "sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+   "size": 3695751,
+   "ecu_comment": "Motorelektronik MSD 87 12 Zylinder N74 Master",
+   "revision": "11.004",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1380"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0A8947",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0A8C47",
+     "request_template": [
+      "0x0A8C4A",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0ADB87",
+     "request_template": [
+      "0x0ADB8A",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x0FE10E",
+     "request_template": [
+      "0x0FE11E",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0A8C4A",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0ADB8A",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "MSV90.prg",
+   "sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+   "size": 2999938,
+   "ecu_comment": "MSV90 für N52TUE mit UDS Protokoll ",
+   "revision": "8.007",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F13E0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x031131",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x031431",
+     "request_template": [
+      "0x031434",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x036371",
+     "request_template": [
+      "0x036374",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x10EB7C",
+     "request_template": [
+      "0x10EB8C",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x031434",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x036374",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "N55_ALP.prg",
+   "sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+   "size": 5813732,
+   "ecu_comment": "N55_ALP für N55 Alpina mit UDS-Protokoll",
+   "revision": "3.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F2220"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0343BE",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0346BE",
+     "request_template": [
+      "0x0346C1",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0395FE",
+     "request_template": [
+      "0x039601",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x13F544",
+     "request_template": [
+      "0x13F554",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x13FFE4",
+     "request_template": [
+      "0x13FFF4",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x140A84",
+     "request_template": [
+      "0x140A94",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x1415D4",
+     "request_template": [
+      "0x1415E4",
+      "10 03"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x1E8A4B",
+     "request_template": [
+      "0x1E8A5B",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0346C1",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x039601",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "N63TU_R0.prg",
+   "sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+   "size": 4898421,
+   "ecu_comment": "Motorelektronik ME VD17.2   8 Zylinder N63 TÜ Master",
+   "revision": "12.002",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1A20"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x06E766",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x06EA66",
+     "request_template": [
+      "0x06EA69",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0739A6",
+     "request_template": [
+      "0x0739A9",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x112A64",
+     "request_template": [
+      "0x112A74",
+      "22 40 4F"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x113CD8",
+     "request_template": [
+      "0x113CE8",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x114828",
+     "request_template": [
+      "0x114838",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x2554A7",
+     "request_template": [
+      "0x2554B7",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x255F47",
+     "request_template": [
+      "0x255F57",
+      "10 03"
+     ]
+    }
+   },
+   "read_request": [
+    "0x06EA69",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0739A9",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "S55.prg",
+   "sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+   "size": 5651220,
+   "ecu_comment": "Motorelektronik ME VD172.6 für 6 Zylinder M-GmbH",
+   "revision": "11.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1EA0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0AA483",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0AA783",
+     "request_template": [
+      "0x0AA786",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0AF6C3",
+     "request_template": [
+      "0x0AF6C6",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x0F0CAC",
+     "request_template": [
+      "0x0F0CBC",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x120699",
+     "request_template": [
+      "0x1206A9",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x141F7E",
+     "request_template": [
+      "0x141F8E",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x156B74",
+     "request_template": [
+      "0x156B84",
+      "10 03"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x1FC330",
+     "request_template": [
+      "0x1FC340",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0AA786",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0AF6C6",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "S63TU_L0.prg",
+   "sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
+   "size": 3693689,
+   "ecu_comment": "MEVD1728 für S63TÜ Slave-Steuergerät",
+   "revision": "11.001",
+   "cbs_version": "5",
+   "address": "0x13",
+   "catalogue_address_index_rows": [
+    "13 0F1A10"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x06E759",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x06EA59",
+     "request_template": [
+      "0x06EA5C",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x073999",
+     "request_template": [
+      "0x07399C",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x06EA5C",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x07399C",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "S63TU_R0.prg",
+   "sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+   "size": 4893265,
+   "ecu_comment": "MEVD1728 für S63TÜ Master-Steuergerät",
+   "revision": "11.001",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1A10"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x06D45D",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x06D75D",
+     "request_template": [
+      "0x06D760",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x07269D",
+     "request_template": [
+      "0x0726A0",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "STEUERN_CBS_COZ_STATUS": {
+     "addr": "0x080556",
+     "request_template": [
+      "0x080566",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_B_COZEW": {
+     "addr": "0x09BE00",
+     "request_template": [
+      "0x09BE10",
+      "10 03"
+     ]
+    },
+    "STEUERN_CBS_B_COZEW": {
+     "addr": "0x0AB7EA",
+     "request_template": [
+      "0x0AB7FA",
+      "10 03"
+     ]
+    },
+    "STATUS_CBS_COZ_STATUS": {
+     "addr": "0x116D06",
+     "request_template": [
+      "0x116D16",
+      "10 03"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x1B5E9B",
+     "request_template": [
+      "0x1B5EAB",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": [
+    "0x06D760",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0726A0",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "dme_bx80.prg",
+   "sha256": "5f0e5e8ca3e4033dea0a55efcf5a14c78925d09a0c04d7bbf0a4228b38c77f91",
+   "size": 3371587,
+   "ecu_comment": "Motorsteuerung Bosch MEVD.17.2.3 und BaukastenMotoren B38 B48 und B58 Bordnetz 2020",
+   "revision": "3.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DC8A2",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DCBA2",
+     "request_template": [
+      "0x0DCBA5",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E1AE2",
+     "request_template": [
+      "0x0E1AE5",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DCBA5",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E1AE5",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "dme_bx81.prg",
+   "sha256": "3989130fadd0166aae87a6486cf2c29d58e5b9fbf4296b408499e26c6c7cea58",
+   "size": 3371587,
+   "ecu_comment": "Motorsteuerung Bosch MEVD.17.2.3 und BaukastenMotoren B38 B48 und B58 Bordnetz 2020",
+   "revision": "3.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DC8A2",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DCBA2",
+     "request_template": [
+      "0x0DCBA5",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E1AE2",
+     "request_template": [
+      "0x0E1AE5",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DCBA5",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E1AE5",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "dme_bx82.prg",
+   "sha256": "5d563659159f7e05867a65571376030ed3ab4ccbd9816dddc5224360e2a83171",
+   "size": 3375491,
+   "ecu_comment": "Motorsteuerung Bosch MEVD.17.2.3 und BaukastenMotoren B38 B48 und B58 Bordnetz 2020",
+   "revision": "2.000",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DC8BA",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DCBBA",
+     "request_template": [
+      "0x0DCBBD",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E1AFA",
+     "request_template": [
+      "0x0E1AFD",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DCBBD",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E1AFD",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "dsc_20.prg",
+   "sha256": "44a14c229746597a93574de7345d0986f1588fede8f06953404f3c05535dff58",
+   "size": 1152216,
+   "ecu_comment": "Dynamische Stabilitätskontrolle",
+   "revision": "0.901",
+   "cbs_version": "5",
+   "address": "0x29",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0C446C",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0C476C",
+     "request_template": [
+      "0x0C476F",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0C9527",
+     "request_template": [
+      "0x0C952A",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0C476F",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0C952A",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "dxc_25.prg",
+   "sha256": "484a08f2202835b282662f17140bfac44396faabc6e10844ec4a3617643467b0",
+   "size": 1152223,
+   "ecu_comment": "Dynamische Stabilitätskontrolle",
+   "revision": "2.001",
+   "cbs_version": "5",
+   "address": "0x29",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0C4473",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0C4773",
+     "request_template": [
+      "0x0C4776",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0C952E",
+     "request_template": [
+      "0x0C9531",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0C4776",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0C9531",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "mevd172_alt.prg",
+   "sha256": "e6e8b8ff12dfe5f4500ee8a6a47451fe370bffe9a278bf9dc6e94ad1c6f36a08",
+   "size": 2419146,
+   "ecu_comment": "MEVD172 für N55 mit UDS-Protokoll",
+   "revision": "3.003",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x03ED2C",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x03F02C",
+     "request_template": [
+      "0x03F02F",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x043DE7",
+     "request_template": [
+      "0x043DEA",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x03F02F",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x043DEA",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "mevd172y_alt.prg",
+   "sha256": "72dd28ea183adb16a01b1069e2ad9557235c457198b1ded333c84d988ef60321",
+   "size": 2480365,
+   "ecu_comment": "MEVD172 für N55 MSA / Hybrid  mit UDS-Protokoll",
+   "revision": "0.900",
+   "cbs_version": "5",
+   "address": "0x12",
+   "catalogue_address_index_rows": [],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x03ED21",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x03F021",
+     "request_template": [
+      "0x03F024",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x043DDC",
+     "request_template": [
+      "0x043DDF",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x03F024",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x043DDF",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "decoder recovered but no UDS address-index row selects this PRG; unreachable via F150"
+  },
+  {
+   "prg": "D83BX7C0.prg",
+   "sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+   "size": 7965649,
+   "ecu_comment": "Dieselelektronik DDE 8.32 SOP",
+   "revision": "24.002",
+   "cbs_version": "6",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F1FE8",
+    "12 0F1FF0",
+    "12 0F1FF4",
+    "12 0F1FF8",
+    "12 0F2670",
+    "12 0F2674",
+    "12 0F2678",
+    "12 0F267C"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x10C60E",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x10C8A2",
+     "request_template": [
+      "0x10C8BC",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x1108F0",
+     "request_template": [
+      "0x1108F3",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x1145C7",
+     "request_template": [
+      "0x1145F8",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x1169A6",
+     "request_template": [
+      "0x1169A9",
+      "22 10 02"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x2308D3",
+     "request_template": [
+      "0x230A5F",
+      "22 40 4F"
+     ]
+    },
+    "CBS_RESET_DATEN_LESEN": {
+     "addr": "0x231DAA",
+     "request_template": [
+      "0x231DC7",
+      "22 40 50"
+     ]
+    },
+    "_CBS_FUNKTION": {
+     "addr": "0x2C9581",
+     "request_template": [
+      "0x2C9591",
+      "22 41 16"
+     ]
+    },
+    "STEUERN_CBS_DATEN_SICHERN": {
+     "addr": "0x3557E1",
+     "request_template": [
+      "0x3557F1",
+      "31 01 F0 ED"
+     ]
+    },
+    "STATUS_CBS_DATEN_SICHERN": {
+     "addr": "0x355D90",
+     "request_template": [
+      "0x355DA0",
+      "31 03 F0 ED"
+     ]
+    }
+   },
+   "read_request": [
+    "0x10C8BC",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x1145F8",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DME8FF_L.prg",
+   "sha256": "0a27292b892a0600af355b3913657891f2a081071cbb2670ad735cb335ccf026",
+   "size": 7225733,
+   "ecu_comment": "Motorelektronik DME880, DME8C0 Slave",
+   "revision": "59.003",
+   "cbs_version": "6",
+   "address": "0x13",
+   "catalogue_address_index_rows": [
+    "13 0F242C",
+    "13 0F242E",
+    "13 0F2460",
+    "13 0F26B8",
+    "13 0F26BC"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x10A3A5",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x10A639",
+     "request_template": [
+      "0x10A653",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x10E687",
+     "request_template": [
+      "0x10E68A",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x11235E",
+     "request_template": [
+      "0x11238F",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x11473D",
+     "request_template": [
+      "0x114740",
+      "22 10 02"
+     ]
+    },
+    "CBS_FUNKTION": {
+     "addr": "0x1EBEF4",
+     "request_template": [
+      "0x1EBF04",
+      "22 41 16"
+     ]
+    },
+    "_CBS_FUNKTION": {
+     "addr": "0x2B8AB4",
+     "request_template": [
+      "0x2B8AC4",
+      "22 41 16"
+     ]
+    },
+    "_CBS_OEL_EA_FUNKTION": {
+     "addr": "0x2DFCB9",
+     "request_template": [
+      "0x2DFCC9",
+      "22 E8 40"
+     ]
+    }
+   },
+   "read_request": [
+    "0x10A653",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x11238F",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DME8FF_R.prg",
+   "sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+   "size": 7226609,
+   "ecu_comment": "Motorelektronik DME8xx",
+   "revision": "59.003",
+   "cbs_version": "6",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F2422",
+    "12 0F2424",
+    "12 0F2426",
+    "12 0F2427",
+    "12 0F2428",
+    "12 0F2429",
+    "12 0F242A",
+    "12 0F242C",
+    "12 0F242E",
+    "12 0F2460",
+    "12 0F25A0",
+    "12 0F25A2",
+    "12 0F26B4",
+    "12 0F26B8",
+    "12 0F26BC",
+    "12 0F26E0",
+    "12 0F26E4",
+    "12 0F26E8",
+    "12 0F2930"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x10A391",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x10A625",
+     "request_template": [
+      "0x10A63F",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x10E673",
+     "request_template": [
+      "0x10E676",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x11234A",
+     "request_template": [
+      "0x11237B",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x114729",
+     "request_template": [
+      "0x11472C",
+      "22 10 02"
+     ]
+    },
+    "CBS_FUNKTION": {
+     "addr": "0x18E93E",
+     "request_template": [
+      "0x18E94E",
+      "22 41 16"
+     ]
+    },
+    "_CBS_FUNKTION": {
+     "addr": "0x2B8AA0",
+     "request_template": [
+      "0x2B8AB0",
+      "22 41 16"
+     ]
+    },
+    "_CBS_OEL_EA_FUNKTION": {
+     "addr": "0x2DFCA5",
+     "request_template": [
+      "0x2DFCB5",
+      "22 E8 40"
+     ]
+    }
+   },
+   "read_request": [
+    "0x10A63F",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x11237B",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_G11.prg",
+   "sha256": "61b0482df5d3092a25510fea3e9491022a9b14f41bad7d3b219a089cf876cc1e",
+   "size": 1672925,
+   "ecu_comment": "Dynamische Stabilitätskontrolle",
+   "revision": "11.007",
+   "cbs_version": "6",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F2100"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0E1B5B",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0E1DEF",
+     "request_template": [
+      "0x0E1E09",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E5E3D",
+     "request_template": [
+      "0x0E5E40",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E9B14",
+     "request_template": [
+      "0x0E9B45",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0EBEF3",
+     "request_template": [
+      "0x0EBEF6",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0E1E09",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E9B45",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_G20.prg",
+   "sha256": "ec13c59498f7fb8986bb364fff9889ea2177524a36ad8042562f4c608bd939b3",
+   "size": 1507122,
+   "ecu_comment": "Dynamische Stabilitätskontrolle (Bremsregelsystem)",
+   "revision": "8.001",
+   "cbs_version": "6",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F2510"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DF6B0",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DF944",
+     "request_template": [
+      "0x0DF95E",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E3992",
+     "request_template": [
+      "0x0E3995",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E7669",
+     "request_template": [
+      "0x0E769A",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E9A48",
+     "request_template": [
+      "0x0E9A4B",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DF95E",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E769A",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_G30N.prg",
+   "sha256": "523cd64d32bd6c5314cb3a3e7c7fa126b98d6d476b872700c5a948c0ec86c6ae",
+   "size": 1551825,
+   "ecu_comment": "Dynamische Stabilitätskontrolle EBC460 SP2018",
+   "revision": "0.411",
+   "cbs_version": "6",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F2850"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DE0A3",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DE337",
+     "request_template": [
+      "0x0DE351",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E2385",
+     "request_template": [
+      "0x0E2388",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E605C",
+     "request_template": [
+      "0x0E608D",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E843B",
+     "request_template": [
+      "0x0E843E",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DE351",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E608D",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "DSC_I1.prg",
+   "sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+   "size": 1584076,
+   "ecu_comment": "Dynamische Stabilitätscontrolle",
+   "revision": "13.002",
+   "cbs_version": "6",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F1970",
+    "29 0F1C50",
+    "29 0F1CE0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DF650",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DF8E4",
+     "request_template": [
+      "0x0DF8FE",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E3932",
+     "request_template": [
+      "0x0E3935",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E7609",
+     "request_template": [
+      "0x0E763A",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E99E8",
+     "request_template": [
+      "0x0E99EB",
+      "22 10 02"
+     ]
+    },
+    "CBS_RESET_KOR": {
+     "addr": "0x0F3F46",
+     "request_template": [
+      "0x0F3F77",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DF8FE",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E763A",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": "0x29 (index not supplied to this research)",
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "GSGE01QW.prg",
+   "sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
+   "size": 1748565,
+   "ecu_comment": "7-Gang-Doppelkupplungsgetriebe mit E-Schaltung",
+   "revision": "4.000",
+   "cbs_version": "6",
+   "address": "0x18",
+   "catalogue_address_index_rows": [
+    "18 0F2388"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DF69F",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DF933",
+     "request_template": [
+      "0x0DF94D",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E3981",
+     "request_template": [
+      "0x0E3984",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E7658",
+     "request_template": [
+      "0x0E7689",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E9A37",
+     "request_template": [
+      "0x0E9A3A",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DF94D",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E7689",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "IB_G05.prg",
+   "sha256": "a0dcf4f5a9636072c1e28db7e1a96d6179269f6c41083d84077c442f8a7a11bf",
+   "size": 1529281,
+   "ecu_comment": "Integriertes Bremssystem (Bremsregelsystem)",
+   "revision": "8.001",
+   "cbs_version": "6",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F2500"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DF69C",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DF930",
+     "request_template": [
+      "0x0DF94A",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E397E",
+     "request_template": [
+      "0x0E3981",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E7655",
+     "request_template": [
+      "0x0E7686",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E9A34",
+     "request_template": [
+      "0x0E9A37",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DF94A",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E7686",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "IB_G2X.prg",
+   "sha256": "40949a1660eacb386be650bc00ec9f9abe8fa6eb794f1956a75852f674283d86",
+   "size": 1507377,
+   "ecu_comment": "Integriertes Bremssystem (Bremsregelsystem)",
+   "revision": "0.004",
+   "cbs_version": "6",
+   "address": "0x29",
+   "catalogue_address_index_rows": [
+    "29 0F2CE0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DF651",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DF8E5",
+     "request_template": [
+      "0x0DF8FF",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E3933",
+     "request_template": [
+      "0x0E3936",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E760A",
+     "request_template": [
+      "0x0E763B",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E99E9",
+     "request_template": [
+      "0x0E99EC",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DF8FF",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E763B",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "KOMBRDCT.prg",
+   "sha256": "b7ef99297a062ad860012c3877dc3a33a1bbdc431250dc003cb326f5065d2c2d",
+   "size": 1508529,
+   "ecu_comment": "Instrumentenkombi",
+   "revision": "3.001",
+   "cbs_version": "6",
+   "address": "0x60",
+   "catalogue_address_index_rows": [
+    "60 0F1636",
+    "60 0F163A"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0E162D",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0E18C9",
+     "request_template": [
+      "0x0E18CC",
+      "22 10 01"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E553A",
+     "request_template": [
+      "0x0E556B",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E7391",
+     "request_template": [
+      "0x0E7394",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0E18CC",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E556B",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "KOMBSP18.prg",
+   "sha256": "a611ef427b42354b518e62d6b9de53addf2e437d8029c1b4b2eb13147ae66a20",
+   "size": 1717762,
+   "ecu_comment": "Instrumentenkombination",
+   "revision": "9.002",
+   "cbs_version": "6",
+   "address": "0x60",
+   "catalogue_address_index_rows": [
+    "60 0F2710",
+    "60 0F2800",
+    "60 0F28A0"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DDF06",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DE19A",
+     "request_template": [
+      "0x0DE1B4",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E21E8",
+     "request_template": [
+      "0x0E21EB",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E5EBF",
+     "request_template": [
+      "0x0E5EF0",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E829E",
+     "request_template": [
+      "0x0E82A1",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DE1B4",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E5EF0",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "KOMB_G11.prg",
+   "sha256": "3c509b8eb4a50479944e623d3b52cdda563b208ae42272e9c9bf0f939eb591a1",
+   "size": 1568398,
+   "ecu_comment": "Kombinstrument",
+   "revision": "14.001",
+   "cbs_version": "6",
+   "address": "0x60",
+   "catalogue_address_index_rows": [
+    "60 0F2270",
+    "60 0F2280",
+    "60 0F2360",
+    "60 0F2390",
+    "60 0F24C0",
+    "60 0F2540"
+   ],
+   "jobs": {
+    "CBS_INFO": {
+     "addr": "0x0DD11C",
+     "request_template": [
+      null,
+      null
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0DD3B0",
+     "request_template": [
+      "0x0DD3CA",
+      "22 10 01"
+     ]
+    },
+    "CBS_INTERNE_DATEN_LESEN": {
+     "addr": "0x0E1400",
+     "request_template": [
+      "0x0E1403",
+      "22 10 03"
+     ]
+    },
+    "CBS_RESET": {
+     "addr": "0x0E50D9",
+     "request_template": [
+      "0x0E510A",
+      "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+     ]
+    },
+    "CBS_RESET_DETAIL_LESEN": {
+     "addr": "0x0E74B8",
+     "request_template": [
+      "0x0E74BB",
+      "22 10 02"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0DD3CA",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x0E510A",
+    "2E 10 01 01 00 64 1F 80 00 0F FF 0F 3F FF 00"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read+reset implementable (default template)"
+  },
+  {
+   "prg": "D94BX7A0.prg",
+   "sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+   "size": 6457109,
+   "ecu_comment": "Dieselelektronik DDE 9.xx",
+   "revision": "0.301",
+   "cbs_version": "6.3",
+   "address": "0x12",
+   "catalogue_address_index_rows": [
+    "12 0F2C80"
+   ],
+   "jobs": {
+    "CBS_RESET": {
+     "addr": "0x219880",
+     "request_template": [
+      "0x219DAD",
+      "31 01 10 00 FF FF FF FF FF"
+     ]
+    },
+    "CBS_DATEN_LESEN": {
+     "addr": "0x23C108",
+     "request_template": [
+      "0x23C10B",
+      "22 10 01"
+     ]
+    },
+    "STATUS_CBS_HISTORIENSPEICHER_LESEN": {
+     "addr": "0x23FC39",
+     "request_template": [
+      "0x23FC3C",
+      "22 10 04"
+     ]
+    },
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x249C94",
+     "request_template": [
+      "0x249E20",
+      "22 40 4F"
+     ]
+    },
+    "CBS_RESET_DATEN_LESEN": {
+     "addr": "0x24B16B",
+     "request_template": [
+      "0x24B188",
+      "22 40 50"
+     ]
+    },
+    "_CBS_FUNKTION": {
+     "addr": "0x2E2942",
+     "request_template": [
+      "0x2E2952",
+      "22 41 16"
+     ]
+    },
+    "STEUERN_CBS_DATEN_SICHERN": {
+     "addr": "0x34CDBF",
+     "request_template": [
+      "0x34CDCF",
+      "31 01 F0 ED"
+     ]
+    },
+    "STATUS_CBS_DATEN_SICHERN": {
+     "addr": "0x34D36E",
+     "request_template": [
+      "0x34D37E",
+      "31 03 F0 ED"
+     ]
+    }
+   },
+   "read_request": [
+    "0x23C10B",
+    "22 10 01"
+   ],
+   "reset_request_template": [
+    "0x219DAD",
+    "31 01 10 00 FF FF FF FF FF"
+   ],
+   "owner_f48_observed_identity": null,
+   "disposition": "read implementable (CBS6.3); reset via routine 31 01 10 00 II 02 FF FF FF with GG/KK completion (reset_63_routine; recovered statically, not yet enabled)"
+  },
+  {
+   "prg": "KOMBSP21.prg",
+   "sha256": "20603da513132ee750561c56bf099834315306da1ab0d51c70ff56e92fd04706",
+   "size": 1843836,
+   "ecu_comment": "Instrumentenkombination SP2021",
+   "revision": "0.003",
+   "cbs_version": "6.3",
+   "address": "0x60",
+   "catalogue_address_index_rows": [
+    "60 0F2B70",
+    "60 0F2B74",
+    "60 0F2B78",
+    "60 0F2B80",
+    "60 0F2B84",
+    "60 0F2B90",
+    "60 0F2B94"
+   ],
+   "jobs": {
+    "CBS_DATEN_LESEN": {
+     "addr": "0x0E1C5B",
+     "request_template": [
+      "0x0E1C5E",
+      "22 10 01"
+     ]
+    },
+    "STATUS_CBS_HISTORIENSPEICHER_LESEN": {
+     "addr": "0x0E578C",
+     "request_template": [
+      "0x0E578F",
+      "22 10 04"
+     ]
+    }
+   },
+   "read_request": [
+    "0x0E1C5E",
+    "22 10 01"
+   ],
+   "reset_request_template": null,
+   "owner_f48_observed_identity": null,
+   "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset request in any supplied artifact (reset_kombsp21)"
+  },
+  {
+   "prg": "DME9FF_R.prg",
+   "sha256": "96657f0d481f0f8f21f1eb4de66774fcd490b183912278ae9553255e579587e2",
+   "size": 1865747,
+   "ecu_comment": "Motorelektronik DME9 B38/B48 TÜ2 SP2018/SP2021",
+   "revision": "0.202",
+   "cbs_version": null,
+   "address": null,
+   "catalogue_address_index_rows": [
+    "12 0F28E0",
+    "12 0F2E00"
+   ],
+   "jobs": {
+    "STATUS_CBS_HISTORIENSPEICHER_LESEN": {
+     "addr": "0x10C72B",
+     "request_template": [
+      "0x10C72E",
+      "22 10 04"
+     ]
+    }
+   },
+   "read_request": null,
+   "reset_request_template": null,
+   "owner_f48_observed_identity": null,
+   "disposition": "no CBS read/reset job in supplied PRG; unresolved"
+  },
+  {
+   "prg": "N63TU_L0.prg",
+   "sha256": "b4f80320b6484709aa8002d6b3d5072ee94e9c35d0be7c1271ffaeca77444475",
+   "size": 3684488,
+   "ecu_comment": "Motorelektronik ME VD17.2   8 Zylinder N63 TÜ Slave",
+   "revision": "12.002",
+   "cbs_version": null,
+   "address": null,
+   "catalogue_address_index_rows": [
+    "13 0F1A20"
+   ],
+   "jobs": {
+    "STATUS_CBSMOTOROELHIST": {
+     "addr": "0x0E0664",
+     "request_template": [
+      "0x0E0674",
+      "22 40 4F"
+     ]
+    }
+   },
+   "read_request": null,
+   "reset_request_template": null,
+   "owner_f48_observed_identity": null,
+   "disposition": "no CBS read/reset job in supplied PRG; unresolved"
+  }
+ ],
+ "excluded_kwp_e_series": [
+  "06MSD80.prg",
+  "06MSV80.prg",
+  "07MSD80.prg",
+  "07MSD802.prg",
+  "07MSD812.prg",
+  "07MSV80.prg",
+  "08MSV80.prg",
+  "CAS.PRG",
+  "D50M57A0.prg",
+  "D50M57C0.prg",
+  "D50M57D0.prg",
+  "D50M57E0.prg",
+  "D51MM670.prg",
+  "D51SM670.prg",
+  "D60M47A0.prg",
+  "D60M57A0.PRG",
+  "D60M57D0.prg",
+  "D60PSA0.prg",
+  "D60_PM.PRG",
+  "D62M57A0.PRG",
+  "D62M57B0.prg",
+  "D62VT71B.prg",
+  "D63MM670.prg",
+  "D63SM670.prg",
+  "D70N47A0.prg",
+  "D70V3R1A.prg",
+  "D70V3R5A.PRG",
+  "D71N47A0.prg",
+  "D71N47C0.prg",
+  "D71V0R1A.prg",
+  "D71V0R2A.PRG",
+  "D71V1R1A.prg",
+  "D71V1R2A.PRG",
+  "D72N47B0.prg",
+  "D72VCA1A.PRG",
+  "D73N47A0.prg",
+  "D73N57B0.prg",
+  "D73N57C0.prg",
+  "D73N57D0.prg",
+  "D73V6R8A.PRG",
+  "D73V7REA.PRG",
+  "DSC_56.prg",
+  "DSC_60.prg",
+  "DSC_60PP.prg",
+  "DSC_87.prg",
+  "DSC_89.prg",
+  "DSC_E65.prg",
+  "DUMMYTM2.PRG",
+  "DXC8_P.prg",
+  "DXC_70.prg",
+  "DXC_90.prg",
+  "Dsc_87_BBV.prg",
+  "IHKA56.prg",
+  "IHKA60.prg",
+  "IHKA60_2.PRG",
+  "IHKA65.prg",
+  "IHKA70.prg",
+  "IHKA82E.prg",
+  "IHKA87.prg",
+  "IHKA87_2.prg",
+  "IHKARR.prg",
+  "IHKR90.prg",
+  "IHKS56.prg",
+  "IHR_87.prg",
+  "IHS_56.prg",
+  "ME17N45.prg",
+  "ME9E65_6.prg",
+  "ME9N45.prg",
+  "ME9N62.prg",
+  "ME9N62_2.prg",
+  "MED17_2.prg",
+  "MED17_2N.prg",
+  "MEV17N46.PRG",
+  "MEV17_2.prg",
+  "MEV17_2N.prg",
+  "MEV9N46L.prg",
+  "MEVD174K.prg",
+  "MEVD176K.prg",
+  "MEVD17KW.prg",
+  "MS450DS0.prg",
+  "MSD80.prg",
+  "MSD80N43.prg",
+  "MSD80_PM.prg",
+  "MSD80_alt.prg",
+  "MSD85.prg",
+  "MSD85Y.prg",
+  "MSD85_EA.prg",
+  "MSS60.prg",
+  "MSS70.prg",
+  "MSV70.prg",
+  "MSV80.prg",
+  "MSV80_alt.prg",
+  "MS_S65.prg",
+  "MS_S65_2.prg",
+  "MS_S65_3.prg",
+  "MV1722.prg",
+  "MVD1722.prg",
+  "MVD1727.prg",
+  "N62_TUE.prg",
+  "N62_TUE2.PRG",
+  "N73TU_L0.prg",
+  "N73TU_R0.prg",
+  "N73_L0.prg",
+  "N73_R0.prg",
+  "POW_65_3.prg",
+  "VGSG70.prg",
+  "VGSG90.prg",
+  "d70n47b0.prg",
+  "d71n47b0.prg",
+  "d71n47d0.prg",
+  "d72n57a0.prg",
+  "dxc_70o.prg",
+  "komb56.prg",
+  "komb60.prg",
+  "komb65_2.prg",
+  "komb70.prg",
+  "komb87.prg",
+  "kombi65.prg",
+  "kombrr.prg",
+  "kombrr_2.prg",
+  "mev9n45.prg",
+  "msd85y-i-500.prg"
+ ],
+ "reset_dsc25_conditional": {
+  "prg": "DSC_25.prg",
+  "job": "CBS_RESET 0x0E6F79..0x0EBD71",
+  "target": "0x29 (hard-coded in every send)",
+  "session_security": "none",
+  "send_macro": "positive iff resp[0] == req[0]+0x40 and SA/TA match; 7F xx 21 -> wait 1 + bounded resend; other failure -> JobResult text then eoj (later steps not sent)",
+  "conditions": [
+   {
+    "at": "0x0E831D",
+    "test": "request byte 6 (service count) == 0x01",
+    "then": "PLAIN"
+   },
+   {
+    "at": "0x0E8390",
+    "send": "22 F1 01",
+    "expect": "62",
+    "on_fail": "end, nothing written"
+   },
+   {
+    "at": "0x0E8892",
+    "test": "resp[0x29..0x2B] (resp[0]=0x62) not in [34 05 01, 01 08 04, 01 0B 03]",
+    "then": "PLAIN",
+    "meaning": "version main.sub.patch of SVK entry index 2 when resp[0x0A] bit7 set (SVK_LESEN 0x012994..0x012C00); raw compare only"
+   },
+   {
+    "at": "0x0E8D76",
+    "send": "22 10 01",
+    "expect": "62",
+    "on_fail": "end, nothing written"
+   },
+   {
+    "at": "0x0E9278",
+    "test": "item 0x02: int16(resp[4..5]); item 0x06: int16(resp[16..17]); other items: unassigned (undefined)",
+    "then": "PLAIN if > 0",
+    "note": "record IDs not checked; 0x8000 (-32768) takes EXT, 0x7FFF takes PLAIN"
+   }
+  ],
+  "EXT": [
+   {
+    "at": "0x0E9658",
+    "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+    "positive_sid": "6E"
+   },
+   {
+    "at": "0x0E9A1C",
+    "request": "86 00 02",
+    "positive_sid": "C6",
+    "meaning": "ResponseOnEvent stop, eventWindowTime 02 (= STEUERN_ROE_STOP 0x0D7862)"
+   },
+   {
+    "at": "0x0E9F2E",
+    "request": "31 01 03 04 00",
+    "positive_sid": "71",
+    "meaning": "routine 0x0304 Trigger_Dummy_DTC, param 00 = application (ZFS_01 0x058001; AMPT07/RSE_01 DEBUG_DMCLIENT_TRIGGERDTCENTRY)"
+   },
+   {
+    "at": "0x0EA442",
+    "request": "14 FF FF FF",
+    "positive_sid": "54",
+    "meaning": "clear all DTCs"
+   },
+   {
+    "at": "0x0EA956",
+    "wait": 2,
+    "unit": "BEST wait (seconds)"
+   },
+   {
+    "at": "0x0EAAF3",
+    "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+    "positive_sid": "6E"
+   },
+   {
+    "at": "0x0EAEB7",
+    "request": "86 05 02",
+    "positive_sid": "C6",
+    "meaning": "ResponseOnEvent start, eventWindowTime 02 (= STEUERN_ROE_START 0x0D9A8A)"
+   }
+  ],
+  "PLAIN": {
+   "at": "0x0EB3B9",
+   "request": "2E 10 01 01 II 64 1F 80 00 0F FF 0F 3F FF 00",
+   "positive_sid": "6E",
+   "note": "skipped when EXT ran (flag S0[0x0E])"
+  },
+  "purpose": "hypothesis: worn-pad latch (DTC 0x480A11/0x480A12) on these DSC software versions blocks the reset; bytes/order are primary",
+  "app_rules": [
+   "items 0x02/0x06 only; require fresh 22 10 01 record 0 ID == 02 (item 2) or record 1 ID == 06 (item 6), else block",
+   "22 F1 01 must be 62 F1 01 with length >= 0x2C, else block",
+   "PLAIN: same completion as reset_default",
+   "EXT: explicit confirmation naming side effects (all DSC DTCs cleared, dummy DTC triggered, ROE stopped/restarted); each step once; first failure = partial, name last positive step; ignition cycle instruction after ROE stop without restart; no automatic replay (D-28); completion = 6E (2nd write) and final C6, then 5 s re-read"
+  ]
+ },
+ "reset_kombsp21": {
+  "disposition": "blocked",
+  "reason": "no reset request in any supplied artifact",
+  "evidence": [
+   "KOMBSP21.prg: 65 jobs; CBS jobs only CBS_DATEN_LESEN 0x0E1C5B and STATUS_CBS_HISTORIENSPEICHER_LESEN 0x0E578C",
+   "XOR-decoded KOMBSP21.prg contains no '2E 10 01' and no '31 01 10 00' / '31 03 10 00'",
+   "SG_FUNKTIONEN: no RID 0x1000, no DID 0x1001; CBS rows 0xD10A CBS_KM_PRO_JAHR, 0xD120 CBS_SERVICE_AKTIVIERUNG (22;2E)",
+   "TAB_RESET_ART (adds 0x08 display / Anzeige-Reset) used only by the history job (0x0E6B01); TAB_CBS_RETURN_CODE_* present but no job tabsets them",
+   "all 2478 supplied PRG/GRP: '31 01 10 00' only in D94BX7A0.prg",
+   "BimmerLink would send the 15-byte 2E default (type o); not defined by the KOMBSP21 PRG"
+  ],
+  "next_source": "newer KOMBSP21 SGBD or ISTA test module calling routine 0x1000 on 0x60"
+ }
+}

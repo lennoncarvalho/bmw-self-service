@@ -127,8 +127,24 @@ class UdsServices:
         self.client.config["data_identifiers"] = snapshot
         self._definitions = definitions
 
-    def invoke(self, payload: bytes, ctx: OperationContext) -> bytes:
-        """Execute through one udsoncan lifecycle with the active outer budget."""
+    def invoke(
+        self,
+        payload: bytes,
+        ctx: OperationContext,
+        *,
+        raw: bool = False,
+        grant: frozenset[int] = frozenset(),
+    ) -> bytes:
+        """Execute through one udsoncan lifecycle with the active outer budget.
+
+        Args:
+            payload: Complete UDS request bytes.
+            ctx: Active operation context.
+            raw: Job-interpreter path. Any service udsoncan knows is sent as-is with
+                SID correlation and pending-response handling; the job decodes the
+                reply. The adapter still applies read-only policy and mutation
+                flagging to the actual bytes. Allowlisted decoding is skipped.
+        """
         if not payload:
             raise ValueError("Diagnostic request cannot be empty")
         self.bridge.context = ctx
@@ -136,7 +152,9 @@ class UdsServices:
         response: Any
         try:
             sid = payload[0]
-            if sid == 0x10 and len(payload) == 2:
+            if raw:
+                response = self.client.send_request(_raw_request(payload, grant))
+            elif sid == 0x10 and len(payload) == 2:
                 response = self.client.change_session(payload[1])
             elif payload == b"\x11\x01":
                 response = self.client.ecu_reset(1)
@@ -158,7 +176,7 @@ class UdsServices:
                 response = self.client.routine_control(
                     int.from_bytes(payload[2:4], "big"), payload[1], payload[4:]
                 )
-            elif payload == b"\x19\x15":
+            elif payload in (b"\x19\x15", b"\x19\x17\x0c\x01"):
                 # Source ECU variants use both standard and legacy permanent-memory
                 # layouts. Feature decoder validates their exact record boundaries.
                 response = self.client.send_request(Request.from_payload(payload))
@@ -210,6 +228,38 @@ class UdsServices:
     def tester_present(self, ctx: OperationContext) -> bytes:
         """Maintain this ECU session with a correlated unsuppressed response."""
         return self.invoke(b"\x3e\x00", ctx)
+
+
+# Raw (job) telegrams: reads are allowed; other services need a caller grant from
+# that feature's write contract. Unsolicited-reply services are never sent.
+RAW_READS = frozenset({0x19, 0x1A, 0x22})
+RAW_NEVER = frozenset({0x2A, 0x86})
+
+
+def _raw_request(payload: bytes, grant: frozenset[int] = frozenset()) -> Request:
+    """Build an exact request for a known service, refusing suppressed replies.
+
+    A suppressed positive response leaves a possible negative reply unowned, so
+    the raw path only sends requests that always owe one correlated reply.
+    Sessions 01/03 and TesterPresent 00 count as reads; everything else must be
+    in ``grant``.
+    """
+    sid = payload[0]
+    readable = (
+        sid in RAW_READS
+        or (sid == 0x10 and payload[1:] in (b"\x01", b"\x03"))
+        or payload == b"\x3e\x00"
+    )
+    if sid in RAW_NEVER or not (readable or sid in grant):
+        raise PermissionError("This job request needs a write grant it was not given")
+    request = Request.from_payload(payload)
+    if request.service is None:
+        raise ValueError("Diagnostic service is not a supported UDS service")
+    if request.suppress_positive_response:
+        raise ValueError("Suppressed-response requests are not supported on the raw path")
+    if request.get_payload() != payload:
+        raise ValueError("Diagnostic request does not round-trip through its service")
+    return request
 
 
 @dataclass(frozen=True)

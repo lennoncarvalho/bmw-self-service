@@ -1,5 +1,5 @@
 {
-  "asset_sha256": "090855cf82fa7a11a8cb7fb126c57b93c19fad05ab46e5f458e51801f1161870",
+  "asset_sha256": "13c38d54840ba6071efc6b7e772fc59cc5c37532624d1608c0e51e8fc876d269",
   "catalogue_engine_names": 26,
   "catalogue_engine_rows": 62,
   "definitions": {
@@ -470,8 +470,9 @@
     },
     "MSD85L6": {
       "boolean_labels": [],
-      "next_job": "STATUS_BLOCK_LESEN",
-      "next_job_offset": 261774,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": 261774,
+      "job_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
       "path": "sources/Ecu/MSD85L6.prg",
       "row": 246,
       "sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
@@ -497,8 +498,9 @@
     },
     "MSD85YL6": {
       "boolean_labels": [],
-      "next_job": "STATUS_BLOCK_LESEN",
-      "next_job_offset": 261705,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": 261705,
+      "job_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
       "path": "sources/Ecu/MSD85YL6.prg",
       "row": 231,
       "sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
@@ -524,8 +526,9 @@
     },
     "MSD87": {
       "boolean_labels": [],
-      "next_job": "STATUS_BLOCK_LESEN",
-      "next_job_offset": 418644,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": 418644,
+      "job_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
       "path": "sources/Ecu/MSD87.prg",
       "row": 213,
       "sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
@@ -579,8 +582,9 @@
     },
     "MSV90": {
       "boolean_labels": [],
-      "next_job": "STATUS_BLOCK_LESEN",
-      "next_job_offset": 316241,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": 316241,
+      "job_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
       "path": "sources/Ecu/MSV90.prg",
       "row": 192,
       "sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
@@ -606,8 +610,9 @@
     },
     "N55_ALP": {
       "boolean_labels": [],
-      "next_job": "STATUS_BLOCK_LESEN",
-      "next_job_offset": 277998,
+      "job": "STATUS_BLOCK_LESEN",
+      "job_offset": 277998,
+      "job_sha256": "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675",
       "path": "sources/Ecu/N55_ALP.prg",
       "row": 175,
       "sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",

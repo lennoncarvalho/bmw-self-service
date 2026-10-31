@@ -241,7 +241,11 @@ class DiagnosticsPage(QWidget):
             or hasattr(self._connection, "data")
         )
         if self._coverage:
-            lines = [f"{r['name']} / {r['memory']}: {r['state']}" for r in self._coverage]
+            lines = [
+                f"{r['name']} / {r['memory']}: {r['state']}"
+                + (f" — {r['source']}" if r.get("source") else "")
+                for r in self._coverage
+            ]
             summary = QLabel(
                 ("Scan complete" if complete else "Scan incomplete")
                 + (
@@ -300,7 +304,9 @@ class DiagnosticsPage(QWidget):
             desc_label.setWordWrap(True)
             card_layout.addWidget(desc_label)
 
-            meta = QLabel(f"ECU: {ecu}  |  {dtc.get('memory', 'Fault')}  |  Status: 0x{status:02X}")
+            meta = QLabel(
+                f"ECU: {ecu}  |  {dtc.get('memory', 'Fault')}  |  {_decode_dtc_status(status)}"
+            )
             meta.setStyleSheet("font-size: 11px; color: #a0a0a0; background: transparent;")
             card_layout.addWidget(meta)
 
@@ -322,6 +328,20 @@ class DiagnosticsPage(QWidget):
             status_lbl = QLabel(f"Status: 0x{status:02X} — {status_text}")
             status_lbl.setStyleSheet("font-size: 12px; color: #F39C12; background: transparent;")
             detail_layout.addWidget(status_lbl)
+
+            job_text = dtc.get("job_text", "")
+            if job_text and job_text not in desc:
+                job_lbl = QLabel(f"ECU job text (German): {job_text}")
+                job_lbl.setWordWrap(True)
+                job_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
+                detail_layout.addWidget(job_lbl)
+            if dtc.get("source"):
+                source_lbl = QLabel(f"Source: {dtc['source']}")
+                source_lbl.setWordWrap(True)
+                source_lbl.setStyleSheet(
+                    "font-size: 11px; color: #a0a0a0; background: transparent;"
+                )
+                detail_layout.addWidget(source_lbl)
 
             # G-10: ECU full name if available
             ecu_full = self._ecu_lookup.get(ecu, ecu)
@@ -397,7 +417,8 @@ class DiagnosticsPage(QWidget):
         gaps = [
             f"{r['name']} / {r['memory']}: {r['state']}"
             for r in self._coverage
-            if r["state"] not in ("read", "unsupported")
+            if r["state"] not in ("read", "not-applicable")
+            and (r["state"] != "unsupported" or r.get("prg_decided"))
         ]
         prompt = (
             "Clear all supported Fault and Information memories? Permanent faults are not cleared by this operation.\n\n"
@@ -453,6 +474,7 @@ class DiagnosticsPage(QWidget):
             return
         lines = [
             f"{r['name']} / {r['memory']}: {r['response']}; memory {r['observed']}"
+            + (f" ({r['source']})" if r.get("source") else "")
             for r in result["outcomes"]
         ]
         QMessageBox.information(
@@ -471,13 +493,13 @@ class DiagnosticsPage(QWidget):
 
     @Slot(object, str)
     def set_mil_observation(self, on: object, detail: str) -> None:
-        """Mirror the independent overview observation, never infer from fault count."""
+        """Mirror the overview's engine fault-memory indicator (D-59)."""
         state = "on" if on is True else "off" if on is False else "unknown"
         text = "ON" if on is True else "OFF" if on is False else "Unavailable"
         self._mil_indicator.setText("")
         self._mil_label.setObjectName("milStatus")
         self._mil_label.setStyleSheet("")
-        self._mil_label.setText(f"Emissions MIL: {text} · {detail}")
+        self._mil_label.setText(f"Check engine (MIL): {text} · {detail}")
         self._mil_label.setWordWrap(True)
         self._mil_label.setTextFormat(Qt.TextFormat.PlainText)
         self._mil_label.setProperty("milState", state)
@@ -489,18 +511,11 @@ class DiagnosticsPage(QWidget):
 
 
 def _decode_dtc_status(status: int) -> str:
-    """Decode a UDS DTC status byte into human-readable text."""
-    labels = (
-        "Test failed",
-        "Test failed this cycle",
-        "Pending",
-        "Confirmed",
-        "Test not completed since last clear",
-        "Test failed since last clear",
-        "Test not completed this cycle",
-        "Warning indicator requested",
-    )
-    return (
-        ", ".join(label for bit, label in enumerate(labels) if status & (1 << bit))
-        or "No status bits set"
-    )
+    """Present a UDS status byte as ISTA does: present, stored (confirmed) or not confirmed."""
+    if status & 0x01:
+        state = "Present (active)"
+    elif status & 0x08:
+        state = "Stored, not present now (confirmed)"
+    else:
+        state = "Not confirmed"
+    return state + (" · warning lamp requested" if status & 0x80 else "")
