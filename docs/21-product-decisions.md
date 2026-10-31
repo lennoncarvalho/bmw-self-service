@@ -94,7 +94,15 @@ prerequisite; actual encoder/session/capacity/result facts still need evidence.
   traced. Writes keep the full contract: exact identity/definition match,
   complete backup, confirmation, power acknowledgement, journal, lockout,
   checked completion, readback/restore and no replay.
-- **D-66 — Popular coding subset (supersedes D-64's deferral).** Following the
+- **D-67 — Learn-by-diff rejected (2026-10-30).** The owner does not want to
+  capture options by trial on the car. The learn-by-diff code was removed. Coding
+  needs a ready-made option database for the popular subset/best-sellers; the
+  data source is open (see [claude-session-limitations.md](claude-session-limitations.md)
+  for options this assistant did not pursue). The recovered write sequence
+  ([task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md))
+  and the popular-coding list remain valid inputs.
+- **D-66 — Popular coding subset (supersedes D-64's deferral; byte-map source
+  superseded by D-67).** Following the
   BimmerCode model, implement a small curated set of popular codings that public
   sources confirm exist, only for best-selling models (F48 first, then common
   F/G). Byte maps are learned on the owner's car: snapshot the ECU's complete
