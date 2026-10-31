@@ -335,7 +335,15 @@ def read_data_version(rheingold: Path) -> str:
 
     The smallest readable database is used; databases are opened read-only.
     """
-    databases = sorted((rheingold / "SQLiteDBs").glob("*.sqlite"), key=lambda p: p.stat().st_size)
+
+    def size(path: Path) -> int:
+        try:
+            return path.stat().st_size
+        except OSError:
+            return -1
+
+    candidates = [p for p in (rheingold / "SQLiteDBs").glob("*.sqlite") if size(p) >= 0]
+    databases = sorted(candidates, key=size)
     for database in databases:
         try:
             connection = sqlite3.connect(f"{database.resolve().as_uri()}?mode=ro", uri=True)
@@ -568,7 +576,16 @@ def validate_ista_folder(path: str | Path) -> FolderCheck:
 
     Requires ``Rheingold/Ecu`` with PRG and GRP files, ``t_grtb.prg`` and at least one
     ``PSdZ/kiswb/<series>`` ECU list. The data version is recorded when present.
+    Unreadable folders (permissions, removed volumes) are reported, never raised.
     """
+    try:
+        return _validate_ista_folder(path)
+    except OSError as exc:
+        logger.warning("ISTA folder unreadable: %s", exc)
+        return FolderCheck(False, "The selected folder could not be read (check permissions).")
+
+
+def _validate_ista_folder(path: str | Path) -> FolderCheck:
     root = rheingold_dir(Path(path).expanduser())
     if not (root / "Ecu").is_dir():
         return FolderCheck(False, "No Ecu folder was found in the selected folder.")
@@ -632,8 +649,11 @@ class IstaDataSource:
                 logger.warning("Bundled data ignored: %s", exc)
         if folder:
             check = validate_ista_folder(folder)
-            if check.ok and check.root is not None:
+            if check.ok and check.root is not None and check.version_supported:
                 providers.append(FolderProvider(check.root))
+            elif check.ok:
+                # D-60: only the 4.29 data release is supported.
+                logger.warning("ISTA folder ignored: data version %r is not 4.29", check.version)
             else:
                 logger.warning("ISTA folder ignored: %s", check.message)
         return cls(providers)

@@ -28,10 +28,10 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.ista_data import (  # noqa: E402
-    BUNDLE_DIRNAME,
     BUNDLE_FORMAT,
     GROUP_TABLE_FILE,
     FolderProvider,
+    bundle_root,
     groups_by_address,
     normalize_series,
     read_group_assignments,
@@ -101,9 +101,11 @@ def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
         main = series if series in check.kis_series else series_map.get(series)
         resolved[series] = main if main in check.kis_series else None
 
+    if out.exists() and not (out / "manifest.json").is_file() and any(out.iterdir()):
+        raise SystemExit(f"{out} exists and is not a bundle; refusing to overwrite it")
+    # Build beside the target and swap at the end, so a failed run keeps the old bundle.
+    final, out = out, out.with_name(out.name + ".building")
     if out.exists():
-        if not (out / "manifest.json").is_file() and any(out.iterdir()):
-            raise SystemExit(f"{out} exists and is not a bundle; refusing to overwrite it")
         shutil.rmtree(out)
     (out / "series").mkdir(parents=True)
     (out / "ecu").mkdir()
@@ -177,6 +179,9 @@ def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
         "job_bytes": total,
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
+    if final.exists():
+        shutil.rmtree(final)
+    out.rename(final)
     return manifest
 
 
@@ -184,7 +189,7 @@ def main() -> None:
     """Command line entry point."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("ista", type=Path, help="ISTA installation or its Rheingold folder")
-    parser.add_argument("--out", type=Path, default=Path(BUNDLE_DIRNAME))
+    parser.add_argument("--out", type=Path, default=bundle_root())
     parser.add_argument("--series", nargs="+", default=DEFAULT_SERIES)
     args = parser.parse_args()
     manifest = build(args.ista, args.out, args.series)
