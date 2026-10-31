@@ -99,6 +99,13 @@ static edxn_error_t t_send(edxn_transport_t *t, const uint8_t *req, size_t req_l
     return EDXN_ERR_TRANSPORT;
 }
 
+/* xstopf: frequent mode is never started (no transmit_frequent), so stopping
+   it is a no-op. Job INITIALISIERUNG routines call it before xsetpar. */
+static edxn_error_t t_stop_frequent(edxn_transport_t *t) {
+    (void)t;
+    return EDXN_OK;
+}
+
 static edxn_error_t t_set_parameter(edxn_transport_t *t, uint16_t param, uint32_t value) {
     edx_ctx_t *ctx = (edx_ctx_t *)t->ctx;
     if (param == 0) memset(ctx->params, 0, sizeof(ctx->params));
@@ -147,6 +154,7 @@ edx_ctx_t *edx_create(void) {
     t->disconnect = t_disconnect;
     t->send = t_send;
     t->is_connected = t_is_connected;
+    t->stop_frequent = t_stop_frequent;
     t->set_parameter = t_set_parameter;
     t->get_parameter = t_get_parameter;
     t->ignition_mv = t_voltage;
