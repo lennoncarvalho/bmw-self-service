@@ -248,3 +248,13 @@ Code. Implemented and checked offline (see
 Next: owner-operated read-only CBS/odometer observation, then one confirmed
 reset; remaining CBS branches (DSC_25, D94 6.3, KOMBSP21); diagnostics
 reconciliation; easy coding. DoIP mapping needs a new source (none supplied).
+
+## ISTA job-engine direction — D-60–D-64 (2026-10-30)
+
+After the owner supplied ISTA 4.29.15 (`sources/ISTA_4.29.1x`, PSdZ-Lite, English
+text DBs), the interview set a new direction: run ISTA PRG/GRP jobs through the
+repo's ediabasx C interpreter behind the existing protocol owner (HSFZ only),
+hybrid data (bundled F056 + common F/G subset, fallback to a user ISTA folder),
+personal use, coding deferred, encrypted CAFDs/DiagDocDb not broken. Plan:
+[tasks/ista-job-engine-plan.md](tasks/ista-job-engine-plan.md). Owner will
+provide DiagDocDb.sqlite and an F48 EDIABAS trace.

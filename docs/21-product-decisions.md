@@ -86,6 +86,35 @@ requires **JSON only**; the earlier proposed legacy-file adapters are withdrawn.
 concrete. No new product interview is required to remove the obsolete reader
 prerequisite; actual encoder/session/capacity/result facts still need evidence.
 
+## ISTA job engine and data — D-60–D-64 (2026-10-30)
+
+Owner interview after the ISTA 4.29.15 analysis
+([architecture](evidence/ista-4.29-architecture.md),
+[online research](evidence/ista-online-research.md)):
+
+- **D-60 — Target ISTA 4.29.** Support exactly what ISTA 4.29 covers (HSFZ over
+  ENET). Newer ISTA/models are a documented later upgrade, not current scope.
+- **D-61 — Run ISTA job files.** Diagnostics execute ECU PRG/GRP jobs by name
+  (identification, FS_LESEN/FS_LOESCHEN, CBS_DATEN_LESEN/CBS_RESET, STATUS_*),
+  using the repo's ediabasx C11 interpreter completed with an HSFZ transport
+  and called from Python through a small shim on the existing protocol owner.
+  ediabasx is PolyForm Noncommercial: acceptable because of D-63.
+- **D-62 — Hybrid data.** A build script converts the owner's F48 (F056) plus
+  common F/G platforms (F20/F30/F15/F25, G20/G30/G05/G01) into a compact
+  bundled database; every other model falls back to a user-provided ISTA 4.29
+  folder (Ecu job files and PSdZ KIS ECU lists) chosen in the app.
+- **D-63 — Personal use only.** No public or commercial release is planned.
+- **D-64 — Coding deferred.** Easy/advanced coding waits; encrypted CAFD/fafp
+  files are not decrypted and ISTA protection is not bypassed. If DiagDocDb is
+  encrypted it is not opened either.
+- **Migration.** Hand-written fault, CBS, odometer and measurement code is
+  replaced by the equivalent ISTA jobs once the owner's F48 EDIABAS trace
+  matches, keeping the app's write safety: confirmation, power acknowledgement,
+  durable journal, global lockout, read-only rejection, no replay.
+- **Next features after the engine:** fault details, live values from each job
+  file's result tables, and selected service functions rebuilt from their job
+  calls. An ISTA-style colored ECU tree was not selected.
+
 ## Engine fault indicator — D-59 (2026-10-30)
 
 Owner: faults are presented as ISTA does — present/active, or stored but not
