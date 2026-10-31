@@ -38,6 +38,7 @@ from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
+from ui.ista_settings_dialog import IstaSettingsDialog
 from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
@@ -318,6 +319,10 @@ class MainWindow(QMainWindow):
         backups_action = QAction("Backups...", self)
         backups_action.triggered.connect(self._on_backups)
         menu.addAction(backups_action)
+
+        job_data_action = QAction("ECU Job Data...", self)
+        job_data_action.triggered.connect(self._on_job_data)
+        menu.addAction(job_data_action)
 
         about_action = QAction("About", self)
         about_action.triggered.connect(self._on_about)
@@ -964,6 +969,9 @@ class MainWindow(QMainWindow):
         idx = self.stack.indexOf(self.backups_page)
         if idx >= 0:
             self.stack.setCurrentIndex(idx)
+
+    def _on_job_data(self) -> None:
+        IstaSettingsDialog(self).exec()
 
     def _on_about(self) -> None:
         QMessageBox.about(
