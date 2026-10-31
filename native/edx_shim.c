@@ -261,7 +261,6 @@ int edx_run_job(edx_ctx_t *ctx, const char *job, const char *args, const uint8_t
     ctx->aborted = false;
     ctx->deadline_hit = false;
     ctx->vm_error = EDXN_OK;
-    atomic_store(&ctx->break_requested, false);
     ctx->deadline_active = timeout_ms > 0;
     if (ctx->deadline_active) {
         clock_gettime(CLOCK_MONOTONIC, &ctx->deadline);
@@ -274,7 +273,8 @@ int edx_run_job(edx_ctx_t *ctx, const char *job, const char *args, const uint8_t
     }
     edxn_error_t err = edxn_ediabas_exec_data(&ctx->eb, job, args ? args : "", bin, bin_len);
     ctx->vm_error = (int)err;
-    bool broke = atomic_load(&ctx->break_requested);
+    /* A break requested before or during this job applies to it; clear afterwards. */
+    bool broke = atomic_exchange(&ctx->break_requested, false);
     deadline_passed(ctx);
     ctx->deadline_active = false;
     /* The first cause wins: a host abort or stop invalidates any results. */

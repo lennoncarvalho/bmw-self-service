@@ -67,6 +67,10 @@ _SendCallback = ctypes.CFUNCTYPE(
 ResultValue = int | float | str | bytes
 
 
+class JobUncertain(ConnectionError):
+    """A job failed after at least one write telegram was sent; outcome unknown."""
+
+
 class JobError(Exception):
     """A job could not run or did not complete inside the interpreter."""
 
@@ -99,6 +103,7 @@ class JobResult:
     sets: list[dict[str, ResultValue]]
     types: list[dict[str, str]] = field(default_factory=list)
     telegrams: int = 0
+    mutated: bool = False
 
     @property
     def status(self) -> str:
@@ -145,6 +150,9 @@ def parse_bmw_fast(telegram: bytes) -> tuple[int, int, bytes]:
         raise ValueError("Job telegram length does not match its header")
     if len(telegram) > offset + length + 1:
         raise ValueError("Job telegram has trailing bytes")
+    if len(telegram) == offset + length + 1 and telegram[-1] != checksum(telegram[:-1]):
+        # A wrong checksum usually means a header length one byte short.
+        raise ValueError("Job telegram checksum does not match its header length")
     return telegram[1], telegram[2], telegram[offset : offset + length]
 
 
@@ -264,10 +272,13 @@ class JobEngine:
         self._job_name = ""
         self._failure: BaseException | None = None
         self._telegrams = 0
+        self._mutated = False
+        self._grant: frozenset[int] = frozenset()
+        self._ctx_lock = Lock()
 
     def close(self) -> None:
         """Release the native context; the engine cannot be used afterwards."""
-        with self._lock:
+        with self._lock, self._ctx_lock:
             if self._ctx:
                 self._lib.edx_destroy(self._ctx)
                 self._ctx = None
@@ -337,6 +348,7 @@ class JobEngine:
         data: bytes = b"",
         timeout: float = 30.0,
         cancelled: Event | None = None,
+        grant: frozenset[int] = frozenset(),
     ) -> JobResult:
         """Run a job; one absolute deadline covers queueing and every telegram.
 
@@ -346,6 +358,7 @@ class JobEngine:
             data: Binary job argument (apiJobData), if the job takes one.
             timeout: Overall job budget in seconds.
             cancelled: Optional cancellation token checked at every telegram.
+            grant: Non-read services this job may send (from a write contract).
 
         Returns:
             The job's result sets.
@@ -366,7 +379,8 @@ class JobEngine:
                 self._load(self._path, self._ecu_dir)
             context = self.connection.context(timeout, cancelled)
             self._job, self._job_name = context, job
-            self._failure, self._telegrams = None, 0
+            self._failure, self._telegrams, self._mutated = None, 0, False
+            self._grant = grant
             remaining = context.deadline - time.monotonic()
             if remaining <= 0:
                 raise TimeoutError("Vehicle operation timed out")
@@ -394,6 +408,11 @@ class JobEngine:
             unresolved = self.is_group and job.upper() != "IDENTIFIKATION"
             if code != _OK or unresolved:
                 self._stale = True
+                if self._mutated:
+                    # A write already reached the ECU; never report a plain failure.
+                    raise JobUncertain(
+                        f"Job {job} stopped after a write was sent; reconnect and reread"
+                    )
                 if code in (_OK, _ERR_VM) and unresolved:
                     # The interpreter ignores a failed identification and stays on the group.
                     raise JobError("The ECU variant could not be identified from its group file")
@@ -402,9 +421,9 @@ class JobEngine:
 
     def request_break(self) -> None:
         """Ask a running job to stop at its next interpreter step (any thread)."""
-        ctx = self._ctx
-        if ctx:
-            self._lib.edx_request_break(ctx)
+        with self._ctx_lock:
+            if self._ctx:
+                self._lib.edx_request_break(self._ctx)
 
     def _raise(self, code: int, job: str) -> None:
         failure = self._failure
@@ -443,7 +462,9 @@ class JobEngine:
             sets.append(values)
             types.append(kinds)
         system = sets[0] if sets else {}
-        return JobResult(self.sgbd, job, system, sets[1:], types[1:], self._telegrams)
+        return JobResult(
+            self.sgbd, job, system, sets[1:], types[1:], self._telegrams, self._mutated
+        )
 
     def _send(
         self,
@@ -495,7 +516,13 @@ class JobEngine:
         )
         # One owner submission per telegram, all bounded by the job's deadline.
         context = OperationContext(job.generation, job.deadline, cancelled=job.cancelled)
-        payload = self.connection.send_uds(target, data, context=context, raw=True)
+        try:
+            payload = self.connection.send_uds(
+                target, data, context=context, raw=True, grant=self._grant
+            )
+        finally:
+            # The adapter marks sent/mutation on this context even when the call raises.
+            self._mutated |= context.sent and context.mutation
         response = build_bmw_fast(TESTER_ADDRESS, target, payload)
         logger.debug(
             "Job RX sgbd=%s job=%s ecu=0x%02X telegram=%s",
