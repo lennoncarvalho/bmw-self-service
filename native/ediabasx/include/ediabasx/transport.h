@@ -85,6 +85,11 @@ struct edxn_transport {
 
     /* xsireset 0x77 — toggle service-interval relay for `time_ms` ms. */
     edxn_error_t (*switch_si_relais)(edxn_transport_t *t, uint32_t time_ms);
+
+    /* Local addition (not upstream): host break hook. Polled by the job
+       loop; returning true aborts the running job with
+       EDXN_ERR_USER_BREAK. NULL = never break. */
+    bool (*should_break)(edxn_transport_t *t);
 };
 
 #endif

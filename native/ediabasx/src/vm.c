@@ -310,7 +310,13 @@ static edxn_error_t run_job_with_bin(edxn_vm_t *vm, int job_idx,
     edxn_vm_set_binary_params(vm, bin, bin_len);
     vm->pc = vm->prg->jobs[job_idx].code_offset;
 
+    /* Local addition (not upstream): poll the host break hook so a
+       deadline or policy refusal stops jobs that loop without I/O. */
+    uint32_t steps = 0;
     while (!vm->halted) {
+        if ((steps++ & 0x3F) == 0 && vm->transport && vm->transport->should_break
+            && vm->transport->should_break(vm->transport))
+            return EDXN_ERR_USER_BREAK;
         edxn_error_t err = edxn_vm_step(vm);
         if (err != EDXN_OK) return err;
     }

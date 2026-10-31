@@ -255,6 +255,7 @@ static inline double edxn_resolve_float(const edxn_vm_t *vm,
 
 static inline int edxn_operand_len(const edxn_vm_t *vm,
                                     const edxn_operand_t *op, bool use_width) {
+    (void)vm; /* local: silence -Wunused-parameter */
     if (op->kind == EDXN_OP_REG) return edxn_reg_byte_len(&op->u.reg);
     if (op->kind == EDXN_OP_IMM && use_width && op->u.imm.width) return op->u.imm.width;
     if (op->kind == EDXN_OP_INDEXED) return 1;

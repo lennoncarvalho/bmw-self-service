@@ -192,6 +192,7 @@ static edxn_error_t build_system_set(edxn_ediabas_t *eb,
 
 /* ── group cache ──────────────────────────────────────────────────── */
 
+#if 0 /* local: unused upstream (no load-time cache short-circuit yet); -Wunused-function */
 static const char *group_cache_lookup(const edxn_ediabas_t *eb,
                                        const char *group_lower) {
     for (size_t i = 0; i < eb->group_cache_count; i++) {
@@ -201,6 +202,7 @@ static const char *group_cache_lookup(const edxn_ediabas_t *eb,
     }
     return NULL;
 }
+#endif
 
 static void group_cache_set(edxn_ediabas_t *eb,
                              const char *group_lower, const char *variant_lower) {
