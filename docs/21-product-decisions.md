@@ -86,6 +86,25 @@ requires **JSON only**; the earlier proposed legacy-file adapters are withdrawn.
 concrete. No new product interview is required to remove the obsolete reader
 prerequisite; actual encoder/session/capacity/result facts still need evidence.
 
+## Read/write strictness and popular coding — D-65–D-66 (2026-10-30)
+
+- **D-65 — Relaxed reads, strict writes.** Reads may use best-effort decoders
+  from available sources (job files, coding data, public documentation) and
+  show values with a source label instead of withholding them until fully
+  traced. Writes keep the full contract: exact identity/definition match,
+  complete backup, confirmation, power acknowledgement, journal, lockout,
+  checked completion, readback/restore and no replay.
+- **D-66 — Popular coding subset (supersedes D-64's deferral).** Following the
+  BimmerCode model, implement a small curated set of popular codings that public
+  sources confirm exist, only for best-selling models (F48 first, then common
+  F/G). Byte maps are learned on the owner's car: snapshot the ECU's complete
+  coding, apply the option once with the owner's own BimmerCode, snapshot again
+  and store the exact ECU/coding-version/byte/mask/old/new diff as the app's
+  own preset (owner-labelled). No bulk decryption or conversion of BimmerCode's
+  database and no new features on `app/coding_db.py`'s decryption; encrypted
+  CAFD/fafp stay untouched. Presets apply only to the exact coding version they
+  were learned on.
+
 ## ISTA job engine and data — D-60–D-64 (2026-10-30)
 
 Owner interview after the ISTA 4.29.15 analysis
