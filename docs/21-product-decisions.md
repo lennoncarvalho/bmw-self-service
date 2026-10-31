@@ -95,12 +95,12 @@ prerequisite; actual encoder/session/capacity/result facts still need evidence.
   complete backup, confirmation, power acknowledgement, journal, lockout,
   checked completion, readback/restore and no replay.
 - **D-67 — Learn-by-diff rejected (2026-10-30).** The owner does not want to
-  capture options by trial on the car. The learn-by-diff code was removed. Coding
-  needs a ready-made option database for the popular subset/best-sellers; the
-  data source is open (see [claude-session-limitations.md](claude-session-limitations.md)
-  for options this assistant did not pursue). The recovered write sequence
-  ([task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md))
-  and the popular-coding list remain valid inputs.
+  capture options by trial on the car; that code was removed. The easiest route
+  to a ready-made option catalogue (using the BimmerCode/ISTA coding data) is
+  left for another coder, because Claude did not take it
+  ([claude-session-limitations.md](claude-session-limitations.md)). The recovered
+  write sequence ([task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md))
+  and the popular-coding list are inputs for that work.
 - **D-66 — Popular coding subset (supersedes D-64's deferral; byte-map source
   superseded by D-67).** Following the
   BimmerCode model, implement a small curated set of popular codings that public
