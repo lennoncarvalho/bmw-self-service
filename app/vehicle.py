@@ -12,6 +12,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
+from app.ista_jobs import JobBackend, fault_records
 from app.protocol.contracts import TransportKind
 from app.resources import resource_path
 from app.uds import decode_dtc_records
@@ -36,11 +37,14 @@ def fault_state(status: int) -> str:
     return "not-confirmed"
 
 
-def read_engine_faults(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, object]:
+def read_engine_faults(
+    connection: Any, ecus: list[dict[str, Any]], backend: JobBackend | None = None
+) -> dict[str, object]:
     """Red when an engine ECU stores a present or confirmed fault (D-59).
 
-    Uses the same `19 02 0C` read as the fault scan. Green needs every responding
-    engine ECU read successfully; an unread engine leaves the indicator unavailable.
+    Uses the same read as the fault scan: the variant's FS_LESEN job where its job
+    file is available, else `19 02 0C`. Green needs every responding engine ECU
+    read successfully; an unread engine leaves the indicator unavailable.
     """
     engines = [
         row
@@ -55,20 +59,49 @@ def read_engine_faults(connection: Any, ecus: list[dict[str, Any]]) -> dict[str,
     ]
     if not engines:
         return {"on": None, "detail": "Engine ECU not found in this session"}
+    jobs = backend if backend is not None else JobBackend(connection)
+    try:
+        return _engine_faults(connection, engines, jobs)
+    finally:
+        if backend is None:
+            jobs.close()
+
+
+def _engine_faults(
+    connection: Any, engines: list[dict[str, Any]], jobs: JobBackend
+) -> dict[str, object]:
     counts = {"present": 0, "stored": 0, "not-confirmed": 0}
-    names = []
+    names, sources = [], []
     for row in engines:
         name = str(row.get("name") or row["addr"])
         names.append(name)
         if not connection.alive_ok:
             return {"on": None, "detail": f"Engine {name} fault memory was not read"}
-        try:
-            response = connection.send_uds(int(row["addr"], 16), b"\x19\x02\x0c", timeout=30.0)
-            records = decode_dtc_records(response)
-        except Exception:  # any failure leaves the indicator unavailable, never green
-            logger.warning("Engine fault memory unavailable addr=%s", row["addr"], exc_info=True)
-            return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
-        for _code, status in records:
+        statuses: list[int] | None = None
+        if row.get("identified") and jobs.has_job(name, "FS_LESEN"):
+            run = jobs.run(name, int(row["addr"], 16), "FS_LESEN", timeout=30.0)
+            if not run.interpreter_failed:
+                try:
+                    if not run.ok:
+                        raise ValueError(f"FS_LESEN {run.state()}")
+                    statuses = [record["status"] for record in fault_records(run)]
+                except ValueError:
+                    logger.warning(
+                        "Engine fault job unavailable addr=%s", row["addr"], exc_info=True
+                    )
+                    return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
+                sources.append(run.source)
+        if statuses is None:
+            try:
+                response = connection.send_uds(int(row["addr"], 16), b"\x19\x02\x0c", timeout=30.0)
+                statuses = [status for _code, status in decode_dtc_records(response)]
+            except Exception:  # any failure leaves the indicator unavailable, never green
+                logger.warning(
+                    "Engine fault memory unavailable addr=%s", row["addr"], exc_info=True
+                )
+                return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
+            sources.append(jobs.fallback_source(name))
+        for status in statuses:
             counts[fault_state(status)] += 1
     serious = counts["present"] + counts["stored"]
     parts = []
@@ -81,7 +114,7 @@ def read_engine_faults(connection: Any, ecus: list[dict[str, Any]]) -> dict[str,
     summary = ", ".join(parts) or "no stored faults"
     return {
         "on": serious > 0,
-        "detail": f"Engine {' / '.join(names)}: {summary}",
+        "detail": f"Engine {' / '.join(names)}: {summary} (source: {'; '.join(sources)})",
         "observed_clock": time.monotonic(),
     }
 

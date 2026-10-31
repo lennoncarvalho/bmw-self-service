@@ -241,7 +241,11 @@ class DiagnosticsPage(QWidget):
             or hasattr(self._connection, "data")
         )
         if self._coverage:
-            lines = [f"{r['name']} / {r['memory']}: {r['state']}" for r in self._coverage]
+            lines = [
+                f"{r['name']} / {r['memory']}: {r['state']}"
+                + (f" — {r['source']}" if r.get("source") else "")
+                for r in self._coverage
+            ]
             summary = QLabel(
                 ("Scan complete" if complete else "Scan incomplete")
                 + (
@@ -300,7 +304,9 @@ class DiagnosticsPage(QWidget):
             desc_label.setWordWrap(True)
             card_layout.addWidget(desc_label)
 
-            meta = QLabel(f"ECU: {ecu}  |  {dtc.get('memory', 'Fault')}  |  Status: 0x{status:02X}")
+            meta = QLabel(
+                f"ECU: {ecu}  |  {dtc.get('memory', 'Fault')}  |  {_decode_dtc_status(status)}"
+            )
             meta.setStyleSheet("font-size: 11px; color: #a0a0a0; background: transparent;")
             card_layout.addWidget(meta)
 
@@ -322,6 +328,20 @@ class DiagnosticsPage(QWidget):
             status_lbl = QLabel(f"Status: 0x{status:02X} — {status_text}")
             status_lbl.setStyleSheet("font-size: 12px; color: #F39C12; background: transparent;")
             detail_layout.addWidget(status_lbl)
+
+            job_text = dtc.get("job_text", "")
+            if job_text and job_text not in desc:
+                job_lbl = QLabel(f"ECU job text (German): {job_text}")
+                job_lbl.setWordWrap(True)
+                job_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
+                detail_layout.addWidget(job_lbl)
+            if dtc.get("source"):
+                source_lbl = QLabel(f"Source: {dtc['source']}")
+                source_lbl.setWordWrap(True)
+                source_lbl.setStyleSheet(
+                    "font-size: 11px; color: #a0a0a0; background: transparent;"
+                )
+                detail_layout.addWidget(source_lbl)
 
             # G-10: ECU full name if available
             ecu_full = self._ecu_lookup.get(ecu, ecu)
@@ -454,6 +474,7 @@ class DiagnosticsPage(QWidget):
             return
         lines = [
             f"{r['name']} / {r['memory']}: {r['response']}; memory {r['observed']}"
+            + (f" ({r['source']})" if r.get("source") else "")
             for r in result["outcomes"]
         ]
         QMessageBox.information(
