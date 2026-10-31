@@ -10,6 +10,7 @@ Usage:
 """
 
 import argparse
+import gc
 import logging
 import logging.handlers
 import os
@@ -21,7 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
 
-from PySide6.QtCore import QMessageLogContext, QtMsgType, qInstallMessageHandler
+from PySide6.QtCore import QMessageLogContext, QTimer, QtMsgType, qInstallMessageHandler
 from PySide6.QtWidgets import QApplication
 
 from app.theme import apply_theme
@@ -185,6 +186,13 @@ def main() -> None:
 
     apply_theme(app)
     log.info("Theme applied")
+
+    # A cyclic collection triggered on a worker thread can free Qt objects off the GUI
+    # thread and crash PySide. Collect only on the GUI thread instead.
+    gc.disable()
+    collector = QTimer(app)
+    collector.timeout.connect(gc.collect)
+    collector.start(5000)
 
     window = MainWindow(read_only=args.read_only)
     window.showMaximized()
