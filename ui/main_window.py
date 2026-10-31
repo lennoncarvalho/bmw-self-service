@@ -119,6 +119,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.diag_page)
 
         self.coding_page = CodingPage()
+        self.coding_page.can_capture = self._can_start_mutation
         self.stack.addWidget(self.coding_page)
 
         self.history_page = ServiceHistoryPage()
@@ -925,12 +926,13 @@ class MainWindow(QMainWindow):
                 self._retire_worker(worker)
         self.history_page.set_connection(None)
         for page in (self.diag_page, self.coding_page):
-            for name in ("_worker", "_coding_reader", "_coding_writer"):
+            for name in ("_worker", "_coding_reader", "_coding_writer", "_learn_worker"):
                 worker = getattr(page, name, None)
                 if isinstance(worker, QThread):
                     self._retire_worker(worker)
                     setattr(page, name, None)
             page._connection = None
+        self.coding_page.learn_panel.set_context("", [], live=False)
         self._worker = None
         self._post_connect_worker = None
         self._post_connect_context = None

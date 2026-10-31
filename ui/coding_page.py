@@ -9,6 +9,7 @@ Reference: docs/16-ui-spec.md Screens 7, 8, 9
 import copy
 import logging
 import os
+from collections.abc import Callable
 from typing import Any
 
 from PySide6.QtCore import Qt, Slot
@@ -28,8 +29,10 @@ from PySide6.QtWidgets import (
 
 from app.coding import CodingSnapshotWorker
 from app.coding_db import CodingDatabase, _decrypt_enc
+from app.coding_learn import CodingCaptureWorker
 from app.resources import resource_path
 from app.worker import CarWorker
+from ui.coding_learn_panel import CodingLearnPanel
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +135,9 @@ class CodingPage(QWidget):
         self._is_real = False  # True when categories come from car, not mock
         self._live_unavailable = True
         self._snapshot_workers: list[CarWorker] = []
+        self._learn_worker: CodingCaptureWorker | None = None
+        # Set by the main window: True only when no other vehicle operation runs.
+        self.can_capture: Callable[[], bool] = lambda: True
         self._sub_stack: QStackedWidget
         self._setup_ui()
         self._write_btn.setEnabled(False)
@@ -187,6 +193,11 @@ class CodingPage(QWidget):
         self._pending_label.setStyleSheet("color: #F39C12; font-size: 13px; font-weight: bold;")
         tab_bar.addWidget(self._pending_label)
         layout.addLayout(tab_bar)
+
+        self.learn_panel = CodingLearnPanel()
+        self.learn_panel.capture_requested.connect(self._start_capture)
+        self.learn_panel.stop_requested.connect(self._stop_capture)
+        layout.addWidget(self.learn_panel)
 
         # Sub-page stack
         self._sub_stack = QStackedWidget()
@@ -542,6 +553,11 @@ class CodingPage(QWidget):
         self._connection = connection
         is_demo = bool(getattr(connection, "data", None))
         self._live_unavailable = not is_demo
+        self.learn_panel.set_context(
+            getattr(connection, "verified_vin", "") if not is_demo else "",
+            ecus or [],
+            live=connection is not None and not is_demo,
+        )
         self._pending = 0
         self._categories = copy.deepcopy(MOCK_CATEGORIES) if is_demo else []
         self._originals = copy.deepcopy(self._categories)
@@ -580,6 +596,7 @@ class CodingPage(QWidget):
             or hasattr(connection, "data")
             or getattr(self, "_snapshot_loaded", False)
             or self._coding_reader is not None
+            or self._learn_worker is not None
         ):
             return
         vin = getattr(connection, "verified_vin", "")
@@ -594,8 +611,66 @@ class CodingPage(QWidget):
         worker.start()
 
     def is_reading(self) -> bool:
-        """Whether an owned coding snapshot read is still running."""
-        return self._coding_reader is not None and self._coding_reader.isRunning()
+        """Whether an owned coding snapshot read or learn capture is still running."""
+        return any(
+            worker is not None and worker.isRunning()
+            for worker in (self._coding_reader, self._learn_worker)
+        )
+
+    # ---- Learn coding option (read-only capture) ----
+
+    @Slot(object, str)
+    def _start_capture(self, ecu: dict, role: str) -> None:
+        """Start one long read-only capture; never concurrent with other page reads."""
+        connection = self._connection
+        panel = self.learn_panel
+        if connection is None or hasattr(connection, "data") or self._learn_worker is not None:
+            return
+        if self._coding_reader is not None or not self.can_capture():
+            panel.capture_failed(
+                "Another vehicle operation is running. Retry when it has finished."
+            )
+            return
+        vin = getattr(connection, "verified_vin", "")
+        worker = CodingCaptureWorker(connection, ecu, vin, role)
+        self._learn_worker = worker
+        worker.progress.connect(self._on_capture_progress)
+        worker.result_ready.connect(self._on_capture)
+        worker.error.connect(self._on_capture_error)
+        worker.finished.connect(self._on_capture_finished)
+        panel.set_busy(True, f"Capturing {ecu.get('name', 'ECU')} ({role})...")
+        worker.start()
+
+    @Slot()
+    def _stop_capture(self) -> None:
+        if self._learn_worker is not None:
+            self._learn_worker.requestInterruption()
+
+    @Slot(str)
+    def _on_capture_progress(self, message: str) -> None:
+        if self.sender() is self._learn_worker:
+            self.learn_panel.set_busy(True, message)
+
+    @Slot(object)
+    def _on_capture(self, result: dict) -> None:
+        if self.sender() is self._learn_worker:
+            self.learn_panel.set_busy(False)
+            self.learn_panel.capture_finished(result)
+
+    @Slot(str)
+    def _on_capture_error(self, message: str) -> None:
+        if self.sender() is self._learn_worker:
+            self.learn_panel.set_busy(False)
+            self.learn_panel.capture_failed(message)
+
+    @Slot()
+    def _on_capture_finished(self) -> None:
+        worker = self.sender()
+        if worker is self._learn_worker:
+            self._learn_worker = None
+            self.learn_panel.set_busy(False)
+        if isinstance(worker, CarWorker) and not worker.property("retired_by_main"):
+            worker.deleteLater()
 
     @Slot(str)
     def _on_snapshot_error(self, message: str) -> None:
