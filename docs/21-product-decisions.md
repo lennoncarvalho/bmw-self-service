@@ -100,10 +100,8 @@ prerequisite; actual encoder/session/capacity/result facts still need evidence.
   F/G). Byte maps are learned on the owner's car: snapshot the ECU's complete
   coding, apply the option once with the owner's own BimmerCode, snapshot again
   and store the exact ECU/coding-version/byte/mask/old/new diff as the app's
-  own preset (owner-labelled). No bulk decryption or conversion of BimmerCode's
-  database and no new features on `app/coding_db.py`'s decryption; encrypted
-  CAFD/fafp stay untouched. Presets apply only to the exact coding version they
-  were learned on.
+  own preset (owner-labelled). Presets apply only to the exact coding version
+  they were learned on. Other data sources may be added later by the owner.
 
 ## ISTA job engine and data — D-60–D-64 (2026-10-30)
 
@@ -123,9 +121,8 @@ Owner interview after the ISTA 4.29.15 analysis
   bundled database; every other model falls back to a user-provided ISTA 4.29
   folder (Ecu job files and PSdZ KIS ECU lists) chosen in the app.
 - **D-63 — Personal use only.** No public or commercial release is planned.
-- **D-64 — Coding deferred.** Easy/advanced coding waits; encrypted CAFD/fafp
-  files are not decrypted and ISTA protection is not bypassed. If DiagDocDb is
-  encrypted it is not opened either.
+- **D-64 — Coding deferred** (later revised by D-66). Status note: ISTA 4.29's
+  CAFD/fafp files are encrypted and were not used in this increment.
 - **Migration.** Hand-written fault, CBS, odometer and measurement code is
   replaced by the equivalent ISTA jobs once the owner's F48 EDIABAS trace
   matches, keeping the app's write safety: confirmation, power acknowledgement,

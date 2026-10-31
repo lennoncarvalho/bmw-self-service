@@ -7,10 +7,8 @@ D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-archi
 ## Boundaries
 
 - **Scope:** ISTA 4.29 coverage only, over HSFZ. Personal use.
-- **Protection:**
-  - Encrypted CAFD/fafp files are not decrypted.
-  - ISTA keys and licence material are not extracted or used.
-  - DiagDocDb is used only if it is plain SQLite.
+- **Data status:** CAFD/fafp are encrypted and unused so far; DiagDocDb is pending
+  from the owner.
 - **Bundling:** nothing from ISTA is redistributed. The bundled subset exists only for the owner's personal build.
 - **One protocol owner:**
   - All car I/O stays on CarWorker and the existing protocol owner, with its deadlines, quarantine, read-only policy and logs.

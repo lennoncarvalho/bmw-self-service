@@ -255,6 +255,6 @@ After the owner supplied ISTA 4.29.15 (`sources/ISTA_4.29.1x`, PSdZ-Lite, Englis
 text DBs), the interview set a new direction: run ISTA PRG/GRP jobs through the
 repo's ediabasx C interpreter behind the existing protocol owner (HSFZ only),
 hybrid data (bundled F056 + common F/G subset, fallback to a user ISTA folder),
-personal use, coding deferred, encrypted CAFDs/DiagDocDb not broken. Plan:
+personal use, coding via learn-by-diff (D-66). Plan:
 [tasks/ista-job-engine-plan.md](tasks/ista-job-engine-plan.md). Owner will
 provide DiagDocDb.sqlite and an F48 EDIABAS trace.
