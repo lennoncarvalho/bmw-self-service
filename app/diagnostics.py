@@ -219,8 +219,8 @@ class DiagnosticReadWorker(CarWorker):
             name = str(ecu.get("name", f"ECU {address:02X}"))
             supported = bool(ecu.get("identified") and ecu.get("uds"))
             requests, decided = memory_requests(name)
-            if supported and backend.engine(name) is not None:
-                decided = True  # the variant's job file defines its memories
+            # A job file decides Fault/Information; Permanent stays on the app request.
+            job_decided = supported and backend.engine(name) is not None
             for memory, payload in requests.items():
                 row = {
                     "name": name,
@@ -230,7 +230,7 @@ class DiagnosticReadWorker(CarWorker):
                     "origin": ecu.get("origin", "gateway"),
                     "source": "",
                 }
-                row["prg_decided"] = decided
+                row["prg_decided"] = decided or (job_decided and memory != "Permanent")
                 coverage.append(row)
                 if supported and not memory_applicable(backend, name, memory, payload):
                     row["state"] = "not-applicable"
@@ -412,6 +412,8 @@ class DiagnosticClearWorker(CarWorker):
             grant=frozenset({payload[0]}),
             expected=frozenset({payload}),
         )
+        if run.write_rejected(payload):
+            return "rejected", run.source
         if run.error is not None:
             logger.warning("Clear job target=%04X job=%s error=%r", address, job, run.error)
             return run.state(), run.source

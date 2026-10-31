@@ -78,9 +78,12 @@ def _engine_faults(
         if not connection.alive_ok:
             return {"on": None, "detail": f"Engine {name} fault memory was not read"}
         statuses: list[int] | None = None
+        job_failure = ""
         if row.get("identified") and jobs.has_job(name, "FS_LESEN"):
             run = jobs.run(name, int(row["addr"], 16), "FS_LESEN", timeout=30.0)
-            if not run.interpreter_failed:
+            if run.interpreter_failed:
+                job_failure = f" (job FS_LESEN failed: {run.error})"
+            else:
                 try:
                     if not run.ok:
                         raise ValueError(f"FS_LESEN {run.state()}")
@@ -100,7 +103,7 @@ def _engine_faults(
                     "Engine fault memory unavailable addr=%s", row["addr"], exc_info=True
                 )
                 return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
-            sources.append(jobs.fallback_source(name))
+            sources.append(jobs.fallback_source(name) + job_failure)
         for status in statuses:
             counts[fault_state(status)] += 1
     serious = counts["present"] + counts["stored"]

@@ -83,6 +83,10 @@ class JobRequestMismatch(PermissionError):
     """A job tried to send a write other than the recorded one; nothing was sent."""
 
 
+class JobWriteRepeated(JobRequestMismatch):
+    """A job tried to resend a write (e.g. its own NRC 0x21 retry); nothing was sent."""
+
+
 @dataclass
 class JobRun:
     """One job execution: its results, every exchange, and any failure.
@@ -100,6 +104,7 @@ class JobRun:
     result: JobResult | None = None
     exchanges: list[tuple[bytes, bytes]] = field(default_factory=list)
     error: BaseException | None = None
+    repeat_refused: bool = False
 
     @property
     def source(self) -> str:
@@ -134,6 +139,18 @@ class JobRun:
             return True
         return any(sent == request for sent, _ in self.exchanges)
 
+    def write_rejected(self, request: bytes) -> bool:
+        """The write was sent once, the ECU gave a final negative reply, and the job's
+        resend was refused: the request was not applied, so this is a rejection."""
+        replies = [received for sent, received in self.exchanges if sent == request]
+        return (
+            self.repeat_refused
+            and len(replies) == 1
+            and len(replies[0]) == 3
+            and replies[0][0] == 0x7F
+            and replies[0][2] != 0x78
+        )
+
     def response(self) -> bytes:
         """The job's own ``_RESPONSE`` result, else the last recorded reply."""
         if self.result is not None:
@@ -146,6 +163,8 @@ class JobRun:
     def state(self) -> str:
         """Coverage state of a run that did not read successfully."""
         error = self.error
+        if self.repeat_refused and any(self.write_rejected(sent) for sent, _ in self.exchanges):
+            return "rejected"
         if isinstance(error, JobUncertain):
             return "outcome-uncertain"
         if isinstance(error, JobRequestMismatch):
@@ -176,6 +195,7 @@ class _JobConnection:
         self.address = address
         self.expected = expected
         self.run = run
+        self.used: set[bytes] = set()
 
     @property
     def trace_id(self) -> str:
@@ -196,8 +216,14 @@ class _JobConnection:
     ) -> bytes:
         if ecu_addr != self.address:
             raise ValueError("Job telegram addressed a different ECU than the identified one")
-        if payload[:1] and payload[0] in grant and payload not in self.expected:
-            raise JobRequestMismatch("Job write does not match the recorded request")
+        if payload[:1] and payload[0] in grant:
+            if payload not in self.expected:
+                raise JobRequestMismatch("Job write does not match the recorded request")
+            if payload in self.used:
+                # D-28: each write is sent once; the job's own retry loop is not replayed.
+                self.run.repeat_refused = True
+                raise JobWriteRepeated("Job tried to resend a write; not sent again")
+            self.used.add(payload)
         reply = bytes(
             self.connection.send_uds(
                 ecu_addr, payload, timeout, context=context, raw=raw, grant=grant

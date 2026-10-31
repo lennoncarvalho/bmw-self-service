@@ -449,7 +449,12 @@ def _read_cbs(connection: Any, ecus: list[dict[str, Any]], jobs: JobBackend) -> 
             items.append(
                 {
                     **record,
-                    "label": labels.get(key) or record.get("job_text") or f"CBS item 0x{key}",
+                    "label": labels.get(key)
+                    or (
+                        f"{record['job_text']} (German text from the ECU job file)"
+                        if record.get("job_text")
+                        else f"CBS item 0x{key}"
+                    ),
                     "owner": owner,
                     "resettable": (
                         owner["reset"] in RESET_POLICIES
@@ -928,16 +933,18 @@ class CbsResetWorker(CarWorker):
                 expected=frozenset({request}),
             )
             state["sent"] = run.sent(request)
-            if run.error is not None:
+            rejected_once = run.write_rejected(request)
+            if run.error is not None and not rejected_once:
                 raise run.error
-            assert run.result is not None
             reply = run.reply(request)
             verdict, reason = (
                 check_reset_reply(policy, reply)
                 if reply
                 else ("uncertain", "The reset job sent no reset request")
             )
-            if verdict == "accepted" and (run.status != "OKAY" or not run.result.mutated):
+            if verdict == "accepted" and (
+                run.result is None or run.status != "OKAY" or not run.result.mutated
+            ):
                 verdict = "uncertain"
                 reason = (
                     f"The ECU accepted the reset but the job reported {run.status or 'no'} status"
