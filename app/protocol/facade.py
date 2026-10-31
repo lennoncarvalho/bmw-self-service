@@ -259,8 +259,13 @@ class DiagnosticConnection:
         timeout: float = 30.0,
         *,
         context: OperationContext | None = None,
+        raw: bool = False,
     ) -> bytes:
-        """Temporary raw compatibility through the owner's sole udsoncan client."""
+        """Temporary raw compatibility through the owner's sole udsoncan client.
+
+        ``raw`` selects the job-interpreter path (see ``UdsServices.invoke``):
+        any known service, still policed by the adapter's read-only check.
+        """
         ctx = (
             context
             or (self._active if self._executor == get_ident() else None)
@@ -273,7 +278,7 @@ class DiagnosticConnection:
             ctx.cancelled = scope.cancelled
 
         def exchange(active: OperationContext) -> bytes:
-            response = self._service(ecu_addr).invoke(payload, active)
+            response = self._service(ecu_addr).invoke(payload, active, raw=raw)
             if payload[:1] == b"\x10" and response[:1] == b"\x50":
                 self._last_session[ecu_addr] = time.monotonic()
             return response

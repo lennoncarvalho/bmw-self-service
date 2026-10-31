@@ -127,8 +127,17 @@ class UdsServices:
         self.client.config["data_identifiers"] = snapshot
         self._definitions = definitions
 
-    def invoke(self, payload: bytes, ctx: OperationContext) -> bytes:
-        """Execute through one udsoncan lifecycle with the active outer budget."""
+    def invoke(self, payload: bytes, ctx: OperationContext, *, raw: bool = False) -> bytes:
+        """Execute through one udsoncan lifecycle with the active outer budget.
+
+        Args:
+            payload: Complete UDS request bytes.
+            ctx: Active operation context.
+            raw: Job-interpreter path. Any service udsoncan knows is sent as-is with
+                SID correlation and pending-response handling; the job decodes the
+                reply. The adapter still applies read-only policy and mutation
+                flagging to the actual bytes. Allowlisted decoding is skipped.
+        """
         if not payload:
             raise ValueError("Diagnostic request cannot be empty")
         self.bridge.context = ctx
@@ -136,7 +145,9 @@ class UdsServices:
         response: Any
         try:
             sid = payload[0]
-            if sid == 0x10 and len(payload) == 2:
+            if raw:
+                response = self.client.send_request(_raw_request(payload))
+            elif sid == 0x10 and len(payload) == 2:
                 response = self.client.change_session(payload[1])
             elif payload == b"\x11\x01":
                 response = self.client.ecu_reset(1)
@@ -210,6 +221,22 @@ class UdsServices:
     def tester_present(self, ctx: OperationContext) -> bytes:
         """Maintain this ECU session with a correlated unsuppressed response."""
         return self.invoke(b"\x3e\x00", ctx)
+
+
+def _raw_request(payload: bytes) -> Request:
+    """Build an exact request for a known service, refusing suppressed replies.
+
+    A suppressed positive response leaves a possible negative reply unowned, so
+    the raw path only sends requests that always owe one correlated reply.
+    """
+    request = Request.from_payload(payload)
+    if request.service is None:
+        raise ValueError("Diagnostic service is not a supported UDS service")
+    if request.suppress_positive_response:
+        raise ValueError("Suppressed-response requests are not supported on the raw path")
+    if request.get_payload() != payload:
+        raise ValueError("Diagnostic request does not round-trip through its service")
+    return request
 
 
 @dataclass(frozen=True)
