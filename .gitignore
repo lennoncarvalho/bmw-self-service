@@ -44,3 +44,5 @@ node_modules/
 
 # Logs
 *.log
+# Personal-build job files and ECU lists from an ISTA folder (D-62/D-63)
+ista_bundle/
