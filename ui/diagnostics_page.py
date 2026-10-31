@@ -397,7 +397,8 @@ class DiagnosticsPage(QWidget):
         gaps = [
             f"{r['name']} / {r['memory']}: {r['state']}"
             for r in self._coverage
-            if r["state"] not in ("read", "unsupported", "not-applicable")
+            if r["state"] not in ("read", "not-applicable")
+            and (r["state"] != "unsupported" or r.get("prg_decided"))
         ]
         prompt = (
             "Clear all supported Fault and Information memories? Permanent faults are not cleared by this operation.\n\n"

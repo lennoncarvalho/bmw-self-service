@@ -352,3 +352,12 @@ Feature-matrix rows to add: **B-CBS-R** = v5/v6/6.3 read, owner-by-response;
 **B-CBS-W** = v5/v6 default 2E reset with D-29 completion. Recovered and implementable
 but not yet enabled in `app/cbs.py`: D94 routine (TT 0x02, GG/KK completion) and the
 DSC_25 conditional sequence. KOMBSP21 and DME9 stay blocked.
+
+## Implementation status — 2026-10-30
+
+Implemented in `app/cbs.py`: default v5/v6 reset (40 definitions), DSC_25 plain
+write (brake pads; the SVK-gated extra sequence that clears all DSC faults stays
+blocked) and the D94BX7A0 6.3 routine reset (type 0x02). The DSC_25 fixed-slot
+record check runs only when the SVK selects the extra path, exactly as the PRG
+does; the plain path needs no slot check. KOMBSP21 remains blocked. Earlier
+"not yet enabled" wording in this record is superseded.

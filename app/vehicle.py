@@ -46,7 +46,12 @@ def read_engine_faults(connection: Any, ecus: list[dict[str, Any]]) -> dict[str,
         row
         for row in ecus
         if row.get("addr") in ENGINE_ADDRESSES
-        and row.get("identity_state", "identified") in ("identified", "unmatched-variant")
+        # A gateway-listed engine is installed even if its identity read failed;
+        # a catalogue candidate counts only once it answered.
+        and (
+            row.get("origin", "gateway") != "catalogue"
+            or row.get("identity_state") in ("identified", "unmatched-variant")
+        )
     ]
     if not engines:
         return {"on": None, "detail": "Engine ECU not found in this session"}
@@ -57,10 +62,11 @@ def read_engine_faults(connection: Any, ecus: list[dict[str, Any]]) -> dict[str,
         names.append(name)
         if not connection.alive_ok:
             return {"on": None, "detail": f"Engine {name} fault memory was not read"}
-        response = connection.send_uds(int(row["addr"], 16), b"\x19\x02\x0c", timeout=30.0)
         try:
+            response = connection.send_uds(int(row["addr"], 16), b"\x19\x02\x0c", timeout=30.0)
             records = decode_dtc_records(response)
-        except ValueError:
+        except Exception:  # any failure leaves the indicator unavailable, never green
+            logger.warning("Engine fault memory unavailable addr=%s", row["addr"], exc_info=True)
             return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
         for _code, status in records:
             counts[fault_state(status)] += 1

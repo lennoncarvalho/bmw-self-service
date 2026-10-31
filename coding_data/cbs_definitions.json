@@ -59,7 +59,7 @@
     "D94BX7A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read implementable (CBS6.3); reset via routine 31 01 10 00 II 02 FF FF FF with GG/KK completion (reset_63_routine; recovered statically, not yet enabled)",
+      "disposition": "read+reset (CBS 6.3 routine 31 01 1000, standard reset type 0x02)",
       "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
       "reset": "routine-6.3",
       "version": "6.3"
@@ -107,7 +107,7 @@
     "DSC_25": {
       "address": 41,
       "detail": false,
-      "disposition": "read implementable (CBS5); reset = conditional sequence reset_dsc25_conditional (recovered statically, not yet enabled)",
+      "disposition": "read+reset (DSC_25 plain write; SVK-gated extra sequence blocked)",
       "prg_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
       "reset": "dsc25-plain",
       "version": "5"

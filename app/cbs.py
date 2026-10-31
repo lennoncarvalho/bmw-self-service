@@ -3,8 +3,9 @@
 Contract: docs/evidence/task-b-cbs-contract.md. The CBS version and owning
 address are constants of the exactly identified ECU definition; an item belongs
 to the ECU whose own `22 10 01` record contains it. There is no default owner.
-Reset sends the shared default `2E 10 01` record once; completion is the exact
-`6E 10 01` reply, and observation is a later re-read. CBS counters are distinct
+Reset is sent once: the shared default `2E 10 01` record (exact `6E 10 01`
+completion), DSC_25's gated plain write, or the CBS 6.3 routine `31 01 1000`
+(exact `71 01 1000 00 00` completion). Observation is a later re-read. CBS counters are distinct
 from headunit service history and are never rolled back or replayed.
 """
 
@@ -145,7 +146,10 @@ DSC25_EXTRA_SVK = frozenset(
 # DSC_25 tests a fixed 22 1001 position per item (0x0E9278): data offset of the record.
 DSC25_RECORD_INDEX = {0x02: 0, 0x06: 1}
 # D94BX7A0 TAB_CBS_RETURN_CODE general codes (6.3 routine reset).
+ROUTINE_COMPONENT_CODES = {0xFE: "no information", 0xFF: "invalid"}
 ROUTINE_CODES = {
+    0xFE: "no information",
+    0xFF: "invalid value",
     0x01: "invalid odometer",
     0x02: "invalid on-board date",
     0x03: "invalid coding",
@@ -184,8 +188,10 @@ def check_reset_reply(policy: str, reply: bytes) -> tuple[str, str]:
             return "uncertain", "Unexpected reset routine reply"
         if reply[4] == 0 and reply[5] == 0:
             return "accepted", ""
-        reason = ROUTINE_CODES.get(reply[4], f"general code 0x{reply[4]:02X}")
-        return "rejected", f"ECU refused the reset: {reason} (component code 0x{reply[5]:02X})"
+        general = ROUTINE_CODES.get(reply[4], f"general code 0x{reply[4]:02X}")
+        component = ROUTINE_COMPONENT_CODES.get(reply[5], f"component code 0x{reply[5]:02X}")
+        reason = general if reply[4] else f"component: {component}"
+        return "rejected", f"ECU refused the reset: {reason}"
     if reply == b"\x6e\x10\x01":
         return "accepted", ""
     if reply[:2] == b"\x7f\x2e" and len(reply) == 3:
@@ -443,7 +449,11 @@ class CbsResetPlan:
             "before_raw": self.before_raw,
             "before_provenance": "read-in-this-connection",
             "request": reset_request(self.item, self.owner["reset"]).hex(),
-            "completion": "exact 6E1001, then re-read after settle",
+            "completion": (
+                "exact 71 01 1000 00 00 RR RR, then re-read after settle"
+                if self.owner["reset"] == "routine-6.3"
+                else "exact 6E1001, then re-read after settle"
+            ),
         }
 
 
@@ -547,6 +557,9 @@ class CbsResetWorker(CarWorker):
             svk = exchange(services, ctx, "svk", b"\x22\xf1\x01")
             if svk[:3] != b"\x62\xf1\x01" or len(svk) < 0x2C:
                 record("changed", "svk", b"\x22\xf1\x01", svk, "Software version unavailable")
+                self.report["reset_reason"] = (
+                    "DSC software version could not be read; reset not sent"
+                )
                 return False
             record("read", "svk", b"\x22\xf1\x01", svk)
             if svk[0x29:0x2C] not in DSC25_EXTRA_SVK:
@@ -643,7 +656,7 @@ class CbsResetWorker(CarWorker):
         events = {(e["step"], e["state"]) for e in self.report["events"]}
         if ("reset", "rejected") in events:
             return "rejected", self.report.get("reset_reason") or "The ECU rejected the reset"
-        if ("svk", "blocked") in events:
+        if ("svk", "blocked") in events or ("svk", "changed") in events:
             return "not-started", self.report["reset_reason"]
         if not state["sent"]:
             if ("identity", "changed") in events or ("before", "changed") in events:

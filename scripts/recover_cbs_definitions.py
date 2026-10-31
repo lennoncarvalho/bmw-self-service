@@ -49,6 +49,12 @@ def build(contract_path: Path, catalog_path: Path, output: Path) -> None:
             reset = SPECIAL_RESETS[name][0]
         else:
             reset = "blocked"
+        if reset in ("dsc25-plain", "routine-6.3"):
+            disposition = (
+                "read+reset (DSC_25 plain write; SVK-gated extra sequence blocked)"
+                if reset == "dsc25-plain"
+                else "read+reset (CBS 6.3 routine 31 01 1000, standard reset type 0x02)"
+            )
         definitions[name] = {
             "address": int(variant["address"], 16),
             "version": version,
