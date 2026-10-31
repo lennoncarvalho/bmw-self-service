@@ -138,6 +138,11 @@ Standard snapshot identifiers (union over 367 PRGs; widths are consistent everyw
   - `dtc_descriptions.db` has `PRIMARY KEY (code, table_type)`, so it can hold only one ECU's text per code. It therefore cannot represent per-variant text.
   - `app/dtc_db.py` is imported nowhere in `app/`, `ui/` or `main.py`, yet the db is still bundled by `BMW Self Service.spec`.
 - For the `19 17` variants, the PRG maps information codes to `IOrtTexte`. The equivalent in the app is the same variant's `info_descriptions`.
+- Easy source path (not taken by Claude; left for another coder): ISTA
+  `DiagDocDb.sqlite` (`TITLE_ENGB`, `XEP_FAULT*`, `XEP_ECUVARIANTS`) holds the
+  authoritative per-variant English fault short texts and ECU titles, which would
+  close the English-description and category reconciliation gaps directly. See
+  [../claude-session-limitations.md](../claude-session-limitations.md).
 
 ## 4. Clear All (B3b)
 

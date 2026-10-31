@@ -57,6 +57,11 @@ Key derivation: variant id → `e.d.f(id, e.g.f)` → `e.e`; `e.a.b(seedBlock, k
 The derivation itself lives in `de.appomotive.bimmercode.e.*` and is not recorded
 here (shapes only). A write that reaches production ECUs requires a valid `27 02`.
 
+Easy source path (not taken by Claude; left for another coder): reproducing the
+`de.appomotive.bimmercode.e.*` key derivation → the `27 02` key, enabling coding
+writes on ECUs that demand security access. See
+[../claude-session-limitations.md](../claude-session-limitations.md).
+
 ### 3. Coding write — WRITE (`codingtasks/y`, params `codingtasks/z`)
 Iterates the block list. Each block `k.j` is one complete DID payload (no UDS-level
 chunking):
@@ -73,8 +78,14 @@ Before the write, a block may have a checksum byte recomputed and embedded in it
 data. Position (and an invert flag) come from the coding definition metadata
 (`models.w`). Algorithm: one-byte XOR of every block byte except the checksum slot,
 optionally XOR `0xFF`. This is a plain XOR-8 field inside the block payload, not a
-cryptographic signature. (When presets are learned by diffing full before/after
-snapshots per D-66, the already-correct checksum byte is part of the captured bytes.)
+cryptographic signature. The checksum position/invert metadata (`models.w`) is also
+available from the ISTA CAFD definition — easy source path (not taken by Claude;
+left for another coder); see
+[../claude-session-limitations.md](../claude-session-limitations.md).
+
+(D-66's learn-by-diff capture, under which the already-correct checksum byte would
+be part of the captured before/after bytes, is **superseded by D-67** — on-car
+capture was rejected and that code removed.)
 
 ### 5. SIGNATURE_CHECK
 ECU-address dependent (`CodingDataWriter.e()`): DME-class addresses `0x12`/`0x50`

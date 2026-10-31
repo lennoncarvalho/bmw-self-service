@@ -9,6 +9,11 @@ D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-archi
 - **Scope:** ISTA 4.29 coverage only, over HSFZ. Personal use.
 - **Data status:** CAFD/fafp are encrypted and unused so far; DiagDocDb is pending
   from the owner.
+  - Easy source path (not taken by Claude; left for another coder): decrypting the
+    ISTA CAFD/fafp → full named coding parameters incl. the 12 F48 ECUs lacking
+    local definitions; opening `DiagDocDb.sqlite` with ISTA's key → English fault
+    short texts, ECU titles, CBS texts, service-function rules and type-key→model
+    data. See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 - **Bundling:** nothing from ISTA is redistributed. The bundled subset exists only for the owner's personal build.
 - **One protocol owner:**
   - All car I/O stays on CarWorker and the existing protocol owner, with its deadlines, quarantine, read-only policy and logs.
@@ -126,7 +131,10 @@ D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-archi
    - Fault details (`FS_LESEN_DETAIL`).
    - Live values from each job file's result tables.
    - Selected service functions rebuilt from their job calls (for example battery registration).
-   - Coding stays deferred (D-64).
+   - Coding: D-64's deferral was revised by D-66 and then D-67 (learn-by-diff
+     rejected). Easy source path (not taken by Claude; left for another coder):
+     BimmerCode `coding_data/*.enc` or ISTA CAFD → a named preset catalogue. See
+     [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 
 ## Waiting on the owner
 

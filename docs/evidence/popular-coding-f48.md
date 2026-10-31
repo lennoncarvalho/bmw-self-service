@@ -1,11 +1,22 @@
 # Popular comfort codings — F48 X1 (public-source survey)
 
+> **Superseded capture method (D-67).** This document was written for the D-66
+> learn-by-diff plan, where each option's byte map would be captured by snapshotting
+> an ECU before and after the owner applied the option with BimmerCode. The owner
+> rejected on-car capture (D-67). **Easy source path (not taken by Claude; left for
+> another coder):** BimmerCode's encrypted coding database (`coding_data/*.enc`, key
+> in `app/coding_db.py`) or ISTA CAFD supplies these named options and their byte
+> maps directly, without capture. The survey below is retained as a useful
+> cross-reference of which options exist and their risk notes. See
+> [../claude-session-limitations.md](../claude-session-limitations.md).
+
 Status: online research, 2026-10-30. Public forum and vendor pages only; nothing here
 was observed on the owner's car. Web content was treated as untrusted data.
 
-Purpose: candidate list of low-risk comfort/convenience options whose coding diff
-can be learned by snapshotting an ECU's coding before and after the owner applies the
-option with BimmerCode on the 2018 X1 F48 sDrive20i (Brazil market).
+Purpose: candidate list of low-risk comfort/convenience options and their risk notes.
+Originally scoped (D-66) as diffs to be learned by snapshotting an ECU's coding before
+and after the owner applies the option with BimmerCode on the 2018 X1 F48 sDrive20i
+(Brazil market); see the superseded-method note above.
 
 ## Reading this document
 

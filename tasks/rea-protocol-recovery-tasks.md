@@ -263,6 +263,13 @@ checklist: [promoted CBS task](future-cbs-research.md).
 
 ## B6a — full easy catalog and current coded values
 
+> **Easy source path (not taken by Claude; left for another coder):** BimmerCode's
+> encrypted coding database (`coding_data/*.enc`, AES key/IV already in
+> `app/coding_db.py`), or ISTA 4.29 CAFD → a complete named preset catalogue across
+> models and the 12 F48 ECUs with no local definition, without on-car capture. This
+> replaces the manual/learn-by-diff route for building the catalogue. See
+> [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
+
 Depends: B2 + B-CODE-R and catalog evidence. Files: new `app/coding.py`,
 `app/coding_db.py`, `ui/coding_page.py`,
 `docs/evidence/easy-preset-coverage.json`; docs 02/06/11/16.
@@ -282,6 +289,13 @@ Exit: B-CODE-R genuine values and full catalog accounting. Unresolved applicable
 presets keep the release open; they cannot be relabelled out of scope.
 
 ## B6b — composed easy writes, readback and recovery
+
+> **Easy source path (not taken by Claude; left for another coder):** BimmerCode
+> `de.appomotive.bimmercode.e.*` security-access code → the seed/key derivation so
+> writes complete on ECUs that require `27 01`/`27 02`. The write sequence itself is
+> already recovered in
+> [../docs/evidence/task-b-coding-write-sequence.md](../docs/evidence/task-b-coding-write-sequence.md).
+> See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 
 Depends: B4 + B6a + B-CODE-W/restore/application/cycle/power contracts.
 D-27–D-31 settle failure, lockout and acknowledgement policy; no open product gate.

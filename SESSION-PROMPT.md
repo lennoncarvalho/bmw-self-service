@@ -255,6 +255,12 @@ After the owner supplied ISTA 4.29.15 (`sources/ISTA_4.29.1x`, PSdZ-Lite, Englis
 text DBs), the interview set a new direction: run ISTA PRG/GRP jobs through the
 repo's ediabasx C interpreter behind the existing protocol owner (HSFZ only),
 hybrid data (bundled F056 + common F/G subset, fallback to a user ISTA folder),
-personal use, coding via learn-by-diff (D-66). Plan:
-[tasks/ista-job-engine-plan.md](tasks/ista-job-engine-plan.md). Owner will
-provide DiagDocDb.sqlite and an F48 EDIABAS trace.
+personal use. Plan: [tasks/ista-job-engine-plan.md](tasks/ista-job-engine-plan.md).
+Owner will provide DiagDocDb.sqlite and an F48 EDIABAS trace.
+
+Coding note: D-66's learn-by-diff capture is **superseded by D-67** — the owner
+rejected on-car capture, and that code was removed. The easy source path for a
+ready-made coding catalogue (BimmerCode `coding_data/*.enc` or ISTA CAFD) and for
+security-access writes (BimmerCode `de.appomotive.bimmercode.e.*`) was not taken by
+Claude and is left for another coder. See
+[docs/claude-session-limitations.md](docs/claude-session-limitations.md).

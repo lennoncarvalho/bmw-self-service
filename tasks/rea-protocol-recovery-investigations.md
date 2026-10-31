@@ -60,6 +60,10 @@ must not depend on a current-odometer check (D-39).
   record/detail paths. Match description keys without silent collision aliases.
 - [ ] Inventory English-description gaps and translation provenance (D-43),
   preserving numeric codes and complete coverage states independently of labels.
+  - Easy source path (not taken by Claude; left for another coder): ISTA
+    `DiagDocDb.sqlite` (`TITLE_ENGB`, `XEP_FAULT*`) → English fault short texts and
+    ECU titles, closing the description/translation gaps directly. See
+    [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 
 Output: versioned record/coverage/lookup contracts; source-supported categories,
 failed/unsupported/not-attempted counts and complete discovered-target accounting.
@@ -120,6 +124,12 @@ entered mileage. No readback, automatic replay/resume/rollback or auto fallback.
 
 ### R8 — complete easy catalog and live reads (B6a; B-CODE-R)
 
+> Easy source path (not taken by Claude; left for another coder): BimmerCode
+> `coding_data/*.enc` (key in `app/coding_db.py`) or ISTA CAFD → the full named
+> preset catalogue and the 12 missing F48 ECU definitions. The live-read transport
+> below is still needed to show current values, but the catalogue itself need not be
+> rebuilt by capture. See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
+
 - [ ] S-02/S-07 exact ECU/software/CAFD matching → current coded-data reads and
   raw/block/decoded layout. Catalog every stable preset ID, applicability,
   multi-field maps and unknown/Custom states. Decrypted definitions are not live values.
@@ -128,6 +138,10 @@ Output: every applicable row accounted for with explicit restriction/unsupported
 unresolved evidence. Preserve existing Custom values; no chosen sample subset.
 
 ### R9 — composed coding writes and restoration (B6b; B-CODE-W/B-REC)
+
+> Easy source path (not taken by Claude; left for another coder): BimmerCode
+> `de.appomotive.bimmercode.e.*` → security-access seed/key for ECUs requiring
+> `27 01`/`27 02`. See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 
 - [ ] Trace masks/multi-field/block composition, integrity/order/session/security,
   final result and baseline restore encoding. Identify genuine authorization

@@ -114,7 +114,11 @@ bytes. BimmerLink parses the same 12-byte stride (`j6.b.j`, type `o`).
 Item labels come from the **variant's own** `CbsKennung` / `CbsNrText` /
 `CBS_6_3_KENNUNG` table; IDs diverge (MSD85L6_EA). English names are in the JSON
 `items` list. The German text is the source; the translations are ours,
-cross-checked with BimmerLink strings for 1/2/3/4/6/0x0A/0x11/0x20/0x64. CBS IDs
+cross-checked with BimmerLink strings for 1/2/3/4/6/0x0A/0x11/0x20/0x64.
+Easy source path (not taken by Claude; left for another coder): ISTA
+`DiagDocDb.sqlite` (CBS `TITLE_ENGB`) holds authoritative English CBS item names,
+removing reliance on our own translations. See
+[../claude-session-limitations.md](../claude-session-limitations.md). CBS IDs
 are **not** the headunit history codes. History 5 is recirculating air filter
 while CBS 0x05 is Service Inclusive; 0x14/0x15/0x20/0x21/0x64 happen to coincide.
 0xE0/0xE1 (eval boards) and 0xFF (delivery state) are not user services.

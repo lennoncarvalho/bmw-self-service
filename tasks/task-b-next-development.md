@@ -71,6 +71,11 @@ source restriction; not-yet-recovered means an actionable investigation.
    dynamic options, exact current-value bytes, composition, authorization,
    completion/cycle and restoration. Account for the whole source catalogue;
    missing applicable rows are unfinished work, not silently excluded scope.
+   - Easy source path (not taken by Claude; left for another coder): BimmerCode
+     `coding_data/*.enc` (key in `app/coding_db.py`) or ISTA CAFD → the named preset
+     catalogue and the 12 missing F48 ECU definitions; BimmerCode
+     `de.appomotive.bimmercode.e.*` → security-access seed/key for writes. See
+     [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 8. **Close implementation and review (B7).** Perform meaningful one-off offline
    byte/error/deadline checks and visual DEMO/UI inspection, independent review,
    fixes and full scripts/preflight.sh before every push. No tests/ suite.

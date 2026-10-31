@@ -13,7 +13,7 @@ Current work: [Task A](tasks/protocol-library-migration.md) and
 | Vehicle information | Identity, versioned ECU inventory, available mileage/voltage/FA | UI and read paths exist; key DIDs/codecs are unverified |
 | Diagnostics | All-ECU fault display, one Clear All and supported MIL status | Four positive empty gateway-only reads, explicitly incomplete; full ECU coverage, clearing and MIL not validated |
 | Service history | Local JSON/cards, one-entry append and explicit erase-and-replace; no car reader or legacy formats | ADD codec recovered; page/JSON/journal/mode workers pending; D-50–D-55/workflow28 retire reader/baseline gate |
-| Easy coding | Compatible presets with live current values | Database parsing/UI exist; exact variant matching and complete baseline/encoder missing |
+| Easy coding | Compatible presets with live current values | Database parsing/UI exist; exact variant matching and complete baseline/encoder missing. Easy source path (not taken by Claude; left for another coder): BimmerCode `coding_data/*.enc` (key in `app/coding_db.py`) or ISTA CAFD → curated named presets and the 12 missing F48 ECU definitions. See [docs/claude-session-limitations.md](docs/claude-session-limitations.md) |
 | Advanced coding | Later priority after all applicable easy presets | Vehicle write/readback not established; not required for initial usable slice |
 | Backups/recovery | Coding original ECU baseline/restore; history local snapshot/intent/results with null prior-car state | History cannot recover unknown erased car entries; coding restore and history journals still require implementation |
 | Demo | Explore UI with a canned F48 fixture | Useful UI simulation; no transport or hardware validation |

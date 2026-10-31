@@ -89,3 +89,8 @@ Independent review of the CBS commit found 1 High, 3 Medium and 4 Low issues; al
 - **MIL:** DME9FF_R/EDMEI1 alternate path; DME98_R/FCCU definitions absent.
 - **Identity:** BDC_G05/ZGW_SP18 `2540` decoder; no production-date source.
 - **Diagnostics:** category/description reconciliation (queue 3). Then easy coding (queue 7); the owner car lacks exact coding definitions for 12 ECUs.
+  - Easy source path (not taken by Claude; left for another coder): ISTA
+    `DiagDocDb.sqlite` → English fault short texts and ECU titles for the
+    category/description reconciliation; ISTA 4.29 CAFD (all 12 CAFD IDs/versions
+    confirmed present) or BimmerCode `coding_data/*.enc` → the 12 missing F48 ECU
+    coding definitions. See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
