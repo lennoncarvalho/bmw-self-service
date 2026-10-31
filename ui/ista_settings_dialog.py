@@ -21,6 +21,7 @@ from app.ista_data import (
     saved_ista_folder,
     validate_ista_folder,
 )
+from app.ista_jobs import remember_ista_folder
 
 
 def bundle_summary() -> str:
@@ -113,6 +114,7 @@ class IstaSettingsDialog(QDialog):
         check = validate_ista_folder(folder)
         if check.ok:
             save_ista_folder(folder)
+            remember_ista_folder()
             self._show_folder(folder)
             return
         # Keep the previous setting; show why the new choice was rejected.
@@ -123,4 +125,5 @@ class IstaSettingsDialog(QDialog):
 
     def _clear(self) -> None:
         save_ista_folder("")
+        remember_ista_folder()
         self._show_folder("")

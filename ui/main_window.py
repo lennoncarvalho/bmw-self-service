@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
 
 from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
+from app.ista_jobs import remember_ista_folder
 from app.mock_connection import MockConnection
 from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
@@ -87,6 +88,8 @@ class MainWindow(QMainWindow):
         self._overview_ecus: list[dict] = []
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
         self._cbs_journal = CbsJournalStore()
+        # Job data folder is read here; CarWorkers must not create QSettings.
+        remember_ista_folder()
         self._worker_reap_timer = QTimer(self)
         self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
