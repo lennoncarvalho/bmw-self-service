@@ -149,24 +149,23 @@ static inline int32_t edxn_resolve_int(const edxn_vm_t *vm,
 /* ── Polymorphic binary read — mirrors TS readPolyBytes.
  *
  * Returns a pointer to the underlying byte buffer + writes the length to
- * `*out_len`. For non-S registers and immediates, returns a pointer into
- * a static scratch buffer holding the LE byte representation — usable
- * synchronously but DO NOT cache across calls; the next call to
- * `edxn_resolve_binary` for the same operand kind overwrites it.
- *
- * The static-buffer trick is safe in the typical usage pattern:
- *   const uint8_t *b = edxn_resolve_binary(vm, &op, &len);
- *   memcpy(dest, b, len);  // consume immediately
- *
- * If you need to compare two operands' bytes (e.g. strcmp), copy them
- * out to separate caller-owned buffers BEFORE the second resolve call.
- * The strcmp opcode does exactly that.
+ * `*out_len`. local: for non-S registers and immediates, returns a pointer into
+ * one slot of the VM's own scratch ring (`vm->bin_scratch`) holding the LE
+ * byte representation. The last EDXN_BIN_SCRATCH_SLOTS such results stay
+ * valid at the same time, so both operands of one opcode (e.g. scmp) can be
+ * compared directly; do not keep a pointer beyond the current opcode.
  *
  * Returns NULL + *out_len=0 for EDXN_OP_NONE (no operand) and for F
  * (float) registers — there's no meaningful byte view of a double.
  */
 
-static inline const uint8_t *edxn_resolve_binary(const edxn_vm_t *vm,
+static inline uint8_t *edxn_bin_scratch(edxn_vm_t *vm) {
+    uint8_t *slot = vm->bin_scratch[vm->bin_scratch_next % EDXN_BIN_SCRATCH_SLOTS];
+    vm->bin_scratch_next = (vm->bin_scratch_next + 1) % EDXN_BIN_SCRATCH_SLOTS;
+    return slot;
+}
+
+static inline const uint8_t *edxn_resolve_binary(edxn_vm_t *vm,
                                                    const edxn_operand_t *op,
                                                    size_t *out_len) {
     switch (op->kind) {
@@ -181,7 +180,7 @@ static inline const uint8_t *edxn_resolve_binary(const edxn_vm_t *vm,
             return NULL;
         }
         {
-            static uint8_t int_buf[4];
+            uint8_t *int_buf = edxn_bin_scratch(vm);
             int len = edxn_reg_byte_len(&op->u.reg);
             int32_t val = edxn_reg_get_int(&vm->regs, &op->u.reg);
             for (int i = 0; i < len; i++)
@@ -190,7 +189,7 @@ static inline const uint8_t *edxn_resolve_binary(const edxn_vm_t *vm,
             return int_buf;
         }
     case EDXN_OP_IMM: {
-        static uint8_t imm_buf[4];
+        uint8_t *imm_buf = edxn_bin_scratch(vm);
         int len = op->u.imm.width ? op->u.imm.width : 4;
         int32_t val = op->u.imm.value;
         for (int i = 0; i < len; i++)
@@ -224,7 +223,7 @@ static inline const uint8_t *edxn_resolve_binary(const edxn_vm_t *vm,
 
 /* ── Polymorphic string read (NUL-terminated from binary) ─────────── */
 
-static inline size_t edxn_resolve_string(const edxn_vm_t *vm,
+static inline size_t edxn_resolve_string(edxn_vm_t *vm,
                                           const edxn_operand_t *op,
                                           char *buf, size_t cap) {
     size_t blen;
@@ -307,6 +306,9 @@ static inline void edxn_write_binary(edxn_vm_t *vm,
                                           &op->u.idx.idx_reg, op->u.idx.idx_imm);
         if (op->u.idx.has_off) start += op->u.idx.off_imm;
         if (start < 0) start = 0;
+        /* local: a start at or past the register capacity cannot hold any byte;
+           without this the capped length below would be smaller than start. */
+        if ((size_t)start >= EDXN_S_REG_MAXLEN) return;
         size_t slen_old;
         const uint8_t *old = edxn_reg_get_s(&vm->regs, op->u.idx.base_s, &slen_old);
         size_t needed = (size_t)start + len;

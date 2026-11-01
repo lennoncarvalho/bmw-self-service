@@ -6,18 +6,19 @@
 
 /* Find column index by name (case-insensitive). Returns -1 on miss. */
 int edxn_table_find_column(const edxn_prg_table_t *tbl,
-                            const uint8_t *decoded, const char *name);
+                            const uint8_t *decoded, size_t len, const char *name);
 
-/* Get cell string at (row, col). row=0 is the header. Returns NULL on OOB. */
+/* Get cell string at (row, col). row=0 is the header. Returns NULL on OOB.
+   `len` is the byte length of `decoded`; all walks stay inside it. */
 const char *edxn_table_get_cell(const edxn_prg_table_t *tbl,
-                                 const uint8_t *decoded, int row, int col);
+                                 const uint8_t *decoded, size_t len, int row, int col);
 
 /* Seek: find first row (1..rows) where column `col` matches `value`. Returns -1. */
 int edxn_table_seek(const edxn_prg_table_t *tbl, const uint8_t *decoded,
-                     int col, const char *value);
+                     size_t len, int col, const char *value);
 
 /* Seek unsigned: match column cell parsed as uint32. */
 int edxn_table_seek_u(const edxn_prg_table_t *tbl, const uint8_t *decoded,
-                       int col, uint32_t value);
+                       size_t len, int col, uint32_t value);
 
 #endif

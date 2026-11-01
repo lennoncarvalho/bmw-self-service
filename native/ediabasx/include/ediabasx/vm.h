@@ -122,6 +122,13 @@ struct edxn_vm {
     /* Table state */
     edxn_table_state_t   table_state;
 
+    /* local: byte views of int registers and immediates returned by
+       edxn_resolve_binary. A per-VM ring, so the operands of one opcode
+       (e.g. scmp) get distinct storage and VMs never share it. */
+#define EDXN_BIN_SCRATCH_SLOTS 4
+    uint8_t              bin_scratch[EDXN_BIN_SCRATCH_SLOTS][4];
+    unsigned             bin_scratch_next;
+
     /* Error trap — mirrors TS ErrorTrapState.
        error_trap_mask: which error bits to ignore (mask out).
        error_trap_bit_nr: the CURRENT trapped error's bit number, or -1.

@@ -13,7 +13,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.." || exit 1
 
 CC=${CC:-cc}
-CFLAGS=(-std=c11 -O2 -Wall -Wextra -Werror -fPIC -fvisibility=default
+# _DEFAULT_SOURCE: glibc hides strcasecmp/usleep/clock_gettime under strict C11.
+CFLAGS=(-std=c11 -D_DEFAULT_SOURCE -O2 -Wall -Wextra -Werror -fPIC -fvisibility=default
     -Inative -Inative/ediabasx/include -Inative/ediabasx/src)
 SOURCES=(native/edx_shim.c native/ediabasx/platform/posix/loaders.c native/ediabasx/src/*.c)
 OUT_DIR=native/build

@@ -32,7 +32,10 @@ Vendored into `native/ediabasx/` without the TypeScript packages, tests, CMake
 files or the POSIX serial transport. Local modifications, each marked `local` in
 the source: the job loop polls an optional host break hook
 (`edxn_transport_t.should_break`) so the host can stop a job at its deadline or
-after a refused telegram, and two `-Wextra` warnings are silenced.
+after a refused telegram; two `-Wextra` warnings are silenced; table cell walks
+are bounded by the table data length; indexed binary writes starting at or past
+the S-register capacity are ignored; and int/immediate byte views use a per-VM
+scratch ring instead of process-wide static buffers.
 
 PolyForm Noncommercial permits personal, noncommercial use only. This is acceptable
 under D-63 (personal use, no public or commercial release). Any public or commercial

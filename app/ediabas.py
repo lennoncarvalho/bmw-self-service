@@ -20,7 +20,7 @@ from typing import Any
 
 from PySide6.QtCore import QCoreApplication, QThread
 
-from app.protocol.contracts import OperationContext
+from app.protocol.contracts import OperationCancelled, OperationContext
 
 logger = logging.getLogger(__name__)
 
@@ -505,7 +505,10 @@ class JobEngine:
             raise ValueError("Functional job telegrams are not supported")
         if source != TESTER_ADDRESS:
             raise ValueError("Job telegram has an unexpected tester address")
-        job.remaining()
+        try:
+            job.remaining()
+        except OperationCancelled as exc:
+            raise ConnectionError("Vehicle operation cancelled") from exc
         self._telegrams += 1
         logger.debug(
             "Job TX sgbd=%s job=%s ecu=0x%02X telegram=%s",

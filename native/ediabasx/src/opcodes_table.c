@@ -29,9 +29,17 @@ static int find_table(const edxn_prg_t *prg, const char *name) {
     return -1;
 }
 
-static const uint8_t *table_data(const edxn_prg_t *prg) {
+/* local: table bytes of a prg and their length: the XOR-decoded copy when the file
+   format has one, else the raw image. */
+static const uint8_t *table_data(const edxn_prg_t *prg, size_t *len) {
+    *len = 0;
     if (!prg) return NULL;
-    return prg->decoded ? prg->decoded : prg->raw;
+    if (prg->decoded) {
+        *len = prg->decoded_len;
+        return prg->decoded;
+    }
+    *len = prg->raw_len;
+    return prg->raw;
 }
 
 /* Switch the active table registry. NULL → fall back to vm->prg. */
@@ -72,10 +80,11 @@ edxn_error_t edxn_op_table(edxn_vm_t *vm, uint8_t op,
             return EDXN_OK;
         }
         const edxn_prg_table_t *tbl = &src->tables[ti];
-        const uint8_t *td = table_data(src);
+        size_t td_len;
+        const uint8_t *td = table_data(src, &td_len);
         char col_name[EDXN_S_REG_MAXLEN + 1];
         edxn_resolve_string(vm, a0, col_name, sizeof(col_name));
-        int col = edxn_table_find_column(tbl, td, col_name);
+        int col = edxn_table_find_column(tbl, td, td_len, col_name);
         if (col < 0) {
             vm->table_state.row = -1;
             vm->flags.z = true;
@@ -83,7 +92,7 @@ edxn_error_t edxn_op_table(edxn_vm_t *vm, uint8_t op,
         }
         char search[EDXN_S_REG_MAXLEN + 1];
         edxn_resolve_string(vm, a1, search, sizeof(search));
-        int row = edxn_table_seek(tbl, td, col, search);
+        int row = edxn_table_seek(tbl, td, td_len, col, search);
         if (row > 0) {
             vm->table_state.row = row - 1;
             vm->flags.z = false;
@@ -102,10 +111,11 @@ edxn_error_t edxn_op_table(edxn_vm_t *vm, uint8_t op,
         int ti = vm->table_state.table_idx;
         if (!src || ti < 0 || (size_t)ti >= src->table_count) return EDXN_OK;
         const edxn_prg_table_t *tbl = &src->tables[ti];
-        const uint8_t *td = table_data(src);
+        size_t td_len;
+        const uint8_t *td = table_data(src, &td_len);
         char col_name[EDXN_S_REG_MAXLEN + 1];
         edxn_resolve_string(vm, a1, col_name, sizeof(col_name));
-        int col = edxn_table_find_column(tbl, td, col_name);
+        int col = edxn_table_find_column(tbl, td, td_len, col_name);
         if (col < 0) return EDXN_OK;
         int row = vm->table_state.row;
         if (row < 0) {
@@ -113,7 +123,7 @@ edxn_error_t edxn_op_table(edxn_vm_t *vm, uint8_t op,
             return EDXN_OK;
         }
         if (row >= tbl->rows) return EDXN_OK;
-        const char *cell = edxn_table_get_cell(tbl, td, row + 1, col);
+        const char *cell = edxn_table_get_cell(tbl, td, td_len, row + 1, col);
         if (cell)
             edxn_reg_set_s(&vm->regs, a0->u.reg.index,
                             (const uint8_t *)cell, strlen(cell));
@@ -151,17 +161,18 @@ edxn_error_t edxn_op_table(edxn_vm_t *vm, uint8_t op,
             return EDXN_OK;
         }
         const edxn_prg_table_t *tbl = &src->tables[ti];
-        const uint8_t *td = table_data(src);
+        size_t td_len;
+        const uint8_t *td = table_data(src, &td_len);
         char col_name[EDXN_S_REG_MAXLEN + 1];
         edxn_resolve_string(vm, a0, col_name, sizeof(col_name));
-        int col = edxn_table_find_column(tbl, td, col_name);
+        int col = edxn_table_find_column(tbl, td, td_len, col_name);
         if (col < 0) {
             vm->table_state.row = -1;
             vm->flags.z = true;
             return EDXN_OK;
         }
         uint32_t search = (uint32_t)edxn_resolve_int(vm, a1);
-        int row = edxn_table_seek_u(tbl, td, col, search);
+        int row = edxn_table_seek_u(tbl, td, td_len, col, search);
         if (row > 0) {
             vm->table_state.row = row - 1;
             vm->flags.z = false;

@@ -52,7 +52,7 @@ class IstaSettingsDialog(QDialog):
 
         intro = QLabel(
             "Diagnostic jobs use the bundled data first. Models or ECUs it does not "
-            "cover are read from an ISTA 4.29 folder on this computer."
+            "cover are read from a diagnostic job data folder on this computer."
         )
         intro.setWordWrap(True)
         layout.addWidget(intro)
