@@ -65,6 +65,12 @@ asset decryption and smoke inspection do not close a wire contract.
 | B-CODE-W | Compose selected presets against one complete baseline; preserve unrelated data | Exact masks/blocks/authorization/encoding, backup/intent, application completion and meaningful verification; easy failure rollback path |
 | B-REC | Coding backup/restoration plus honest history local journals/interruption handling | Coding retains complete original ECU bytes; history has null prior-car state, no automatic rollback/replay; JSON import itself never writes |
 
+Open research for B-CODE-R/B-CODE-W (not completion evidence). Easy source path, not
+taken by Claude and left for another coder: BimmerCode `coding_data/*.enc` or ISTA
+CAFD may provide the named catalogue and the 12 missing F48 ECU definitions;
+BimmerCode `de.appomotive.bimmercode.e.*` may provide the security-access seed/key
+for `27 01`/`27 02` ECUs. See [claude-session-limitations.md](claude-session-limitations.md).
+
 Track source-evidenced, implemented, offline-inspected, vehicle-validated,
 unsupported and unknown separately for each variant. All applicable presets
 means the full supplied catalog for matched model/ECU/software, with stable IDs

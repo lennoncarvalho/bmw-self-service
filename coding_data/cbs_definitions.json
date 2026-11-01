@@ -1,0 +1,392 @@
+{
+  "definitions": {
+    "CMEDIA": {
+      "address": 54,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
+      "reset": "default",
+      "version": "5"
+    },
+    "D70BX7A0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+      "reset": "default",
+      "version": "5"
+    },
+    "D72N47A0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "reset": "default",
+      "version": "5"
+    },
+    "D73N57A0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "reset": "default",
+      "version": "5"
+    },
+    "D73N57E0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "reset": "default",
+      "version": "5"
+    },
+    "D75BX7A0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+      "reset": "default",
+      "version": "5"
+    },
+    "D83BX7C0": {
+      "address": 18,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+      "reset": "default",
+      "version": "6"
+    },
+    "D94BX7A0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset (CBS 6.3 routine 31 01 1000, standard reset type 0x02)",
+      "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "reset": "routine-6.3",
+      "version": "6.3"
+    },
+    "DME8FF_L": {
+      "address": 19,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "0a27292b892a0600af355b3913657891f2a081071cbb2670ad735cb335ccf026",
+      "reset": "default",
+      "version": "6"
+    },
+    "DME8FF_R": {
+      "address": 18,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+      "reset": "default",
+      "version": "6"
+    },
+    "DME_BX8": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+      "reset": "default",
+      "version": "5"
+    },
+    "DSC_01": {
+      "address": 41,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+      "reset": "default",
+      "version": "5"
+    },
+    "DSC_10": {
+      "address": 41,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "reset": "default",
+      "version": "5"
+    },
+    "DSC_25": {
+      "address": 41,
+      "detail": false,
+      "disposition": "read+reset (DSC_25 plain write; SVK-gated extra sequence blocked)",
+      "prg_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "reset": "dsc25-plain",
+      "version": "5"
+    },
+    "DSC_G11": {
+      "address": 41,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "61b0482df5d3092a25510fea3e9491022a9b14f41bad7d3b219a089cf876cc1e",
+      "reset": "default",
+      "version": "6"
+    },
+    "DSC_G20": {
+      "address": 41,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "ec13c59498f7fb8986bb364fff9889ea2177524a36ad8042562f4c608bd939b3",
+      "reset": "default",
+      "version": "6"
+    },
+    "DSC_G30N": {
+      "address": 41,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "523cd64d32bd6c5314cb3a3e7c7fa126b98d6d476b872700c5a948c0ec86c6ae",
+      "reset": "default",
+      "version": "6"
+    },
+    "DSC_I1": {
+      "address": 41,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "reset": "default",
+      "version": "6"
+    },
+    "EDMEI1": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "54affb2706cdb7b6edf2584ab0255a07d03f5b458818a60027324db3fddc4f54",
+      "reset": "default",
+      "version": "5"
+    },
+    "EHC_01": {
+      "address": 56,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
+      "reset": "default",
+      "version": "5"
+    },
+    "GSGE01QW": {
+      "address": 24,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
+      "reset": "default",
+      "version": "6"
+    },
+    "IB_G05": {
+      "address": 41,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "a0dcf4f5a9636072c1e28db7e1a96d6179269f6c41083d84077c442f8a7a11bf",
+      "reset": "default",
+      "version": "6"
+    },
+    "IB_G2X": {
+      "address": 41,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "40949a1660eacb386be650bc00ec9f9abe8fa6eb794f1956a75852f674283d86",
+      "reset": "default",
+      "version": "6"
+    },
+    "KOMB01": {
+      "address": 96,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "014a0730df2b993380aff00afabd7794b2672cbf171ae3390feb1ed0ffb122b1",
+      "reset": "default",
+      "version": "5"
+    },
+    "KOMB25": {
+      "address": 96,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "38c3b5de88402bef28c2697b0c03615e79097a03d29640e22b60c071f5f1a688",
+      "reset": "default",
+      "version": "5"
+    },
+    "KOMBRDCT": {
+      "address": 96,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "b7ef99297a062ad860012c3877dc3a33a1bbdc431250dc003cb326f5065d2c2d",
+      "reset": "default",
+      "version": "6"
+    },
+    "KOMBSP18": {
+      "address": 96,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "a611ef427b42354b518e62d6b9de53addf2e437d8029c1b4b2eb13147ae66a20",
+      "reset": "default",
+      "version": "6"
+    },
+    "KOMBSP21": {
+      "address": 96,
+      "detail": false,
+      "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset request in any supplied artifact (reset_kombsp21)",
+      "prg_sha256": "20603da513132ee750561c56bf099834315306da1ab0d51c70ff56e92fd04706",
+      "reset": "blocked",
+      "version": "6.3"
+    },
+    "KOMB_G11": {
+      "address": 96,
+      "detail": true,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "3c509b8eb4a50479944e623d3b52cdda563b208ae42272e9c9bf0f939eb591a1",
+      "reset": "default",
+      "version": "6"
+    },
+    "LMV_01": {
+      "address": 25,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
+      "reset": "default",
+      "version": "5"
+    },
+    "MEVD172": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "reset": "default",
+      "version": "5"
+    },
+    "MEVD1724": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "reset": "default",
+      "version": "5"
+    },
+    "MEVD1725": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "reset": "default",
+      "version": "5"
+    },
+    "MEVD172Y": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "reset": "default",
+      "version": "5"
+    },
+    "MSD85L6": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "reset": "default",
+      "version": "5"
+    },
+    "MSD85YL6": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "reset": "default",
+      "version": "5"
+    },
+    "MSD87": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "reset": "default",
+      "version": "5"
+    },
+    "MSD87_R0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+      "reset": "default",
+      "version": "5"
+    },
+    "MSV90": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "reset": "default",
+      "version": "5"
+    },
+    "N55_ALP": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "reset": "default",
+      "version": "5"
+    },
+    "N63TU_R0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "reset": "default",
+      "version": "5"
+    },
+    "S55": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+      "reset": "default",
+      "version": "5"
+    },
+    "S63TU_L0": {
+      "address": 19,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
+      "reset": "default",
+      "version": "5"
+    },
+    "S63TU_R0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "read+reset implementable (default template)",
+      "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "reset": "default",
+      "version": "5"
+    }
+  },
+  "items": {
+    "01": "Engine oil",
+    "02": "Front brake pads",
+    "03": "Brake fluid",
+    "05": "Service Inclusive",
+    "06": "Rear brake pads",
+    "07": "Particulate filter",
+    "08": "Battery state of health",
+    "0A": "Spark plugs / glow plugs",
+    "0D": "NOx additive",
+    "11": "Vehicle check",
+    "14": "Pre-delivery inspection",
+    "15": "Running-in check",
+    "17": "Water filter",
+    "20": "Statutory vehicle inspection",
+    "21": "Statutory emissions test",
+    "23": "Transmission oil",
+    "31": "Tyre age",
+    "32": "Clutch",
+    "33": "Bonnet gas struts (pedestrian protection)",
+    "34": "First-aid kit",
+    "35": "Tyre sealant kit",
+    "36": "Catalytic converter",
+    "37": "Shock absorbers",
+    "64": "Vehicle check (linked)",
+    "E0": "CBS evaluation board (development)",
+    "E1": "CBR evaluation board (development)",
+    "FF": "Delivery state (not a service item; v6 reset rejects 'rda')"
+  },
+  "not_resettable": [
+    "E0",
+    "E1",
+    "FF"
+  ],
+  "schema": 1,
+  "source_sha256": "2e35e4c0c56cf2fc64e633291483d50002a7e5c61d4b2b7987db910881933fcd"
+}

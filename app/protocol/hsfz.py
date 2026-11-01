@@ -1,11 +1,14 @@
 """Scapy HSFZ codecs behind the project's bounded stream adapter."""
 
+import logging
 import select
 
 from scapy.contrib.automotive.bmw.hsfz import HSFZ
 
 from app.protocol.contracts import EcuIdentity, FailureKind, OperationContext, ProtocolFailure
 from app.protocol.stream import BoundedStream, check_payload
+
+logger = logging.getLogger(__name__)
 
 
 class HsfzAdapter:
@@ -15,6 +18,19 @@ class HsfzAdapter:
         self.stream = stream
         self.read_only = read_only
         self.tester = tester
+        # ECUs whose timed-out read still owes one final reply (spec 25 invariant 2).
+        # Address -> monotonic expiry; after it the connection must be replaced.
+        self.abandoned: dict[int, float] = {}
+
+    def _late(self, packet: HSFZ, raw: bytes) -> bool:
+        """Consume an abandoned read's reply; only a final reply resolves it."""
+        if packet.target != self.tester or packet.source not in self.abandoned:
+            return False
+        payload = raw[8:]
+        if not (len(payload) == 3 and payload[0] == 0x7F and payload[2] == 0x78):
+            self.abandoned.pop(packet.source, None)
+        logger.info("Late reply consumed ecu=0x%02X data=%s", packet.source, payload.hex(" "))
+        return True
 
     def send_diagnostic(self, ecu: EcuIdentity, payload: bytes, context: OperationContext) -> None:
         """Check the actual bytes and send one Scapy-encoded diagnostic frame."""
@@ -36,6 +52,7 @@ class HsfzAdapter:
             if control == 1:
                 if packet.source == ecu.address and packet.target == self.tester:
                     return raw[8:]
+                self._late(packet, raw)
             elif control == 0x12:
                 self._alive(raw, context)
             elif control >= 0x40:
@@ -54,6 +71,8 @@ class HsfzAdapter:
         control = int.from_bytes(raw[4:6], "big")
         if control == 0x12:
             self._alive(raw, ctx)
+        elif control == 1 and len(raw) >= 8 and self._late(HSFZ(raw), raw):
+            return
         elif control == 1 or control >= 0x40:
             raise ConnectionError("Unowned diagnostic response requires reconnect")
 

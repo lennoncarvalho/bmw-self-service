@@ -1,9 +1,22 @@
+> **2026-10-30, D-59:** the app no longer reads or shows the ECU lamp command
+> (4A69 / F303). The overview indicator follows engine fault memory. This record
+> is retained as source research; `coding_data/mil_contracts.json` remains only
+> as input to `scripts/recover_engine_measurements.py`.
+
 # Older-engine MIL block lifecycle recovery — 2026-10-29
 
-Status: **primary implementation reference**, source recovery only. No new MIL
-requests are enabled in this increment. The current runtime still enables the
-53 exact engine rows / 17 definitions in [the breadth record](task-b-mil-breadth.md).
-The remaining nine exact rows remain concrete implementation/source tasks.
+Status: **implementation withdrawn under D-59.** `app/mil_block.py` is absent
+from this revision and has no current callers. The details below are retained as
+historical source research.
+
+History: it was implemented 2026-10-30 in `app/mil_block.py` (commit 152df53) as
+an explicit confirmed action. The generator fingerprints `STATUS_BLOCK_LESEN`
+against the reviewed hash below and marks the five rows `dynamic-block` (DID 4A69,
+slot F303). Offline fake-gateway checks covered exact wire order, pending replies,
+exclusivity, rejection/invalid/timeout/cleanup outcomes and read-only rejection.
+No physical observation exists for these engines (the owner's car uses direct
+DME_BX8). DME9FF_R/EDMEI1 alternate MIL and DME98_R/FCCU definitions were open
+source work when the implementation was withdrawn.
 
 ## Exact block source
 

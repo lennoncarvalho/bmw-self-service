@@ -1,0 +1,1841 @@
+{
+ "schema": 1,
+ "source_sha256": "a6b48b72528a314a468131aadd1667d519e1913c36b5aaa012d0aee7caba6cc8",
+ "variants": {
+  "AAG_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ACF_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ACP_RRS2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ACSM3": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ACSM4": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ACSM4I": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ACSM5": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "AHM_01": {
+   "info": null,
+   "info_clear": null,
+   "permanent": false
+  },
+  "AMPH07": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPH10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPHHB20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPT07": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPT10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPTHB10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPTHB32": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "AMPTLR13": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ASA_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ASA_25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ASD_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ASD_I12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ATM": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ATM02": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BATT48": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BDC": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BDC_G05": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BDC_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BFH_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BFH_12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BFH_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BFS_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BFS_12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BFS_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "BIS01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CAS4": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CAS4_2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CCU_01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "CCU_01b": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "CCU_01c": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "CCU_01d": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "CDM02": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CDM02SL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CDM02SR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CDM_RR4": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CECALL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CGW_RRS2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CHAMP2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CHC01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CHRO_F56": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CIC": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CICM": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CID_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CID_01R1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CID_01R2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CID_01T": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CID_25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CMEDIA": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CPM_G30": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CSM3": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CSM4": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CSM4R": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CTM_F33": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVMS_I15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_F23": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_F57": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_G14": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_G23": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_G29": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_I15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "CVM_RR6": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "D70BX7A0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "D72N47A0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "D73N57A0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "D73N57E0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "D75BX7A0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "D83BX7C0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "D94BX7A0": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DCS01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "DKG_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DME8FF_L": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DME8FF_R": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DME9FF_R": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DME_BX8": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DSC_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "DSC_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DSC_25": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "DSC_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DSC_G20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DSC_G30N": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DSC_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "DWA_12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "DWA_G14": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EDMEI1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EHC2RR4": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EHC_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EKP301": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ELV_G30": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EMARS_H1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EMARS_V1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EMA_LI": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EMA_RE": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EME_04": {
+   "info": null,
+   "info_clear": null,
+   "permanent": false
+  },
+  "EME_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EME_F18": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EME_F30": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EME_F45": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EME_G12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EME_I01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EME_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EME_I12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "EMF_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EMF_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ENAVEVO": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ENS": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ENTRY": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ENTRYNAV": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_G01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_G05": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "EPS_TK02": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FAH_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FAH_12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FAH_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FAS_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FAS_12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FAS_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FEM_20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FKA_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FKA_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLA_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLA_20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLE02_L": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLE02_R": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLE_L": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLE_R": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLM01_L": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLM01_R": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLM02X_L": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLM02X_R": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLM02_L": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FLM02_R": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FRM3": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FRR_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FRR_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FZD3": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FZD_20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FZD_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FZD_F40": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "FZD_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GHAS10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GKEB23TU": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GKEG3HY": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GKEHY23": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GS100A": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GSAW01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GSAW02FH": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSAW02FP": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSB231": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSD_F90": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GSGE01QT": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSGE01QW": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSZF04GA": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSZF04GD": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSZF04GF": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSZFB1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GSZFBCE": {
+   "info": "19 17 0C 01",
+   "info_clear": null,
+   "permanent": true
+  },
+  "GSZFBHY1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GWS2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_G05": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_G05K": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_G11B": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GWS_I01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GW_RR4": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "GZAL01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "GZAR01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "HC2_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HC2_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HKA_02": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HKA_G07": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "HKA_G12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "HKFM11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HKFM_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HKFM_I20": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HKL_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HSR_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HSR_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HUD_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HU_MGU": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HVS_01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HVS_01b": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HVS_01c": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "HVS_01d": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IB_G05": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "IB_G2X": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "ICAM2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ICAM_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ICMQL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ICMV": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ICM_25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA1RR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA25_2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA2RR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKARR4": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA_G05": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "IHKA_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "IHX_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "JBBF3": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KAFAS01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KAFAS04": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KAFAS20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KAFASG11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KLE_82E": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KOMB01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KOMB25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KOMBRDCT": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KOMBSP18": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KOMBSP21": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "KOMB_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LEM_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LEZF04VB": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LHM2_L": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LHM2_R": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LIM_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LMV_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LMV_F45": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "LMV_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "MEVD172": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "MEVD1724": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "MEVD1725": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "MEVD172Y": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "MMC2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "MRR02": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "MSD85L6": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "MSD85YL6": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "MSD87": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "MSD87_L0": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "MSD87_R0": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "MSV90": {
+   "info": "22 20 00",
+   "info_clear": null,
+   "permanent": false
+  },
+  "N55_ALP": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "N63TU_L0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "N63TU_R0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "NBT": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "NBTEVO": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "NIVI2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "NIVI3": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "OBC_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PCU48": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PCU_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PCU_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PCU_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PDC_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PDC_F10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PMA_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PMA_15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "PMA_20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "QSG_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RAD12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RAD_UKL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RAM01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RDCUDS": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RDC_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RDC_03": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RDME_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "REMA_LI": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "REMA_RE": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "REME_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "REME_I12": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "REM_20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "RK_HL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RK_HR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RK_VL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RK_VR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RLM_1L": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RLM_1R": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RLM_2L": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RLM_2R": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RSEEVO": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RSEH01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RSEH10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "RSE_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "RSE_MGU": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "S55": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "S63TU_L0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "S63TU_R0": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SAS_G05": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SAS_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SAS_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SCR01": {
+   "info": null,
+   "info_clear": null,
+   "permanent": true
+  },
+  "SCR03": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SCR04": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SEC1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SEC1_F46": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SEC1_G20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SEC2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SGE48V": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SLE_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SMES1_82": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SMES2_82": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SME_04": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SME_10": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SME_82": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": true
+  },
+  "SME_F15": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SME_F18": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SME_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SPNM_HL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SPNM_HR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SPNM_VL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SPNM_VR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SRR01_HL": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SRR01_HR": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SRR01_VL": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SRR01_VR": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SVT_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "SZL_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TBX5_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TCB1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TCB4G": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE1_01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE1_01b": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE1_01c": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE1_01d": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE2_01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE2_01b": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TEE2_01c": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TFM_I1": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TMS3_L": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TMS3_R": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TPL": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TRSVC01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TRSVC_RR": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TVM2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TVM2_T2": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "TVM_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "UCX2_I01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "UCX_I01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "USS_G05": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "USS_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VDC_25": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VDP_G11": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VIP_G05": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VIP_G30N": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VSG_H": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VSG_I01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "VSW_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "WSG_01": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBE5F01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBE5_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBE6": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBE6M": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBE7": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBEF01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBEF6": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBEL20": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZBE_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZGW_01": {
+   "info": "22 20 00",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  },
+  "ZGW_SP18": {
+   "info": "19 17 0C 01",
+   "info_clear": "31 01 0F 06",
+   "permanent": false
+  }
+ }
+}

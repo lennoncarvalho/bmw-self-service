@@ -19,6 +19,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ui.cbs_panel import CbsPanel
+from ui.regional import regional_locale
+
 
 class VehiclePage(QWidget):
     """Vehicle facts and an independently observed emissions MIL indicator."""
@@ -73,6 +76,7 @@ class VehiclePage(QWidget):
         self.order_label = QLabel()
         self.ilevel_label = QLabel()
         self.battery_label = QLabel()
+        self.engine_label = QLabel()
         for label in (
             self.model_label,
             self.vin_label,
@@ -82,6 +86,7 @@ class VehiclePage(QWidget):
             self.order_label,
             self.ilevel_label,
             self.battery_label,
+            self.engine_label,
         ):
             label.setWordWrap(True)
             label.setTextFormat(Qt.TextFormat.PlainText)
@@ -103,6 +108,9 @@ class VehiclePage(QWidget):
         self.order_scroll.setWidget(self.order_details)
         self.order_scroll.hide()
         layout.addWidget(self.order_scroll)
+
+        self.cbs_panel = CbsPanel()
+        layout.addWidget(self.cbs_panel)
 
         self.ecu_count_label = QLabel()
         layout.addWidget(self.ecu_count_label)
@@ -152,6 +160,7 @@ class VehiclePage(QWidget):
     def reset(self) -> None:
         """Discard all facts and MIL observations from the previous session."""
         self.populate({}, vin="Unavailable")
+        self.cbs_panel.clear("Service status not read in this session")
         self._observed_at = None
         self.observed_label.setText("No current vehicle observation")
         self.refresh_button.setEnabled(False)
@@ -187,7 +196,7 @@ class VehiclePage(QWidget):
                 ),
                 "ecu_list": data.get("svt_ecus", []),
                 "connection_info": "DEMO — simulated vehicle",
-                "mil": {"on": False, "detail": "DEMO observation"},
+                "mil": {"on": False, "detail": "DEMO — simulated engine fault memory"},
             },
             series,
             vehicle.get("vin", "Unavailable"),
@@ -203,7 +212,10 @@ class VehiclePage(QWidget):
         self.connection_label.setText(
             str(results.get("connection_info") or "Connection unavailable")
         )
-        self.mileage_label.setText(f"Odometer: {results.get('mileage') or 'Unavailable'}")
+        mileage = results.get("mileage")
+        if isinstance(mileage, dict):
+            mileage = f"{regional_locale().toString(int(mileage['km']))} km ({mileage['source']})"
+        self.mileage_label.setText(f"Odometer: {mileage or 'Unavailable'}")
         self.prod_date_label.setText(f"Build date: {results.get('prod_date') or 'Unavailable'}")
         self.ilevel_label.setText(
             f"Software integration levels: {results.get('i-level') or 'Unavailable'}"
@@ -211,6 +223,12 @@ class VehiclePage(QWidget):
         self.battery_label.setText(
             f"Supply voltage: {results.get('battery_voltage') or 'Unavailable'}"
         )
+        engine = results.get("engine_data")
+        self.engine_label.setVisible(isinstance(engine, list))
+        if isinstance(engine, list):
+            self.engine_label.setText(
+                "Engine: " + " · ".join(self._measurement(item) for item in engine)
+            )
         mil = results.get("mil")
         self._mil_on = mil.get("on") if isinstance(mil, dict) else None
         if type(self._mil_on) is not bool:
@@ -251,16 +269,29 @@ class VehiclePage(QWidget):
         self._populate_order(order if isinstance(order, dict) else None)
         self._update_age()
 
+    @staticmethod
+    def _measurement(item: dict[str, Any]) -> str:
+        value, unit = item.get("value"), str(item.get("unit", ""))
+        if not isinstance(value, (int, float)):
+            return f"{item.get('label')} unavailable"
+        if unit == "mV":
+            value, unit = value / 1000, "V"
+        unit = {"C": "°C", "rpm": "1/min"}.get(unit, unit)
+        decimals = 0 if unit == "1/min" else 1
+        return (
+            f"{item.get('label')} {regional_locale().toString(float(value), 'f', decimals)} {unit}"
+        )
+
     def _set_mil(self, on: bool | None, detail: str) -> None:
         state = "on" if on is True else "off" if on is False else "unknown"
         text = (
-            "ON — ECU reports check-engine light"
+            "ON — engine has a present or confirmed fault"
             if on is True
-            else "OFF — ECU reports check-engine light off"
+            else "OFF — no present or confirmed engine fault"
             if on is False
             else "Unavailable"
         )
-        self.mil_label.setText(f"● Emissions MIL: {text}\n{detail}")
+        self.mil_label.setText(f"● Check engine (MIL): {text}\n{detail}")
         self.mil_label.setProperty("milState", state)
         self.mil_label.style().unpolish(self.mil_label)
         self.mil_label.style().polish(self.mil_label)

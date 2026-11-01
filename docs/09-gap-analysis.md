@@ -78,6 +78,14 @@ BimmerLink's assets yet but can.
 
 ## Module 3: Easy Coding
 
+> **Easy source path (not taken by Claude; left for another coder):** the two gaps
+> below — the CAFD-name → translation mapping and the SecurityAccess seed/key — are
+> reachable from the protected source databases without on-car work. BimmerCode's
+> encrypted coding DB (`coding_data/*.enc`, key in `app/coding_db.py`) and ISTA CAFD
+> hold the named parameters and labels; BimmerCode `de.appomotive.bimmercode.e.*`
+> holds the seed/key derivation. See
+> [claude-session-limitations.md](claude-session-limitations.md).
+
 | Component | Status | Detail |
 |-----------|--------|--------|
 | CAFD parameter database | ✅ Complete | ~350 CAFD variant files decrypted, 1,592+ params per ECU |

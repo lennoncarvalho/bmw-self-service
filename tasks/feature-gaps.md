@@ -60,6 +60,10 @@ These are the minimum to make the app show real data instead of stub/mock values
   - Files: `ui/service_history_page.py`, `app/worker.py`
 
 - [ ] **G-8: Coding real-car read**
+  - Easy source path (not taken by Claude; left for another coder): BimmerCode
+    `coding_data/*.enc` (key in `app/coding_db.py`) or ISTA CAFD → the real option
+    catalogue that replaces `MOCK_CATEGORIES`, plus the 12 missing F48 ECU
+    definitions. See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
   - Send UDS `0x22` to read CAFD/FDL data from each ECU. Parse into the option structure used by `MOCK_CATEGORIES`.
   - Replace `MOCK_CATEGORIES` with real data after connection.
   - Acceptance: Easy Coding shows actual vehicle options instead of mock categories.
@@ -67,6 +71,9 @@ These are the minimum to make the app show real data instead of stub/mock values
   - Files: `ui/coding_page.py`, `app/worker.py`
 
 - [ ] **G-9: Coding real-car write with auto-backup**
+  - Easy source path (not taken by Claude; left for another coder): BimmerCode
+    `de.appomotive.bimmercode.e.*` → security-access seed/key for ECUs requiring
+    `27 01`/`27 02`. See [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
   - Send UDS `0x2E` (WriteDataByIdentifier) for each modified FDL parameter. Before writing, auto-backup the original CAFD data to `~/BMW-Tool/backups/`.
   - Backup format: `backups/YYYY-MM-DD_HH-MM/ECU_NAME.bin` + `manifest.json` with VIN, ECU, changes.
   - Rollback: restore from backup via `0x2E`.

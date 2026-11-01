@@ -25,6 +25,11 @@ REVIEWED_JOBS = {
     "36f664998c2827d1c2742f4b7ab3b591a84deefec6843c7bb1369c72a4888a6e",
     "a71e62867f0b5a076d9ad05efce917dbca85c82482db2595d333194970e13789",
 }
+# Complete STATUS_BLOCK_LESEN listing shared by the five older engines; see
+# docs/evidence/task-b-mil-block-recovery.md for clear/define/read echo checks.
+REVIEWED_BLOCK_JOB = "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675"
+# The source application's fixed dynamic slot for engine sensor selection (k6.c0.m).
+BLOCK_SLOT = 0xF303
 
 
 def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None:
@@ -89,16 +94,14 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None
         for i in range(parser._read_int32_raw(offset)):
             entry = parser._read_decrypted(offset + 4 + i * 0x44, 0x44)
             jobs[parser._read_null_string(entry[:0x40])] = struct.unpack_from("<i", entry, 0x40)[0]
-        if "STATUS_LESEN" not in jobs:
-            definitions[name] = {"state": "block-reader-not-yet-traced"}
-            source["next_job"] = "STATUS_BLOCK_LESEN"
-            source["next_job_offset"] = jobs.get("STATUS_BLOCK_LESEN")
-            continue
-        listing = "\n".join(parser._disassemble_job(jobs["STATUS_LESEN"]))
+        job = "STATUS_LESEN" if "STATUS_LESEN" in jobs else "STATUS_BLOCK_LESEN"
+        if job not in jobs:
+            raise ValueError(f"No reviewed MIL job: {name}")
+        listing = "\n".join(parser._disassemble_job(jobs[job]))
         fingerprint = hashlib.sha256(
             re.sub(r"__[0-9A-F]+", "__LABEL", listing).encode()
         ).hexdigest()
-        if fingerprint not in REVIEWED_JOBS:
+        if fingerprint not in (REVIEWED_JOBS if job == "STATUS_LESEN" else {REVIEWED_BLOCK_JOB}):
             raise ValueError(f"Unreviewed MIL request/decoder: {name} {fingerprint}")
         if (
             row["DATENTYP"] != "unsigned char"
@@ -112,10 +115,13 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None
         ):
             raise ValueError(f"MIL row has unreviewed encoding/scaling: {name}")
         did = int(row["ID"], 16)
-        source.update(
-            {"job": "STATUS_LESEN", "job_offset": jobs["STATUS_LESEN"], "job_sha256": fingerprint}
-        )
-        definitions[name] = {"state": "scalar-boolean", "did": did}
+        source.update({"job": job, "job_offset": jobs[job], "job_sha256": fingerprint})
+        if job == "STATUS_LESEN":
+            definitions[name] = {"state": "scalar-boolean", "did": did}
+        elif "2C" in re.split(r"[;,]", row["SERVICE"]):
+            definitions[name] = {"state": "dynamic-block", "did": did, "slot": BLOCK_SLOT}
+        else:
+            raise ValueError(f"MIL block row lacks dynamic definition service: {name}")
     asset = {
         "schema": 1,
         "engines": {

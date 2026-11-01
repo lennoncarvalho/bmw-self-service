@@ -1,8 +1,10 @@
 {
   "engines": {
     "12 0F1090": {
+      "did": 19049,
       "name": "MSD85L6",
-      "state": "block-reader-not-yet-traced"
+      "slot": 62211,
+      "state": "dynamic-block"
     },
     "12 0F10A0": {
       "did": 20696,
@@ -10,8 +12,10 @@
       "state": "scalar-boolean"
     },
     "12 0F1370": {
+      "did": 19049,
       "name": "MSD87",
-      "state": "block-reader-not-yet-traced"
+      "slot": 62211,
+      "state": "dynamic-block"
     },
     "12 0F1380": {
       "did": 19049,
@@ -19,8 +23,10 @@
       "state": "scalar-boolean"
     },
     "12 0F13E0": {
+      "did": 19049,
       "name": "MSV90",
-      "state": "block-reader-not-yet-traced"
+      "slot": 62211,
+      "state": "dynamic-block"
     },
     "12 0F13F0": {
       "did": 19049,
@@ -33,8 +39,10 @@
       "state": "scalar-boolean"
     },
     "12 0F1780": {
+      "did": 19049,
       "name": "MSD85YL6",
-      "state": "block-reader-not-yet-traced"
+      "slot": 62211,
+      "state": "dynamic-block"
     },
     "12 0F17B0": {
       "did": 20696,
@@ -166,8 +174,10 @@
       "state": "scalar-boolean"
     },
     "12 0F2220": {
+      "did": 19049,
       "name": "N55_ALP",
-      "state": "block-reader-not-yet-traced"
+      "slot": 62211,
+      "state": "dynamic-block"
     },
     "12 0F2422": {
       "did": 19049,

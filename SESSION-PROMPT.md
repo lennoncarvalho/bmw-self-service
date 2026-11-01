@@ -230,3 +230,37 @@ run_operation for exclusive clear/define/read/cleanup; explicit2C service suppor
 confirmed UI action/global lockout, reserved cleanup budget and per-step uncertain
 outcomes remain required. Do not put dynamic-DID writes in normal overview refresh.
 No additional physical vehicles are a prerequisite for these implementation tasks.
+
+
+## CBS/MIL/odometer increment — 2026-10-30
+
+PR15 and PR16 are merged (`85ed2ad`). Fresh branch `codex/task-b-cbs-mil` from
+fetched origin/main; no PR is authorized yet. REA MCP now also runs in Claude
+Code. Implemented and checked offline (see
+[tasks/task-b-cbs-mil-implementation.md](tasks/task-b-cbs-mil-implementation.md)):
+- CBS read and confirmed reset for 44 exact definitions (owner by response, no
+  default owner, durable intent before send, exact `6E 10 01`, settle re-read).
+- Owned F303 MIL for the five older engines (explicit action, checked cleanup).
+- Odometer (cluster D122 or KOMB01/25 D10D−D114; BDC copy) and 83 engine values.
+- Owner-session fixes: per-ECU late-reply quarantine (bounded 30 s) instead of
+  dropping the connection, and the I-level trailer.
+
+Next: owner-operated read-only CBS/odometer observation, then one confirmed
+reset; remaining CBS branches (DSC_25, D94 6.3, KOMBSP21); diagnostics
+reconciliation; easy coding. DoIP mapping needs a new source (none supplied).
+
+## ISTA job-engine direction — D-60–D-64 (2026-10-30)
+
+After the owner supplied ISTA 4.29.15 (`sources/ISTA_4.29.1x`, PSdZ-Lite, English
+text DBs), the interview set a new direction: run ISTA PRG/GRP jobs through the
+repo's ediabasx C interpreter behind the existing protocol owner (HSFZ only),
+hybrid data (bundled F056 + common F/G subset, fallback to a user ISTA folder),
+personal use. Plan: [tasks/ista-job-engine-plan.md](tasks/ista-job-engine-plan.md).
+Owner will provide DiagDocDb.sqlite and an F48 EDIABAS trace.
+
+Coding note: D-66's learn-by-diff capture is **superseded by D-67** — the owner
+rejected on-car capture, and that code was removed. The easy source path for a
+ready-made coding catalogue (BimmerCode `coding_data/*.enc` or ISTA CAFD) and for
+security-access writes (BimmerCode `de.appomotive.bimmercode.e.*`) was not taken by
+Claude and is left for another coder. See
+[docs/claude-session-limitations.md](docs/claude-session-limitations.md).

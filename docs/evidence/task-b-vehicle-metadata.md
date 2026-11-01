@@ -12,6 +12,13 @@ No reference application or vehicle operation was executed.
 `e()` as **paint code**, and `j()` as **upholstery code**. It does not decode a
 trim/model from the type key, convert the time criterion into a proven build
 date, or normalize a four-character model range into a chassis string.
+
+Easy source path (not taken by Claude; left for another coder): ISTA
+`DiagDocDb.sqlite` (`XEP_TYPEKEY_MAPPING`, `XEP_CHARACTERISTICS`) maps type key → 
+series/model/trim, which would decode the trim/model honestly. The physical build
+date is **not** in these databases (it comes from FA/VCM; see
+[odometer/identity A5](task-b-odometer-identity-doip.md)), so that gap stays open.
+See [../claude-session-limitations.md](../claude-session-limitations.md).
 Evidence `ev_6122b4e2add3ae4c9153750009a2cf869e49d74edd70ac4ed1bfb8eedc552e34`.
 These distinctions prevent the previously conceptual FA/model examples from
 becoming guesses in the dashboard.

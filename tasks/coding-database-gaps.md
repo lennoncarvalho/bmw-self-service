@@ -8,6 +8,13 @@
 > Merged in PR #7 (`feat/coding-database`). 12 of 15 tasks complete.
 > 3 tasks remain open: T-2 (CAFD reads), T-4 (build_write_payload), T-11 (seed/key).
 
+> **Easy source path (not taken by Claude; left for another coder):** the three open
+> tasks are reachable from the protected source databases without on-car derivation.
+> T-2/T-4 — ISTA CAFD or BimmerCode `coding_data/*.enc` → exact per-ECU read/write
+> DIDs and block/checksum metadata. T-11 — BimmerCode `de.appomotive.bimmercode.e.*`
+> → security-access seed/key. See
+> [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
+
 ---
 
 ## Phase 1: Coding database foundation (blocks all real-car coding)

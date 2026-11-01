@@ -1,5 +1,11 @@
 # Task B — CBS reading and writing before coding
 
+**Status 2026-10-30: implemented** on `codex/task-b-cbs-mil` (commit ddd0dd0).
+Contract: [CBS contract](../docs/evidence/task-b-cbs-contract.md); verification
+and remaining branches: [implementation record](task-b-cbs-mil-implementation.md).
+The upstream 0x41xx cluster read and default-owner fallback were not ported
+(contradicted by PRGs/BimmerLink). No physical CBS read/reset yet.
+
 **Current implementation scope under D-58 (2026-10-29).** This existing path is
 retained for incoming links; the old deferred/research-only status is superseded.
 CBS read/write is due after history work and **before easy and advanced coding**.

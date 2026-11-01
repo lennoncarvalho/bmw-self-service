@@ -1,0 +1,572 @@
+{
+ "schema": 1,
+ "date": "2026-10-30",
+ "branch": "codex/task-b-cbs-mil",
+ "scope": "static source recovery; no vehicle traffic; no app/ui change",
+ "sources": {
+  "apk_sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5",
+  "rea_evidence": {
+   "j6.v": "ev_ecc2bdb8915a2d1da2064f7a48f9a7496bd7ef71ec3c515a303a45142eb1305a",
+   "j6.v.b0": "ev_3b92fb82f7b31d32ff626fb8061d089ef4af6bb7e1669a72b11bae8d600099fd",
+   "j6.v.A": "ev_f765ce47ff5ecae1c8b6eb486223c445feb6b8062dfada9aef64ff89aea80f4f"
+  },
+  "smali_sha256_prefix16": {
+   "j6/v.smali": "1c6df5de8a665efe",
+   "j6/v$e0.smali": "89f68a0f6894ead9",
+   "j6/v$a0$a.smali": "d0cdbc63b226d960",
+   "j6/v$y.smali": "7ab5a49b19178daf",
+   "j6/v$z.smali": "3c8ced947394ba4d",
+   "j6/e.smali": "6c0e200980e373eb",
+   "j6/p.smali": "cfde34af147e6229",
+   "u5/d.smali": "d7f96fe641b6144e"
+  },
+  "owner_log_sha256": "e38c106ce58baffc5819b464a8176a3dd9843794e1f628b6856990bdd0637f25",
+  "prg_parser": "BimmerDaten/decoderPrg.py",
+  "prgs_parsed": 367,
+  "uds_names_without_prg": 235
+ },
+ "raw_dir": "/Users/lennon/BMW-Tool/investigations/task-b-diagnostics-20261030",
+ "raw_sha256": {
+  "prg-breadth-scan.json": "58bf9ebf6261a2e80773f59c27420ba6e5d46a5d26dec4867e9059d0802ab2ae",
+  "prg-detail-owner-f48.json": "5e0a34fe6cb40d743f45894432ae40e6279962d3bb10f1e6a250ef8c69a784e5",
+  "variant-memory-applicability.json": "a6b48b72528a314a468131aadd1667d519e1913c36b5aaa012d0aee7caba6cc8",
+  "description-collisions.json": "5763d91fabd2e65fb504fdf090096a637872bc75ca4436a25a382f6ceb050637",
+  "rea-evidence-bundle.json": "3b72a2926a150f1d71c4a32578b0fc760cd74ee8a15d38a64d5beebe1dafee47",
+  "scan_description_collisions.py": "49ee392456da2514ebc9991fd8417876bb062cbed73895f1995a6d20f964a7c2",
+  "prg_breadth_scan.py": "b2df965be37a73fef824aa7041ebdabd1a5e8774cf21974d01be91a72996b654",
+  "prg_detail_dump.py": "3ed4db2e82a25d5e2c59b4af8f3d46ed4d55b9bfd3180a14a59e8ba28628e754",
+  "BDC.FS_LESEN_DETAIL.asm": "ee2639b112cb3995680171bd0091232dce892e66e7cd7f2462d0a1bd57ccee5c",
+  "BDC.IS_LESEN_DETAIL.asm": "c7935beafc5200781eff10537ac7f5c5cc8c0328a21166b1fe645f5538606151",
+  "BDC_G05.IS_LESEN.asm": "a55f5235c1b16453434c3618df8d7664814276fefb5b9d334e77187da0e53015"
+ },
+ "memories": {
+  "fault": {
+   "request": "19 02 0C",
+   "response": "59 02 AM {DTC3 SS}*",
+   "status": "primary-reference",
+   "app": "correct"
+  },
+  "information_did2000": {
+   "request": "22 20 00",
+   "response": "62 20 00 {DTC3 SS}*",
+   "status": "primary-reference+observed",
+   "app": "correct"
+  },
+  "information_userdef": {
+   "request": "19 17 0C 01",
+   "response": "59 17 MS AM {DTC3 SS}* (records at offset 4)",
+   "status": "primary-reference (PRG); header order standard-derived",
+   "variants": [
+    "ATM02",
+    "BATT48",
+    "BDC_G05",
+    "CCU_01",
+    "CCU_01b",
+    "CCU_01c",
+    "CCU_01d",
+    "CHC01",
+    "CSM4",
+    "CSM4R",
+    "CVM_G14",
+    "CVM_G23",
+    "CVM_G29",
+    "D94BX7A0",
+    "DCS01",
+    "DME9FF_R",
+    "DSC_G30N",
+    "DWA_G14",
+    "EPS_G05",
+    "FLM02X_L",
+    "FLM02X_R",
+    "FLM02_L",
+    "FLM02_R",
+    "FZD_F40",
+    "GSD_F90",
+    "GSZF04GA",
+    "GSZF04GD",
+    "GSZF04GF",
+    "GSZFBCE",
+    "HKFM_I20",
+    "HU_MGU",
+    "HVS_01",
+    "HVS_01b",
+    "HVS_01c",
+    "HVS_01d",
+    "KAFAS04",
+    "KOMBSP18",
+    "KOMBSP21",
+    "LEZF04VB",
+    "MRR02",
+    "PCU48",
+    "RAM01",
+    "RLM_1L",
+    "RLM_1R",
+    "RLM_2L",
+    "RLM_2R",
+    "RSE_MGU",
+    "SAS_G05",
+    "SCR04",
+    "SGE48V",
+    "SRR01_HL",
+    "SRR01_HR",
+    "SRR01_VL",
+    "SRR01_VR",
+    "TEE1_01",
+    "TEE1_01b",
+    "TEE1_01c",
+    "TEE1_01d",
+    "TEE2_01",
+    "TEE2_01b",
+    "TEE2_01c",
+    "VIP_G30N",
+    "WSG_01",
+    "ZGW_SP18"
+   ],
+   "app": "missing (G2)"
+  },
+  "permanent": {
+   "request": "19 15",
+   "response": "59 15 [AM] {DTC3 SS}*",
+   "status": "primary-reference+observed",
+   "prg_variants": [
+    "ACSM5",
+    "CCU_01",
+    "CCU_01b",
+    "CCU_01c",
+    "CCU_01d",
+    "D70BX7A0",
+    "D72N47A0",
+    "D73N57E0",
+    "D75BX7A0",
+    "D83BX7C0",
+    "D94BX7A0",
+    "DKG_10",
+    "DME8FF_L",
+    "DME8FF_R",
+    "DME9FF_R",
+    "DME_BX8",
+    "DSC_10",
+    "DSC_G11",
+    "DSC_G20",
+    "DSC_G30N",
+    "DSC_I1",
+    "EME_10",
+    "EME_F18",
+    "EME_F30",
+    "EME_F45",
+    "EME_G12",
+    "EME_I01",
+    "EME_I12",
+    "FZD_G11",
+    "GKEB23TU",
+    "GKEG3HY",
+    "GKEHY23",
+    "GSAW02FH",
+    "GSAW02FP",
+    "GSB231",
+    "GSGE01QT",
+    "GSGE01QW",
+    "GSZF04GA",
+    "GSZF04GD",
+    "GSZF04GF",
+    "GSZFB1",
+    "GSZFBCE",
+    "GSZFBHY1",
+    "GZAL01",
+    "GZAR01",
+    "HKA_G07",
+    "HKA_G12",
+    "IB_G05",
+    "IB_G2X",
+    "IHKA_G11",
+    "MEVD172",
+    "MEVD1724",
+    "MEVD1725",
+    "MEVD172Y",
+    "N55_ALP",
+    "N63TU_L0",
+    "N63TU_R0",
+    "NBTEVO",
+    "REM_20",
+    "RSEH10",
+    "S55",
+    "S63TU_L0",
+    "S63TU_R0",
+    "SAS_I1",
+    "SCR01",
+    "SCR03",
+    "SCR04",
+    "SMES1_82",
+    "SMES2_82",
+    "SME_10",
+    "SME_82"
+   ],
+   "app": "correct; applicability optional (G7)"
+  },
+  "no_information_read": [
+   "AHM_01",
+   "EME_04",
+   "SCR01"
+  ],
+  "information_read_without_clear": [
+   "DSC_25",
+   "GSZFBCE",
+   "MSD85L6",
+   "MSD85YL6",
+   "MSD87",
+   "MSD87_L0",
+   "MSD87_R0",
+   "MSV90"
+  ]
+ },
+ "details": {
+  "requests": [
+   "19 06 DTC FF",
+   "19 04 DTC FF"
+  ],
+  "skipped": "19 09 DTC (F_SEVERITY=ja in 15/367)",
+  "extended_records": {
+   "01": {
+    "name": "CONDITION_BYTE",
+    "bytes": 1,
+    "use": "bit0 = memory overflow"
+   },
+   "02": {
+    "name": "HFK",
+    "bytes": 1,
+    "use": "occurrence counter 0-255 saturating"
+   },
+   "03": {
+    "name": "HLZ",
+    "bytes": 1,
+    "use": "healing counter; meaningful when F_HLZ=ja (223/367)"
+   },
+   "other": "stop, keep raw"
+  },
+  "snapshot_layout": "59 04 DTC3 SS {RN NI {DID2 data}*NI}*; length 6 = none",
+  "standard_dids": {
+   "1700": [
+    3,
+    "km BE; FFFFFF=unavailable"
+   ],
+   "1701": [
+    4,
+    "seconds BE; epoch unresolved"
+   ],
+   "1702": [
+    3,
+    "SAE code"
+   ],
+   "1731": [
+    1,
+    "fault class 0/1/2/4/FF"
+   ],
+   "1750": [
+    1,
+    "raw"
+   ],
+   "1751": [
+    3,
+    "raw"
+   ],
+   "1768": [
+    4,
+    "raw"
+   ],
+   "1769": [
+    4,
+    "raw"
+   ]
+  },
+  "unknown_did": "stop decoding remaining bytes (per-ECU widths not shipped)",
+  "record_order": "unresolved; do not label first/last",
+  "source_apk_mileage": "max of regex 1700([A-F0-9]{6})17 over hex (do not copy)",
+  "information_details": "partial: 22 20 nn (position) or 19 18/19 19 DTC FF 01; body unresolved"
+ },
+ "descriptions": {
+  "association": "per variant asset (descriptionFilename); errors for fault+permanent, infoErrors for information",
+  "app": "equivalent",
+  "duplicate_raw_keys": 0,
+  "case_fold_collisions": 0,
+  "malformed_keys": [
+   [
+    "ACF_01",
+    "errors",
+    "0x2FF68"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4012"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x400D"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4019"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4014"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x400F"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x400A"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4016"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4000"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4011"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4007"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x400C"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4018"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4013"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x400E"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4015"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4010"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x4017"
+   ],
+   [
+    "CDM_RR4",
+    "infoErrors",
+    "0x400B"
+   ],
+   [
+    "D73N57A0",
+    "errors",
+    "0x2FF12"
+   ],
+   [
+    "D73N57A0",
+    "infoErrors",
+    "0x2FF12"
+   ],
+   [
+    "DME98_L",
+    "errors",
+    "-"
+   ],
+   [
+    "DME98_L",
+    "infoErrors",
+    "-"
+   ],
+   [
+    "DME98_R",
+    "errors",
+    "-"
+   ],
+   [
+    "DME98_R",
+    "infoErrors",
+    "-"
+   ],
+   [
+    "LEMA02HG",
+    "infoErrors",
+    "-"
+   ],
+   [
+    "SCR05",
+    "infoErrors",
+    "-"
+   ]
+  ],
+  "codes_in_errors_and_infoErrors": 59610,
+  "cross_asset_differing_text": {
+   "normal": 13258,
+   "information": 7211
+  },
+  "dtc_descriptions_db": "PRIMARY KEY(code,table_type) cannot hold per-variant text; app/dtc_db.py unused at runtime"
+ },
+ "clear": {
+  "source_clear_all": "j6.v.i: functional HSFZ 0xDF 14 FF FF FF or 31 01 0F 06; outcome ignored; reread each ECU; always reports cleared",
+  "source_per_ecu": "j6.v.j / v$f0.b: physical; checks SID 54/71 only",
+  "prg": "FS_LOESCHEN 14 FF FF FF (367), IS_LOESCHEN 31 01 0F 06 (356), no permanent clear; Modus Default",
+  "app": "physical per target, exact 54 / 71 01 0F 06, separate reread; keep (deliberate divergence)",
+  "gaps": [
+   "G2b userdef reread",
+   "G6 trailing routine bytes -> uncertain"
+  ]
+ },
+ "status": {
+  "summary_mask": "0x6D",
+  "not_present_stored": [
+   "04",
+   "08",
+   "0C",
+   "20",
+   "24",
+   "28",
+   "2C"
+  ],
+  "present_stored": [
+   "05",
+   "09",
+   "0D",
+   "21",
+   "25",
+   "29",
+   "2D"
+  ],
+  "stored_test_incomplete": [
+   "44",
+   "45",
+   "48",
+   "49",
+   "4C",
+   "4D",
+   "60",
+   "61",
+   "64",
+   "65",
+   "68",
+   "69",
+   "6C",
+   "6D"
+  ],
+  "none": "00",
+  "other": "unknown",
+  "test_conditions_met": "bit4 == 0",
+  "warning_indicator_would": "bit7 (never MIL)",
+  "availability_mask": "bits outside AM = not reported; observed AM FF/4F/4D",
+  "outliers": {
+   "no_0x2x_rows": 101,
+   "CAS4_SEC2": "05/09/0D -> stored"
+  },
+  "relevance_filter": "none in APK; PRG IGNORIERE_EREIGNIS_DTC only"
+ },
+ "gaps": [
+  {
+   "id": "G1",
+   "value": 1,
+   "what": "on-demand fault details",
+   "files": [
+    "app/diagnostics.py",
+    "ui/diagnostics_page.py"
+   ]
+  },
+  {
+   "id": "G2",
+   "value": 2,
+   "what": "19 17 0C 01 information memory for 64 variants + completeness",
+   "files": [
+    "scripts/recover_diagnostic_memory_variants.py (new)",
+    "coding_data/diagnostic_memory_variants.json (new)",
+    "app/vehicle.py DiagnosticCatalog",
+    "app/diagnostics.py"
+   ]
+  },
+  {
+   "id": "G3",
+   "value": 3,
+   "what": "BMW status summary + availability mask",
+   "files": [
+    "app/diagnostics.py decode_memory",
+    "app/uds.py decode_dtc_records",
+    "ui/diagnostics_page.py _decode_dtc_status"
+   ]
+  },
+  {
+   "id": "G4",
+   "value": 4,
+   "what": "doc corrections (Clear All anchor, divergence, db collisions)",
+   "files": [
+    "docs/evidence/task-b-recovered-contracts.md",
+    "docs/14-dtc-database.md"
+   ]
+  },
+  {
+   "id": "G5",
+   "value": 5,
+   "what": "record 27 malformed description keys",
+   "files": [
+    "scripts/recover_diagnostic_catalog.py"
+   ]
+  },
+  {
+   "id": "G6",
+   "value": 6,
+   "what": "71 01 0F 06 + trailing bytes -> uncertain",
+   "files": [
+    "app/diagnostics.py DiagnosticClearWorker"
+   ]
+  },
+  {
+   "id": "G7",
+   "value": 7,
+   "what": "optional permanent applicability",
+   "files": [
+    "same table as G2"
+   ]
+  },
+  {
+   "id": "G8",
+   "value": 8,
+   "what": "research: info details, per-ECU UW widths, ABS_ZEIT epoch, record order",
+   "files": []
+  },
+  {
+   "id": "G9",
+   "value": 9,
+   "what": "proposal: retire unused dtc_db + bundled db",
+   "files": [
+    "app/dtc_db.py",
+    "BMW Self Service.spec"
+   ]
+  }
+ ]
+}

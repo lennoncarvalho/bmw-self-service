@@ -108,6 +108,17 @@ Legacy formats named in the source inventory are research references only.
    This is a proposed research target, not an inspected source or a required
    installation. Do not infer transport/current-value layout from data names.
 
+> **Easy source path (not taken by Claude; left for another coder).** Several coding
+> and description gaps above may not need a new source request: the already-supplied
+> protected sources are proposed candidates, once decrypted/derived. Their contents
+> and usability are unverified. BimmerCode `coding_data/*.enc` (key in
+> `app/coding_db.py`) or ISTA 4.29 CAFD may provide the named preset catalogue and
+> the 12 missing F48 ECU definitions; BimmerCode `de.appomotive.bimmercode.e.*`
+> holds the referenced key-derivation classes and may provide the security-access
+> seed/key; ISTA `DiagDocDb.sqlite` (encrypted, not opened) may provide English
+> fault/ECU/CBS texts, service-function rules and type-key→model data.
+> See [claude-session-limitations.md](claude-session-limitations.md).
+
 Use current sources first. A source request must state the unresolved contract,
 searches already bounded, exact files/version needed and expected observation.
 Do not substitute forum constants or an unrelated platform for original evidence.
