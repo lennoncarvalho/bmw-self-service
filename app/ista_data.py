@@ -498,7 +498,7 @@ class FolderProvider:
         """Use an already validated ``Rheingold`` directory."""
         self.root = rheingold
         self.ecu_dir = rheingold / "Ecu"
-        self.label = "ISTA folder"
+        self.label = "Job data folder"
         self._kiswb = rheingold / "PSdZ" / "kiswb"
         self._brref = rheingold / "PSdZ" / "mapping" / "brref.xml"
         self._index = _JobIndex(self.ecu_dir)

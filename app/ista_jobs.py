@@ -109,7 +109,7 @@ class JobRun:
     @property
     def source(self) -> str:
         """User-facing label of this run's origin."""
-        return f"ISTA job {self.job} ({self.sgbd})"
+        return f"ECU job {self.job} ({self.sgbd})"
 
     @property
     def status(self) -> str:
@@ -267,7 +267,7 @@ class JobBackend:
             except (OSError, DataFormatError) as exc:
                 self.reason = f"job data unavailable ({exc})"
         if not self.reason and self.source is not None and not self.source.providers:
-            self.reason = "no job data (bundle or ISTA folder) is available"
+            self.reason = "no job data (bundle or job data folder) is available"
 
     @classmethod
     def disabled(cls, connection: Any, reason: str) -> "JobBackend":

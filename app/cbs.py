@@ -773,7 +773,7 @@ class CbsResetWorker(CarWorker):
             # A job file that cannot name this item cannot reset it; never improvise.
             raise PermissionError("The ECU job file defines no reset identifier for this item")
         self.report["execution"] = (
-            f"ISTA job {JOB_RESET} {execution['args']} ({execution['job_file']})"
+            f"ECU job {JOB_RESET} {execution['args']} ({execution['job_file']})"
             if execution is not None
             else f"app request ({backend.fallback_source(owner['name'])})"
         )

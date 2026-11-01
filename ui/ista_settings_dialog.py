@@ -63,7 +63,7 @@ class IstaSettingsDialog(QDialog):
         form.addRow("Bundled data", self.bundle_label)
         self.folder_label = QLabel()
         self.folder_label.setWordWrap(True)
-        form.addRow("ISTA folder", self.folder_label)
+        form.addRow("Job data folder", self.folder_label)
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
         form.addRow("Status", self.status_label)
@@ -108,7 +108,7 @@ class IstaSettingsDialog(QDialog):
 
     def _choose(self) -> None:
         start = saved_ista_folder()
-        folder = QFileDialog.getExistingDirectory(self, "Choose the ISTA folder", start)
+        folder = QFileDialog.getExistingDirectory(self, "Choose the job data folder", start)
         if not folder:
             return
         check = validate_ista_folder(folder)
