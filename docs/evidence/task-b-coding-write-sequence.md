@@ -78,10 +78,12 @@ Before the write, a block may have a checksum byte recomputed and embedded in it
 data. Position (and an invert flag) come from the coding definition metadata
 (`models.w`). Algorithm: one-byte XOR of every block byte except the checksum slot,
 optionally XOR `0xFF`. This is a plain XOR-8 field inside the block payload, not a
-cryptographic signature. The checksum position/invert metadata (`models.w`) is also
-available from the ISTA CAFD definition — easy source path (not taken by Claude;
-left for another coder); see
-[../claude-session-limitations.md](../claude-session-limitations.md).
+cryptographic signature. `models.w` is the established source of the checksum
+position/invert metadata. ISTA CAFD definitions are a possible source of equivalent
+metadata (easy source path, not taken by Claude; left for another coder; see
+[../claude-session-limitations.md](../claude-session-limitations.md)). That mapping
+is unverified: check it against one exact field's `models.w` metadata before CAFD
+metadata is used to compose writes.
 
 (D-66's learn-by-diff capture, under which the already-correct checksum byte would
 be part of the captured before/after bytes, is **superseded by D-67** — on-car

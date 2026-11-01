@@ -12,10 +12,10 @@ These are the limits of one assistant (Claude Opus 5.5, session of 2026-10-30), 
 
 ## What the owner can still get without these items
 
-- **Diagnostics:** connection, full identification, all fault memories (present / confirmed / not confirmed), live values, CBS read and reset, and service history, all on the owner's car.
+- **Diagnostics (implemented, verified offline only; no on-car validation yet):** connection and identification, fault memories (present / confirmed / not confirmed), engine values, CBS read and confirmed reset, and local JSON service history with append/replace writes. Vehicle service-history reading is retired (D-50).
 - **ISTA job files:** running ISTA 4.29 PRG/GRP jobs. These are XOR-obfuscated, not encrypted.
-- **Coding (learn-by-diff):** capture an ECU, apply one option with the owner's BimmerCode, capture again, and store the exact diff as the app's own preset. Writes follow the recovered sequence once one write per ECU type is confirmed on the car.
-- **Missing pieces:** English ISTA short texts, if `DiagDocDb` is encrypted (#2), and a large ready-made coding catalogue (#1, #3).
+- **Coding:** existing coding snapshots from the local definitions in `coding_data/`; the recovered write sequence is recorded in [task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md) but no coding write is enabled or verified on a vehicle. Learn-by-diff capture was rejected (D-67) and removed.
+- **Missing pieces:** English ISTA short texts (`DiagDocDb` is encrypted, #2) and a large ready-made coding catalogue (#1, #3).
 
 ## Gaps that the easy source path would close
 

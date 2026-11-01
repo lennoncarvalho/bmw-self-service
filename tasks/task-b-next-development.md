@@ -206,7 +206,7 @@ No additional physical vehicles are a prerequisite for these implementation task
 PR15 and PR16 are merged (`85ed2ad`). Fresh branch `codex/task-b-cbs-mil` from
 fetched origin/main; no PR is authorized yet. REA MCP now also runs in Claude
 Code. Implemented and checked offline (see
-[tasks/task-b-cbs-mil-implementation.md](tasks/task-b-cbs-mil-implementation.md)):
+[tasks/task-b-cbs-mil-implementation.md](task-b-cbs-mil-implementation.md)):
 - CBS read and confirmed reset for 44 exact definitions (owner by response, no
   default owner, durable intent before send, exact `6E 10 01`, settle re-read).
 - Owned F303 MIL for the five older engines (explicit action, checked cleanup).

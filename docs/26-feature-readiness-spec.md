@@ -61,9 +61,15 @@ asset decryption and smoke inspection do not close a wire contract.
 | B-HIST-W | Append one multi-item entry or explicitly erase/write a reviewed local list | No ERASE in append; explicit irreversible replacement; durable local snapshot/intent/results, known-local date checks, application/cycle completion; no car-history-backup claim |
 | B-CBS-R | Read applicable Condition Based Service items with actual remaining distance/time, due date, availability/counters and explicit unknowns | Exact ECU/version/item selection, checked response/decoder/units/sentinels, per-item coverage and before-state; headunit history is independent |
 | B-CBS-W | Confirmed source-supported CBS writes/resets before coding | Exact owning ECU/version/preconditions, frozen intent, durable before/results, power/lockout, checked application completion and meaningful post-state/cycle handling; no guessed owner, automatic replay or promised counter rollback |
-| B-CODE-R | Every applicable matched easy preset with actual current values | Exact ECU/software/CAFD and live bytes; complete catalog accounting; untouched Custom values preserved. Easy source path (not taken by Claude; left for another coder): BimmerCode `coding_data/*.enc` or ISTA CAFD → the named catalogue and 12 missing F48 ECU definitions ([claude-session-limitations.md](claude-session-limitations.md)) |
-| B-CODE-W | Compose selected presets against one complete baseline; preserve unrelated data | Exact masks/blocks/authorization/encoding, backup/intent, application completion and meaningful verification; easy failure rollback path. Easy source path (not taken by Claude; left for another coder): BimmerCode `de.appomotive.bimmercode.e.*` → security-access seed/key for `27 01`/`27 02` ECUs ([claude-session-limitations.md](claude-session-limitations.md)) |
+| B-CODE-R | Every applicable matched easy preset with actual current values | Exact ECU/software/CAFD and live bytes; complete catalog accounting; untouched Custom values preserved |
+| B-CODE-W | Compose selected presets against one complete baseline; preserve unrelated data | Exact masks/blocks/authorization/encoding, backup/intent, application completion and meaningful verification; easy failure rollback path |
 | B-REC | Coding backup/restoration plus honest history local journals/interruption handling | Coding retains complete original ECU bytes; history has null prior-car state, no automatic rollback/replay; JSON import itself never writes |
+
+Open research for B-CODE-R/B-CODE-W (not completion evidence). Easy source path, not
+taken by Claude and left for another coder: BimmerCode `coding_data/*.enc` or ISTA
+CAFD may provide the named catalogue and the 12 missing F48 ECU definitions;
+BimmerCode `de.appomotive.bimmercode.e.*` may provide the security-access seed/key
+for `27 01`/`27 02` ECUs. See [claude-session-limitations.md](claude-session-limitations.md).
 
 Track source-evidenced, implemented, offline-inspected, vehicle-validated,
 unsupported and unknown separately for each variant. All applicable presets
