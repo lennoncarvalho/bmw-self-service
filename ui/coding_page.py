@@ -28,8 +28,6 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QRadioButton,
-    QScrollArea,
-    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -38,6 +36,7 @@ from app.coding import CodingSnapshotWorker
 from app.coding_db import CodingDatabase
 from app.resources import resource_path
 from app.worker import CarWorker
+from ui.page_stack import PageStack
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +126,7 @@ class CodingPage(QWidget):
         self._pending_plan: Any = None
         self._write_report: dict = {}
         self.can_mutate: Callable[[], bool] = lambda: True
-        self._sub_stack: QStackedWidget
+        self._sub_stack: PageStack
         self._setup_ui()
         self._evidence_export_btn = QPushButton("Export retained coding results")
         self._evidence_export_btn.clicked.connect(self._export_coding_report)
@@ -190,7 +189,7 @@ class CodingPage(QWidget):
         layout.addLayout(tab_bar)
 
         # Sub-page stack
-        self._sub_stack = QStackedWidget()
+        self._sub_stack = PageStack(content_height=True)
         self._sub_stack.addWidget(self._build_easy_page())
         self._sub_stack.addWidget(self._build_advanced_page())
         layout.addWidget(self._sub_stack, stretch=1)
@@ -234,9 +233,6 @@ class CodingPage(QWidget):
         title.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffffff;")
         layout.addWidget(title)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         container = QWidget()
         cat_layout = QVBoxLayout(container)
         cat_layout.setSpacing(8)
@@ -335,8 +331,7 @@ class CodingPage(QWidget):
             cat_layout.addWidget(card)
 
         cat_layout.addStretch()
-        scroll.setWidget(container)
-        layout.addWidget(scroll)
+        layout.addWidget(container)
         return page
 
     def _build_advanced_page(self) -> QWidget:
@@ -366,9 +361,6 @@ class CodingPage(QWidget):
         layout.addWidget(sub)
 
         # ECU tree
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         container = QWidget()
         self._adv_ecu_layout = QVBoxLayout(container)
         self._adv_ecu_layout.setSpacing(6)
@@ -378,8 +370,7 @@ class CodingPage(QWidget):
         self._build_ecu_tree(container)
 
         self._adv_ecu_layout.addStretch()
-        scroll.setWidget(container)
-        layout.addWidget(scroll, stretch=1)
+        layout.addWidget(container)
         return page
 
     def _build_ecu_tree(self, container: QWidget) -> None:
@@ -677,8 +668,6 @@ class CodingPage(QWidget):
         )
         notice.setWordWrap(True)
         layout.addWidget(notice)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
         content = QWidget()
         entries = QVBoxLayout(content)
         for row in rows:
@@ -755,8 +744,7 @@ class CodingPage(QWidget):
                     details.addWidget(restriction)
                 entries.addWidget(card)
         entries.addStretch()
-        scroll.setWidget(content)
-        layout.addWidget(scroll)
+        layout.addWidget(content)
         old = self._sub_stack.widget(0)
         if old is not None:
             self._sub_stack.removeWidget(old)

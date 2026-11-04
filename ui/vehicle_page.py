@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -98,16 +97,12 @@ class VehiclePage(QWidget):
         self.order_button.setCheckable(True)
         self.order_button.toggled.connect(self._toggle_order)
         layout.addWidget(self.order_button)
-        self.order_scroll = QScrollArea()
-        self.order_scroll.setWidgetResizable(True)
-        self.order_scroll.setMaximumHeight(160)
         self.order_details = QLabel()
         self.order_details.setWordWrap(True)
         self.order_details.setTextFormat(Qt.TextFormat.PlainText)
         self.order_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.order_scroll.setWidget(self.order_details)
-        self.order_scroll.hide()
-        layout.addWidget(self.order_scroll)
+        self.order_details.hide()
+        layout.addWidget(self.order_details)
 
         self.cbs_panel = CbsPanel()
         layout.addWidget(self.cbs_panel)
@@ -118,17 +113,14 @@ class VehiclePage(QWidget):
         self.details_button.setCheckable(True)
         self.details_button.toggled.connect(self._toggle_details)
         layout.addWidget(self.details_button)
-        self.ecu_scroll = QScrollArea()
-        self.ecu_scroll.setWidgetResizable(True)
         self.ecu_container = QWidget()
         self.ecu_layout = QVBoxLayout(self.ecu_container)
-        self.ecu_scroll.setWidget(self.ecu_container)
-        self.ecu_scroll.hide()
-        layout.addWidget(self.ecu_scroll, 1)
+        self.ecu_container.hide()
+        layout.addWidget(self.ecu_container)
         layout.addStretch()
 
     def _toggle_order(self, visible: bool) -> None:
-        self.order_scroll.setVisible(visible)
+        self.order_details.setVisible(visible)
         self.order_button.setText(
             "Hide vehicle configuration" if visible else "Show vehicle configuration"
         )
@@ -154,7 +146,7 @@ class VehiclePage(QWidget):
         self.order_details.setText("\n".join(lines))
 
     def _toggle_details(self, visible: bool) -> None:
-        self.ecu_scroll.setVisible(visible)
+        self.ecu_container.setVisible(visible)
         self.details_button.setText("Hide ECU details" if visible else "Show ECU details")
 
     def reset(self) -> None:

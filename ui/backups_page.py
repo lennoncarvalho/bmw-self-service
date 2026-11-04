@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -36,13 +35,10 @@ class BackupsPage(QWidget):
         location = QLabel(f"Backup location: {self.store.root}")
         location.setWordWrap(True)
         layout.addWidget(location)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
         container = QWidget()
         self.list_layout = QVBoxLayout(container)
         self.list_layout.addStretch()
-        scroll.setWidget(container)
-        layout.addWidget(scroll)
+        layout.addWidget(container)
         actions = QHBoxLayout()
         for label, handler in (("Import JSON backup", self._import), ("Refresh", self.refresh)):
             button = QPushButton(label)

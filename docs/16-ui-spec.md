@@ -71,6 +71,15 @@ appears as a bottom bar (not a sidebar) so the layout is consistent across
 screen sizes. On narrow windows (< 600px), content margins shrink and cards
 stack vertically.
 
+Owner clarification (2026-11-04): main-page content has one outer vertical
+scrollbar. Expanding any accordion grows it until all of its content is visible;
+configuration, ECU, CBS, diagnostic, coding, local history and journal sections
+must not create nested vertical viewports or fixed-height scrolling boxes.
+The current page alone determines the content height, including wrapped text;
+hidden pages/tabs do not reserve space. The header and bottom navigation remain
+outside that scrolling content and stay anchored. Dialog forms and confirmation
+previews retain their separate scrolling where needed.
+
 ---
 
 ## Screen 1: Welcome / Connect

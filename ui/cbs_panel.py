@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -44,18 +43,14 @@ class CbsPanel(QWidget):
         self.status_label.setWordWrap(True)
         self.status_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.status_label)
-        self.items_area = QScrollArea()
-        self.items_area.setWidgetResizable(True)
-        self.items_area.setMaximumHeight(260)
         self.container = QWidget()
         self.rows = QVBoxLayout(self.container)
-        self.items_area.setWidget(self.container)
-        layout.addWidget(self.items_area)
+        layout.addWidget(self.container)
         self.clear("Service status not read in this session")
         self._toggle(False)
 
     def _toggle(self, visible: bool) -> None:
-        self.items_area.setVisible(visible)
+        self.container.setVisible(visible)
         self.status_label.setVisible(visible)
         self.toggle_button.setText(
             "Hide service status (CBS)" if visible else "Show service status (CBS)"

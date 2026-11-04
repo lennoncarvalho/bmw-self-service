@@ -24,8 +24,8 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
-    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -40,6 +40,7 @@ from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
 from ui.ista_settings_dialog import IstaSettingsDialog
+from ui.page_stack import PageStack
 from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
@@ -104,7 +105,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self._build_top_bar())
 
-        self.stack = QStackedWidget()
+        self.stack = PageStack()
 
         self.welcome_page = WelcomePage()
         self.welcome_page.connect_clicked.connect(self._on_connect_requested)
@@ -136,7 +137,11 @@ class MainWindow(QMainWindow):
         self.backups_page.restore_requested.connect(self.coding_page.restore_vehicle_backup)
         self.stack.addWidget(self.backups_page)
 
-        main_layout.addWidget(self.stack, stretch=1)
+        self.content_scroll = QScrollArea()
+        self.content_scroll.setObjectName("pageScrollArea")
+        self.content_scroll.setWidgetResizable(True)
+        self.content_scroll.setWidget(self.stack)
+        main_layout.addWidget(self.content_scroll, stretch=1)
 
         self.spinner_overlay = self._build_spinner()
 
@@ -280,11 +285,12 @@ class MainWindow(QMainWindow):
 
     def _position_spinner(self) -> None:
         if self.spinner_overlay and self.stack:
-            stack_geo = self.stack.geometry()
-            x = (stack_geo.width() - self.spinner_overlay.width()) // 2
-            y = (stack_geo.height() - self.spinner_overlay.height()) // 2
-            if x >= 0 and y >= 0:
-                self.spinner_overlay.move(x, y)
+            viewport = self.content_scroll.viewport()
+            center = viewport.mapTo(self, viewport.rect().center())
+            self.spinner_overlay.move(
+                center.x() - self.spinner_overlay.width() // 2,
+                center.y() - self.spinner_overlay.height() // 2,
+            )
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
