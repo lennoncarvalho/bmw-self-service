@@ -1,5 +1,11 @@
 # History execution contracts — PR16 continuation, 2026-10-29
 
+> Source location update, 2026-11-04: `sources/Ecu/` below is a historical
+> artifact path; that collection was removed. Current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Names, bytes and versions can differ.
+> Preserve this record's hashes/offsets; compare current files before reuse.
+> See [current inventory](../29-source-reuse-continuation.md).
+
 **Primary implementation references; static source recovery.** This extends the
 [ADD investigation](task-b-history-deep-investigation.md) with exact ERASE,
 headunit selection, session/default-mode, reset and pacing observations. It

@@ -8,6 +8,18 @@ The current milestone is working personal use from Python source on macOS.
 remaining factual questions. No unanswered product question from this interview
 blocks starting those investigations or planning implementation.
 
+## Current interpretation — 2026-11-04
+
+The owner requested reuse of supplied definitions and executable jobs first,
+with investigation focused on missing integration contracts. See
+[source reuse and continuation](29-source-reuse-continuation.md).
+Assistant-specific refusals or tool limitations are not product decisions.
+D-60's ISTA 4.29 milestone remains. Reconcile D-66's original popular subset
+with D-17 and the current owner direction by using it to order incremental
+delivery; D-67 itself rejects car-trial reconstruction, not the subset wording. Do not silently exclude
+applicable source-defined options or reintroduce learn-by-diff. This does not
+expand the milestone to newer ISTA/DoIP support.
+
 ## Decisions
 
 D-01–D-20 originated before this interview; D-21–D-55 were answered on
@@ -101,15 +113,14 @@ prerequisite; actual encoder/session/capacity/result facts still need evidence.
   ([claude-session-limitations.md](claude-session-limitations.md)). The recovered
   write sequence ([task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md))
   and the popular-coding list are inputs for that work.
-- **D-66 — Popular coding subset (supersedes D-64's deferral; byte-map source
-  superseded by D-67).** Following the
-  BimmerCode model, implement a small curated set of popular codings that public
-  sources confirm exist, only for best-selling models (F48 first, then common
-  F/G). Byte maps are learned on the owner's car: snapshot the ECU's complete
-  coding, apply the option once with the owner's own BimmerCode, snapshot again
-  and store the exact ECU/coding-version/byte/mask/old/new diff as the app's
-  own preset (owner-labelled). Presets apply only to the exact coding version
-  they were learned on. Other data sources may be added later by the owner.
+- **D-66 — Historical popular-coding proposal (2026-10-30).** The original
+  proposal was a small curated set for best-selling models (F48 first, then
+  common F/G), with exact-version byte maps learned from owner-labelled car
+  captures. **The capture method was rejected by D-67.** The original subset
+  wording is retained here as history, not a permanent exclusion of the supplied
+  catalogue. Under D-17 and the owner's 2026-11-04 source-reuse direction, popular
+  options can order delivery within D-60's milestone; recover applicable options
+  from supplied definitions instead of requiring car trials.
 
 ## ISTA job engine and data — D-60–D-64 (2026-10-30)
 

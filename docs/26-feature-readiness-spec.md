@@ -1,5 +1,11 @@
 # Task B specification — functional diagnostics, history, CBS and easy coding
 
+> Current reconciliation (2026-11-04): [source reuse and continuation](29-source-reuse-continuation.md).
+> Use its current source paths, status and queue before the historical checkpoints
+> below. Reuse existing definitions/jobs first; session limitations are not scope
+> decisions. `sources/Ecu/` was removed; current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+
 Status: product decisions consolidated 2026-10-29; ready for evidence-driven
 implementation. BMW wire contracts remain to be recovered before enabling their
 operations. Authority: [owner decisions 21](21-product-decisions.md).
@@ -36,7 +42,16 @@ Task A PR #12 is merged. Use its single owner/API and selected libraries;
 Task B must not introduce another transport stack or socket consumer. Retain
 Qt Widgets/CarWorker architecture, offline runtime and no automated suite.
 
-## Required source contract before an operation is enabled
+## Source reuse and operation evidence
+
+D-60 limits the current milestone to source-supported ISTA 4.29/HSFZ; it does
+not require recreating existing definitions or PRG logic. D-65 permits labelled
+best-effort reads. For writes, recover the exact selection, baseline, encoder,
+authorization and completion contracts. Apply the evidence fields below to the
+behavior relied on; do not make exhaustive reanalysis of existing libraries or
+vehicle captures a prerequisite for source-based implementation.
+
+### Operation evidence to retain
 
 Retain versioned operation ID, artifact/version/full hash, exact class/method/job
 or instruction, dependency/member identities, actual REA Evidence IDs and
@@ -95,8 +110,9 @@ configuration. Recover reference behavior first; assisted setup is authorized
 conditionally if beneficial and straightforward. Record platform need, owned
 changes/elevation/cleanup; assume neither DHCP necessity nor privileged fallback.
 
-D-25: emissions MIL On / Off / Unavailable is separate from fault count and uses
-an actual supported read. After Clear All show the observed state, including On.
+D-59 supersedes D-25 for the current engine fault indicator: use engine fault
+memory and its coverage states. The prior physical lamp-command requirement and
+related source research below are historical, not current display acceptance.
 D-26: incomplete scan coverage permits clearing identified supported targets,
 with gaps named in confirmation. Continue after ECU-local failure on a usable
 stream; respect Task A closure after ambiguous transport failure and explicitly

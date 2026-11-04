@@ -1,6 +1,6 @@
 # Capability map — goals and current evidence
 
-Updated 2026-10-28. Single desktop app, one active vehicle connection. This is
+Updated 2026-11-04. Single desktop app, one active vehicle connection. This is
 not a completed-feature certificate. See [the audit](docs/19-audit-and-readiness.md).
 Current work: [Task A](tasks/protocol-library-migration.md) and
 [Task B](tasks/rea-protocol-recovery.md); acceptance in
@@ -9,17 +9,23 @@ Current work: [Task A](tasks/protocol-library-migration.md) and
 
 | Capability | Intended behavior | Current evidence / blocker |
 |------------|-------------------|----------------------------|
-| Connection | ENET discovery, transport selection, correlated identity | Two retained HSFZ/session/VIN successes on owner F48; optional data and real ECU inventory still missing |
-| Vehicle information | Identity, versioned ECU inventory, available mileage/voltage/FA | UI and read paths exist; key DIDs/codecs are unverified |
-| Diagnostics | All-ECU fault display, one Clear All and supported MIL status | Four positive empty gateway-only reads, explicitly incomplete; full ECU coverage, clearing and MIL not validated |
-| Service history | Local JSON/cards, one-entry append and explicit erase-and-replace; no car reader or legacy formats | ADD codec recovered; page/JSON/journal/mode workers pending; D-50–D-55/workflow28 retire reader/baseline gate |
-| Easy coding | Compatible presets with live current values | Database parsing/UI exist; exact variant matching and complete baseline/encoder missing. Easy source path (not taken by Claude; left for another coder): BimmerCode `coding_data/*.enc` (key in `app/coding_db.py`) or ISTA CAFD → curated named presets and the 12 missing F48 ECU definitions. See [docs/claude-session-limitations.md](docs/claude-session-limitations.md) |
-| Advanced coding | Later priority after all applicable easy presets | Vehicle write/readback not established; not required for initial usable slice |
-| Backups/recovery | Coding original ECU baseline/restore; history local snapshot/intent/results with null prior-car state | History cannot recover unknown erased car entries; coding restore and history journals still require implementation |
-| Demo | Explore UI with a canned F48 fixture | Useful UI simulation; no transport or hardware validation |
-| Distribution | Offline macOS and Windows desktop binaries | Build examples exist; clean installs/platform release builds unverified |
+| Connection | ENET discovery, correlated identity and inventory | Implemented HSFZ owner and identification; current milestone is ISTA 4.29 (D-60). Source support and physical observations remain separate |
+| Vehicle information | Identity, inventory, mileage/voltage/FA and supported values | Source-based reads implemented; odometer/measurements still use app decoders rather than STATUS jobs |
+| Diagnostics | All applicable ECU faults and one Clear All | Job-backed FS_/IS_ paths with labelled app fallbacks and per-memory coverage; detail/text reconciliation and VM gaps remain |
+| Service history | Local JSON/cards, ADD-only append and explicit replacement | Editor, journals and mode-specific workers implemented; prior car history unavailable, no reader or automatic replay; physical write validation not established here |
+| CBS | Reads and confirmed resets before coding | Job-backed read/reset with app fallbacks implemented; DSC_25, D94 6.3 and KOMBSP21 branches remain concrete work |
+| Easy coding | Applicable source-defined presets with current values and checked writes | Existing catalogue decrypts; exact-definition snapshots implemented. Full selection, composition, authorization, writes and restore remain unfinished |
+| Advanced coding | Later priority after easy coding | No live editing/write completion claimed |
+| Backups/recovery | Complete coding originals; separate history intent/results | Coding snapshots and history journal implemented. Coding restore remains unfinished; history cannot recover unknown erased entries |
+| Demo | Explore UI with canned data | UI simulation, never a live baseline or physical validation |
+| Distribution | Personal Mac source use first | D-63 personal use; packages/platform acceptance later. Native runtime and data bundle need rebuilding in this checkout |
 
-Build/review order: connection → read-only identity/inventory → diagnostics and
-local history/JSON and coding reads → mode-specific persistence/recovery → checked mutations → broader
-variant coverage → platform release validation. Research can inform wider
-coverage; physical validation is currently limited to the owner's F48/NBT.
+Current status is reconciled in [doc 29](docs/29-source-reuse-continuation.md).
+This table describes implementation boundaries, not a fresh end-to-end acceptance
+run. Historical source/capture evidence remains in the linked feature records.
+
+Development order: verify current sources/runtime → finish remaining CBS and
+diagnostic branches using jobs/data → complete applicable coding catalogue,
+write and restore integration. Reuse implemented history and source contracts.
+Only the owner's F48 is available for physical observations; other vehicles do
+not gate source-based implementation. Do not open a PR without owner instruction.

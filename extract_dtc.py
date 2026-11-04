@@ -6,7 +6,7 @@ Run once to produce dtc_descriptions.db — a static app asset.
 Never part of the app build process.
 
 Usage:
-    python3 extract_dtc.py --extract --prg-dir sources/Ecu
+    python3 extract_dtc.py --extract --prg-dir sources/ISTA_4.29.1x/Rheingold/Ecu
     python3 extract_dtc.py --translate           # DeepL German→English (background task)
     python3 extract_dtc.py --translate-offline   # argos-translate (background task)
     python3 extract_dtc.py --stats               # show database stats
@@ -344,8 +344,9 @@ if __name__ == '__main__':
                    help='Translate using argostranslate (offline, no API key needed)')
     p.add_argument('--stats', action='store_true',
                    help='Show database statistics')
-    p.add_argument('--prg-dir', default='sources/Ecu',
-                   help='Directory containing PRG files (default: sources/Ecu)')
+    p.add_argument('--prg-dir', default='sources/ISTA_4.29.1x/Rheingold/Ecu',
+                   help='Directory containing PRG files '
+                        '(default: sources/ISTA_4.29.1x/Rheingold/Ecu)')
     p.add_argument('--output', default='dtc_descriptions.db',
                    help='Output SQLite database (default: dtc_descriptions.db)')
     p.add_argument('--workers', type=int, default=None,

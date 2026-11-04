@@ -1,5 +1,11 @@
 # ISTA job engine — plan (D-60–D-64)
 
+> Current reconciliation (2026-11-04): [source reuse and continuation](../docs/29-source-reuse-continuation.md).
+> Use its current source paths, status and queue before the historical checkpoints
+> below. Reuse existing definitions/jobs first; session limitations are not scope
+> decisions. `sources/Ecu/` was removed; current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+
 2026-10-30. Branch `codex/task-b-cbs-mil`. Decisions: [doc 21](../docs/21-product-decisions.md)
 D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-architecture.md),
 [online research](../docs/evidence/ista-online-research.md).
@@ -167,7 +173,7 @@ D-60–D-64. Evidence: [ISTA 4.29 architecture](../docs/evidence/ista-4.29-archi
      BimmerCode `coding_data/*.enc` or ISTA CAFD → a named preset catalogue. See
      [../docs/claude-session-limitations.md](../docs/claude-session-limitations.md).
 
-## Waiting on the owner
+## Historical requests and current investigation
 
-- `DiagDocDb.sqlite` from the working ISTA 4.29 machine. The copy now in `sources/ISTA_4.29.1x/Rheingold/SQLiteDBs/` (5.9 GB) has no SQLite header and does not open ("file is not a database"); it appears encrypted.
+- The owner has supplied `DiagDocDb.sqlite`; recover its access/codec/key path rather than treating another copy as a prerequisite. The copy in `sources/ISTA_4.29.1x/Rheingold/SQLiteDBs/` (5.9 GB) has no SQLite header and does not open ("file is not a database"); it appears encrypted.
 - An EDIABAS `ApiTrace=3`/`IfhTrace=3` trace of ISTA identifying the F48, reading faults and opening the CBS screen (no resets).

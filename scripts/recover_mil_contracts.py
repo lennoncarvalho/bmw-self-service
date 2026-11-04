@@ -1,6 +1,6 @@
 """Recover exact scalar MIL contracts and account for every catalogued engine.
 
-Development-only BEST table/job inspection; no PRG interpreter enters runtime.
+Development-only BEST table/job inspection; this script is not a runtime dependency.
 See docs/evidence/task-b-mil-breadth.md for the reviewed decoder fingerprints.
 """
 
@@ -51,7 +51,7 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None
     }
     files = {
         path.stem.upper(): path
-        for path in (root / "sources/Ecu").iterdir()
+        for path in (root / "sources/ISTA_4.29.1x/Rheingold/Ecu").iterdir()
         if path.suffix.lower() == ".prg"
     }
     definitions: dict[str, Any] = {}

@@ -1,5 +1,11 @@
 # Task B — remaining source/REA investigations
 
+> Current reconciliation (2026-11-04): [source reuse and continuation](../docs/29-source-reuse-continuation.md).
+> Use its current source paths, status and queue before the historical checkpoints
+> below. Reuse existing definitions/jobs first; session limitations are not scope
+> decisions. `sources/Ecu/` was removed; current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+
 Created 2026-10-29 after owner decisions D-21–D-49. This is a factual work queue,
 not new Evidence or completed analysis. [Spec 26](../docs/26-feature-readiness-spec.md)
 owns behavior; [source guide 27](../docs/27-rea-source-guide.md) owns artifact paths,

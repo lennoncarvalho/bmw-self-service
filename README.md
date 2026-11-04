@@ -4,21 +4,24 @@ Cross-platform Python desktop app under development for BMW diagnostics, coding,
 and service history over ENET. F/G/U/I coverage is a goal, not a verified
 compatibility claim.
 
-**Current status:** PRs #8/#9 are merged. The retained owner session confirms
-HSFZ connection/session/VIN, but optional reads failed and DTC coverage was
-gateway-only ([diagnosis](docs/23-first-vehicle-session.md)). Live coding remains
-unavailable; writes and rollback are not production validated.
-Next development is split into [library migration](tasks/protocol-library-migration.md)
-and [REA feature recovery](tasks/rea-protocol-recovery.md), with separate specs.
-Local JSON/cards, a separate history-operation journal and mode-specific workers
-for ADD-only append or explicit erase-and-replace are implemented; physical
-validation remains pending. Vehicle history reading is retired. See
-[the workflow](docs/28-service-history-workflow.md) and
-[the implementation](tasks/task-b-history-write-implementation.md).
-Use [the session handoff](SESSION-PROMPT.md) and [source guide](docs/27-rea-source-guide.md).
-Start with [the documentation index](docs/README.md),
-[readiness audit](docs/19-audit-and-readiness.md) and
-[owner decisions](docs/21-product-decisions.md).
+**Current status:** merged code includes HSFZ identification, diagnostics,
+local history editor/journals/append/replacement and CBS read/reset. Fault/CBS
+paths can execute existing ECU jobs through the protocol owner, with labelled
+app fallbacks. Live coding editing, writes and restore remain unfinished.
+Implementation, offline checks and physical observations are separate; none of
+these statements claims universal vehicle validation.
+
+Read [current source reuse and continuation](docs/29-source-reuse-continuation.md)
+for the reconciled status, remaining work and actual local build/data availability.
+Reuse supplied definitions and executable jobs first. The canonical ECU directory
+is `sources/ISTA_4.29.1x/Rheingold/Ecu/`; the former `sources/Ecu/` was removed.
+Current milestone: personal Mac source use with ISTA 4.29/HSFZ coverage; packages
+and other platforms remain later acceptance.
+
+Use [the session handoff](SESSION-PROMPT.md),
+[documentation index](docs/README.md), [source guide](docs/27-rea-source-guide.md)
+and [owner decisions](docs/21-product-decisions.md). History follows
+[workflow 28](docs/28-service-history-workflow.md); vehicle history reading is retired.
 
 Project skills live in [`.agents/`](.agents/README.md); they are development
 resources and are not shipped with the application.

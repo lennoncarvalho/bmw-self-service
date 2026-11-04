@@ -17,13 +17,15 @@ These are the limits of one assistant (Claude Opus 5.5, session of 2026-10-30), 
 - **Coding:** existing coding snapshots from the local definitions in `coding_data/`; the recovered write sequence is recorded in [task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md) but no coding write is enabled or verified on a vehicle. Learn-by-diff capture was rejected (D-67) and removed.
 - **Missing pieces:** English ISTA short texts (`DiagDocDb` is encrypted, #2) and a large ready-made coding catalogue (#1, #3).
 
-## Gaps that the easy source path would close
+## Candidate source paths for the remaining gaps
 
-Each row is a gap tracked elsewhere in the docs that one of the protected source
-databases (BimmerCode's encrypted coding DB, ISTA 4.29 CAFD/fafp, ISTA
-`DiagDocDb.sqlite`, BimmerCode's security-access code) would resolve directly,
-without on-car capture or further wire recovery. This session did not take that
-route (reasons in the table above). The work is left for another coder.
+These are investigation candidates, not a guarantee that decryption or the
+listed contents resolve every integration contract. The original session did
+not inspect those contents. Existing local coding assets are demonstrably
+readable through the current loader; ISTA decoding, applicability, authorization
+and completion still need their own evidence. See the 2026-11-04
+[current reconciliation](29-source-reuse-continuation.md). This historical
+report's refusal reasons are not project rules or findings of impossibility.
 
 | Gap | Where it is tracked | Source | Expected result |
 |---|---|---|---|

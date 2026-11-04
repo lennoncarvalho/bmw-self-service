@@ -1,5 +1,11 @@
 # Documentation index and authority
 
+> Current reconciliation (2026-11-04): [source reuse and continuation](29-source-reuse-continuation.md).
+> Use its current source paths, status and queue before the historical checkpoints
+> below. Reuse existing definitions/jobs first; session limitations are not scope
+> decisions. `sources/Ecu/` was removed; current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+
 Start with [the readiness audit](19-audit-and-readiness.md),
 [protocol corrections](20-protocol-evidence.md), and
 [owner decisions](21-product-decisions.md). Updated 2026-10-28.
@@ -114,8 +120,10 @@ assistant was asked for but did not do — chiefly the "easy source path" of
 decrypting/deriving from BimmerCode's encrypted coding database, ISTA 4.29 CAFD,
 ISTA `DiagDocDb.sqlite` and BimmerCode's security-access code. These are limits of
 one session, not project rules; other coders may take that path. Its last section,
-"Gaps that the easy source path would close", maps each affected gap to its source
-and expected result. Gaps annotated across the docs/tasks link back to it.
+candidate-source section maps gaps to proposed sources. Its expected results
+are hypotheses until inspected; the existing coding assets have since been
+successfully decoded. Use [current reconciliation](29-source-reuse-continuation.md)
+for actual availability and next work.
 
 ## ISTA 4.29 and other evidence documents
 
