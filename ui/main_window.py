@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 
 from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
-from app.ista_jobs import remember_ista_folder
+from app.ista_jobs import refresh_bundled_data
 from app.mock_connection import MockConnection
 from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
         self._cbs_journal = CbsJournalStore()
         # Job data folder is read here; CarWorkers must not create QSettings.
-        remember_ista_folder()
+        refresh_bundled_data()
         self._worker_reap_timer = QTimer(self)
         self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
@@ -123,6 +123,8 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.diag_page)
 
         self.coding_page = CodingPage()
+        self.coding_page.can_mutate = self._can_start_mutation
+        self.coding_page.mutation_active.connect(self._set_mutation_active)
         self.stack.addWidget(self.coding_page)
 
         self.history_page = ServiceHistoryPage()
@@ -131,6 +133,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.history_page)
 
         self.backups_page = BackupsPage()
+        self.backups_page.restore_requested.connect(self.coding_page.restore_vehicle_backup)
         self.stack.addWidget(self.backups_page)
 
         main_layout.addWidget(self.stack, stretch=1)
@@ -895,6 +898,16 @@ class MainWindow(QMainWindow):
         if self._mutation_active:
             event.ignore()
             return
+        if self.coding_page.has_unexported_results():
+            event.ignore()
+            self.stack.setCurrentWidget(self.coding_page)
+            QMessageBox.warning(
+                self,
+                "Export coding results",
+                "Some coding results could not be saved. Use Export retained coding results "
+                "before closing so the operation outcome remains available.",
+            )
+            return
         if not self._closing:
             self._closing = True
             self.history_page.shutdown()
@@ -1092,22 +1105,34 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(dialog)
         text = QLabel(
             f"Reset “{item['label']}” in {owner['name']} (0x{owner['address']:02X}, CBS "
-            f"{owner['version']})?\n\nThe ECU sets availability to 100 % and counts one more "
-            "service; it then recalculates the next due values. Other fields are sent as "
-            "“unchanged”. This cannot be undone by the app. The current record is saved "
-            "locally first.\n\nThis is separate from the headunit service history."
+            f"{owner['version']})?\n\nThe ECU applies its standard reset and recalculates "
+            "the next due values. The app checks completion and rereads service status. "
+            "This cannot be undone by the app. The current record and intended requests "
+            "are saved locally first.\n\nThis is separate from the headunit service history."
         )
         text.setWordWrap(True)
         layout.addWidget(text)
         power = QCheckBox("Battery charger connected or supply voltage is stable")
         layout.addWidget(power)
+        dsc_extra = owner.get("reset") == "dsc25-plain"
+        extra_ack = QCheckBox(
+            "I understand this ECU may also clear all DSC faults, run its reset "
+            "completion routine and temporarily stop/restart event reporting."
+        )
+        extra_ack.setVisible(dsc_extra)
+        layout.addWidget(extra_ack)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
         ok.setText("Reset")
         ok.setEnabled(False)
-        power.toggled.connect(ok.setEnabled)
+
+        def update_reset_confirmation() -> None:
+            ok.setEnabled(power.isChecked() and (not dsc_extra or extra_ack.isChecked()))
+
+        power.toggled.connect(update_reset_confirmation)
+        extra_ack.toggled.connect(update_reset_confirmation)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addWidget(buttons)
@@ -1118,7 +1143,11 @@ class MainWindow(QMainWindow):
         ):
             return
         worker = CbsResetWorker(
-            connection, plan, self._cbs_journal, power_acknowledged=power.isChecked()
+            connection,
+            plan,
+            self._cbs_journal,
+            power_acknowledged=power.isChecked(),
+            dsc_extra_acknowledged=extra_ack.isChecked(),
         )
         self._cbs_worker = worker
         self._set_mutation_active(True)
@@ -1155,6 +1184,9 @@ class MainWindow(QMainWindow):
         """Keep the GUI responsive while blocking disruptive app actions."""
         self._mutation_active = active
         self.history_page.setEnabled(not active)
+        self.coding_page.setEnabled(not active)
+        self.backups_page.setEnabled(not active)
+        self.diag_page.setEnabled(not active)
         self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
         self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
         if active:

@@ -1,120 +1,153 @@
 # Current source reuse and continuation — 2026-11-04
 
-This is the current reconciliation of the app, source locations and development
-order. Older checkpoints remain historical evidence. Authority: owner request
-of 2026-11-04 to reuse supplied definitions and executable jobs first, investigate
-missing integration contracts, and disclose actual limitations without changing
-the product to accommodate an assistant.
+Owner direction: recover how supplied applications communicate with cars, reuse
+their definitions/databases/jobs, and generate standalone runtime assets during
+development. Disclose concrete limitations; do not change the product to fit an
+assistant. This is the current handoff; older checkpoints are historical.
 
-## Product and implementation boundaries
+## Runtime and source boundaries
 
-- D-60's ISTA 4.29 / HSFZ milestone, D-61 job execution, D-62 hybrid data and
-  D-63 personal use remain recorded owner decisions. Broad applicability within
-  that source release remains the target; F48 observations are not fleet proof.
-- D-67 rejects learn-by-diff as a prerequisite. Reuse the supplied coding
-  catalogue; do not ask the owner to capture each option to reconstruct it.
-  Reconcile D-66's historical popular subset with D-17 and the current owner
-  direction as delivery ordering, not silent exclusion of applicable definitions. This does not add newer ISTA/DoIP scope.
-- CBS reads and writes precede coding. History remains local JSON plus explicit
-  append/replacement, without vehicle-history reads or automatic replay.
-- Exact identity, complete original coding bytes, durable intent/results,
-  confirmation, power handling, lockout and checked completion remain required
-  for writes. Use D-29's operation-specific completion instead of a universal
-  immediate-readback prerequisite. DEMO is not a live backup.
-- REA is development-only. The embedded interpreter/data are standalone runtime
-  components; do not invoke REA, research providers or reference applications.
-- Do not open a PR without explicit owner instruction. Do not merge for the owner.
+D-68 supersedes D-62's runtime source-folder fallback. The app uses generated
+assets only, including when old settings point at a source folder. The ECU Job
+Data dialog displays bundled-data status; it does not select reference folders.
+REA, source applications, decryption tools, licences and JARs are development-only.
+The embedded native interpreter executes the copied job assets through CarWorker
+and the existing protocol owner; it never opens a second vehicle connection.
 
-## Reuse first
+Canonical development input: `sources/ISTA_4.29.1x/Rheingold/Ecu/`.
+The former `sources/Ecu/` was removed. Historical evidence retains old hashes and
+offsets; compare actual bytes before reusing it. Do not relabel changed artifacts.
 
-1. Use the existing definition loader and catalogue for named options, layouts,
-   selectors and checksums. Account for exact versions and conditional/dynamic
-   options before enabling editing; catalogue availability is not write readiness.
-2. Execute existing PRG jobs through `JobBackend` / `JobEngine` and the existing
-   protocol owner where they establish the requested behavior. Fix concrete VM
-   gaps instead of writing another complete diagnostic implementation. Existing
-   app-decoder fallbacks remain until equivalent behavior is checked.
-3. Use REA on the missing selection, authorization and assembly/database paths.
-   Recover the missing contract, not every already-understood layer again.
-   Static source and meaningful offline checks can establish implementation;
-   vehicle captures add observations, not a blanket development prerequisite.
-4. Reuse readable text/mapping databases and investigate protected databases
-   when needed. A failed tool call, unopened database or untraced algorithm is
-   an investigation result, not an owner decision or permanent product limit.
-   Record the precise blocker and next action. Do not promise recoverability.
-5. Prefer existing libraries and parsers over new implementations when they fit
-   the standalone app and recorded owner constraints. Evidence identifies the
-   source/version and behavior actually relied on; it is not a demand to trace
-   every library implementation before exposing a labelled read (D-65).
+Preserve ISTA 4.29/HSFZ scope (D-60), personal use (D-63), CBS before coding (D-58),
+labelled reads/strict writes (D-65), and no learn-by-diff prerequisite (D-67).
+Popular models order delivery rather than silently excluding applicable source
+branches. Do not open a PR without explicit owner instruction; never merge it.
 
-## Current local source inventory
+## What the app now reuses
 
-Canonical ECU directory: `sources/ISTA_4.29.1x/Rheingold/Ecu/`.
-The owner removed `sources/Ecu/`; do not recreate or require it. The standalone
-headunit PRGs, APKs and existing extracted coding assets remain available.
+| Generated runtime input | Source and actual use |
+|---|---|
+| `coding_data/coding_catalog.db` | Decrypted coding documents, labels, source selectors, authorization/signing entries and converted ISTA definitions. The app reads ordinary SQLite; it does not decrypt source packages at runtime |
+| `coding_data/diagnostic_texts.db` | 162,757 linked fault/information text rows and 1,227 ECU titles from the actually opened DiagDocDb. Exact variant/code/memory lookup; differing candidates remain ambiguous |
+| `ista_bundle/` | All 13 supplied KIS families, 530 job files (399 PRG/131 GRP), 592,028,562 job bytes. Manifest membership/hash checks precede native use; model lists come from source data |
+| `native/build/libedx.dylib` in source use; library at bundle root when packaged | Existing interpreter, built universally for arm64/x86_64 on this Mac |
+| Recovered JSON/gzip contracts | Diagnostic identity/memory, CBS, headunit-history, equipment and measurements. Standards and source-defined wire codecs remain code; car-specific tables are assets |
 
-Observed on 2026-11-04:
+The 620 exact job-table identities already exist in the 1,307-row diagnostic
+catalogue. The added lookup is independent-source resilience, not 620 new variants.
+KIS contains K/R metadata too; including it does not expand the app's product
+scope or infer compatibility from a series letter. Common source aliases include
+F01/F10/F20/F30/F48/F15/F25/G20/G30/G05/G01 and I001; source lists are potential
+ECU coverage, never proof of what is installed or physically validated.
 
-| Material | Observation | Limit |
-|---|---|---|
-| ISTA Ecu | 1,227 PRG and 394 GRP files | Not byte-identical to the deleted collection |
-| ISTA PSdZ | 5,895 CAFD and 26 FAFP files | Inventory only; decryption not established here |
-| DiagDocDb | 5,945,655,296 bytes; first 16 bytes `8e9d09414f37d004b31d374176a892e9` | No ordinary SQLite header; encryption/codec and key path still to recover; header alone does not prove the format |
-| SQLite connector | REA identifies .NET Framework 4.8 CIL, assembly 4.29.15.23407 | Metadata inspection only; no key recovery or execution |
-| Existing coding `.enc` files | All 2,305 decrypt/parse using the existing loader: 2,163 variant definitions and 142 lists; 1,566 entries in eight-character root indexes | Counts across the catalogue, not unique presets or per-car applicability |
-| Native job runtime and bundle | `native/build/` and `ista_bundle/` absent in this checkout | Prior build/check records are historical; rebuild locally before claiming job execution here |
+The coding asset contains 6,106 exact numeric CAFD versions plus retained legacy
+source documents; there are 80 named numeric root indexes and 1,034 root entries.
+Counts do not mean every entry applies to every model. The former 1,566 count
+included non-CAFD eight-character metadata files. There are 2,829 recovered AS/NCDS
+entries; source order and unsupported key formats remain explicit.
 
-Connector identity: `TesterGUI/bin/Release/RheingoldDatabaseSQLiteConnector.dll`,
-SHA-256 `b4c43353b2cd4a99f4bcafdfd3a5f19b3e2390e7b8ab88afe4f8e76d2e05b06b`,
-MVID `140e8b25-cfe7-4ca7-9b6c-6bf16ccaa933`. REA metadata parent
-`ev_1cdb7147d8b2916e4aa2fc99fa644d637825c12b9a5fcea10c36774779df8d26`,
-summary `ev_ec3b4a500dc6b0aa8fdc3dca5bff8dffaa22b1df3c68f949ef4aea5f7e81d593`.
-These IDs may be session-local; path, hash and MVID permit reinspection.
+## Recovered selection and enabled flows
 
-### Historical evidence after relocation
+- Connection/identity and DTC read/clear retain the existing owner and source
+  catalogue, with generated jobs where available and labelled source-based
+  fallbacks. Source/offline/physical coverage stays separate.
+- History JSON/editor/journals and ADD-only append/explicit replacement remain
+  implemented. No history reader, legacy adapters or automatic replay is restored.
+  Twelve of the fourteen exact source head-unit identities expose the recovered
+  ADD/ERASE jobs, including MGU02A/L. CICM/RAD12 do not expose them.
+  See workflow 28 and the current headunit source audit.
+- Current-source CBS adds KOMBSP21/7.0 start/result handling and DSC_25's ordered
+  extra sequence, with explicit acknowledgement of fault clearing/event control.
+  Readable copies do not automatically become writers; owner roles require the
+  recovered service workflow, not a guessed default address. The asset includes
+  48 definitions: 47 current PRGs plus the absent historical D94 entry; 40 primary
+  roles and eight branches retained for observation/ownership investigation.
+- Coding reads use the reported F101 identities and source-selected layouts.
+  REA recovered exact APK selection followed by the immediately lower patch
+  within the same ID/major/minor; this replaces the invented exact-file-only
+  restriction. Exact ISTA metadata cross-checks group bounds/signature addresses.
+  Contradictions remain explicit, not guessed compatible.
+- Easy coding exposes source labels, actual current values, option predicates,
+  dynamic lighting, and stable entry/option identities even for duplicate names.
+  Complete fresh baseline/intent, signing/authorization, global lockout, checked
+  application responses, explicit restore and interrupted-operation comparisons
+  are implemented through the shared engine. Reported and selected identities
+  and all source hashes are retained separately.
+- Source coding guards are compiled data too. The recovered climate-controller
+  critical-fault guard is checked before coding and retained as separate local
+  evidence. Clearing DTCs does not silently erase that observed source restriction.
+  Guard/evidence files are not restorable coding backups.
+- Head-unit reads also follow recovered prerequisites: separate entitlement
+  retrieval/local preservation and the exact NBTEVO I-level/RAM/HMI checks.
+  Their small generated reader contract is independent of the large catalogue.
+  Session/routine prerequisites run only after GUI lockout acknowledgement and
+  remain refused in read-only mode. Entitlement files are separate from coding
+  baseline groups; no automatic entitlement upload or replay is enabled.
 
-Keep original paths, hashes and offsets in retained JSON evidence. Resolve an
-old basename case-insensitively in the current ECU directory and compare its
-hash before using the old trace. Among the 24 files in
-`evidence/task-b-mil-breadth.json`, 14 match, eight differ and two are absent
-(`D94BX7A0`, `DME9FF_R`). Changed files require comparison/recovery; missing files
-need another retained artifact or an explicit uncovered disposition. Do not
-rewrite runtime contract hashes or treat a matching basename as matching bytes.
-The [relocation manifest](evidence/ecu-source-relocation-20261104.json) records
-both hashes and current paths for this subset. The old folder comparison in
-the ISTA architecture record is historical.
+D-29 governs completion. Response-confirmed is distinct from post-cycle observed
+verification. Do not roll back because a value is old before its required cycle.
+Only an established rejection permits checked restoration of known accepted
+changes; uncertain/disconnected operations stop without automatic retry/replay.
+DEMO previews never qualify as live ECU backups. Advanced editing remains deferred.
 
-## Current implementation and next work
+## Development build and verification
 
-Implemented code includes protocol ownership, identity/inventory, fault reads/
-clears, history editor/journals/append/replacement, CBS read/reset, odometer and
-measurements, and exact-definition coding snapshots. Fault/CBS paths can use
-jobs with labelled app fallbacks. This review does not certify every branch or
-repeat previous offline/physical acceptance. Live coding editing/writes/restore
-remain disabled; the existing coding database is usable input, not a finished
-writer. See `app/coding.py`, `app/coding_db.py`, `app/ista_jobs.py` and the
-history/CBS implementation records.
+Use `scripts/build_runtime_assets.py --help`. The inputs are the supplied ISTA
+folder, recovered coding assets/APK/resources and the development SQLite codec
+reader. The command builds the native library/job bundle, decodes or reuses a
+hash-checked CAFD export, creates plain SQLite assets and emits
+`runtime-assets.json`. No builder is invoked by the app.
 
-Continue in this order, preserving completed substeps:
+A typical command from the repository is:
 
-1. Rebuild the native interpreter and source bundle from the current ISTA tree;
-   reproduce relevant offline job checks. Reconcile changed/missing PRG hashes,
-   VM limitations, source selection and current applicability records.
-2. Complete remaining CBS branches (including DSC_25, D94 6.3 and KOMBSP21) and
-   diagnostics/text reconciliation through existing jobs/data. Migrate remaining
-   STATUS-based values where jobs are equivalent. Keep uncovered branches named.
-3. Establish the coding catalogue inventory/applicability with the existing
-   decrypted data, including exact-version gaps; recover missing selectors,
-   dynamic options, group layout/checksum metadata and authorization from sources.
-   Use ISTA CAFD for gaps after establishing a working decode path, not as an
-   assumed prerequisite for definitions already available locally.
-4. Compose all applicable presets against complete real baseline blocks; integrate
-   write, completion and restore contracts into the existing owner/store/UI.
-   Implement and review with offline byte/error checks before PR delivery.
-5. Recover DiagDocDb access for text/model/service mappings in parallel where it
-   supplies needed facts. Investigate the connector and existing implementation
-   references; report exact technical failures without replacing the requirement.
+```bash
+.venv/bin/python3 scripts/build_runtime_assets.py \
+  --ista sources/ISTA_4.29.1x \
+  --apk sources/BimmerCode_v4.25.04-12743.apk \
+  --resource-strings bimmercode_extracted/res/values/strings.xml \
+  --text-reader /path/to/development/sqlite3mc \
+  --reader-backup-evidence /path/to/coding-unlock-backup-contracts.json \
+  --reader-prerequisite-evidence /path/to/coding-read-prerequisites.json
+```
 
-Retain source/offline/physical evidence separately. Only the owner's F48 is
-available for physical observations; other cars do not gate source-based work.
-No automated suite or `tests/`; full app preflight before every push.
+`--decrypted-definitions /path/to/completed/export` reuses a verified development
+export. Use `--out build/runtime_assets` for a separate runtime-only data tree;
+reference packages, licences, encrypted source files and the codec reader are
+not part of that output. The extractor evidence records exact tool provenance.
+Reader evidence files are retained under
+`/Users/lennon/BMW-Tool/investigations/source-runtime-20261104/`; the reader
+contract compiler validates their exact same-artifact methods before producing
+its small runtime JSON. CBS/history contracts are regenerated too, rather than
+copied from an older build. The personal generated databases/job bundle remain
+local, not a public release.
+
+Read `tasks/source-reuse-runtime-implementation.md` for final verification and
+review findings. Separate detailed records cover job assets, source database
+access, CAFD access, coding catalogue/selection, coding execution and current CBS.
+Meaningful checks use actual data/jobs with synthetic ECU responses. The real
+owner/Scapy/udsoncan path was exercised through a fragmented loopback gateway;
+Qt confirmation, lockout, restore and interruption handling were checked offline.
+No physical car operation or universal vehicle validation is claimed.
+
+## Remaining concrete source work
+
+1. Three CAFD 02.00.00 files use a different `codingArea/sigId/sigLen` layout;
+   the current converter records their exact identities/dispositions instead of
+   pretending the byte-layout importer covers them.
+2. Trimmed ISTA USER function names are literal `.`. All 5,895 CAFDs and 26 FAFPs
+   decrypt, but decryption cannot restore removed names. Source-compatible APK
+   layouts recover several owner's F48 options; remaining semantic mappings need
+   actual identifiers/another source, never positional or near-version guesses.
+3. Keep tracing any CBS ownership/argument branches not established by the service
+   workflow. Preserve observational data without making it write authority.
+4. Ninety-four group-table job names and five USES dependencies are absent from
+   this supplied release. Record the affected source branch; use established app
+   contracts where available, rather than assuming absent files are fleet proof.
+5. Source signing entries with empty/EC material unsupported by this APK's RSA
+   path remain explicit. No arbitrary fallback key or signing-server bypass.
+6. Odometer/measurement migration to equivalent STATUS jobs, richer DTC details
+   and later advanced editing remain separate work. Do not restart completed
+   history/CBS/coding increments from stale aggregate checkboxes.
+
+None of these source investigations requires access to another car. Physical
+observations, Windows and packaged-release acceptance remain separate milestones.

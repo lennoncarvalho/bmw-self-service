@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 class BackupsPage(QWidget):
     """Preview/import/export records; restoring needs an exact vehicle contract."""
+
+    restore_requested = Signal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -87,6 +89,12 @@ class BackupsPage(QWidget):
                         "Restoration requires a supported operation and matching vehicle/software identity."
                     )
                 )
+                if original["kind"] == "coding" and original["mode"] == "live":
+                    restore = QPushButton("Review coding restoration")
+                    restore.clicked.connect(
+                        lambda checked=False, source=path: self.restore_requested.emit(source)
+                    )
+                    box.addWidget(restore)
                 export = QPushButton("Export JSON")
                 export.clicked.connect(lambda checked=False, source=path: self._export(source))
                 box.addWidget(export)

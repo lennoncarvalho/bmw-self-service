@@ -6,6 +6,12 @@
 > decisions. `sources/Ecu/` was removed; current jobs are in
 > `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
 
+Current implemented source paths, source-compatible layout selection and concrete
+remaining branches are in doc 29. D-68 requires generated assets rather than
+runtime source-folder fallback. "Exact identity" below means the real reported
+ECU/software identity plus the evidenced definition-selection contract, not an
+invented requirement that the package contain an exact-version filename.
+
 Status: product decisions consolidated 2026-10-29; ready for evidence-driven
 implementation. BMW wire contracts remain to be recovered before enabling their
 operations. Authority: [owner decisions 21](21-product-decisions.md).

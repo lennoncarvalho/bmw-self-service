@@ -21,6 +21,7 @@ import re
 import shutil
 import struct
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -79,24 +80,34 @@ def table_references(path: Path, table_files: set[str]) -> set[str]:
     return tokens & table_files
 
 
-def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
+def build(
+    ista: Path, out: Path, requested: list[str], *, all_source_series: bool = False
+) -> dict[str, Any]:
     """Export ECU lists and job files; returns the manifest."""
     check = validate_ista_folder(ista)
     if not check.ok or check.root is None:
         raise SystemExit(f"Not a usable ISTA folder: {check.message}")
+    if not check.version_supported:
+        raise SystemExit(f"Only the 4.29 data release is supported, got {check.version!r}")
     rheingold = check.root
     folder = FolderProvider(rheingold)
     ecu_dir = folder.ecu_dir
-    available = {
-        p.stem.lower(): p for p in ecu_dir.iterdir() if p.suffix.lower() in (".prg", ".grp")
-    }
+    available: dict[str, Path] = {}
+    for path in ecu_dir.iterdir():
+        if path.suffix.lower() not in (".prg", ".grp") or not path.is_file():
+            continue
+        key = path.stem.lower()
+        if key in available:
+            raise ValueError(f"Ambiguous job stem {key!r} in the data source")
+        available[key] = path
     series_map = read_series_map(rheingold / "PSdZ" / "mapping" / "brref.xml")
     table_path = available[GROUP_TABLE_FILE]
     assignments = read_group_assignments(table_path)
     groups_for = groups_by_address(assignments)
 
     resolved: dict[str, str | None] = {}
-    for code in requested:
+    selected_series = check.kis_series if all_source_series else requested
+    for code in selected_series:
         series = normalize_series(code)
         main = series if series in check.kis_series else series_map.get(series)
         resolved[series] = main if main in check.kis_series else None
@@ -104,10 +115,10 @@ def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
     if out.exists() and not (out / "manifest.json").is_file() and any(out.iterdir()):
         raise SystemExit(f"{out} exists and is not a bundle; refusing to overwrite it")
     # Build beside the target and swap at the end, so a failed run keeps the old bundle.
-    final, out = out, out.with_name(out.name + ".building")
-    if out.exists():
-        shutil.rmtree(out)
-    (out / "series").mkdir(parents=True)
+    final = out
+    final.parent.mkdir(parents=True, exist_ok=True)
+    out = Path(tempfile.mkdtemp(prefix=f".{final.name}.building-", dir=final.parent))
+    (out / "series").mkdir()
     (out / "ecu").mkdir()
 
     main_series: dict[str, Any] = {}
@@ -164,7 +175,6 @@ def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
         "format": BUNDLE_FORMAT,
         "generated": datetime.now(UTC).isoformat(timespec="seconds"),
         "source": {
-            "folder": rheingold.parent.name,
             "version": check.version,
             "group_table_sha256": sha256(table_path),
             "brref_sha256": sha256(rheingold / "PSdZ" / "mapping" / "brref.xml"),
@@ -179,9 +189,21 @@ def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
         "job_bytes": total,
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    if final.exists():
-        shutil.rmtree(final)
-    out.rename(final)
+    # Preserve the old bundle if publication fails. Each builder uses its own
+    # staging directory; never remove a predictable sibling owned by another run.
+    backup = Path(tempfile.mkdtemp(prefix=f".{final.name}.previous-", dir=final.parent))
+    backup.rmdir()
+    had_previous = final.exists()
+    if had_previous:
+        final.rename(backup)
+    try:
+        out.rename(final)
+    except OSError:
+        if had_previous:
+            backup.rename(final)
+        raise
+    if had_previous:
+        shutil.rmtree(backup)
     return manifest
 
 
@@ -190,9 +212,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("ista", type=Path, help="ISTA installation or its Rheingold folder")
     parser.add_argument("--out", type=Path, default=bundle_root())
-    parser.add_argument("--series", nargs="+", default=DEFAULT_SERIES)
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--series", nargs="+", default=DEFAULT_SERIES)
+    selection.add_argument(
+        "--all-source-series", action="store_true",
+        help="Include every KIS main-series list available in the supplied source release",
+    )
     args = parser.parse_args()
-    manifest = build(args.ista, args.out, args.series)
+    manifest = build(args.ista, args.out, args.series, all_source_series=args.all_source_series)
     for series, main in manifest["requested"].items():
         print(f"{series}: {main or 'ABSENT from this ISTA folder'}")
     for main, info in manifest["main_series"].items():

@@ -1,5 +1,13 @@
 # Documentation index and authority
 
+Current source-runtime implementation is summarized in
+[doc 29](29-source-reuse-continuation.md) and
+[the implementation/verification record](../tasks/source-reuse-runtime-implementation.md).
+Supplied encrypted databases are now actually decoded and compiled into runtime
+assets; old refusal/undecrypted statements below are historical. D-68 retires
+runtime reference-folder fallback. Current source selectors, not exact-file-only
+assumptions, determine coding layouts.
+
 > Current reconciliation (2026-11-04): [source reuse and continuation](29-source-reuse-continuation.md).
 > Use its current source paths, status and queue before the historical checkpoints
 > below. Reuse existing definitions/jobs first; session limitations are not scope
@@ -77,7 +85,7 @@ an empty/partial DTC scan.
 | [09 — gap analysis](09-gap-analysis.md) | Historical; green completeness marks and estimates are not acceptance results |
 | [10 — HSFZ](10-hsfz-protocol.md) | Corrected transport contract; heartbeat behavior remains partly unresolved |
 | [11 — coding data format](11-curated-coding-format.md) | Definition schema reference; sample offsets/masks/block writes need verification |
-| [12 — service-history wire](12-service-history-wire-format.md) | Recovered ADD codec; execution/results/cycle review pending; reader retired under D-50; workflow28 applies |
+| [12 — service-history wire](12-service-history-wire-format.md) | Recovered ADD codec and execution/journal flows implemented; current source headunit audit extends coverage; reader retired under D-50; workflow28 applies |
 | [13 — architecture](13-replacement-app-architecture.md) | Historical design/examples; “all gaps resolved” withdrawn |
 | [14 — DTC database](14-dtc-database.md) | Corrected counts, threading and diagnostic parsing guidance |
 | [15 — stack](15-tech-stack.md) | Corrected declared/observed runtime, network and release status |

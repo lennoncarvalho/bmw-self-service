@@ -34,29 +34,30 @@ for source recovery, implementation, offline review or delivery.
 
 ## Current implementation and continuation
 
-Read doc 29's current-status/queue before implementing. Existing code includes
-history JSON/editor/journals/append/replacement and CBS read/reset; do not
-restart them from unchecked aggregate tasks. Fault/CBS jobs use the existing
-owner with labelled app fallbacks. Coding supports exact-definition snapshots;
-live editing, composed writes and restoration remain unfinished.
+Read doc 29 before implementing; it reflects the actual source recovery and
+runtime integration completed on `codex/source-derived-runtime`. Source folders
+are build inputs only (D-68); the runtime ignores old folder preferences.
 
-Rebuild missing local native runtime/bundle, reconcile current PRG versions,
-finish remaining CBS/diagnostic branches, then implement coding from the usable
-local catalogue and recovered write/restore contracts. Investigate ISTA database
-access for missing text/model/service facts. Previous checks are historical;
-report exactly what this checkout and session actually verify.
+Implemented: generated job/text/coding databases, history append/replacement,
+source-current CBS, source-selected coding reads, easy coding writes/signing,
+explicit restore and interruption handling. REA recovered lower-patch layout
+selection, so reported F101 and selected layout identities are distinct and
+retained; arbitrary first/nearest variants remain forbidden. All supplied CAFDs
+and FAFPs decrypt; three newer CAFD formats and trimmed semantic names have
+explicit remaining investigation tasks. Do not reintroduce exact-file-only,
+learn-by-diff or source-folder runtime prerequisites.
 
-Task A/library boundaries: `tasks/protocol-library-migration.md`, spec 25.
-Task B acceptance: spec 26; sources: doc 27; implementation detail:
-`tasks/ista-job-engine-plan.md`, `tasks/rea-protocol-recovery-tasks.md`,
-`tasks/rea-protocol-recovery-investigations.md`, history workflow 28.
+Use `tasks/source-reuse-runtime-implementation.md` and its linked subtask/evidence
+records before repeating work. Continue doc 29's concrete remaining source work;
+source/offline/physical status must stay separate. No PR creation is authorized.
 
 All car I/O stays on CarWorker and one protocol owner. Preserve settled initial
 page results, bounded refresh, mutation lockout and checked completion. Current
 engine indicator behavior follows D-59; old physical MIL-command research is
 historical and must not silently override that decision.
 
-Coding requires actual complete ECU baseline bytes and exact identity; DEMO
+Coding requires actual complete ECU baseline bytes and exact reported identity
+with source-defined layout selection; DEMO
 previews are not backups. History instead preserves local JSON/intent/results
 with null prior-car state, ADD-only append or explicitly acknowledged replacement.
 No history reader, legacy adapters, automatic replay or guessed old-car backup.

@@ -1,0 +1,1066 @@
+{
+  "asset_sha256": "c649181bd3b4dc9c6c52ef930f096afd1099d9558abf672a4fcf6fb0e33c190c",
+  "excluded": {
+    "CICM": {
+      "identities": [
+        "63 0F15B0"
+      ],
+      "reason": "no source ADD/ERASE jobs"
+    },
+    "RAD12": {
+      "identities": [
+        "63 0F1770"
+      ],
+      "reason": "no source ADD/ERASE jobs"
+    }
+  },
+  "native_width_verification": {
+    "arithmetic_source_sha256": "cce65efba18cdc0018f3634141c66ab0339b5c8c0c5f4643ae8bed519b67b5fe",
+    "boundary_vectors": "I32 min/max, negative256/65536 multiples, U32 maximum mileage",
+    "conversion_source_sha256": "d3e7f75b708d4781a8784f51d72ecfd596ac3bc673f79646800f74488ee6652a",
+    "correction": "32-bit registers are already signed; sign-extend only shorter widths",
+    "opcodes": [
+      "ASR 0x18",
+      "fix2flt 0x68"
+    ],
+    "resolved": true
+  },
+  "pacing_source": "retained native writer contract: erase200ms/add100ms",
+  "physical_validation": false,
+  "profiles": {
+    "BIS01": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "b077a59bf8c1e845314a497b75c91aa496bbada0063e84cfcb8e4e0206ecd16b",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F2700"
+      ],
+      "job_offset": "0xcbf1b",
+      "source_job_sha256": "b0965cc37f1696a4a1a664996cccd5121e464b7be3eb93941bce14b46c6457cc"
+    },
+    "CHAMP2": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F1580"
+      ],
+      "job_offset": "0x151637",
+      "source_job_sha256": "30ae075209a42cda7c42f28426de1e27a7b140dfc1ccb32e9f1fafc4c334dac9"
+    },
+    "CIC": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F12D0"
+      ],
+      "job_offset": "0x17f613",
+      "source_job_sha256": "d77e5bf8dd036d58354fa560dff1403610a1e194a21d2b650066b4baaa853650"
+    },
+    "ENAVEVO": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "b077a59bf8c1e845314a497b75c91aa496bbada0063e84cfcb8e4e0206ecd16b",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F2330"
+      ],
+      "job_offset": "0x11786c",
+      "source_job_sha256": "ec5da70bbaabcfc2ead25c696b04e13289d4519125d457882b7588d3b3b672c2"
+    },
+    "ENTRY": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F1820"
+      ],
+      "job_offset": "0xe09a8",
+      "source_job_sha256": "800fb0b8c9c54938aaf38ad48cc772afcd816a57e702da0ca1c4389d6a5aeb66"
+    },
+    "ENTRYNAV": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F1BE0"
+      ],
+      "job_offset": "0x111bbe",
+      "source_job_sha256": "8adf15810a89fcc46a0814b61e40d33d02bc9ddbc2a3641819557f0d208bae67"
+    },
+    "HU_MGU": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "0bc9835d940399ff124b00f880416337c4ea1b64c77eb9f2b14d39fda7eb4b40",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F25B0"
+      ],
+      "job_offset": "0xe9dd5",
+      "source_job_sha256": "ec9e280f3a83ecd127c0956f357c76d97c3e5234c996dfce53f822fb6bbf9e54"
+    },
+    "MGU_02_A": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "0bc9835d940399ff124b00f880416337c4ea1b64c77eb9f2b14d39fda7eb4b40",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F2E60"
+      ],
+      "job_offset": "0x133844",
+      "source_job_sha256": "a274f22c573e6fbcd84c94258eefa658102d3c8f0b4af71806f5c187a726af98"
+    },
+    "MGU_02_L": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "0bc9835d940399ff124b00f880416337c4ea1b64c77eb9f2b14d39fda7eb4b40",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F2E50"
+      ],
+      "job_offset": "0xd7b7f",
+      "source_job_sha256": "110a913b65ae816282430080975cee579a467bd76dcb28a978865035d249e213"
+    },
+    "NBT": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F1A30"
+      ],
+      "job_offset": "0x13763b",
+      "source_job_sha256": "e94e3b4434c9f8563448ee0b89153ed62856cce3d72db61b18373b184f896415"
+    },
+    "NBTEVO": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F2230"
+      ],
+      "job_offset": "0x179bf5",
+      "source_job_sha256": "ee29a5f65809a17b7104f2eae2715a976b5d588b0342b2d696af18242ebbe1a0"
+    },
+    "RAD_UKL": {
+      "checks": [
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "bddd666178da0253fa4a7e7096c12788b3759a1397d1820006ee9aa4d12089f8",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "b20b946363df1597cf2fa139b95d4f3cf9899e01a142d994e29b84364693873e",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 0
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 1
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 2
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 4
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ADD",
+          "request_sha256": "89be0d8f1719d060cdd4cf27f1d5198c17d18d30496c58f62276ccd08b7ec2df",
+          "status": 5
+        },
+        {
+          "job": "STEUERN_SERVICEHISTORY_ERASE",
+          "request_sha256": "05c28e49490dc340a1dd8812e31e0d705880d274429a2f818ff282fb64f1a600",
+          "status": 5
+        },
+        {
+          "job": "DIAGNOSE_MODE",
+          "request_sha256": "27c24fcb8474773e2af799d0848495ff053272d33c432dc26277993df45c9276",
+          "status": 0
+        },
+        {
+          "job": "STEUERGERAETE_RESET",
+          "request_sha256": "8155675d252720b1ca30eca6e23468f76ea21dd9d1c7bbdba9d891315d8ec36a",
+          "status": 0
+        }
+      ],
+      "complete_job_sha256": "9d24a59ffe1983649761ea5bdfb5c1b53e90580103f3f4aac410d2556fb0893e",
+      "encoder_prefix_sha256": "a5e9b6de05df7adc76d3420ded00306430f4c94fac90ebbe0950a39c9abc28fa",
+      "identities": [
+        "63 0F1CD0"
+      ],
+      "job_offset": "0xaba92",
+      "source_job_sha256": "9b92f1a3890d58d0140ac0663a66feec294c947db9c1edbbc2adff782ad7b960"
+    }
+  },
+  "schema": 1,
+  "source_group_table_sha256": "4514f12d917039ecac65f753d163e4a8f30fcce5c61111a5e762d85c94b57d61"
+}

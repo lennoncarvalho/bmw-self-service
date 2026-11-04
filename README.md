@@ -7,7 +7,9 @@ compatibility claim.
 **Current status:** merged code includes HSFZ identification, diagnostics,
 local history editor/journals/append/replacement and CBS read/reset. Fault/CBS
 paths can execute existing ECU jobs through the protocol owner, with labelled
-app fallbacks. Live coding editing, writes and restore remain unfinished.
+app fallbacks. Easy coding now uses source-selected layouts, complete live
+baselines, source signatures/authorization, checked writes and explicit restore.
+Advanced editing remains deferred.
 Implementation, offline checks and physical observations are separate; none of
 these statements claims universal vehicle validation.
 

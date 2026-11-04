@@ -10,6 +10,23 @@ blocks starting those investigations or planning implementation.
 
 ## Current interpretation — 2026-11-04
 
+**D-68 — Development extraction, standalone runtime (owner reaffirmation,
+2026-11-04).** Recover communication and selection from the supplied applications
+with REA; reuse their definitions, databases and job logic rather than rebuilding
+known behavior or deriving presets by car trials. Generate runtime assets during
+development. The app must not look in `sources/`, execute reference applications
+or invoke REA/research tooling. This supersedes D-62's saved source-folder runtime
+fallback; development builders may still accept the supplied folder as input.
+An assistant limitation must be disclosed precisely, never silently substituted
+for a product requirement. Source/offline verification proceeds without a car.
+
+Source-defined layout selection is part of this requirement. Keep the ECU's
+reported software/CAFD identity exact, while recording the layout actually
+selected by a recovered compatibility rule separately. Do not impose exact-file
+presence if the source implements an evidenced lower-patch selector, and never
+substitute arbitrary first/nearest versions. Retain complete baseline/intent and
+source-bound application/restore contracts; no storage requirement is relaxed.
+
 The owner requested reuse of supplied definitions and executable jobs first,
 with investigation focused on missing integration contracts. See
 [source reuse and continuation](29-source-reuse-continuation.md).
@@ -135,7 +152,7 @@ Owner interview after the ISTA 4.29.15 analysis
   using the repo's ediabasx C11 interpreter completed with an HSFZ transport
   and called from Python through a small shim on the existing protocol owner.
   ediabasx is PolyForm Noncommercial: acceptable because of D-63.
-- **D-62 — Hybrid data.** A build script converts the owner's F48 (F056) plus
+- **D-62 — Historical hybrid data (runtime folder fallback superseded by D-68).** A build script converts the owner's F48 (F056) plus
   common F/G platforms (F20/F30/F15/F25, G20/G30/G05/G01) into a compact
   bundled database; every other model falls back to a user-provided ISTA 4.29
   folder (Ecu job files and PSdZ KIS ECU lists) chosen in the app.

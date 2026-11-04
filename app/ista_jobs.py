@@ -1,7 +1,7 @@
 """ECU job files as the primary source for faults and service status (D-61, M4).
 
 ``JobBackend`` loads an identified ECU variant's job file from the data source
-(bundle first, then the user's ISTA folder) and runs named jobs through
+from generated bundled assets and runs named jobs through
 ``JobEngine`` over the existing protocol owner. Each run uses a per-run
 connection view that:
 
@@ -17,12 +17,11 @@ when no interpreter, data source or job file is available, and label the source.
 
 import hashlib
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Event, Lock
 from typing import Any
-
-from PySide6.QtCore import QCoreApplication, QThread
 
 from app.ediabas import JobEngine, JobError, JobResult, JobUncertain
 from app.ista_data import (
@@ -30,7 +29,6 @@ from app.ista_data import (
     IstaDataSource,
     bundle_root,
     read_job_table,
-    saved_ista_folder,
 )
 from app.protocol.contracts import TransportKind
 
@@ -42,40 +40,36 @@ UNSUPPORTED_NRCS = frozenset({0x11, 0x12, 0x31})
 
 
 _source_lock = Lock()
-_saved_folder: str | None = None
-_source_cache: tuple[str, IstaDataSource] | None = None
+_source_cache: tuple[tuple[str, int, int], IstaDataSource] | None = None
 
 
-def _on_gui_thread() -> bool:
-    app = QCoreApplication.instance()
-    return app is None or QThread.currentThread() == app.thread()
+def refresh_bundled_data() -> None:
+    """Invalidate generated-data metadata; never read a source-folder preference."""
+    global _source_cache
+    with _source_lock:
+        _source_cache = None
 
 
 def remember_ista_folder() -> None:
-    """Cache the saved ISTA folder; call on the GUI thread at startup and after changes.
-
-    QSettings is a QObject; creating one in a CarWorker would leave its deletion to
-    the GUI thread while it belongs to the worker, so workers use this cache.
-    """
-    global _saved_folder
-    folder = saved_ista_folder()
-    with _source_lock:
-        _saved_folder = folder
+    """Compatibility hook for old callers; runtime source folders are ignored."""
+    refresh_bundled_data()
 
 
 def data_source() -> IstaDataSource:
-    """Shared job data source: the bundle, then the remembered ISTA folder."""
+    """Shared generated bundle only; saved research-folder settings are ignored."""
     global _source_cache
+    root = bundle_root()
+    try:
+        stat = (root / "manifest.json").stat()
+        identity = (str(root), stat.st_mtime_ns, stat.st_size)
+    except OSError:
+        identity = (str(root), -1, -1)
     with _source_lock:
-        folder = _saved_folder
-    if folder is None:
-        folder = saved_ista_folder() if _on_gui_thread() else ""
-    with _source_lock:
-        if _source_cache is not None and _source_cache[0] == folder:
+        if _source_cache is not None and _source_cache[0] == identity:
             return _source_cache[1]
-    source = IstaDataSource.from_paths(bundle_root(), folder or None)
+    source = IstaDataSource.from_paths(root, None)
     with _source_lock:
-        _source_cache = (folder, source)
+        _source_cache = (identity, source)
     return source
 
 
@@ -189,13 +183,23 @@ class _JobConnection:
     """Per-run view of the protocol owner used by ``JobEngine`` (see module doc)."""
 
     def __init__(
-        self, connection: Any, address: int, expected: frozenset[bytes], run: JobRun
+        self,
+        connection: Any,
+        address: int,
+        expected: frozenset[bytes],
+        run: JobRun,
+        sequence: tuple[bytes, ...] | None = None,
+        on_send: Callable[[bytes], None] | None = None,
+        on_reply: Callable[[bytes, bytes], None] | None = None,
     ) -> None:
         self.connection = connection
         self.address = address
         self.expected = expected
         self.run = run
         self.used: set[bytes] = set()
+        self.sequence = sequence
+        self.sequence_position = 0
+        self.on_send, self.on_reply = on_send, on_reply
 
     @property
     def trace_id(self) -> str:
@@ -219,17 +223,30 @@ class _JobConnection:
         if payload[:1] and payload[0] in grant:
             if payload not in self.expected:
                 raise JobRequestMismatch("Job write does not match the recorded request")
-            if payload in self.used:
-                # D-28: each write is sent once; the job's own retry loop is not replayed.
+            if self.sequence is not None:
+                if (
+                    self.sequence_position >= len(self.sequence)
+                    or payload != self.sequence[self.sequence_position]
+                ):
+                    self.run.repeat_refused = payload in self.used
+                    raise JobRequestMismatch("Job write is out of the recorded sequence")
+            elif payload in self.used:
+                # A source-planned occurrence list may explicitly contain the same
+                # bytes twice. Without that list, each write remains single-use.
                 self.run.repeat_refused = True
                 raise JobWriteRepeated("Job tried to resend a write; not sent again")
+            if self.on_send is not None:
+                self.on_send(bytes(payload))
             self.used.add(payload)
+            self.sequence_position += 1
         reply = bytes(
             self.connection.send_uds(
                 ecu_addr, payload, timeout, context=context, raw=raw, grant=grant
             )
         )
         self.run.exchanges.append((bytes(payload), reply))
+        if self.on_reply is not None:
+            self.on_reply(bytes(payload), reply)
         return reply
 
 
@@ -267,7 +284,7 @@ class JobBackend:
             except (OSError, DataFormatError) as exc:
                 self.reason = f"job data unavailable ({exc})"
         if not self.reason and self.source is not None and not self.source.providers:
-            self.reason = "no job data (bundle or job data folder) is available"
+            self.reason = "generated job data is unavailable"
 
     @classmethod
     def disabled(cls, connection: Any, reason: str) -> "JobBackend":
@@ -348,6 +365,9 @@ class JobBackend:
         cancelled: Event | None = None,
         grant: frozenset[int] = frozenset(),
         expected: frozenset[bytes] = frozenset(),
+        sequence: tuple[bytes, ...] | None = None,
+        on_send: Callable[[bytes], None] | None = None,
+        on_reply: Callable[[bytes, bytes], None] | None = None,
     ) -> JobRun:
         """Run one job on the identified ECU; failures are returned in ``JobRun.error``.
 
@@ -360,15 +380,29 @@ class JobBackend:
             cancelled: Cancellation token.
             grant: Non-read services the job may send.
             expected: Exact requests allowed for the granted services.
+            sequence: Optional source-planned occurrence order. Repeated bytes are
+                allowed only at their explicit positions; other repeats are refused.
+            on_send: Called before each granted request; a persistence error stops
+                the job without sending that request.
+            on_reply: Called after each reply, before the job continues. An error
+                stops the sequence; already-received outcomes remain in exchanges.
 
         Raises:
             JobError: No job file is loaded for ``name``.
         """
+        if sequence is not None and (
+            not sequence
+            or frozenset(sequence) != expected
+            or any(not payload or payload[0] not in grant for payload in sequence)
+        ):
+            raise ValueError("Job occurrence sequence does not match the exact write grant")
         engine = self.engine(name)
         if engine is None:
             raise JobError(f"No job file is available for {name}")
         run = JobRun(engine.sgbd, job.upper())
-        engine.connection = _JobConnection(self.connection, address, expected, run)
+        engine.connection = _JobConnection(
+            self.connection, address, expected, run, sequence, on_send, on_reply
+        )
         try:
             run.result = engine.run_job(
                 job, args, timeout=timeout, cancelled=cancelled, grant=grant

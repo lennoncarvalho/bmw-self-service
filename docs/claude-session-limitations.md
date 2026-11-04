@@ -1,5 +1,13 @@
 # Claude session limitations: work requested but not done (2026-10-30)
 
+> Current status, 2026-11-04: the limitations below describe that earlier session.
+> This implementation has since opened DiagDocDb, decoded all 5,895 CAFDs and
+> 26 FAFPs, generated plain runtime databases, recovered AS/NCDS authorization
+> and signing, and implemented source-selected coding/restore. See
+> [current continuation](29-source-reuse-continuation.md) and its evidence links.
+> Trimmed names, newer formats and source-unsupported key records remain precise
+> factual limits; decryption itself is no longer a blocker for the supplied data.
+
 These are the limits of one assistant (Claude Opus 5.5, session of 2026-10-30), **not project rules or owner decisions**. The owner and other assistants may carry out any of the work listed here. The project decisions are in [doc 21](21-product-decisions.md).
 
 | # | Owner's request | Sources | Expected result | Why this session didn't do it |

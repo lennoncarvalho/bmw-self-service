@@ -11,6 +11,13 @@ The canonical ECU directory is its `Ecu/` child; `sources/Ecu/` was removed.
 Historical records keep original paths and hashes. Do not assume equal names
 mean equal bytes: compare current files before reusing offsets or contracts.
 
+Current generated runtime assets and actual decoding results are in doc 29.
+DiagDocDb access and every supplied CAFD/FAFP now decode successfully; source
+applications and codecs are never runtime dependencies. The owner explicitly
+retired runtime source-folder fallback under D-68. Existing source-compatible
+coding patch selection is recovered; do not reintroduce arbitrary first-version
+selection or the disproven exact-file-only gate.
+
 ## Start with the right task
 
 - [Task A](../tasks/protocol-library-migration.md) + [spec 25](25-library-migration-spec.md):

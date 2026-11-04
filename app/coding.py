@@ -5,15 +5,17 @@ bytes returned here are a real read, not a synthesized preset or write permissio
 """
 
 import hashlib
-import json
 import logging
 import time
+from threading import Event
 from typing import Any
 
-from app.coding_db import _decrypt_enc
+from PySide6.QtCore import Signal
+
+from app.coding_db import CodingDatabase
+from app.coding_prerequisites import applies, run_prerequisites
 from app.operation_store import OperationStore
-from app.resources import resource_path
-from app.vehicle import did_data
+from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,8 @@ class CodingSnapshotWorker(CarWorker):
     remain visible but never become a supposedly complete restorable backup.
     """
 
+    sensitive_operation_requested = Signal(object)
+
     def __init__(self, connection: Any, ecus: list[dict], vin: str) -> None:
         super().__init__(connection)
         self.ecus = [dict(ecu) for ecu in ecus]
@@ -63,6 +67,7 @@ class CodingSnapshotWorker(CarWorker):
         """Return a settled batch of real coding bytes and exact coverage reasons."""
         self._deadline = time.monotonic() + 300.0
         results = []
+        database = CodingDatabase()
         for ecu in self.ecus:
             row: dict[str, Any] = {
                 "name": ecu.get("name", "ECU"),
@@ -70,6 +75,7 @@ class CodingSnapshotWorker(CarWorker):
                 "definitions": [],
                 "blocks": {},
                 "backup": "",
+                "presets": [],
             }
             results.append(row)
             if not ecu.get("identified") or not ecu.get("uds"):
@@ -80,27 +86,109 @@ class CodingSnapshotWorker(CarWorker):
             address = int(str(ecu["addr"]), 0)
             self.progress.emit(f"Reading coding identity: {row['name']}...")
             try:
+                identity = self._read(address, b"\x22\xf1\x50")
+                match = DiagnosticCatalog().identify(address, identity)
+                if (
+                    not match.get("identified")
+                    or not match.get("uds")
+                    or match["variant"] != ecu.get("variant")
+                    or match["name"] != ecu.get("name")
+                ):
+                    raise ValueError("Coding ECU identity changed since inventory")
                 response = self._read(address, b"\x22\xf1\x01")
                 definitions = decode_cafd_identifiers(response)
                 row["definitions"] = list(definitions)
+                row["definition_resolution"] = [
+                    database.definition_resolution(definition) for definition in definitions
+                ]
                 if not definitions:
                     row["state"] = "No coding definition reported"
                     continue
+                store = OperationStore()
+                if applies(address, list(definitions), database):
+                    if self.connection.read_only:
+                        raise PermissionError(
+                            "Headunit reader prerequisites require writable access"
+                        )
+                    acknowledged = Event()
+                    self.sensitive_operation_requested.emit(acknowledged)
+                    while not acknowledged.wait(0.05):
+                        if self.isInterruptionRequested() or time.monotonic() >= self._deadline:
+                            raise TimeoutError(
+                                "Coding reader prerequisite lockout was not acquired"
+                            )
+
+                def prerequisites(
+                    services: Any,
+                    context: Any,
+                    *,
+                    row: dict = row,
+                    address: int = address,
+                    match: dict = match,
+                    definitions: tuple[str, ...] = definitions,
+                    store: OperationStore = store,
+                ) -> bytes:
+                    def read_prerequisite(payload: bytes, override: int | None = None) -> bytes:
+                        deadline = context.deadline
+                        context.deadline = min(deadline, time.monotonic() + 30.0)
+                        try:
+                            return self._read(address if override is None else override, payload)
+                        finally:
+                            context.deadline = deadline
+
+                    observed_vin = did_data(read_prerequisite(b"\x22\xf1\x90", 0x10), 0xF190)
+                    if observed_vin.decode("ascii") != self.vin:
+                        raise ValueError("Vehicle VIN changed before headunit prerequisites")
+
+                    row["reader_prerequisites"] = run_prerequisites(
+                        address=address,
+                        variant=match["variant"],
+                        definitions=list(definitions),
+                        database=database,
+                        vin=self.vin,
+                        store=store,
+                        read=read_prerequisite,
+                        read_only=self.connection.read_only,
+                    )
+                    return b""
+
+                self.connection.run_operation(
+                    address,
+                    prerequisites,
+                    context=self.connection.context(max(0.001, self._deadline - time.monotonic())),
+                )
                 groups: set[int] = set()
+                group_minimums: dict[int, int] = {}
+                group_sizes: dict[int, int] = {}
                 hashes = []
                 for definition in definitions:
-                    path = resource_path(f"coding_data/{definition}.enc")
-                    if not path.is_file():
+                    cafd_id, variant = definition.split("-", 1)
+                    if not database.has_definition(cafd_id, variant):
                         raise ValueError(
                             "Exact reported coding definition is not available locally"
                         )
-                    hashes.append(hashlib.sha256(path.read_bytes()).hexdigest())
-                    data = json.loads(_decrypt_enc(str(path)))
+                    hashes.append(database.source_sha256(definition))
+                    data = database.get_definition(cafd_id, variant)
                     for group in data["dataGroups"]:
                         did = int(group["address"], 0)
                         if not 0 <= did <= 0xFFFF:
                             raise ValueError("Coding group address exceeds the supported width")
                         groups.add(did)
+                        minimum = max(
+                            (
+                                int(function["storageInfo"]["end"]) + 1
+                                for function in group.get("functions", [])
+                            ),
+                            default=1,
+                        )
+                        group_minimums[did] = max(group_minimums.get(did, 1), minimum)
+                        size = group.get("units")
+                        if size is not None:
+                            if type(size) is not int or not 0 < size <= 65536:
+                                raise ValueError("Coding group has an invalid declared byte count")
+                            if did in group_sizes and group_sizes[did] != size:
+                                raise ValueError("Coding definitions disagree on the group size")
+                            group_sizes[did] = size
                 if not groups:
                     raise ValueError("Coding definition has no readable groups")
                 blocks: dict[str, str] = {}
@@ -113,17 +201,19 @@ class CodingSnapshotWorker(CarWorker):
                         self._read(address, b"\x22" + did.to_bytes(2, "big")),
                         did,
                     )
-                    if not raw:
-                        raise ValueError("Coding group returned no bytes")
+                    if len(raw) < group_minimums[did] or (
+                        did in group_sizes and len(raw) != group_sizes[did]
+                    ):
+                        raise ValueError("Coding group returned incomplete source-defined bytes")
                     blocks[f"{did:04X}"] = raw.hex()
                 # Reidentify before publication; all groups must belong to the
                 # same software snapshot rather than a changing ECU definition.
                 observed = self._read(address, b"\x22\xf1\x01")
-                if observed != response:
+                if observed != response or self._read(address, b"\x22\xf1\x50") != identity:
                     raise ValueError("Coding software identity changed while reading")
                 target = {
                     "address": address,
-                    "variant": ecu["variant"],
+                    "variant": match["variant"],
                     "software": response.hex(),
                     "definition_sha256": hashlib.sha256("".join(hashes).encode()).hexdigest(),
                     "baseline": blocks,
@@ -135,9 +225,80 @@ class CodingSnapshotWorker(CarWorker):
                     path,
                     state="verified",
                     observed={str(address): blocks},
-                    instructions="Read-only coding snapshot. No vehicle write was requested. Restoration is unavailable until its exact operation contract is implemented.",
+                    responses=[
+                        {
+                            "kind": "definition-selection",
+                            "selections": row["definition_resolution"],
+                        }
+                    ],
+                    instructions="Complete coding snapshot. No coding write was requested. Any separately retrieved entitlement material is stored independently; restoration requires fresh identity and baseline checks.",
                 )
                 row["backup"] = str(path)
+                byte_blocks = {int(did, 16): bytes.fromhex(raw) for did, raw in blocks.items()}
+                presets = []
+                for definition in (database.primary_definition(list(definitions)),):
+                    cafd_id, variant = definition.split("-", 1)
+                    database.load_ecu(cafd_id, variant)
+                    for preset in database.get_presets(cafd_id):
+                        if preset.get("type", 0):
+                            try:
+                                preset = database.resolve_dynamic_preset(
+                                    preset,
+                                    byte_blocks,
+                                    cafd_id,
+                                    variant,
+                                    definitions=list(definitions),
+                                )
+                            except (ValueError, KeyError, TypeError):
+                                logger.info("Dynamic source option unavailable: %s", preset["name"])
+                        current = database.get_current_option(
+                            preset, byte_blocks, cafd_id, variant, definitions=list(definitions)
+                        )
+                        mapped, mapping_reason = database.preset_mapping_status(
+                            preset, cafd_id, variant, byte_blocks, definitions=list(definitions)
+                        )
+                        label = next(
+                            (
+                                option["label"]
+                                for option in preset["options"]
+                                if option["name"] == current
+                            ),
+                            "Custom / no unique option"
+                            if mapped
+                            else "Definition mapping unavailable",
+                        )
+                        predicates = {
+                            key: preset[key]
+                            for key in (
+                                "series",
+                                "excludedSeries",
+                                "excludeECUVariants",
+                                "supportedForID8",
+                            )
+                            if key in preset
+                        }
+                        presets.append(
+                            {
+                                "address": address,
+                                "definition": definition,
+                                "id": preset["name"],
+                                "source_index": preset["source_index"],
+                                "label": preset["label"],
+                                "section": preset["section"],
+                                "current": current,
+                                "current_label": label,
+                                "options": [option["label"] for option in preset["options"]],
+                                "choices": [
+                                    {"name": option["name"], "label": option["label"]}
+                                    for option in preset["options"]
+                                ],
+                                "predicates": predicates,
+                                "mapping_supported": mapped,
+                                "mapping_reason": mapping_reason,
+                                "type": preset.get("type", 0),
+                            }
+                        )
+                row["presets"] = presets
                 row["state"] = "All reported groups read; snapshot saved"
             except (OSError, ValueError, KeyError, TypeError, ConnectionError, TimeoutError):
                 logger.warning("Coding snapshot unavailable address=%04X", address, exc_info=True)

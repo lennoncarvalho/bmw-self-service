@@ -1,18 +1,15 @@
-"""ECU job files and model ECU lists from a 4.29 data bundle or a user folder (D-62).
+"""Generated ECU job assets and development-only source extraction helpers.
 
-Two providers, consulted in order:
+Runtime uses only the compact ``ista_bundle/`` asset produced during development.
+It never validates or reads a saved reference-software/source-folder preference.
+``FolderProvider`` and explicit ``from_paths(..., folder)`` remain available to
+builders and offline research; app workers use the generated bundle exclusively.
 
-1. The compact bundle under ``ista_bundle/`` produced by ``scripts/build_ista_bundle.py``
-   (job files plus per-series ECU lists and a manifest with SHA-256 provenance).
-2. A user-selected ISTA 4.29 folder (``Rheingold/Ecu`` job files, ``PSdZ/kiswb`` ECU
-   lists, ``PSdZ/mapping/brref.xml`` series map), stored in QSettings ``ista/folder``.
-
-Every file read here is untrusted data. The KIS ECU list is an HSQLDB 2.5.x cached
-table, read directly and read-only (no database engine, nothing written); the group
-assignment table comes from ``t_grtb.prg``. Formats are documented in
-``tasks/ista-job-engine-plan.md`` (M2).
+The extraction helper reads source KIS model lists and job group tables without
+running the reference application. Formats are documented in the job engine plan.
 """
 
+import hashlib
 import json
 import logging
 import re
@@ -168,6 +165,22 @@ def read_group_assignments(group_table_file: Path) -> list[GroupAssignment]:
             GroupAssignment(address, index_text, row[variant].lower(), row[group].lower())
         )
     return result
+
+
+def uds_variant_map(assignments: Iterable[GroupAssignment]) -> dict[str, str]:
+    """Exact ``AA IIIIII`` identities; reject conflicts instead of choosing a row."""
+    variants: dict[str, str] = {}
+    for row in assignments:
+        if not 0 <= row.address <= 0xFF or not re.fullmatch(r"[0-9A-Fa-f]{6}", row.sgbd_index):
+            raise DataFormatError("Job group table has an invalid UDS identity")
+        if not re.fullmatch(r"[A-Za-z0-9_]+", row.variant):
+            raise DataFormatError("Job group table has an invalid variant name")
+        key = f"{row.address:02X} {row.sgbd_index.upper()}"
+        name = row.variant.upper()
+        if key in variants and variants[key] != name:
+            raise DataFormatError("Job group table has conflicting UDS identities")
+        variants[key] = name
+    return variants
 
 
 def groups_by_address(assignments: Iterable[GroupAssignment]) -> dict[int, list[str]]:
@@ -393,6 +406,10 @@ class DataProvider(Protocol):
         """KIS main series this provider has ECU lists for."""
         ...
 
+    def uds_variants(self) -> dict[str, str]:
+        """Exact address/index to variant names from the job group table."""
+        ...
+
     def main_series(self, series: str) -> str | None:
         """KIS main series of a series code."""
         ...
@@ -435,52 +452,157 @@ class _JobIndex:
 
 
 class BundleProvider:
-    """The compact bundle written by ``scripts/build_ista_bundle.py``."""
+    """Generated, integrity-checked job files and per-series ECU lists.
+
+    The native interpreter reads table/USES dependencies directly from ``ecu/``.
+    Verify the whole directory before returning a job path, not only that one
+    file. Checks are cached against file identity/size/mtime; a changed file is
+    rehashed. No path outside the generated bundle is consulted.
+    """
 
     def __init__(self, root: Path) -> None:
-        """Open a bundle directory; raises ``DataFormatError`` if it is not one."""
+        """Open and validate a bounded bundle manifest, without loading job bytes."""
         manifest_path = root / "manifest.json"
         try:
+            if manifest_path.stat().st_size > 2 * 1024 * 1024:
+                raise DataFormatError("Bundle manifest is too large")
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise DataFormatError("Bundle manifest is missing or unreadable") from exc
         if not isinstance(manifest, dict) or manifest.get("format") != BUNDLE_FORMAT:
             raise DataFormatError("Bundle manifest has an unsupported format")
-        self.root = root
+        source = manifest.get("source", {})
+        if not isinstance(source, dict) or not str(source.get("version", "")).startswith(
+            SUPPORTED_VERSION_PREFIX
+        ):
+            raise DataFormatError("Bundle data version is not supported")
+        self.root = root.resolve()
         self.manifest: dict[str, Any] = manifest
-        self.ecu_dir = root / "ecu"
+        self.ecu_dir = self.root / "ecu"
         self.label = "Bundled data"
-        series_map = manifest.get("series_map", {})
-        self._series_map = (
-            {str(k): str(v) for k, v in series_map.items()} if isinstance(series_map, dict) else {}
+        series_map, main, files = (
+            manifest.get(key) for key in ("series_map", "main_series", "files")
         )
-        main = manifest.get("main_series", {})
-        self._main = sorted(str(k) for k in main) if isinstance(main, dict) else []
+        if not isinstance(series_map, dict) or not isinstance(main, dict):
+            raise DataFormatError("Bundle model index is invalid")
+        if len(series_map) > 5000 or len(main) > 100:
+            raise DataFormatError("Bundle model index is too large")
+        self._series_map: dict[str, str] = {}
+        for series, target in series_map.items():
+            if not isinstance(series, str) or not isinstance(target, str):
+                raise DataFormatError("Bundle series mapping is invalid")
+            if not _SERIES_PATTERN.fullmatch(series) or not _SERIES_PATTERN.fullmatch(target):
+                raise DataFormatError("Bundle series name is invalid")
+            self._series_map[series] = target
+        self._main = sorted(main)
+        self._series_files: dict[str, tuple[Path, str]] = {}
+        for name, info in main.items():
+            if not isinstance(name, str) or not _SERIES_PATTERN.fullmatch(name):
+                raise DataFormatError("Bundle main series is invalid")
+            if not isinstance(info, dict) or info.get("file") != f"series/{name}.json":
+                raise DataFormatError("Bundle ECU-list path is invalid")
+            digest = self._digest(info.get("sha256"))
+            self._series_files[name] = (self.root / "series" / f"{name}.json", digest)
+        if not isinstance(files, dict) or not 1 <= len(files) <= 5000:
+            raise DataFormatError("Bundle job manifest is invalid")
+        self._job_files: dict[str, tuple[Path, str, int]] = {}
+        for relative, info in files.items():
+            if not isinstance(relative, str) or not isinstance(info, dict):
+                raise DataFormatError("Bundle job entry is invalid")
+            path = Path(relative)
+            if (
+                len(path.parts) != 2
+                or path.parts[0] != "ecu"
+                or path.suffix.lower() not in JOB_SUFFIXES
+                or "\\" in relative
+            ):
+                raise DataFormatError("Bundle job path is invalid")
+            size = info.get("size")
+            if type(size) is not int or not 0 < size <= 32 * 1024 * 1024:
+                raise DataFormatError("Bundle job size is invalid")
+            key = path.name.lower()
+            if key in self._job_files:
+                raise DataFormatError("Bundle has duplicate job names")
+            self._job_files[key] = (self.root / path, self._digest(info.get("sha256")), size)
+        self._verified: dict[Path, tuple[int, int, int, int]] = {}
         self._index = _JobIndex(self.ecu_dir)
+
+    @staticmethod
+    def _digest(value: Any) -> str:
+        if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+            raise DataFormatError("Bundle asset digest is invalid")
+        return value
+
+    def _verify(self, path: Path, digest: str, size: int | None = None) -> None:
+        try:
+            if (
+                path.is_symlink()
+                or not path.is_file()
+                or not path.resolve().is_relative_to(self.root)
+            ):
+                raise DataFormatError("Bundle asset is missing or outside the bundle")
+            stat = path.stat()
+            maximum = 32 * 1024 * 1024 if size is not None else 8 * 1024 * 1024
+            if stat.st_size > maximum or (size is not None and stat.st_size != size):
+                raise DataFormatError("Bundle asset size does not match its manifest")
+            signature = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+            if self._verified.get(path) == signature:
+                return
+            if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                raise DataFormatError("Bundle asset does not match its manifest")
+            after = path.stat()
+            if signature != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns):
+                raise DataFormatError("Bundle asset changed during verification")
+            self._verified[path] = signature
+        except OSError as exc:
+            raise DataFormatError("Bundle asset could not be read") from exc
+
+    def _verify_jobs(self) -> None:
+        try:
+            names = {p.name.lower() for p in self.ecu_dir.iterdir() if p.is_file()}
+            if names != set(self._job_files):
+                raise DataFormatError("Bundle job directory differs from its manifest")
+            for path, digest, size in self._job_files.values():
+                self._verify(path, digest, size)
+        except OSError as exc:
+            raise DataFormatError("Bundle job directory could not be read") from exc
 
     @property
     def source_version(self) -> str:
-        """Data version of the folder the bundle was built from."""
-        source = self.manifest.get("source", {})
-        return str(source.get("version", "")) if isinstance(source, dict) else ""
+        """Data version of the source release used by the asset builder."""
+        return str(self.manifest["source"]["version"])
 
     def job_file(self, name: str) -> Path | None:
-        """Job file by name or stem, case-insensitive."""
+        """Return a manifested job only after checking its dependency directory."""
+        self._verify_jobs()
         return self._index.find(name)
 
     def series_ecus(self, main_series: str) -> list[IstaEcu] | None:
-        """Bundled ECU list of a KIS main series."""
-        if main_series not in self._main:
+        """Load an integrity-checked bundled ECU list of a KIS main series."""
+        entry = self._series_files.get(main_series)
+        if entry is None:
             return None
-        path = self.root / "series" / f"{main_series}.json"
+        path, digest = entry
+        self._verify(path, digest)
         try:
             content = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise DataFormatError(f"Bundled ECU list {main_series} is unreadable") from exc
         items = content.get("ecus") if isinstance(content, dict) else None
-        if not isinstance(items, list):
-            raise DataFormatError(f"Bundled ECU list {main_series} has no ECU entries")
+        if not isinstance(items, list) or len(items) > 100_000:
+            raise DataFormatError(f"Bundled ECU list {main_series} has no valid ECU entries")
         return [_checked_ecu(item) for item in items]
+
+    def uds_variants(self) -> dict[str, str]:
+        """Exact UDS identities from the integrity-checked bundled group table."""
+        entries = [
+            entry for name, entry in self._job_files.items() if Path(name).stem == GROUP_TABLE_FILE
+        ]
+        if len(entries) != 1:
+            raise DataFormatError("Bundle has no unambiguous group assignment table")
+        path, digest, size = entries[0]
+        self._verify(path, digest, size)
+        return uds_variant_map(read_group_assignments(path))
 
     def available_series(self) -> list[str]:
         """Bundled KIS main series."""
@@ -534,6 +656,11 @@ class FolderProvider:
                 logger.warning("Series map unavailable: %s", exc)
                 self._series_map = {}
         return self._series_map.get(series.upper())
+
+    def uds_variants(self) -> dict[str, str]:
+        """Exact UDS identities from the explicitly selected folder's group table."""
+        path = self.job_file(GROUP_TABLE_FILE)
+        return uds_variant_map(read_group_assignments(path)) if path else {}
 
     def _group_map(self) -> dict[int, list[str]]:
         if self._groups is None:
@@ -632,7 +759,7 @@ def bundle_root() -> Path:
 
 
 class IstaDataSource:
-    """Job files and ECU lists; the bundle is consulted first, then the user folder."""
+    """Job assets; runtime is bundle-only, explicit folder inputs are for builders."""
 
     def __init__(self, providers: Iterable[DataProvider]) -> None:
         """Use providers in lookup order."""
@@ -640,7 +767,7 @@ class IstaDataSource:
 
     @classmethod
     def from_paths(cls, bundle: Path | None, folder: str | Path | None) -> "IstaDataSource":
-        """Build from a bundle directory and an ISTA folder; invalid ones are skipped."""
+        """Explicit builder/research inputs; app runtime passes no source folder."""
         providers: list[DataProvider] = []
         if bundle is not None and (bundle / "manifest.json").is_file():
             try:
@@ -660,8 +787,8 @@ class IstaDataSource:
 
     @classmethod
     def from_settings(cls) -> "IstaDataSource":
-        """Build from the shipped bundle and the folder saved in QSettings."""
-        return cls.from_paths(bundle_root(), saved_ista_folder())
+        """Use generated assets only, ignoring obsolete source-folder settings."""
+        return cls.from_paths(bundle_root(), None)
 
     def locate(self, name: str) -> tuple[Path, Path] | None:
         """Job file and the job directory it must be loaded with, or ``None``.
@@ -670,7 +797,11 @@ class IstaDataSource:
         file and its directory always come from the same provider.
         """
         for provider in self.providers:
-            path = provider.job_file(name)
+            try:
+                path = provider.job_file(name)
+            except (OSError, DataFormatError) as exc:
+                logger.warning("%s: job data rejected: %s", provider.label, exc)
+                continue
             if path is not None:
                 return path, provider.ecu_dir
         return None
@@ -705,6 +836,19 @@ class IstaDataSource:
             if ecus is not None:
                 return ecus
         return []
+
+    def uds_variants(self) -> dict[str, str]:
+        """Merge exact source identities in provider order, with bundle precedence."""
+        result: dict[str, str] = {}
+        for provider in self.providers:
+            try:
+                variants = provider.uds_variants()
+            except (OSError, DataFormatError) as exc:
+                logger.warning("%s: UDS identities unavailable: %s", provider.label, exc)
+                continue
+            for key, name in variants.items():
+                result.setdefault(key, name)
+        return result
 
     def available_series(self) -> list[str]:
         """KIS main series available from any provider."""

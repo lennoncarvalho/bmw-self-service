@@ -182,6 +182,38 @@ def _publish(path: Path, record: dict[str, Any]) -> None:
             Path(temporary).unlink(missing_ok=True)
 
 
+def export_interruption_evidence(path: Path, report: dict) -> None:
+    """Save bounded coding results without making them a restorable backup.
+
+    This format is deliberately rejected by load_record; raw outcome evidence
+    supplies no complete original/intent or permission to resume a mutation.
+    """
+    record = {"schema": 1, "kind": "coding-interruption-evidence", "report": report}
+    raw = _encoded({**record, "sha256": _digest(record)})
+    if len(raw) > MAX_BYTES:
+        raise ValueError("Coding evidence exceeds the supported size")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=path.parent, prefix=".coding-evidence-", delete=False
+        ) as stream:
+            temporary = stream.name
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        temporary = None
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if temporary is not None:
+            Path(temporary).unlink(missing_ok=True)
+
+
 class OperationStore:
     """Retain every original and outcome until the owner explicitly deletes it."""
 

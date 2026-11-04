@@ -213,7 +213,10 @@ edxn_error_t edxn_op_arith(edxn_vm_t *vm, uint8_t op,
                 vm->flags.c = sign_set;
             } else {
                 vm->flags.c = ((uint32_t)v0 & (1u << (shift - 1))) != 0;
-                int32_t s = sign_set ? v0 - (int32_t)(1u << (len * 8)) : v0;
+                /* Long registers are already signed int32. Shifting 1u by
+                   32 is undefined and subtracting it can overflow INT32_MIN. */
+                int32_t s = sign_set && len < 4
+                    ? v0 - (int32_t)(1u << (len * 8)) : v0;
                 result = (uint32_t)(s >> shift) & mask;
             }
         } else {

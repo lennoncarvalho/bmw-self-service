@@ -13,19 +13,19 @@ Current work: [Task A](tasks/protocol-library-migration.md) and
 | Vehicle information | Identity, inventory, mileage/voltage/FA and supported values | Source-based reads implemented; odometer/measurements still use app decoders rather than STATUS jobs |
 | Diagnostics | All applicable ECU faults and one Clear All | Job-backed FS_/IS_ paths with labelled app fallbacks and per-memory coverage; detail/text reconciliation and VM gaps remain |
 | Service history | Local JSON/cards, ADD-only append and explicit replacement | Editor, journals and mode-specific workers implemented; prior car history unavailable, no reader or automatic replay; physical write validation not established here |
-| CBS | Reads and confirmed resets before coding | Job-backed read/reset with app fallbacks implemented; DSC_25, D94 6.3 and KOMBSP21 branches remain concrete work |
-| Easy coding | Applicable source-defined presets with current values and checked writes | Existing catalogue decrypts; exact-definition snapshots implemented. Full selection, composition, authorization, writes and restore remain unfinished |
+| CBS | Reads and confirmed resets before coding | Source-current job-backed read/reset includes CBS7.0 and acknowledged DSC_25 extra sequencing; ownership follows source service workflows |
+| Easy coding | Applicable source-defined presets with current values and checked writes | Generated plain catalogue, source-compatible layout selection, actual values, composition/signatures/authorization, checked writes and restore implemented; missing semantic mappings and newer formats remain explicit |
 | Advanced coding | Later priority after easy coding | No live editing/write completion claimed |
-| Backups/recovery | Complete coding originals; separate history intent/results | Coding snapshots and history journal implemented. Coding restore remains unfinished; history cannot recover unknown erased entries |
+| Backups/recovery | Complete coding originals; separate history intent/results | Complete coding baseline/intent and explicit restore implemented; history cannot recover unknown erased entries |
 | Demo | Explore UI with canned data | UI simulation, never a live baseline or physical validation |
-| Distribution | Personal Mac source use first | D-63 personal use; packages/platform acceptance later. Native runtime and data bundle need rebuilding in this checkout |
+| Distribution | Personal Mac source use first | D-63 personal use; packages/platform acceptance later. Native runtime and standalone data assets built locally; package acceptance remains separate |
 
 Current status is reconciled in [doc 29](docs/29-source-reuse-continuation.md).
 This table describes implementation boundaries, not a fresh end-to-end acceptance
 run. Historical source/capture evidence remains in the linked feature records.
 
 Development order: verify current sources/runtime → finish remaining CBS and
-diagnostic branches using jobs/data → complete applicable coding catalogue,
-write and restore integration. Reuse implemented history and source contracts.
+diagnostic branches using jobs/data → remaining coding source formats and
+semantic mappings, followed by richer details and later advanced editing. Reuse implemented history and source contracts.
 Only the owner's F48 is available for physical observations; other vehicles do
 not gate source-based implementation. Do not open a PR without owner instruction.

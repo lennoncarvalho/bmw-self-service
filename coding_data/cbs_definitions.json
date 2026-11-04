@@ -1,355 +1,1049 @@
 {
+  "current_source_sha256": "9f2c8866ecac5b81523f6f625dbd46aa2ca8c360ee36e04fe69063d73cdf8907",
   "definitions": {
+    "BCP_SP21": {
+      "address": 16,
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
+      "prg_sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "routine_codes": {
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "01": "ung\u00fcltiger km-Stand",
+          "02": "ung\u00fcltiges Borddatum",
+          "03": "ung\u00fcltige Codierung",
+          "04": "SG nicht initialisiert oder im falschen Zustand",
+          "05": "Fahrzeug im fahrenden Zustand",
+          "06": "Reset bei CBR nicht erlaubt",
+          "07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+          "08": "Verf\u00fcgbarkeit ausserhalb des g\u00fcltigen Wertebereichs",
+          "09": "Servicez\u00e4hler ist nicht zwischen 1 und 250",
+          "0A": "Zieltermin ausserhalb des g\u00fcltigen Wertebereichs",
+          "0B": "Restweg ist ausserhalb des g\u00fcltigen Wertebereichs",
+          "0C": "Keine g\u00fcltigen RDA Daten erhalten",
+          "FE": "keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "80": "Bremsdruck vorhanden",
+          "81": "Sensor angeschliffen/ Fehlerhaft",
+          "82": "EMF angezogen",
+          "83": "EMF Fehler vorhanden",
+          "84": "aktiver Druckaufbau",
+          "85": "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)",
+          "86": "Daten werden gerade persistiert",
+          "87": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 08",
+          "88": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 09",
+          "89": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 10",
+          "8A": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 11",
+          "8B": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 12",
+          "8C": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 13",
+          "8D": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 14",
+          "8E": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 15",
+          "8F": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 16",
+          "90": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 17",
+          "91": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 18",
+          "92": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 19",
+          "93": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 20",
+          "94": "Restwegvorgabe h\u00f6her als Maximalwert",
+          "95": "Ung\u00fcltige Vorgabe Verf\u00fcgbarkeit",
+          "96": "Ung\u00fcltige Vorgabe Servicez\u00e4hler",
+          "97": "Ung\u00fcltige Vorgabe Zielmonat",
+          "98": "Ung\u00fcltige Vorgabe Zieljahr",
+          "99": "Ung\u00fcltige Vorgabe Zieltag",
+          "9A": "Ung\u00fcltige Vorgabe Zieldatum",
+          "9B": "Ung\u00fcltige Vorgabe Restweg",
+          "9C": "Ung\u00fcltige Vorgabe Restwegprognose",
+          "9D": "Manipulation festgestellt",
+          "9E": "Keine Kodierung zum Prognosereset festgestellt",
+          "9F": "Werksreset des Clients Getriebe\u00f6l nur bei Neufahrzeugen m\u00f6glich",
+          "A0": "Deaktivierung der Anzeige bei Client Getriebe\u00f6l im F\u00e4lligkeitsbereich nicht erlaubt",
+          "A1": "Korrekturreset Verf\u00fcgbarkeit bei den Umf\u00e4ngen Motor\u00f6l, Z\u00fcndkerze und Partikelfilter nicht erlaubt",
+          "A2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 35",
+          "A3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 36",
+          "A4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 37",
+          "A5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 38",
+          "A6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 39",
+          "A7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 40",
+          "A8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 41",
+          "A9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 42",
+          "AA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 43",
+          "AB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 44",
+          "AC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 45",
+          "AD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 46",
+          "AE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 47",
+          "AF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 48",
+          "B0": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 49",
+          "B1": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 50",
+          "B2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 51",
+          "B3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 52",
+          "B4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 53",
+          "B5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 54",
+          "B6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 55",
+          "B7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 56",
+          "B8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 57",
+          "B9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 58",
+          "BA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 59",
+          "BB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 60",
+          "BC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 61",
+          "BD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 62",
+          "BE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 63",
+          "BF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 64",
+          "FE": "Keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        }
+      },
+      "source_groups": [
+        "G_ZGW"
+      ],
+      "source_reset_policy": "unrecovered",
+      "version": "7.0"
+    },
     "CMEDIA": {
       "address": 54,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
       "prg_sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
-      "reset": "default",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "source_groups": [
+        "G_TEL"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "D70BX7A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "4609b1ec33c0f6040da9e84d9aa80cfd56a5796b03e41d74d65475f7311150f6",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "D72N47A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "D73N57A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "D73N57E0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "D75BX7A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "7e6678d772c668dd7077fc541c47458417d43c4916a419d84ea19bfb925ae10e",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "D83BX7C0": {
       "address": 18,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "D94BX7A0": {
       "address": 18,
       "detail": false,
       "disposition": "read+reset (CBS 6.3 routine 31 01 1000, standard reset type 0x02)",
+      "ownership": "primary",
       "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
       "reset": "routine-6.3",
+      "source_groups": [
+        "G_MOTOR"
+      ],
       "version": "6.3"
     },
     "DME8FF_L": {
       "address": 19,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "0a27292b892a0600af355b3913657891f2a081071cbb2670ad735cb335ccf026",
-      "reset": "default",
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
+      "prg_sha256": "36ad3cad7a0eeb7b002c6c250a59c249257ab0bf56dddbe6883dfbc5e42107e3",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "source_groups": [
+        "G_MOTOR2"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "DME8FF_R": {
       "address": 18,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "DME_BX8": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "DSC_01": {
       "address": 41,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "DSC_10": {
       "address": 41,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "DSC_25": {
       "address": 41,
       "detail": false,
-      "disposition": "read+reset (DSC_25 plain write; SVK-gated extra sequence blocked)",
+      "disposition": "current-source read plus checked reset",
+      "extra_sequence": [
+        "{reset}",
+        "860002",
+        "3101030400",
+        "14ffffff",
+        "{reset}",
+        "860502"
+      ],
+      "extra_svk": [
+        "340501",
+        "010804",
+        "010b03"
+      ],
+      "ownership": "primary",
       "prg_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "read_job": "CBS_DATEN_LESEN",
+      "record_index": {
+        "02": 0,
+        "06": 1
+      },
       "reset": "dsc25-plain",
+      "side_effects": [
+        "May clear all DSC fault memory",
+        "Temporarily stops and restarts ECU event reporting",
+        "Runs ECU routine 0304",
+        "The extra branch intentionally sends the reset twice as separate source-planned steps"
+      ],
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "dsc25-plain",
       "version": "5"
     },
     "DSC_G11": {
       "address": 41,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "61b0482df5d3092a25510fea3e9491022a9b14f41bad7d3b219a089cf876cc1e",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "3b96336aa05b38d47256c03dea4e249e99c3d5082a7e4c89ab09df28ce333ba8",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "DSC_G20": {
       "address": 41,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "ec13c59498f7fb8986bb364fff9889ea2177524a36ad8042562f4c608bd939b3",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "12cfd8b2c3a0e5cf57f05148db0c43ef1363d75d8968602652f79e7d8524be58",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "DSC_G30N": {
       "address": 41,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "523cd64d32bd6c5314cb3a3e7c7fa126b98d6d476b872700c5a948c0ec86c6ae",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "0fe812ebf70afe31b453d26d1072d9b7fdb7708bce3cfdc096be072cd1d81968",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "DSC_I1": {
       "address": 41,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "EDMEI1": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "54affb2706cdb7b6edf2584ab0255a07d03f5b458818a60027324db3fddc4f54",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "f5564d839090f25dec1dad1b505061d0cfe81e5fad23bcf8295d8f73c1e531c5",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "EHC_01": {
       "address": 56,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
       "prg_sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
-      "reset": "default",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "source_groups": [
+        "G_EHC"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "GSGE01QW": {
       "address": 24,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
       "prg_sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
-      "reset": "default",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "source_groups": [
+        "G_EGS"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "IB_G05": {
       "address": 41,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "a0dcf4f5a9636072c1e28db7e1a96d6179269f6c41083d84077c442f8a7a11bf",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "83622fe6b18414229d78868a12608f4ee8899d4f8339db7873b632a807d1402c",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "IB_G2X": {
       "address": 41,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "40949a1660eacb386be650bc00ec9f9abe8fa6eb794f1956a75852f674283d86",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "1c54f283353b5703228bc7356fa4e1337c8c248ff650c308e6f8c28028f91a0d",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
+    },
+    "IB_I20": {
+      "address": 41,
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "445144b5bafddc0fba3aa502c9a48be4b44e04a9481ed794449c0713de46a5f3",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "reset": "routine-7.0",
+      "routine_codes": {
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "01": "ung\u00fcltiger km-Stand",
+          "02": "ung\u00fcltiges Borddatum",
+          "03": "ung\u00fcltige Codierung",
+          "04": "SG nicht initialisiert oder im falschen Zustand",
+          "05": "Fahrzeug im fahrenden Zustand",
+          "06": "Reset bei CBR nicht erlaubt",
+          "07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+          "08": "Verf\u00fcgbarkeit ausserhalb des g\u00fcltigen Wertebereichs",
+          "09": "Servicez\u00e4hler ist nicht zwischen 1 und 250",
+          "0A": "Zieltermin ausserhalb des g\u00fcltigen Wertebereichs",
+          "0B": "Restweg ist ausserhalb des g\u00fcltigen Wertebereichs",
+          "0C": "Keine g\u00fcltigen RDA Daten erhalten",
+          "FE": "keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "80": "Bremsdruck vorhanden",
+          "81": "Sensor angeschliffen/ Fehlerhaft",
+          "82": "EMF angezogen",
+          "83": "EMF Fehler vorhanden",
+          "84": "aktiver Druckaufbau",
+          "85": "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)",
+          "86": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 07",
+          "87": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 08",
+          "88": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 09",
+          "89": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 10",
+          "8A": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 11",
+          "8B": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 12",
+          "8C": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 13",
+          "8D": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 14",
+          "8E": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 15",
+          "8F": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 16",
+          "90": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 17",
+          "91": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 18",
+          "92": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 19",
+          "93": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 20",
+          "94": "Restwegvorgabe h\u00f6her als Maximalwert",
+          "95": "Ung\u00fcltige Vorgabe Verf\u00fcgbarkeit",
+          "96": "Ung\u00fcltige Vorgabe Servicez\u00e4hler",
+          "97": "Ung\u00fcltige Vorgabe Zielmonat",
+          "98": "Ung\u00fcltige Vorgabe Zieljahr",
+          "99": "Ung\u00fcltige Vorgabe Zieltag",
+          "9A": "Ung\u00fcltige Vorgabe Zieldatum",
+          "9B": "Ung\u00fcltige Vorgabe Restweg",
+          "9C": "Ung\u00fcltige Vorgabe Restwegprognose",
+          "9D": "Manipulation festgestellt",
+          "9E": "Keine Kodierung zum Prognosereset festgestellt",
+          "9F": "Werksreset des Clients Getriebe\u00f6l nur bei Neufahrzeugen m\u00f6glich",
+          "A0": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 33",
+          "A1": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 34",
+          "A2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 35",
+          "A3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 36",
+          "A4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 37",
+          "A5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 38",
+          "A6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 39",
+          "A7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 40",
+          "A8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 41",
+          "A9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 42",
+          "AA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 43",
+          "AB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 44",
+          "AC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 45",
+          "AD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 46",
+          "AE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 47",
+          "AF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 48",
+          "B0": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 49",
+          "B1": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 50",
+          "B2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 51",
+          "B3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 52",
+          "B4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 53",
+          "B5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 54",
+          "B6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 55",
+          "B7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 56",
+          "B8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 57",
+          "B9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 58",
+          "BA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 59",
+          "BB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 60",
+          "BC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 61",
+          "BD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 62",
+          "BE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 63",
+          "BF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 64",
+          "FE": "Keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        }
+      },
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_reset_policy": "routine-7.0",
+      "version": "7.0"
     },
     "KOMB01": {
       "address": 96,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "014a0730df2b993380aff00afabd7794b2672cbf171ae3390feb1ed0ffb122b1",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "71b474ab7a18d8a01f305f15688ae5661d80167d08dae5b7cc3e818e0103a7db",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "KOMB25": {
       "address": 96,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "38c3b5de88402bef28c2697b0c03615e79097a03d29640e22b60c071f5f1a688",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "6dfb80eee4e5b9d7b94dfe97f43da25fd80ef0abac2adf0f8a113d50d47b2bc4",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "KOMBRDCT": {
       "address": 96,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "b7ef99297a062ad860012c3877dc3a33a1bbdc431250dc003cb326f5065d2c2d",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "1245018cfc2bdaa944311f0bb8228e50fbb13216e68e92a5e6fef9a1668ca3ad",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "KOMBSP18": {
       "address": 96,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "a611ef427b42354b518e62d6b9de53addf2e437d8029c1b4b2eb13147ae66a20",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "33aa21d5e03f1445ec98e8412959d452d73d64834d1e3082bb4bfddaff59887f",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "KOMBSP21": {
       "address": 96,
       "detail": false,
-      "disposition": "read implementable (CBS6.3 layout); reset BLOCKED: no reset request in any supplied artifact (reset_kombsp21)",
-      "prg_sha256": "20603da513132ee750561c56bf099834315306da1ab0d51c70ff56e92fd04706",
-      "reset": "blocked",
-      "version": "6.3"
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "656c5cd27932fca9cc27ad2568d7eda4faad0d0d80090ca038e22eb47c5339db",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "reset": "routine-7.0",
+      "routine_codes": {
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "01": "ung\u00fcltiger km-Stand",
+          "02": "ung\u00fcltiges Borddatum",
+          "03": "ung\u00fcltige Codierung",
+          "04": "SG nicht initialisiert oder im falschen Zustand",
+          "05": "Fahrzeug im fahrenden Zustand",
+          "06": "Reset bei CBR nicht erlaubt",
+          "07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+          "08": "Verf\u00fcgbarkeit ausserhalb des g\u00fcltigen Wertebereichs",
+          "09": "Servicez\u00e4hler ist nicht zwischen 1 und 250",
+          "0A": "Zieltermin ausserhalb des g\u00fcltigen Wertebereichs",
+          "0B": "Restweg ist ausserhalb des g\u00fcltigen Wertebereichs",
+          "0C": "Keine g\u00fcltigen RDA Daten erhalten",
+          "FE": "keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "80": "Bremsdruck vorhanden",
+          "81": "Sensor angeschliffen/ Fehlerhaft",
+          "82": "EMF angezogen",
+          "83": "EMF Fehler vorhanden",
+          "84": "aktiver Druckaufbau",
+          "85": "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)",
+          "86": "Daten werden gerade persistiert",
+          "87": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 08",
+          "88": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 09",
+          "89": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 10",
+          "8A": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 11",
+          "8B": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 12",
+          "8C": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 13",
+          "8D": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 14",
+          "8E": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 15",
+          "8F": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 16",
+          "90": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 17",
+          "91": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 18",
+          "92": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 19",
+          "93": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 20",
+          "94": "Restwegvorgabe h\u00f6her als Maximalwert",
+          "95": "Ung\u00fcltige Vorgabe Verf\u00fcgbarkeit",
+          "96": "Ung\u00fcltige Vorgabe Servicez\u00e4hler",
+          "97": "Ung\u00fcltige Vorgabe Zielmonat",
+          "98": "Ung\u00fcltige Vorgabe Zieljahr",
+          "99": "Ung\u00fcltige Vorgabe Zieltag",
+          "9A": "Ung\u00fcltige Vorgabe Zieldatum",
+          "9B": "Ung\u00fcltige Vorgabe Restweg",
+          "9C": "Ung\u00fcltige Vorgabe Restwegprognose",
+          "9D": "Manipulation festgestellt",
+          "9E": "Keine Kodierung zum Prognosereset festgestellt",
+          "9F": "Werksreset des Clients Getriebe\u00f6l nur bei Neufahrzeugen m\u00f6glich",
+          "A0": "Deaktivierung der Anzeige bei Client Getriebe\u00f6l im F\u00e4lligkeitsbereich nicht erlaubt",
+          "A1": "Korrekturreset Verf\u00fcgbarkeit bei den Umf\u00e4ngen Motor\u00f6l, Z\u00fcndkerze und Partikelfilter nicht erlaubt",
+          "A2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 35",
+          "A3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 36",
+          "A4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 37",
+          "A5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 38",
+          "A6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 39",
+          "A7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 40",
+          "A8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 41",
+          "A9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 42",
+          "AA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 43",
+          "AB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 44",
+          "AC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 45",
+          "AD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 46",
+          "AE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 47",
+          "AF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 48",
+          "B0": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 49",
+          "B1": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 50",
+          "B2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 51",
+          "B3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 52",
+          "B4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 53",
+          "B5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 54",
+          "B6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 55",
+          "B7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 56",
+          "B8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 57",
+          "B9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 58",
+          "BA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 59",
+          "BB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 60",
+          "BC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 61",
+          "BD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 62",
+          "BE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 63",
+          "BF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 64",
+          "FE": "Keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        }
+      },
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "routine-7.0",
+      "version": "7.0"
     },
     "KOMB_G11": {
       "address": 96,
       "detail": true,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "3c509b8eb4a50479944e623d3b52cdda563b208ae42272e9c9bf0f939eb591a1",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "ecf05aeef3478b5eadd020244764be9b52451676a07a0f79f7280dc52f2830f4",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "default",
+      "version": "6"
+    },
+    "KOMB_J29": {
+      "address": 96,
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "a29439942caa37e27cd24368e2c8d03e4b4d3287d3d40ad19f91a9bdbdce7578",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "default",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_reset_policy": "default",
       "version": "6"
     },
     "LMV_01": {
       "address": 25,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
       "prg_sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
-      "reset": "default",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "source_groups": [
+        "G_LMV"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MEVD172": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MEVD1724": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MEVD1725": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MEVD172Y": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
+    },
+    "MGU_02_A": {
+      "address": 99,
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
+      "prg_sha256": "a274f22c573e6fbcd84c94258eefa658102d3c8f0b4af71806f5c187a726af98",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "routine_codes": {
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "01": "ung\u00fcltiger km-Stand",
+          "02": "ung\u00fcltiges Borddatum",
+          "03": "ung\u00fcltige Codierung",
+          "04": "SG nicht initialisiert oder im falschen Zustand",
+          "05": "Fahrzeug im fahrenden Zustand",
+          "06": "Reset bei CBR nicht erlaubt",
+          "07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+          "08": "Verf\u00fcgbarkeit ausserhalb des g\u00fcltigen Wertebereichs",
+          "09": "Servicez\u00e4hler ist nicht zwischen 1 und 250",
+          "0A": "Zieltermin ausserhalb des g\u00fcltigen Wertebereichs",
+          "0B": "Restweg ist ausserhalb des g\u00fcltigen Wertebereichs",
+          "0C": "Keine g\u00fcltigen RDA Daten erhalten",
+          "FE": "keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "80": "Bremsdruck vorhanden",
+          "81": "Sensor angeschliffen/ Fehlerhaft",
+          "82": "EMF angezogen",
+          "83": "EMF Fehler vorhanden",
+          "84": "aktiver Druckaufbau",
+          "85": "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)",
+          "86": "Daten werden gerade persistiert",
+          "87": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 08",
+          "88": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 09",
+          "89": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 10",
+          "8A": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 11",
+          "8B": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 12",
+          "8C": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 13",
+          "8D": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 14",
+          "8E": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 15",
+          "8F": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 16",
+          "90": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 17",
+          "91": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 18",
+          "92": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 19",
+          "93": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 20",
+          "94": "Restwegvorgabe h\u00f6her als Maximalwert",
+          "95": "Ung\u00fcltige Vorgabe Verf\u00fcgbarkeit",
+          "96": "Ung\u00fcltige Vorgabe Servicez\u00e4hler",
+          "97": "Ung\u00fcltige Vorgabe Zielmonat",
+          "98": "Ung\u00fcltige Vorgabe Zieljahr",
+          "99": "Ung\u00fcltige Vorgabe Zieltag",
+          "9A": "Ung\u00fcltige Vorgabe Zieldatum",
+          "9B": "Ung\u00fcltige Vorgabe Restweg",
+          "9C": "Ung\u00fcltige Vorgabe Restwegprognose",
+          "9D": "Manipulation festgestellt",
+          "9E": "Keine Kodierung zum Prognosereset festgestellt",
+          "9F": "Werksreset des Clients Getriebe\u00f6l nur bei Neufahrzeugen m\u00f6glich",
+          "A0": "Deaktivierung der Anzeige bei Client Getriebe\u00f6l im F\u00e4lligkeitsbereich nicht erlaubt",
+          "A1": "Korrekturreset Verf\u00fcgbarkeit bei den Umf\u00e4ngen Motor\u00f6l, Z\u00fcndkerze und Partikelfilter nicht erlaubt",
+          "A2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 35",
+          "A3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 36",
+          "A4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 37",
+          "A5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 38",
+          "A6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 39",
+          "A7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 40",
+          "A8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 41",
+          "A9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 42",
+          "AA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 43",
+          "AB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 44",
+          "AC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 45",
+          "AD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 46",
+          "AE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 47",
+          "AF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 48",
+          "B0": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 49",
+          "B1": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 50",
+          "B2": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 51",
+          "B3": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 52",
+          "B4": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 53",
+          "B5": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 54",
+          "B6": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 55",
+          "B7": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 56",
+          "B8": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 57",
+          "B9": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 58",
+          "BA": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 59",
+          "BB": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 60",
+          "BC": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 61",
+          "BD": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 62",
+          "BE": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 63",
+          "BF": "Sensorapplikationsspezifischer R\u00fccksetzverhinderer 64",
+          "FE": "Keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        }
+      },
+      "source_groups": [
+        "G_MMI"
+      ],
+      "source_reset_policy": "routine-7.0",
+      "version": "7.0"
     },
     "MSD85L6": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MSD85YL6": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MSD87": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MSD87_R0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "0055e880abd9151f5f031fb2087e9949ff6d84e94ccec3219e82ffb6e60aa2ad",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "MSV90": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "N55_ALP": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "N63TU_R0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "S55": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
-      "prg_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
+      "prg_sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "S63TU_L0": {
       "address": 19,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "ownership": "owner-not-recovered",
       "prg_sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
-      "reset": "default",
+      "read_job": "CBS_DATEN_LESEN",
+      "reset": "blocked",
+      "source_groups": [
+        "G_MOTOR2"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     },
     "S63TU_R0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset implementable (default template)",
+      "disposition": "current-source read plus checked reset",
+      "ownership": "primary",
       "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "default",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_reset_policy": "default",
       "version": "5"
     }
   },
