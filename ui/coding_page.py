@@ -577,6 +577,7 @@ class CodingPage(QWidget):
             or hasattr(connection, "data")
             or getattr(self, "_snapshot_loaded", False)
             or self._coding_reader is not None
+            or self.is_reading()
         ):
             return
         vin = getattr(connection, "verified_vin", "")
@@ -1285,9 +1286,13 @@ class CodingPage(QWidget):
 
     @Slot(object)
     def _source_evidence_exported(self, path: object) -> None:
-        """Mark retained results exported only for the current export worker."""
-        if self.sender() is self._worker:
-            self._write_report["evidence_exported"] = True
+        """Mark the originating report without changing a newer session's report."""
+        worker = self.sender()
+        if not isinstance(worker, CodingEvidenceExportWorker):
+            return
+        report = worker.originating_report
+        report["evidence_exported"] = True
+        if self._write_report is report:
             self._pending_label.setText("Coding evidence exported; reread before a new operation.")
 
     @Slot()
@@ -1312,6 +1317,9 @@ class CodingEvidenceExportWorker(CarWorker):
         """Retain a detached result report and its requested export destination."""
         super().__init__(connection)
         self.path = path
+        # GUI-only identity reference; background publication uses its detached
+        # copy below. Disconnect may clear the page's current worker reference.
+        self.originating_report = report
         self.report = copy.deepcopy(report)
 
     def do_work(self) -> str:

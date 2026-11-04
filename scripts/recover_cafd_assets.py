@@ -143,6 +143,8 @@ def recover(psdz: Path, output: Path, *, openssl: str, include_fafp: bool = Fals
             for source in sorted((psdz / "swe" / kind).iterdir()):
                 if not source.is_file():
                     continue
+                if not 0 < source.stat().st_size <= 2 * MAX_XML:
+                    raise ValueError(f"Encrypted definition exceeds its size bound: {source.name}")
                 raw = source.read_bytes()
                 root = ET.fromstring(raw)
                 if root.attrib.get("isEncrypted") != "true":

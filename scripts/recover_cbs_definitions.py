@@ -70,6 +70,9 @@ def build(
         current = json.loads(current_raw)
         if current.get("schema") != 1 or not isinstance(current.get("definitions"), dict):
             raise ValueError("Unsupported current-job contract")
+        ownership = current.get("ownership")
+        if not isinstance(ownership, dict) or current["definitions"].keys() - ownership.keys():
+            raise ValueError("Every current CBS definition requires a source ownership entry")
         current_digest = hashlib.sha256(current_raw).hexdigest()
         for name, definition in current["definitions"].items():
             if name not in names:
@@ -87,15 +90,19 @@ def build(
                     raise ValueError(f"Unreviewed current CBS operation: {name}")
             elif policy == "dsc25-plain":
                 if definition.get("extra_sequence") != [
-                    "{reset}", "860002", "3101030400", "14ffffff", "{reset}", "860502"
+                    "{reset}",
+                    "860002",
+                    "3101030400",
+                    "14ffffff",
+                    "{reset}",
+                    "860502",
                 ]:
                     raise ValueError(f"Unreviewed DSC occurrence sequence: {name}")
             elif policy == "default":
                 if (
                     definition.get("version") not in ("5", "6")
                     or definition.get("reset_xsend_count") != 1
-                    or definition.get("verified_reset_request")
-                    != "2e10010101641f80000fff0f3fff00"
+                    or definition.get("verified_reset_request") != "2e10010101641f80000fff0f3fff00"
                 ):
                     raise ValueError(f"Unreviewed default CBS reset: {name}")
             elif not (
@@ -107,8 +114,16 @@ def build(
             definitions[name] = {
                 key: definition[key]
                 for key in (
-                    "address", "version", "reset", "read_job", "prg_sha256", "detail",
-                    "disposition", "ownership", "source_groups", "source_reset_policy",
+                    "address",
+                    "version",
+                    "reset",
+                    "read_job",
+                    "prg_sha256",
+                    "detail",
+                    "disposition",
+                    "ownership",
+                    "source_groups",
+                    "source_reset_policy",
                 )
             }
             if definition["version"] == "7.0":
@@ -117,9 +132,7 @@ def build(
                         row[0].removeprefix("0x").upper(): row[1]
                         for row in definition["tables"][table]["rows"]
                     }
-                    for table in (
-                        "TAB_CBS_RETURN_CODE_ALLGEMEIN", "TAB_CBS_RETURN_CODE_KOMPONENTE"
-                    )
+                    for table in ("TAB_CBS_RETURN_CODE_ALLGEMEIN", "TAB_CBS_RETURN_CODE_KOMPONENTE")
                 }
             if policy == "dsc25-plain":
                 for field in ("extra_sequence", "extra_svk", "record_index", "side_effects"):

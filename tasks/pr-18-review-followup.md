@@ -126,3 +126,64 @@ The separate Robin review job stops because the complete diff exceeds its
 licence passphrase derivation in `recover_cafd_assets.py`; that algorithm is
 required by the supplied file format, not a new application password-storage
 scheme. Neither check is disabled, silenced or reconfigured by this review fix.
+
+## Second review batch — plan
+
+Verify the newly supplied findings against the current code. Preserve the DSC
+plain-reset source gate when an exact optional job is unavailable; keep unmapped
+coding categories unknown; enforce D-43 English-only normal text lookup. Make
+selection evidence mandatory in the builder CLI, bound source reads before
+allocation and require independent CBS ownership entries. Bind export completion
+to the actual originating report across disconnect/reconnect, prevent overlapping
+snapshot/preparation, reset selected-page scrolling and make restore preparation
+visible. Exercise focused offline/Qt and failure cases before the full gate/push;
+no test suite or protocol guesses.
+
+### Second batch results
+
+All ten new findings were still valid and were fixed minimally; none skipped.
+
+- DSC optional extra-job metadata failures return `None`, allowing only the
+  pre-existing SVK/fixed-record gate to authorize a plain reset. Unknown/unsafe
+  extra branches remain blocked; exact supported jobs retain their full sequence.
+- Nonempty series tags with no recovered category mapping return unknown,
+  including category0. Mapped categories, mixed tags and existing exclusions
+  retain their established behavior.
+- D-43 English lookups no longer return German when English is absent. Explicit
+  German requests are unchanged; this applies to descriptions and ECU titles.
+- CLI selection evidence is required. Encrypted definition source files are
+  size-checked before reads (strictly positive and at most2×MAX_XML). Current
+  CBS overlays require a corresponding independent ownership table entry.
+- Export workers keep a GUI-only reference to their originating report and a
+  detached background payload. Successful completion marks that original report
+  even after disconnect clears the current worker; an older export cannot mark
+  a newer report. Snapshot activation now refuses overlapping page work while
+  retaining the uncleared-reader guard.
+- Main-page navigation resets the outer scroll position after page selection.
+  Backup restoration switches to Coding, selects its navigation tab and resets
+  scrolling before invoking preparation, so its existing progress is visible.
+
+Focused verification (outside the repository; no suite):
+
+- `/tmp/check_pr18_cbs_category_review.py`: actual CBS worker/journal plain-safe
+  and unsafe paths for absent extra sequence/job/hash; no86/31/14 emitted by
+  fallback; read-only zero-I/O; exact six-step metadata retained. Unknown-only,
+  mapped/mixed/category0 and exclusion predicate outcomes checked.
+- `/tmp/pr18_review_batch2.py`: required CLI input rejects before output,
+  pre-read size hooks reject zero/oversize without reading, inclusive boundary
+  reaches parsing, missing ownership tampering preserves prior output, and
+  explicit nonprimary ownership remains blocked. Actual CBS regeneration is
+  byte-identical. `/tmp/pr18_one_cafd.py` decrypts an actual supplied CAFD to
+  75,908 XML bytes with the size guard in place.
+- `~/BMW-Tool/investigations/source-runtime-20261104/pr18_batch2_ui_check.py`:
+  actual threaded export completion after MainWindow disconnect marks origin;
+  older export after reconnect leaves a replacement report untouched; active
+  preparation/uncleared reader prevent snapshot allocation; two long pages
+  reset scroll to zero; restore visibility precedes invocation; mutation blocks
+  restore navigation. Zero vehicle requests.
+- Independent `/tmp/review-pr18-final-ui-text.py`: stalled actual QThread export,
+  detached payload snapshot, report identity, Qt navigation/restore ordering and
+  English-missing/German-request SQLite fixtures all pass. No actionable findings.
+
+No runtime asset bytes, cryptographic contracts or vehicle storage requirements
+were changed by this review batch. Full preflight is rerun before push.

@@ -866,7 +866,7 @@ class CbsResetWorker(CarWorker):
                 or not backend.has_job(owner["name"], JOB_RESET)
                 or backend.file_sha256(owner["name"]) != definition.get("prg_sha256")
             ):
-                raise PermissionError("The exact DSC reset job definition is not available")
+                return None
             sequence = [
                 request.hex() if part == "{reset}" else part
                 for part in definition["extra_sequence"]

@@ -481,11 +481,12 @@ class CodingDatabase:
                 raise ValueError("Coding selection metadata is invalid")
             mapping = document["series_categories"]
             supported = {value for tag in tags for value in mapping.get(str(tag).lower(), [])}
-            if supported:
-                if category is None:
-                    return None, "Source category predicate is not identified"
-                if category != 0 and category not in supported:
-                    return False, "Option is excluded by the source category filter"
+            if not supported:
+                return None, "Source series tags have no recovered category mapping"
+            if category is None:
+                return None, "Source category predicate is not identified"
+            if category != 0 and category not in supported:
+                return False, "Option is excluded by the source category filter"
         if preset.get("excludedSeries"):
             return (
                 None,

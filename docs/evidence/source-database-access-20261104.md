@@ -82,8 +82,10 @@ ECU titles are description data, not proof of an installed ECU or write support.
 - Wrong ECU and wrong memory return empty; an SQL-injection-shaped ECU name
   remains a parameter, not SQL. Four concurrent threads repeat the same lookup
   without sharing connections.
-- One-off ambiguity fixture with two different texts returns empty; English
-  absence falls back to German. No automated suite or `tests/` was created.
+- One-off ambiguity fixture with two different texts returns empty. Updated in
+  the PR18 follow-up to honor D-43: English requests return empty when English
+  is absent; explicit German requests retain German text. This applies to both
+  fault descriptions and ECU titles. No automated suite or `tests/` was created.
 - Python audit observations show runtime lookup opens only the generated asset,
   with no path under `sources/` and no codec/provider subprocess.
 - Generated SQLite `PRAGMA integrity_check` returns `ok`.

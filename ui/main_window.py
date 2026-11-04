@@ -6,6 +6,7 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 
 import logging
 from collections.abc import Callable
+from pathlib import Path
 from threading import Event
 from typing import Any
 
@@ -135,7 +136,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.history_page)
 
         self.backups_page = BackupsPage()
-        self.backups_page.restore_requested.connect(self.coding_page.restore_vehicle_backup)
+        self.backups_page.restore_requested.connect(self._review_coding_restore)
         self.stack.addWidget(self.backups_page)
 
         self.content_scroll = QScrollArea()
@@ -381,9 +382,20 @@ class MainWindow(QMainWindow):
                 self.stack.setCurrentWidget(self.welcome_page)
             else:
                 self.stack.setCurrentIndex(index + 1)
+            self.content_scroll.verticalScrollBar().setValue(0)
             page = self.stack.currentWidget()
             if page in (self.diag_page, self.coding_page):
                 page.activate()
+
+    @Slot(object)
+    def _review_coding_restore(self, path: object) -> None:
+        """Show preparation progress before starting a reviewed backup restore."""
+        if self._mutation_active or not isinstance(path, Path):
+            return
+        self.stack.setCurrentWidget(self.coding_page)
+        self.nav_group.button(2).setChecked(True)
+        self.content_scroll.verticalScrollBar().setValue(0)
+        self.coding_page.restore_vehicle_backup(path)
 
     # ---- Connection flow ----
 

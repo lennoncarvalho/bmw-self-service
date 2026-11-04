@@ -47,19 +47,19 @@ class DiagnosticTexts:
             return ""
 
     def describe(self, code: int, *, ecu: str, fault_type: str = "F", language: str = "en") -> str:
-        """Return an exact variant/code/memory description with German fallback.
+        """Return an exact variant/code/memory description in the requested language.
 
         Args:
             code: Numeric diagnostic code, independent of its display width.
             ecu: Identified variant name, never a marketing model or chassis hint.
             fault_type: Source memory datatype F (fault) or I (information).
-            language: en prefers English; de requests German.
+            language: en requests English only; de requests German only.
         """
         if isinstance(code, bool) or not 0 <= code <= 0xFFFFFF or not ecu:
             return ""
         if fault_type not in {"F", "I"} or language not in {"en", "de"}:
             return ""
-        column = "coalesce(nullif(text_en,''),text_de)" if language == "en" else "text_de"
+        column = "text_en" if language == "en" else "text_de"
         return self._texts(
             f"SELECT {column} FROM fault_texts "
             "WHERE variant=? COLLATE NOCASE AND code=? AND fault_type=? LIMIT 129",
@@ -70,7 +70,7 @@ class DiagnosticTexts:
         """Return a sourced ECU title only when exact-name candidates agree."""
         if not ecu or language not in {"en", "de"}:
             return ""
-        column = "coalesce(nullif(text_en,''),text_de)" if language == "en" else "text_de"
+        column = "text_en" if language == "en" else "text_de"
         return self._texts(
             f"SELECT {column} FROM ecu_titles WHERE variant=? COLLATE NOCASE LIMIT 129", (ecu,)
         )

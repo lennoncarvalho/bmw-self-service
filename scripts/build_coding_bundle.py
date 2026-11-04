@@ -465,7 +465,10 @@ if __name__ == "__main__":
         help="Development-only supplied coding package for authorization entries",
     )
     parser.add_argument(
-        "--selection-evidence", type=Path, help="Retained complete REA series selector evidence"
+        "--selection-evidence",
+        type=Path,
+        required=True,
+        help="Retained complete REA series selector evidence",
     )
     parser.add_argument(
         "--resource-strings",
