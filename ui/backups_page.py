@@ -27,6 +27,7 @@ class BackupsPage(QWidget):
     restore_requested = Signal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the expanding backup record list and local file actions."""
         super().__init__(parent)
         self.store = OperationStore()
         layout = QVBoxLayout(self)

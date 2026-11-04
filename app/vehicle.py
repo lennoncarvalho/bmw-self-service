@@ -287,6 +287,7 @@ class DiagnosticCatalog:
     """Exact address/variant definitions and English fault descriptions."""
 
     def __init__(self, path: Path | None = None) -> None:
+        """Load the bundled diagnostic catalogue and optional exact text mappings."""
         self.path = path or resource_path("coding_data/diagnostic_catalog.json.gz")
         self.variants: dict[str, dict[str, Any]] = {}
         self.descriptions: dict[str, dict[str, str]] = {}

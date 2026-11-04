@@ -1,6 +1,6 @@
 """Generated ECU job assets and development-only source extraction helpers.
 
-Runtime uses only the compact ``ista_bundle/`` asset produced during development.
+Runtime uses only the compact generated job assets produced during development.
 It never validates or reads a saved reference-software/source-folder preference.
 ``FolderProvider`` and explicit ``from_paths(..., folder)`` remain available to
 builders and offline research; app workers use the generated bundle exclusively.
@@ -529,11 +529,13 @@ class BundleProvider:
 
     @staticmethod
     def _digest(value: Any) -> str:
+        """Validate a lowercase SHA-256 digest from the generated manifest."""
         if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
             raise DataFormatError("Bundle asset digest is invalid")
         return value
 
     def _verify(self, path: Path, digest: str, size: int | None = None) -> None:
+        """Check an asset against its manifest, caching only unchanged file identities."""
         try:
             if (
                 path.is_symlink()
@@ -558,6 +560,7 @@ class BundleProvider:
             raise DataFormatError("Bundle asset could not be read") from exc
 
     def _verify_jobs(self) -> None:
+        """Reject unlisted job files and validate every bundled dependency."""
         try:
             names = {p.name.lower() for p in self.ecu_dir.iterdir() if p.is_file()}
             if names != set(self._job_files):
@@ -758,6 +761,49 @@ def bundle_root() -> Path:
 # Data source
 
 
+def recoverable_bundle_root(bundle: Path) -> Path:
+    """Resolve a manifest-bound previous publication after an interrupted directory swap."""
+    if bundle.exists():
+        return bundle
+    marker = bundle.parent / f".{bundle.name}.recovery.json"
+    if marker.exists() or marker.is_symlink():
+        try:
+            if marker.is_symlink() or marker.stat().st_size > 4096:
+                return bundle
+            record = json.loads(marker.read_bytes())
+            name = record.get("directory")
+            digest = record.get("manifest_sha256")
+            if (
+                record.get("schema") != 1
+                or not isinstance(name, str)
+                or Path(name).name != name
+                or "/" in name
+                or "\\" in name
+                or not name.startswith(f".{bundle.name}.previous-")
+                or not isinstance(digest, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            ):
+                return bundle
+            previous = bundle.parent / name
+            manifest = previous / "manifest.json"
+            if (
+                previous.is_symlink()
+                or manifest.is_symlink()
+                or not previous.is_dir()
+                or manifest.stat().st_size > 2 * 1024 * 1024
+                or hashlib.sha256(manifest.read_bytes()).hexdigest() != digest
+            ):
+                return bundle
+            return previous
+        except (OSError, ValueError, AttributeError):
+            return bundle
+    # Compatibility for crashes from builders predating the explicit marker.
+    candidates = list(bundle.parent.glob(f".{bundle.name}.previous-*"))
+    if len(candidates) == 1 and candidates[0].is_dir() and not candidates[0].is_symlink():
+        return candidates[0]
+    return bundle
+
+
 class IstaDataSource:
     """Job assets; runtime is bundle-only, explicit folder inputs are for builders."""
 
@@ -769,6 +815,8 @@ class IstaDataSource:
     def from_paths(cls, bundle: Path | None, folder: str | Path | None) -> "IstaDataSource":
         """Explicit builder/research inputs; app runtime passes no source folder."""
         providers: list[DataProvider] = []
+        if bundle is not None:
+            bundle = recoverable_bundle_root(bundle)
         if bundle is not None and (bundle / "manifest.json").is_file():
             try:
                 providers.append(BundleProvider(bundle))

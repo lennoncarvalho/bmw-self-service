@@ -21,6 +21,7 @@ _NOTICE = (
 
 
 def _encoded(value: Any) -> bytes:
+    """Encode canonical JSON for retained guard integrity checks."""
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode()
@@ -67,6 +68,7 @@ def contracts(database: CodingDatabase, address: int) -> list[dict]:
 
 
 def _path(store: OperationStore, vin: str, guard: dict) -> Path:
+    """Derive a per-vehicle guard path without exposing the VIN in its name."""
     if not valid_vin(vin):
         raise ValueError("Coding guard requires verified vehicle identity")
     identity = hashlib.sha256((vin + "\0" + guard["id"]).encode()).hexdigest()
@@ -74,6 +76,7 @@ def _path(store: OperationStore, vin: str, guard: dict) -> Path:
 
 
 def _load(path: Path, vin: str, guard: dict, *, required: bool) -> dict | None:
+    """Load bounded guard evidence and verify its envelope and source identity."""
     if not path.exists():
         if required:
             raise ValueError("The prepared coding guard evidence is missing")

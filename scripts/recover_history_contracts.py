@@ -48,6 +48,7 @@ class _EncoderPeer:
     """Only predetermined request/response pairs; no networking implementation."""
 
     def __init__(self) -> None:
+        """Initialize an empty, network-free expected exchange."""
         self.expected = b""
         self.reply = b""
         self.requests: list[bytes] = []
@@ -68,6 +69,7 @@ class _EncoderPeer:
 
 
 def _arguments(entry: HistoryEntry) -> str:
+    """Serialize a history entry into the source job argument order."""
     header: list[object] = [
         entry.service_date.day,
         entry.service_date.month,
@@ -85,6 +87,7 @@ def _arguments(entry: HistoryEntry) -> str:
 
 
 def _fixtures() -> list[HistoryEntry]:
+    """Cover all sourced service types and signed/unsigned encoding boundaries."""
     codes = [code for _, code in SERVICE_TYPES]
     return [
         HistoryEntry(
@@ -126,6 +129,7 @@ def _run(
     field: str | None = None,
     status: int = 0,
 ) -> dict[str, Any]:
+    """Execute one exact exchange and verify its final application status."""
     peer.expected, peer.reply, peer.requests = request, response, []
     result = engine.run_job(job, args, timeout=3.0, grant=frozenset({0x31, 0x11}))
     if result.status != "OKAY" or peer.requests != [request]:
@@ -138,8 +142,19 @@ def _run(
 
 
 def _write(path: Path, data: dict[str, Any]) -> None:
+    """Publish deterministic JSON through an atomic file replacement."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    raw = (json.dumps(data, indent=2, sort_keys=True) + "\n").encode()
+    _write_bytes(path, _encoded(data))
+
+
+def _encoded(data: dict[str, Any]) -> bytes:
+    """Encode stable JSON bytes shared by publication and provenance hashes."""
+    return (json.dumps(data, indent=2, sort_keys=True) + "\n").encode()
+
+
+def _write_bytes(path: Path, raw: bytes) -> None:
+    """Flush a temporary file before replacing the destination atomically."""
+    path.parent.mkdir(parents=True, exist_ok=True)
     temporary: str | None = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -156,7 +171,34 @@ def _write(path: Path, data: dict[str, Any]) -> None:
             Path(temporary).unlink(missing_ok=True)
 
 
+def _publish(output: Path, asset: dict[str, Any], evidence: Path, record: dict[str, Any]) -> None:
+    """Restore both prior files if either publication fails; surface rollback failures."""
+    if output.resolve() == evidence.resolve():
+        raise ValueError("Runtime asset and evidence must have distinct paths")
+    snapshots = [
+        (path, path.read_bytes() if path.exists() else None) for path in (output, evidence)
+    ]
+    try:
+        _write(output, asset)
+        _write(evidence, record)
+    except BaseException:
+        try:
+            path, previous = snapshots[0]
+            if previous is None:
+                path.unlink(missing_ok=True)
+            else:
+                _write_bytes(path, previous)
+        finally:
+            path, previous = snapshots[1]
+            if previous is None:
+                path.unlink(missing_ok=True)
+            else:
+                _write_bytes(path, previous)
+        raise
+
+
 def _fingerprint(parser: Any, path: Path) -> dict[str, Any]:
+    """Require the reviewed ADD encoder before recording normalized job hashes."""
     parsed = parser.PrgParser(str(path))
     job = next(job for job in parsed._parse_jobs(parsed._parse_description()) if job.name == ADD)
     lines = parsed._disassemble_job(job.address)
@@ -181,11 +223,8 @@ def _fingerprint(parser: Any, path: Path) -> dict[str, Any]:
     }
 
 
-def build(
-    bundle: Path, output: Path, evidence: Path, parser_path: Path | None = None
-) -> dict[str, Any]:
+def build(bundle: Path, output: Path, evidence: Path, parser_path: Path) -> dict[str, Any]:
     """Validate every exact source headunit and publish a standalone execution asset."""
-    parser_path = parser_path or Path(__file__).resolve().parents[1] / "BimmerDaten/decoderPrg.py"
     spec = importlib.util.spec_from_file_location("history_asset_parser", parser_path)
     if spec is None or spec.loader is None:
         raise ValueError("The development job parser is unavailable")
@@ -290,31 +329,32 @@ def build(
         "erase_delay_ms": 200,
         "add_delay_ms": 100,
     }
-    _write(output, asset)
-    _write(
-        evidence,
-        {
-            "schema": 1,
-            "source_group_table_sha256": hashlib.sha256(table.read_bytes()).hexdigest(),
-            "asset_sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
-            "profiles": profiles,
-            "excluded": excluded,
-            "pacing_source": "retained native writer contract: erase200ms/add100ms",
-            "native_width_verification": {
-                "resolved": True,
-                "opcodes": ["ASR 0x18", "fix2flt 0x68"],
-                "correction": "32-bit registers are already signed; sign-extend only shorter widths",
-                "boundary_vectors": "I32 min/max, negative256/65536 multiples, U32 maximum mileage",
-                "arithmetic_source_sha256": hashlib.sha256(
-                    (Path(__file__).resolve().parents[1] / "native/ediabasx/src/opcodes_arith.c").read_bytes()
-                ).hexdigest(),
-                "conversion_source_sha256": hashlib.sha256(
-                    (Path(__file__).resolve().parents[1] / "native/ediabasx/src/opcodes_misc.c").read_bytes()
-                ).hexdigest(),
-            },
-            "physical_validation": False,
+    evidence_data = {
+        "schema": 1,
+        "source_group_table_sha256": hashlib.sha256(table.read_bytes()).hexdigest(),
+        "asset_sha256": hashlib.sha256(_encoded(asset)).hexdigest(),
+        "profiles": profiles,
+        "excluded": excluded,
+        "pacing_source": "retained native writer contract: erase200ms/add100ms",
+        "native_width_verification": {
+            "resolved": True,
+            "opcodes": ["ASR 0x18", "fix2flt 0x68"],
+            "correction": "32-bit registers are already signed; sign-extend only shorter widths",
+            "boundary_vectors": "I32 min/max, negative256/65536 multiples, U32 maximum mileage",
+            "arithmetic_source_sha256": hashlib.sha256(
+                (
+                    Path(__file__).resolve().parents[1] / "native/ediabasx/src/opcodes_arith.c"
+                ).read_bytes()
+            ).hexdigest(),
+            "conversion_source_sha256": hashlib.sha256(
+                (
+                    Path(__file__).resolve().parents[1] / "native/ediabasx/src/opcodes_misc.c"
+                ).read_bytes()
+            ).hexdigest(),
         },
-    )
+        "physical_validation": False,
+    }
+    _publish(output, asset, evidence, evidence_data)
     return asset
 
 
@@ -328,7 +368,7 @@ def main() -> None:
         type=Path,
         default=Path("docs/evidence/source-history-contracts-20261104.json"),
     )
-    cli.add_argument("--parser", type=Path)
+    cli.add_argument("--parser", type=Path, required=True)
     args = cli.parse_args()
     asset = build(args.bundle, args.output, args.evidence, args.parser)
     print(f"Verified {len(asset['engines'])} exact headunit history contracts")

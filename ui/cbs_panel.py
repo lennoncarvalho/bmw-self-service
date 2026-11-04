@@ -26,6 +26,7 @@ class CbsPanel(QWidget):
     reset_requested = Signal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the service-status toggle and expanding record container."""
         super().__init__(parent)
         self._resets_allowed = False
         layout = QVBoxLayout(self)
@@ -50,6 +51,7 @@ class CbsPanel(QWidget):
         self._toggle(False)
 
     def _toggle(self, visible: bool) -> None:
+        """Show the complete service list and its source status together."""
         self.container.setVisible(visible)
         self.status_label.setVisible(visible)
         self.toggle_button.setText(

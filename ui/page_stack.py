@@ -24,6 +24,7 @@ class PageStack(QStackedWidget):
 
     @Slot(int)
     def _page_changed(self, index: int) -> None:
+        """Invalidate geometry and recalculate the newly visible page height."""
         layout = self.layout()
         if layout is not None:
             layout.invalidate()
@@ -31,6 +32,7 @@ class PageStack(QStackedWidget):
         self.updateGeometry()
 
     def _refresh_height(self) -> None:
+        """Constrain nested stacks to their current content rather than hidden tabs."""
         if self._content_height:
             # Parent layouts otherwise query the native stacked layout's
             # height-for-width, which includes inactive pages. This tracks the

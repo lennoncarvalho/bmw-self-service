@@ -27,6 +27,7 @@ def build(backup_evidence: Path, read_evidence: Path, output: Path) -> dict:
         raise ValueError("Reader evidence does not identify one source artifact")
 
     def method(class_name: str, name: str) -> str:
+        """Select complete, consistent retained evidence for one source method."""
         matches = [
             row
             for row in records

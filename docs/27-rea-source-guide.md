@@ -129,12 +129,16 @@ Legacy formats named in the source inventory are research references only.
 > and description gaps above may not need a new source request: the already-supplied
 > protected sources are proposed candidates, once decrypted/derived. Their contents
 > and usability were unverified by that session. The local coding files have
-> since decrypted/parsed successfully (doc 29); exact applicability remains work. BimmerCode `coding_data/*.enc` (key in
-> `app/coding_db.py`) or ISTA 4.29 CAFD may provide the named preset catalogue and
+> since decrypted/parsed successfully (doc 29); exact applicability remains work.
+> Decrypted coding assets and ISTA 4.29 CAFD are available development inputs;
+> their recovery is recorded in `docs/evidence/source-cafd-access-20261104.md`.
+> They may provide the named preset catalogue and
 > the 12 missing F48 ECU definitions; BimmerCode `de.appomotive.bimmercode.e.*`
 > holds the referenced key-derivation classes and may provide the security-access
-> seed/key; ISTA `DiagDocDb.sqlite` (encrypted, not opened) may provide English
-> fault/ECU/CBS texts, service-function rules and type-key→model data.
+> seed/key. ISTA `DiagDocDb.sqlite` has now been opened and diagnostic texts
+> extracted into `coding_data/diagnostic_texts.db`; service-function rules,
+> type-key→model data and named preset catalogue coverage remain separate
+> investigations.
 > See [claude-session-limitations.md](claude-session-limitations.md).
 
 Use current sources first. A source request must state the unresolved contract,

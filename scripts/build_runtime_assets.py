@@ -43,6 +43,7 @@ def build(
     reader_prerequisite_evidence: Path,
     decrypted_definitions: Path | None = None,
     openssl: str = "/opt/homebrew/bin/openssl",
+    job_parser: Path | None = None,
 ) -> None:
     """Run existing producers, then publish a content manifest for the final set.
 
@@ -53,6 +54,13 @@ def build(
     ista, coding, apk, reader, output = (
         path.expanduser().resolve() for path in (ista, coding, apk, reader, output)
     )
+    if job_parser is None:
+        raise ValueError("An explicit development job parser is required")
+    job_parser = job_parser.expanduser().resolve(strict=True)
+    if digest(coding / "diagnostic_catalog.json.gz") != digest(
+        ROOT / "coding_data/diagnostic_catalog.json.gz"
+    ):
+        raise ValueError("Selected coding catalogue differs from the bundled diagnostic catalogue")
     output.mkdir(parents=True, exist_ok=True)
     data = output / "coding_data"
     data.mkdir(parents=True, exist_ok=True)
@@ -128,6 +136,8 @@ def build(
         str(data / "history_contracts.json"),
         "--evidence",
         str(output / "build/history-contract-verification.json"),
+        "--parser",
+        str(job_parser),
     )
     # Existing independently recovered runtime contracts remain assets, never
     # reference-application dependencies. Their own evidence records own provenance.
@@ -199,6 +209,7 @@ if __name__ == "__main__":
         help="Reuse a completed, hash-checked development CAFD export instead of decoding again",
     )
     parser.add_argument("--openssl", default="/opt/homebrew/bin/openssl")
+    parser.add_argument("--job-parser", type=Path, required=True)
     args = parser.parse_args()
     build(
         args.ista,
@@ -212,4 +223,5 @@ if __name__ == "__main__":
         args.reader_prerequisite_evidence,
         args.decrypted_definitions,
         args.openssl,
+        args.job_parser,
     )

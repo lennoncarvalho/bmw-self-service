@@ -476,6 +476,7 @@ def read_cbs(
 
 
 def _read_cbs(connection: Any, ecus: list[dict[str, Any]], jobs: JobBackend) -> dict[str, Any]:
+    """Read source-selected CBS owners within one bounded batch."""
     data = cbs_definitions()
     labels: dict[str, str] = data["items"]
     blocked_items = set(data["not_resettable"])
@@ -792,6 +793,7 @@ class CbsResetPlan:
 
 
 def _primary_reset_owner(owner: dict[str, Any]) -> bool:
+    """Require the exact source-defined primary reset owner metadata."""
     definition = cbs_definitions()["definitions"].get(owner.get("name"), {})
     return (
         definition.get("ownership") == "primary"
@@ -836,6 +838,7 @@ class CbsResetWorker(CarWorker):
         dsc_extra_acknowledged: bool = False,
         backend: JobBackend | None = None,
     ) -> None:
+        """Retain the frozen reset plan, storage and explicit power acknowledgement."""
         super().__init__(connection)
         self.plan, self.store = plan, store
         self.power_acknowledged = power_acknowledged
@@ -943,6 +946,7 @@ class CbsResetWorker(CarWorker):
                 backend.close()
 
     def _reset(self, backend: JobBackend) -> dict[str, Any]:
+        """Persist intent and execute the exact reset policy with observed outcomes."""
         connection, plan = self.connection, self.plan
         owner = plan.owner
         policy = owner["reset"]
@@ -1128,12 +1132,14 @@ class CbsResetWorker(CarWorker):
             active = ""
 
             def sending(payload: bytes) -> None:
+                """Persist the exact next reset-sequence telegram before transmission."""
                 nonlocal position, active
                 active = f"reset-step-{position + 1}"
                 record("sending", active, payload)
                 position += 1
 
             def received(payload: bytes, reply: bytes) -> None:
+                """Check source preconditions and classify each reset-sequence response."""
                 if payload in (b"\x22\xf1\x01", b"\x22\x10\x01") and position == 0:
                     field = "svk" if payload == b"\x22\xf1\x01" else "before"
                     if reply != state[field]:
@@ -1375,6 +1381,7 @@ class CbsResetWorker(CarWorker):
         return self.report
 
     def _outcome(self, state: dict[str, Any], failure: str) -> tuple[str, str]:
+        """Classify reset completion from observed sends, responses and rereads."""
         events = {(e["step"], e["state"]) for e in self.report["events"]}
         if ("reset", "rejected") in events:
             return "rejected", self.report.get("reset_reason") or "The ECU rejected the reset"

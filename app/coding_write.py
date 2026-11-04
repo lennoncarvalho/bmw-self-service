@@ -38,6 +38,7 @@ _INSTRUCTIONS = (
 
 
 def _canonical(value: Any) -> bytes:
+    """Encode deterministic JSON for frozen plans and integrity hashes."""
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode()
@@ -56,6 +57,7 @@ def bootloader_identifier(response: bytes) -> str:
 
 
 def _groups(db: CodingDatabase, definitions: list[str]) -> list[int]:
+    """Collect complete coding group DIDs in source definition order."""
     groups: set[int] = set()
     for definition in definitions:
         identifier, version = definition.split("-", 1)
@@ -79,6 +81,7 @@ def _groups(db: CodingDatabase, definitions: list[str]) -> list[int]:
 
 
 def _definition_digest(db: CodingDatabase, definitions: list[str]) -> str:
+    """Bind the selected definition material to its ordered source hashes."""
     return hashlib.sha256(
         "".join(db.source_sha256(item) for item in definitions).encode()
     ).hexdigest()
@@ -146,6 +149,7 @@ def _resolve_changes(
     variant_index: str,
     vehicle_context: dict,
 ) -> dict[int, bytes]:
+    """Validate source preset selections and compose nonconflicting masked changes."""
     intended = dict(baseline)
     by_definition: dict[str, list[tuple[dict, str]]] = {}
     seen: set[tuple[str, int]] = set()
@@ -218,10 +222,12 @@ def _finalize(
 ) -> dict[int, bytes]:
     # This helper implements source NCD signatures and exact key selection. Its
     # absence is not permission to return unfinalized bytes.
+    """Apply source signatures using the reported bootloader identity."""
     return db.finalize_write_blocks(blocks, definitions, bootloader_identifier(software))
 
 
 def _target_record(target: dict) -> dict:
+    """Extract the strict complete-baseline storage fields from a prepared target."""
     return {
         key: target[key]
         for key in ("address", "variant", "software", "definition_sha256", "baseline", "intended")
@@ -243,6 +249,7 @@ class CodingPrepareWorker(CarWorker):
         restore_path: Path | None = None,
         vehicle_context: dict | None = None,
     ) -> None:
+        """Copy selection inputs and retain the optional explicit restore source."""
         super().__init__(connection)
         self.restore_path = restore_path
         self.guard_notice = ""
@@ -328,7 +335,10 @@ class CodingPrepareWorker(CarWorker):
                 rows: list[dict] = rows,
                 target: dict = target,
             ) -> bytes:
+                """Read, validate and freeze one complete target under the protocol owner."""
+
                 def read_uds(payload: bytes, address_override: int | None = None) -> bytes:
+                    """Cap each owner request while preserving the overall preparation deadline."""
                     deadline = ctx.deadline
                     ctx.deadline = min(deadline, time.monotonic() + 30.0)
                     try:
@@ -523,6 +533,7 @@ class CodingRestorePrepareWorker(CodingPrepareWorker):
         backup_path: Path,
         store: OperationStore | None = None,
     ) -> None:
+        """Defer validated backup loading and fresh comparison to the worker."""
         super().__init__(connection, ecus, [], store, restore_path=backup_path)
 
 
@@ -676,6 +687,7 @@ class CodingWriteWorker(CarWorker):
         power_acknowledged: bool = False,
         recovery_acknowledged: bool = False,
     ) -> None:
+        """Retain the frozen plan and explicit power/recovery acknowledgements."""
         super().__init__(connection)
         self.plan = plan
         self.store = store or OperationStore()
@@ -722,6 +734,7 @@ class CodingWriteWorker(CarWorker):
         def event(
             kind: str, address: int, request: bytes, response: bytes = b"", state: str = "sending"
         ) -> None:
+            """Retain and durably journal each step before continuing execution."""
             record = {
                 "kind": kind,
                 "address": address,
@@ -737,6 +750,7 @@ class CodingWriteWorker(CarWorker):
                 raise
 
         def send(ctx: OperationContext, address: int, payload: bytes, kind: str) -> bytes:
+            """Journal one bounded telegram and validate its final application response."""
             nonlocal attempted_mutation
             ctx.remaining()
             event(kind, address, payload)
@@ -789,6 +803,7 @@ class CodingWriteWorker(CarWorker):
             return bytes(response)
 
         def check(ctx: OperationContext, target: dict, expected: dict[str, str]) -> None:
+            """Compare current identity, software and complete groups with expected bytes."""
             address = target["address"]
             if send(ctx, address, b"\x22\xf1\x50", "identity").hex() != target["identity"]:
                 raise ValueError("Coding ECU identity changed")
@@ -805,6 +820,7 @@ class CodingWriteWorker(CarWorker):
             blocks: dict[str, str],
             current: dict[str, str] | None = None,
         ) -> None:
+            """Run the source session, authorization, group and completion sequence."""
             address = target["address"]
             if address == 0x12 and blocks.get("3010") != (current or target["baseline"]).get(
                 "3010"
@@ -851,6 +867,7 @@ class CodingWriteWorker(CarWorker):
             send(ctx, address, b"\x14\xff\xff\xff", "clear")
 
         def execute(services: Any, ctx: OperationContext) -> bytes:
+            """Recheck confirmed recovery evidence and fresh targets before programming."""
             prior_now = _prior_records(
                 self.store,
                 data["vin"],
@@ -883,6 +900,7 @@ class CodingWriteWorker(CarWorker):
                 ):
 
                     def read_guard(payload: bytes, address: int = target["address"]) -> bytes:
+                        """Read the selected guard through the journalled owner request path."""
                         return send(ctx, address, payload, "guard")
 
                     try:
@@ -923,6 +941,7 @@ class CodingWriteWorker(CarWorker):
                 def read_prerequisite(
                     payload: bytes, override: int | None = None, *, address: int = target["address"]
                 ) -> bytes:
+                    """Route reader prerequisites through bounded, journalled owner requests."""
                     return send(
                         ctx,
                         address if override is None else override,

@@ -42,6 +42,7 @@ def applies(address: int, definitions: list[str], db: CodingDatabase) -> bool:
 
 
 def _read_file(path: Path) -> bytes:
+    """Read entitlement material with a fixed size bound."""
     with path.open("rb") as stream:
         payload = stream.read(_MAX_FILE + 1)
     if len(payload) > _MAX_FILE:
@@ -50,6 +51,7 @@ def _read_file(path: Path) -> bytes:
 
 
 def _publish(path: Path, payload: bytes) -> None:
+    """Atomically publish and sync exact entitlement bytes before proceeding."""
     if len(payload) > _MAX_FILE:
         raise ValueError("Entitlement backup exceeds its supported bound")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -72,6 +74,7 @@ def _publish(path: Path, payload: bytes) -> None:
 
 
 def _verify(payload: bytes, variant: str, status: int, contract: dict) -> None:
+    """Apply the source variant/status and RSA-MD5 entitlement checks."""
     if variant != contract["verify_variant"]:
         return
     if status == 4:

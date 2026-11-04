@@ -31,6 +31,7 @@ _VARIANT = re.compile(r"[0-9]{3}-[0-9]{3}-[0-9]{3}")
 
 
 def _number(value: Any) -> int:
+    """Decode a source integer while rejecting booleans and missing values."""
     if isinstance(value, bool):
         raise ValueError("Boolean is not a coding integer")
     if isinstance(value, int):
@@ -60,6 +61,7 @@ class CodingDatabase:
         self._load_metadata()
 
     def _connect(self) -> sqlite3.Connection:
+        """Open one bounded, read-only connection to the standalone catalogue."""
         if not self.path.is_file() or not 0 < self.path.stat().st_size <= MAX_DATABASE:
             raise ValueError("Standalone vehicle coding catalogue is missing or too large")
         connection = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
@@ -68,6 +70,7 @@ class CodingDatabase:
         return connection
 
     def _load_metadata(self) -> None:
+        """Validate the catalogue manifest and load its document inventory and labels."""
         with closing(self._connect()) as connection:
             if connection.execute("PRAGMA user_version").fetchone() != (1,):
                 raise ValueError("Unsupported coding catalogue schema")
@@ -128,12 +131,14 @@ class CodingDatabase:
         return document
 
     def _source_hash(self, name: str) -> str:
+        """Return the retained original source hash for one compiled document."""
         value = self._manifest.get("sources", {}).get(name + ".enc")
         if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
             raise ValueError("Coding document provenance is unavailable")
         return value
 
     def _document_hash(self, name: str) -> str:
+        """Return the integrity hash of one compiled plaintext document."""
         with closing(self._connect()) as connection:
             row = connection.execute(
                 "SELECT sha256 FROM documents WHERE name=?", (name,)
@@ -143,6 +148,7 @@ class CodingDatabase:
         return row[0]
 
     def _package_definition(self, name: str) -> bool:
+        """Identify definitions supplied by the original named package."""
         original = self._manifest.get("original_definitions")
         if isinstance(original, list):
             return name in original
@@ -490,6 +496,7 @@ class CodingDatabase:
     def _combined_index(
         self, cafd_id: str, variant: str, definitions: list[str] | None = None
     ) -> dict[str, list[tuple[int, dict]]]:
+        """Index functions across source-selected definitions in reported order."""
         ordered = definitions if definitions is not None else [f"{cafd_id}-{variant}"]
         combined: dict[str, list[tuple[int, dict]]] = {}
         for identity in ordered:
@@ -611,12 +618,14 @@ class CodingDatabase:
         index = self._combined_index(cafd_id, variant, definitions)
 
         def function(name: str) -> tuple[int, dict]:
+            """Find the first named function in the combined source definition order."""
             entries = index.get(name, [])
             if not entries:
                 raise ValueError("Dynamic lighting function is missing")
             return entries[0]
 
         def values(name: str) -> list[dict]:
+            """Decode the complete masked function vector from actual group bytes."""
             did, definition = function(name)
             storage = definition["storageInfo"]
             start, end, mask = (_number(storage[key]) for key in ("start", "end", "mask"))
@@ -632,6 +641,7 @@ class CodingDatabase:
             ]
 
         def parameter(name: str) -> dict:
+            """Match current bytes to an explicit source parameter by byte position."""
             _, definition = function(name)
             current = values(name)
             for candidate in definition.get("params", []):
@@ -648,12 +658,14 @@ class CodingDatabase:
             raise ValueError("Dynamic lighting value has no matching source parameter")
 
         def scalar(name: str) -> int:
+            """Read a source parameter that describes exactly one vector position."""
             expected = parameter(name).get("values", [])
             if len(expected) != 1:
                 raise ValueError("Dynamic lighting parameter is not scalar")
             return _number(values(name)[_number(expected[0]["position"])]["value"])
 
         def module_index(code: int) -> int:
+            """Select the source lighting module index for a named module code."""
             selected = -1
             for offset in range(1, 11):
                 if scalar(f"LM{offset:02d}_Name") == code:
@@ -664,6 +676,7 @@ class CodingDatabase:
             return selected - 1
 
         def intensity(name: str, offset: int) -> int:
+            """Resolve a matrix entry through its source intensity function."""
             current = values(name)
             if not 0 <= offset < len(current):
                 raise ValueError("Dynamic lighting module index is out of range")
@@ -683,17 +696,20 @@ class CodingDatabase:
         brightness = intensity("POLI1_Idx", selected)
         vectors = {name: values(name) for name in ("POLI1_Idx", "POLI2_Idx", "POLI3_Idx")}
         source_values = parameter("DRL_Idx").get("values", [])
-        if selected >= len(source_values) or any(
-            selected >= len(vector) for vector in vectors.values()
-        ):
+        if any(selected >= len(vector) for vector in vectors.values()):
             raise ValueError("Dynamic lighting matrix is incomplete")
+        selected_values = [
+            value for value in source_values if _number(value.get("position")) == selected
+        ]
+        if len(selected_values) != 1:
+            raise ValueError("Dynamic lighting module source position is missing or repeated")
         choices = []
         for percent in [brightness] if brightness == 100 else [brightness, 100]:
             functions = []
             for name, vector in vectors.items():
                 intended = copy.deepcopy(vector)
                 if percent == 100 and brightness != 100:
-                    intended[selected]["value"] = source_values[selected]["value"]
+                    intended[selected]["value"] = selected_values[0]["value"]
                 functions.append({"name": name, "values": intended})
             choices.append(
                 {"name": f"{percent}_PERCENT", "label": f"{percent}%", "functions": functions}
@@ -711,6 +727,7 @@ class CodingDatabase:
         *,
         definitions: list[str] | None = None,
     ) -> list[tuple[int, int, int, int]]:
+        """Resolve one option into checked group, byte, mask and value patches."""
         self.load_ecu(cafd_id, variant)
         if preset.get("type", 0) != 0:
             raise ValueError("Dynamic coding option requires its source-specific resolver")

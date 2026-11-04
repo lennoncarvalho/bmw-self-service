@@ -9,6 +9,7 @@ from Crypto.Util.asn1 import DerSequence
 
 
 def _material(entry: dict) -> bytes:
+    """Decode bounded private-key material from the selected source entry."""
     material = entry.get("keyString")
     if not isinstance(material, str) or len(material) > 32768:
         raise ValueError("Coding key material is missing or too large")
@@ -22,6 +23,7 @@ def _material(entry: dict) -> bytes:
 
 
 def _rsa_signature(payload: bytes, entry: dict) -> bytes:
+    """Encode the source digest, raw RSA signature and word ordering."""
     name = entry.get("digest")
     if not isinstance(name, str):
         raise ValueError("Coding digest selector is missing")

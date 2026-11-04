@@ -51,12 +51,14 @@ class CodingSnapshotWorker(CarWorker):
     sensitive_operation_requested = Signal(object)
 
     def __init__(self, connection: Any, ecus: list[dict], vin: str) -> None:
+        """Retain the source inventory and VIN for this bounded snapshot batch."""
         super().__init__(connection)
         self.ecus = [dict(ecu) for ecu in ecus]
         self.vin = vin
         self._deadline = 0.0
 
     def _read(self, address: int, payload: bytes) -> bytes:
+        """Read one diagnostic response within the remaining snapshot budget."""
         remaining = self._deadline - time.monotonic()
         if remaining <= 0:
             raise TimeoutError("Coding snapshot batch budget exhausted")
@@ -128,7 +130,10 @@ class CodingSnapshotWorker(CarWorker):
                     definitions: tuple[str, ...] = definitions,
                     store: OperationStore = store,
                 ) -> bytes:
+                    """Run source reader preparation under one protocol owner."""
+
                     def read_prerequisite(payload: bytes, override: int | None = None) -> bytes:
+                        """Cap each nested owner request without extending the batch deadline."""
                         deadline = context.deadline
                         context.deadline = min(deadline, time.monotonic() + 30.0)
                         try:
@@ -234,72 +239,84 @@ class CodingSnapshotWorker(CarWorker):
                     instructions="Complete coding snapshot. No coding write was requested. Any separately retrieved entitlement material is stored independently; restoration requires fresh identity and baseline checks.",
                 )
                 row["backup"] = str(path)
-                byte_blocks = {int(did, 16): bytes.fromhex(raw) for did, raw in blocks.items()}
-                presets = []
-                for definition in (database.primary_definition(list(definitions)),):
-                    cafd_id, variant = definition.split("-", 1)
-                    database.load_ecu(cafd_id, variant)
-                    for preset in database.get_presets(cafd_id):
-                        if preset.get("type", 0):
-                            try:
-                                preset = database.resolve_dynamic_preset(
-                                    preset,
-                                    byte_blocks,
-                                    cafd_id,
-                                    variant,
-                                    definitions=list(definitions),
-                                )
-                            except (ValueError, KeyError, TypeError):
-                                logger.info("Dynamic source option unavailable: %s", preset["name"])
-                        current = database.get_current_option(
-                            preset, byte_blocks, cafd_id, variant, definitions=list(definitions)
-                        )
-                        mapped, mapping_reason = database.preset_mapping_status(
-                            preset, cafd_id, variant, byte_blocks, definitions=list(definitions)
-                        )
-                        label = next(
-                            (
-                                option["label"]
-                                for option in preset["options"]
-                                if option["name"] == current
-                            ),
-                            "Custom / no unique option"
-                            if mapped
-                            else "Definition mapping unavailable",
-                        )
-                        predicates = {
-                            key: preset[key]
-                            for key in (
-                                "series",
-                                "excludedSeries",
-                                "excludeECUVariants",
-                                "supportedForID8",
-                            )
-                            if key in preset
-                        }
-                        presets.append(
-                            {
-                                "address": address,
-                                "definition": definition,
-                                "id": preset["name"],
-                                "source_index": preset["source_index"],
-                                "label": preset["label"],
-                                "section": preset["section"],
-                                "current": current,
-                                "current_label": label,
-                                "options": [option["label"] for option in preset["options"]],
-                                "choices": [
-                                    {"name": option["name"], "label": option["label"]}
-                                    for option in preset["options"]
-                                ],
-                                "predicates": predicates,
-                                "mapping_supported": mapped,
-                                "mapping_reason": mapping_reason,
-                                "type": preset.get("type", 0),
-                            }
-                        )
-                row["presets"] = presets
                 row["state"] = "All reported groups read; snapshot saved"
+                presets: list[dict] = []
+                row["presets"] = presets
+                try:
+                    byte_blocks = {int(did, 16): bytes.fromhex(raw) for did, raw in blocks.items()}
+                    for definition in (database.primary_definition(list(definitions)),):
+                        cafd_id, variant = definition.split("-", 1)
+                        database.load_ecu(cafd_id, variant)
+                        for preset in database.get_presets(cafd_id):
+                            if preset.get("type", 0):
+                                try:
+                                    preset = database.resolve_dynamic_preset(
+                                        preset,
+                                        byte_blocks,
+                                        cafd_id,
+                                        variant,
+                                        definitions=list(definitions),
+                                    )
+                                except (ValueError, KeyError, TypeError):
+                                    logger.info(
+                                        "Dynamic source option unavailable: %s", preset["name"]
+                                    )
+                            current = database.get_current_option(
+                                preset, byte_blocks, cafd_id, variant, definitions=list(definitions)
+                            )
+                            mapped, mapping_reason = database.preset_mapping_status(
+                                preset, cafd_id, variant, byte_blocks, definitions=list(definitions)
+                            )
+                            label = next(
+                                (
+                                    option["label"]
+                                    for option in preset["options"]
+                                    if option["name"] == current
+                                ),
+                                "Custom / no unique option"
+                                if mapped
+                                else "Definition mapping unavailable",
+                            )
+                            predicates = {
+                                key: preset[key]
+                                for key in (
+                                    "series",
+                                    "excludedSeries",
+                                    "excludeECUVariants",
+                                    "supportedForID8",
+                                )
+                                if key in preset
+                            }
+                            presets.append(
+                                {
+                                    "address": address,
+                                    "definition": definition,
+                                    "id": preset["name"],
+                                    "source_index": preset["source_index"],
+                                    "label": preset["label"],
+                                    "section": preset["section"],
+                                    "current": current,
+                                    "current_label": label,
+                                    "options": [option["label"] for option in preset["options"]],
+                                    "choices": [
+                                        {"name": option["name"], "label": option["label"]}
+                                        for option in preset["options"]
+                                    ],
+                                    "predicates": predicates,
+                                    "mapping_supported": mapped,
+                                    "mapping_reason": mapping_reason,
+                                    "type": preset.get("type", 0),
+                                }
+                            )
+                except (OSError, ValueError, KeyError, TypeError, ConnectionError, TimeoutError):
+                    logger.warning(
+                        "Coding options unavailable for saved snapshot address=%04X",
+                        address,
+                        exc_info=True,
+                    )
+                    row["state"] = (
+                        "All reported groups read; snapshot saved; coding options unavailable"
+                    )
             except (OSError, ValueError, KeyError, TypeError, ConnectionError, TimeoutError):
                 logger.warning("Coding snapshot unavailable address=%04X", address, exc_info=True)
                 row["state"] = "Coding snapshot incomplete; see session log"

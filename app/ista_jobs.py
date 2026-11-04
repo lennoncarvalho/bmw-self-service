@@ -192,6 +192,7 @@ class _JobConnection:
         on_send: Callable[[bytes], None] | None = None,
         on_reply: Callable[[bytes, bytes], None] | None = None,
     ) -> None:
+        """Bind one job run to its exact ECU and permitted telegram sequence."""
         self.connection = connection
         self.address = address
         self.expected = expected
@@ -218,6 +219,7 @@ class _JobConnection:
         raw: bool = False,
         grant: frozenset[int] = frozenset(),
     ) -> bytes:
+        """Enforce the exact target, granted telegrams and optional source ordering."""
         if ecu_addr != self.address:
             raise ValueError("Job telegram addressed a different ECU than the identified one")
         if payload[:1] and payload[0] in grant:

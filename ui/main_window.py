@@ -97,6 +97,7 @@ class MainWindow(QMainWindow):
         self._apply_theme()
 
     def _setup_ui(self) -> None:
+        """Build fixed chrome around the shared scrolling page stack."""
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
@@ -284,6 +285,7 @@ class MainWindow(QMainWindow):
             self._on_disconnect()
 
     def _position_spinner(self) -> None:
+        """Center the operation overlay within the visible content viewport."""
         if self.spinner_overlay and self.stack:
             viewport = self.content_scroll.viewport()
             center = viewport.mapTo(self, viewport.rect().center())
@@ -1123,7 +1125,8 @@ class MainWindow(QMainWindow):
         dsc_extra = owner.get("reset") == "dsc25-plain"
         extra_ack = QCheckBox(
             "I understand this ECU may also clear all DSC faults, run its reset "
-            "completion routine and temporarily stop/restart event reporting."
+            "completion routine and temporarily stop/restart event reporting. "
+            "The extra sequence sends two planned reset writes to the ECU."
         )
         extra_ack.setVisible(dsc_extra)
         layout.addWidget(extra_ack)
@@ -1135,6 +1138,7 @@ class MainWindow(QMainWindow):
         ok.setEnabled(False)
 
         def update_reset_confirmation() -> None:
+            """Require power and applicable DSC side-effect acknowledgement."""
             ok.setEnabled(power.isChecked() and (not dsc_extra or extra_ack.isChecked()))
 
         power.toggled.connect(update_reset_confirmation)

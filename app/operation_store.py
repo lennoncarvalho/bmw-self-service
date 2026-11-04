@@ -153,6 +153,7 @@ def load_record(path: Path) -> dict[str, Any]:
 
 
 def _publish(path: Path, record: dict[str, Any]) -> None:
+    """Validate and atomically sync the complete operation record."""
     record["sha256"] = _digest({key: value for key, value in record.items() if key != "sha256"})
     _validate(record)
     raw = _encoded(record)

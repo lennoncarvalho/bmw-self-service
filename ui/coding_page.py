@@ -34,15 +34,10 @@ from PySide6.QtWidgets import (
 
 from app.coding import CodingSnapshotWorker
 from app.coding_db import CodingDatabase
-from app.resources import resource_path
 from app.worker import CarWorker
 from ui.page_stack import PageStack
 
 logger = logging.getLogger(__name__)
-
-# The generated catalogue is independent of reference packages and exact
-# software identities select live definitions in CodingSnapshotWorker.
-coding_db = CodingDatabase(str(resource_path("coding_data")))
 
 MOCK_CATEGORIES = [
     {
@@ -137,6 +132,7 @@ class CodingPage(QWidget):
         self._write_btn.setEnabled(False)
 
     def _setup_ui(self) -> None:
+        """Build coding tabs, pending controls and the mutation action bar."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -223,6 +219,7 @@ class CodingPage(QWidget):
         layout.addWidget(self._bottom_bar)
 
     def _build_easy_page(self) -> QWidget:
+        """Build expandable DEMO categories from the current preview values."""
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(24, 12, 24, 24)
@@ -450,11 +447,14 @@ class CodingPage(QWidget):
                 fdl_funcs: list[dict] = []
                 # DEMO fixtures do not establish a software version. Show only
                 # explicitly supplied exact identities, never a first match.
+                database: CodingDatabase | None = None
                 for definition in ecu.get("definitions", []):
                     try:
+                        if database is None:
+                            database = CodingDatabase()
                         cafd_id, variant = definition.split("-", 1)
-                        coding_db.load_ecu(cafd_id, variant)
-                        fdl_funcs.extend(coding_db.get_ecu_fdl_functions(cafd_id, variant))
+                        database.load_ecu(cafd_id, variant)
+                        fdl_funcs.extend(database.get_ecu_fdl_functions(cafd_id, variant))
                     except (OSError, ValueError, KeyError):
                         logger.warning("DEMO definition unavailable", exc_info=True)
 
@@ -607,12 +607,14 @@ class CodingPage(QWidget):
 
     @Slot(str)
     def _on_snapshot_error(self, message: str) -> None:
+        """Show a settled unavailable result for a failed snapshot worker."""
         self._on_snapshot(
             [{"name": "Coding", "state": message, "definitions": [], "blocks": {}, "backup": ""}]
         )
 
     @Slot()
     def _on_snapshot_finished(self) -> None:
+        """Release the finished snapshot and its sensitive-session lockout."""
         worker = self.sender()
         if worker is self._coding_reader:
             self._coding_reader = None
@@ -832,6 +834,7 @@ class CodingPage(QWidget):
             self._bottom_bar.setVisible(False)
 
     def _on_clear(self) -> None:
+        """Discard pending live selections or confirm resetting DEMO preview choices."""
         if not getattr(self._connection, "data", None):
             if not self.is_reading():
                 self._show_source_rows(self._source_rows)
@@ -974,6 +977,7 @@ class CodingPage(QWidget):
             self._live_selections[identity] = str(selected)
         self._pending = len(self._live_selections)
         self._pending_label.setText(f"{self._pending} pending coding change(s)")
+        self._bottom_bar.setVisible(self._pending > 0)
         self._write_btn.setEnabled(bool(self._pending) and not self.is_reading())
 
     def _prepare_source_write(self, restore_path: Path | None = None) -> None:
@@ -1020,12 +1024,14 @@ class CodingPage(QWidget):
 
     @Slot(object)
     def _source_plan_ready(self, plan: Any) -> None:
+        """Retain a plan only from the current preparation worker."""
         worker = self.sender()
         if worker is self._worker and worker.connection is self._connection:
             self._pending_plan = plan
 
     @Slot()
     def _source_prepare_finished(self) -> None:
+        """Release preparation before presenting the retained confirmation plan."""
         worker = self.sender()
         if not isinstance(worker, CarWorker):
             return
@@ -1150,6 +1156,7 @@ class CodingPage(QWidget):
         accept.setEnabled(False)
 
         def refresh() -> None:
+            """Enable confirmation only after every applicable acknowledgement."""
             accept.setEnabled(
                 power.isChecked()
                 and (data["mode"] != "restore" or restore.isChecked())
@@ -1176,6 +1183,10 @@ class CodingPage(QWidget):
             or (data["mode"] == "restore" and not restore.isChecked())
             or (prior and not recovery.isChecked())
         ):
+            self._pending_label.setText(
+                "Vehicle state changed or another operation is running; review coding again."
+            )
+            self._write_btn.setEnabled(bool(self._live_selections) and not self.is_reading())
             return
         self.mutation_active.emit(True)
         worker = CodingWriteWorker(
@@ -1195,6 +1206,7 @@ class CodingPage(QWidget):
 
     @Slot(object)
     def _source_written(self, report: dict) -> None:
+        """Retain the current writer outcome and expose unsaved evidence."""
         worker = self.sender()
         if worker is not self._coding_writer or worker.connection is not self._connection:
             return
@@ -1213,6 +1225,7 @@ class CodingPage(QWidget):
 
     @Slot(str)
     def _source_error(self, message: str) -> None:
+        """Display a current worker failure while preserving any result evidence."""
         worker = self.sender()
         if not isinstance(worker, CarWorker) or worker.connection is not self._connection:
             return
@@ -1226,6 +1239,7 @@ class CodingPage(QWidget):
 
     @Slot()
     def _source_write_finished(self) -> None:
+        """Unlock after thread completion and refresh safely persisted results."""
         worker = self.sender()
         if not isinstance(worker, CarWorker):
             return
@@ -1239,6 +1253,7 @@ class CodingPage(QWidget):
             self.activate()
 
     def _release_source_worker(self, worker: CarWorker) -> None:
+        """Release page ownership and any sensitive-session lock for a worker."""
         if self._sensitive_worker is worker:
             self._sensitive_worker = None
             self.mutation_active.emit(False)
@@ -1270,12 +1285,14 @@ class CodingPage(QWidget):
 
     @Slot(object)
     def _source_evidence_exported(self, path: object) -> None:
+        """Mark retained results exported only for the current export worker."""
         if self.sender() is self._worker:
             self._write_report["evidence_exported"] = True
             self._pending_label.setText("Coding evidence exported; reread before a new operation.")
 
     @Slot()
     def _source_evidence_finished(self) -> None:
+        """Release the export worker and refresh after durable publication."""
         worker = self.sender()
         if not isinstance(worker, CarWorker):
             return
@@ -1292,6 +1309,7 @@ class CodingEvidenceExportWorker(CarWorker):
     """Publish local evidence using the page's bounded worker lifecycle."""
 
     def __init__(self, connection: Any, path: Path, report: dict) -> None:
+        """Retain a detached result report and its requested export destination."""
         super().__init__(connection)
         self.path = path
         self.report = copy.deepcopy(report)

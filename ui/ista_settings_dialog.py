@@ -11,19 +11,22 @@ from PySide6.QtWidgets import (
 )
 
 from app.ediabas import library_path
-from app.ista_data import BundleProvider, DataFormatError, bundle_root
+from app.ista_data import BundleProvider, IstaDataSource, bundle_root
 from app.ista_jobs import refresh_bundled_data
 
 
 def bundle_summary() -> str:
     """Describe generated-data metadata without opening reference source folders."""
     root = bundle_root()
-    if not (root / "manifest.json").is_file():
-        return "Not included in this build. Job-backed features are unavailable."
-    try:
-        bundle = BundleProvider(root)
-    except DataFormatError:
-        return "Present but unreadable. Job-backed features are unavailable."
+    source = IstaDataSource.from_paths(root, None)
+    if not source.providers:
+        return (
+            "Present but unreadable. Job-backed features are unavailable."
+            if root.exists()
+            else "Not included in this build. Job-backed features are unavailable."
+        )
+    bundle = source.providers[0]
+    assert isinstance(bundle, BundleProvider)
     count = len(bundle.manifest["files"])
     series = ", ".join(bundle.available_series()) or "none"
     return (
@@ -69,6 +72,7 @@ class IstaSettingsDialog(QDialog):
         self._refresh()
 
     def _refresh(self) -> None:
+        """Reload generated-data status without opening research source folders."""
         refresh_bundled_data()
         self.bundle_label.setText(bundle_summary())
         self.runtime_label.setText(

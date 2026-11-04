@@ -260,6 +260,7 @@ class ServiceHistoryPage(QWidget):
         return button
 
     def _setup_ui(self) -> None:
+        """Build local history cards, journal expansion and explicit write controls."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         title = _label("Local service records")

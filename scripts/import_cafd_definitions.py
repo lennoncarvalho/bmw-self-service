@@ -21,6 +21,7 @@ MAX_XML = 64 * 1024 * 1024
 
 
 def _values(parent: ET.Element | None) -> list[dict[str, str]]:
+    """Decode unique positioned XML byte values with explicit bounds."""
     if parent is None:
         return []
     result = []

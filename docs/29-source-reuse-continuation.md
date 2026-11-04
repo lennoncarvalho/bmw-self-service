@@ -106,6 +106,7 @@ A typical command from the repository is:
   --apk sources/BimmerCode_v4.25.04-12743.apk \
   --resource-strings bimmercode_extracted/res/values/strings.xml \
   --text-reader /path/to/development/sqlite3mc \
+  --job-parser /path/to/development/job_parser.py \
   --reader-backup-evidence /path/to/coding-unlock-backup-contracts.json \
   --reader-prerequisite-evidence /path/to/coding-read-prerequisites.json
 ```
