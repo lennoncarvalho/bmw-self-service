@@ -36,6 +36,7 @@ from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, pl
 from app.connection import DoIPConnection, HSFZConnection
 from app.ista_jobs import refresh_bundled_data
 from app.mock_connection import MockConnection
+from app.protocol.contracts import TransportKind
 from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
@@ -91,6 +92,7 @@ class MainWindow(QMainWindow):
         self._coding_loading = False
         self._overview_ecus: list[dict] = []
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
+        self._cbs_reset_blocked = False
         self._cbs_journal = CbsJournalStore()
         # Job data folder is read here; CarWorkers must not create QSettings.
         refresh_bundled_data()
@@ -280,11 +282,13 @@ class MainWindow(QMainWindow):
 
     def _show_spinner_cancel(self) -> None:
         """G-13: Show cancel button after 10s."""
-        self._cancel_btn.setVisible(not self._mutation_active and not self._coding_loading)
+        self._cancel_btn.setVisible(
+            not self._mutation_active and not self._coding_loading and self._cbs_worker is None
+        )
 
     def _show_retry_dialog(self) -> None:
         """G-13: Show retry dialog after 30s timeout."""
-        if self._mutation_active or self._coding_loading:
+        if self._mutation_active or self._coding_loading or self._cbs_worker is not None:
             return
         self.hide_spinner()
         reply = QMessageBox.question(
@@ -331,7 +335,7 @@ class MainWindow(QMainWindow):
         self._spinner_retry_timer.start(30000)
 
     def hide_spinner(self) -> None:
-        if self._coding_loading:
+        if self._coding_loading or self._cbs_worker is not None:
             return
         self.loading_backdrop.hide()
         central = self.centralWidget()
@@ -423,7 +427,7 @@ class MainWindow(QMainWindow):
             getattr(self._connection, "trace_id", "demo/disconnected"),
             self._read_only,
         )
-        if not self._mutation_active and not self._coding_loading:
+        if not self._mutation_active and not self._coding_loading and self._cbs_worker is None:
             if index == 0 and not self._connected:
                 self.stack.setCurrentWidget(self.welcome_page)
             else:
@@ -677,6 +681,7 @@ class MainWindow(QMainWindow):
             or self._closing
             or self._mutation_active
             or self._coding_loading
+            or self._cbs_worker is not None
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
         ):
@@ -1004,6 +1009,7 @@ class MainWindow(QMainWindow):
             return
         self.vehicle_page.reset()
         self._overview_ecus = []
+        self._cbs_reset_blocked = False
         if self._cbs_worker is not None:
             self._retire_worker(self._cbs_worker)
             self._cbs_worker = None
@@ -1089,12 +1095,11 @@ class MainWindow(QMainWindow):
         """Read CBS from identified owners; DEMO decodes its simulated snapshot."""
         connection = self._connection
         panel = self.vehicle_page.cbs_panel
-        if (
-            connection is None
-            or self._cbs_worker is not None
-            or self._mutation_active
-            or self._coding_loading
-        ):
+        if connection is None:
+            panel.show_error("Connect to the vehicle before reading service status")
+            return
+        if not self._can_start_mutation():
+            panel.show_error("Service status unavailable — wait for the current vehicle operation")
             return
         if self._demo_mode:
             data = getattr(connection, "data", {}) or {}
@@ -1104,12 +1109,21 @@ class MainWindow(QMainWindow):
                 note="DEMO — simulated records; reset is not available",
             )
             return
+        if getattr(connection, "kind", None) != TransportKind.HSFZ:
+            panel.show_error(
+                "CBS is unavailable on this transport: its service-controller address mapping "
+                "has not been recovered."
+            )
+            return
         if not getattr(connection, "alive_ok", False):
-            panel.clear("Connection lost — reconnect before reading service status")
+            panel.show_error("Connection lost — reconnect before reading service status")
             return
         worker = CbsReadWorker(connection, self._overview_ecus)
         self._cbs_worker = worker
         panel.set_busy(True, "read")
+        self.show_spinner("Reading service status...")
+        self._spinner_cancel_timer.stop()
+        self._spinner_retry_timer.stop()
         worker.result_ready.connect(self._on_cbs_read)
         worker.error.connect(self._on_cbs_error)
         worker.finished.connect(self._on_cbs_finished)
@@ -1121,16 +1135,24 @@ class MainWindow(QMainWindow):
         if worker is not self._cbs_worker or self._connection is not worker.connection:
             return
         read_only = self._read_only or getattr(self._connection, "read_only", False)
+        note = (
+            "Reconnect and read service status before another reset; the previous outcome "
+            "or its local record is incomplete."
+            if self._cbs_reset_blocked
+            else "Read-only session — resets disabled"
+            if read_only
+            else ""
+        )
         self.vehicle_page.cbs_panel.show_result(
             result,
-            resets_allowed=not read_only,
-            note="Read-only session — resets disabled" if read_only else "",
+            resets_allowed=not read_only and not self._cbs_reset_blocked,
+            note=note,
         )
 
     @Slot(str)
     def _on_cbs_error(self, message: str) -> None:
         if self.sender() is self._cbs_worker:
-            self.vehicle_page.cbs_panel.clear(message)
+            self.vehicle_page.cbs_panel.show_error(message)
 
     @Slot()
     def _on_cbs_finished(self) -> None:
@@ -1142,15 +1164,16 @@ class MainWindow(QMainWindow):
         self._retire_worker(worker)
         reset = isinstance(worker, CbsResetWorker)
         if reset:
-            self._set_mutation_active(False)
+            self._set_mutation_active(False, refresh_overview=False)
         self.vehicle_page.cbs_panel.set_busy(self._mutation_active)
+        self.hide_spinner()
         if isinstance(worker, CbsResetWorker) and self._connection is worker.connection:
             # Always replace the rows the reset was planned from; a closed
             # connection clears them instead of leaving stale reset actions.
             if getattr(worker.connection, "alive_ok", False):
                 QTimer.singleShot(0, self._start_cbs_read)
             else:
-                self.vehicle_page.cbs_panel.clear(
+                self.vehicle_page.cbs_panel.show_error(
                     "Connection closed — reconnect and read service status"
                 )
 
@@ -1164,11 +1187,21 @@ class MainWindow(QMainWindow):
             or self._read_only
             or getattr(connection, "read_only", False)
             or not getattr(connection, "alive_ok", False)
+            or self._cbs_reset_blocked
             or not self._can_start_mutation()
         ):
-            QMessageBox.information(
-                self, "Reset Unavailable", "Wait for the current vehicle operation, then retry."
+            reason = (
+                "Reconnect and read service status to resolve the previous reset outcome."
+                if self._cbs_reset_blocked
+                else "DEMO cannot reset a vehicle."
+                if self._demo_mode
+                else "This session is read-only; resets are disabled."
+                if self._read_only or getattr(connection, "read_only", False)
+                else "Reconnect and read service status before resetting."
+                if connection is None or not getattr(connection, "alive_ok", False)
+                else "Wait for the current vehicle operation, then retry."
             )
+            QMessageBox.information(self, "Reset Unavailable", reason)
             return
         try:
             plan = plan_reset(getattr(connection, "verified_vin", ""), item)
@@ -1229,6 +1262,10 @@ class MainWindow(QMainWindow):
         )
         self._cbs_worker = worker
         self._set_mutation_active(True)
+        self.vehicle_page.cbs_panel.invalidate_resets()
+        self.show_spinner("Resetting service item — checking completion...")
+        self._spinner_cancel_timer.stop()
+        self._spinner_retry_timer.stop()
         worker.result_ready.connect(self._on_cbs_reset)
         worker.error.connect(self._on_cbs_reset_error)
         worker.finished.connect(self._on_cbs_finished)
@@ -1238,6 +1275,8 @@ class MainWindow(QMainWindow):
     def _on_cbs_reset(self, report: dict) -> None:
         if self.sender() is not self._cbs_worker:
             return
+        self._cbs_reset_blocked = report["state"] == "uncertain" or report["persistence_failed"]
+        self.vehicle_page.cbs_panel.show_outcome(report)
         persistence = (
             "\n\nThe local operation record could not be saved; see the session log."
             if report["persistence_failed"]
@@ -1255,10 +1294,11 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _on_cbs_reset_error(self, message: str) -> None:
         if self.sender() is self._cbs_worker:
+            self.vehicle_page.cbs_panel.show_error(message)
             QMessageBox.warning(self, "Service Reset Not Started", message)
 
     @Slot(bool)
-    def _set_mutation_active(self, active: bool) -> None:
+    def _set_mutation_active(self, active: bool, *, refresh_overview: bool = True) -> None:
         """Keep the GUI responsive while blocking disruptive app actions."""
         self._mutation_active = active
         self.history_page.setEnabled(not active)
@@ -1269,7 +1309,7 @@ class MainWindow(QMainWindow):
         self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
-        elif self._connected and not self._coding_loading:
+        elif self._connected and not self._coding_loading and refresh_overview:
             QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
             btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3)) and not active)

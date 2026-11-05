@@ -13,20 +13,20 @@
       "version": "7.0",
       "read_job": "STATUS_CBS_DATEN_LESEN",
       "prg_sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
-      "source_reset_policy": "unrecovered",
+      "source_reset_policy": "routine-7.0",
       "reset": "blocked",
       "ownership": "owner-not-recovered",
       "source_groups": [
         "G_ZGW"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/bcp_sp21.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "4e9bbfad9987dcdfe44be3c5a22aea88939a874c37223413d2f122fdd5121900",
       "reset_listing_sha256": "7e0f6fed180dd202022ec8f244df38a72ea1bfac4a1dde405412de9811e1b8e8",
       "read_job_offset": "0x152ad0",
       "reset_job_offset": "0x12c606",
       "detail": false,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "current-source observation and verified native CBS7 encoder; service-reset ownership is not established",
       "start_request": "31011000{item}02ffffff",
       "start_positive": "71011000",
       "results_request": "31031000",
@@ -579,7 +579,36 @@
             ]
           ]
         }
-      }
+      },
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBS_7_0_KENNUNG"
     },
     "CMEDIA": {
       "address": 54,
@@ -593,7 +622,7 @@
         "G_TEL"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/cmedia.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "0937800d726f3f4d99f40317fe17cb0a6ba02911a4e406fe6b105e25670d5fbf",
       "reset_listing_sha256": "945f7f953b74eeb7280960c62af29124d51bece92c34a746829eb9c0cc71692a",
       "read_job_offset": "0xeb1b7",
@@ -601,7 +630,23 @@
       "detail": false,
       "disposition": "current-source observations; primary reset owner remains a source investigation",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "D70BX7A0": {
       "address": 18,
@@ -615,7 +660,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d70bx7a0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "9ac51d0554df92cd2ecc1b9c87cdf68df44920135f81c0f1cda4c37926470f98",
       "reset_listing_sha256": "70a860287d4a89d113457d8a3d014ca79ff17dfc513ef9e8a5c24046a1764ce8",
       "read_job_offset": "0x9763c",
@@ -623,7 +668,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "D72N47A0": {
       "address": 18,
@@ -637,7 +699,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d72n47a0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "7504f903be532b0d975a55f0489be95c9123fdb427ed4f019023a6e263d183f9",
       "reset_listing_sha256": "f06fc830a878e97491041f4eb3d82b2de0a76152137500361dc2ba56164128f4",
       "read_job_offset": "0x91a7a",
@@ -645,7 +707,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "D73N57A0": {
       "address": 18,
@@ -659,7 +738,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57a0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "4d3dcf1f2b38d1b361ffa4a0336075a23a2d68475545322823195caba71cfca3",
       "reset_listing_sha256": "915e5d2ed45e2089d35bebe5f0b8e4cb429f5a661bcd9e0765f396876708aefa",
       "read_job_offset": "0x8f0fc",
@@ -667,7 +746,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "D73N57E0": {
       "address": 18,
@@ -681,7 +776,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57e0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "10e064dc28f365e0cd576d9b796fe38088a665cab9dd776f3dbb162d0456d05e",
       "reset_listing_sha256": "ac6113becaba290b873407024cbbea0f3aded5b87e029604515dbee3033a199b",
       "read_job_offset": "0x91a23",
@@ -689,7 +784,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "D75BX7A0": {
       "address": 18,
@@ -703,7 +815,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d75bx7a0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "c856f9c7f793d2c79af4f17b8b39fd7191e30514969c0262bf576a88b2a18676",
       "reset_listing_sha256": "41ec81c44c39b92f8d7bdaa66de3673d3bd4de4d8a84e0b66732de214a5dc09c",
       "read_job_offset": "0x97624",
@@ -711,7 +823,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "D83BX7C0": {
       "address": 18,
@@ -725,7 +854,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d83bx7c0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "71f6dfc4ef3dd72999b3d6ab440983b75a69b7ec1eeea86ef74c13fa12a2a442",
       "reset_listing_sha256": "625187c03edc074d9591132ed61e485e375058bb8d80f720c8d243209075f791",
       "read_job_offset": "0x10d0a5",
@@ -733,7 +862,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DME8FF_L": {
       "address": 19,
@@ -747,7 +905,7 @@
         "G_MOTOR2"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_l.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "6f6b0b90305be122965f3afe28f52963842db7d82e8b8f4ca06be08fb229391d",
       "reset_listing_sha256": "4794b5fd634c56b71f40f396525adcaa9144453a9aeb4e9d98ab3197ae48c479",
       "read_job_offset": "0x10ade0",
@@ -755,7 +913,36 @@
       "detail": true,
       "disposition": "current-source observations; primary reset owner remains a source investigation",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DME8FF_R": {
       "address": 18,
@@ -769,7 +956,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_r.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "1198092e2ef331ec790384ba59c3155147c12960f6df2417b49e0617c7fc317d",
       "reset_listing_sha256": "fa5806cea8048c82139ddeee26c3a1d36f2c9d8a200e2b03c94b2d4a3ec71074",
       "read_job_offset": "0x10adec",
@@ -777,7 +964,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DME_BX8": {
       "address": 18,
@@ -791,7 +1007,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme_bx8.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "43fdd1e0b9a2e8d29329087d1f8955bcfd579f7a29464f09701911c24cec776c",
       "reset_listing_sha256": "ac9d3d0bf4474b6f2e375734121ffd76a1c23e7a27eb1fc24cf57e8be79787d4",
       "read_job_offset": "0xe3007",
@@ -799,7 +1015,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_01": {
       "address": 41,
@@ -813,7 +1046,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_01.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "e6c9593b1cdc2f8390af7c3856d4f1fe6e1729b67f5a532ece84cd6efb8c6881",
       "reset_listing_sha256": "0f1efa6dca68c629080da2d931823cc11edbac586c654e23c6d08678fd5ac03a",
       "read_job_offset": "0xd30b3",
@@ -821,7 +1054,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_10": {
       "address": 41,
@@ -835,7 +1084,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_10.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "b9fa7a22650361c62ef7652d0bdbbdf49654cf4d075d89d720cb2966f79d6447",
       "reset_listing_sha256": "6f2fc610ac85053856205a007aa640e197530e6f951fdc88f80d0d974fd5e317",
       "read_job_offset": "0xd9676",
@@ -843,7 +1092,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_25": {
       "address": 41,
@@ -882,11 +1147,18 @@
       "source_groups": [
         "G_DSC"
       ],
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "3827aedc51bbda4e0b59a13e56e36ff408647860e0e39d53c7b894943000b9f6",
       "reset_listing_sha256": "4e9e5cefd7b2ea2a98c61f64fa53d46ec5bddbedcb1acd876b8da3fa2bc44c41",
       "read_job_offset": "0xe21be",
-      "reset_job_offset": "0xe6f79"
+      "reset_job_offset": "0xe6f79",
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "02",
+        "06"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_G11": {
       "address": 41,
@@ -900,7 +1172,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g11.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "f1ce18b04fe9e67c9fec08d26291d8f4ebf8488561910dfe9af268c809fe3653",
       "reset_listing_sha256": "259570ee70b0cbe4ed19b1aadcf53d4bba0f36a6fefe715beb10f04c88ec5028",
       "read_job_offset": "0xe1f20",
@@ -908,7 +1180,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_G20": {
       "address": 41,
@@ -922,7 +1223,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g20.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "3d119ca68fe69a3387e9c68436cb8f02c70fe3067061e99df97321b3766e23df",
       "reset_listing_sha256": "a9cdb72d1ac393bd0389674d8961862fe753ed2039593b600e7cdf54401a90c6",
       "read_job_offset": "0xe2a30",
@@ -930,7 +1231,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_G30N": {
       "address": 41,
@@ -944,7 +1274,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g30n.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "bb0fa19d0c8c6d8eebd1f367e9ebe225b1f6aef1e8805a07f24d24808529de80",
       "reset_listing_sha256": "20a31720418051943162e06bfd42fa84188174721c4534a345e4a91accbbdf12",
       "read_job_offset": "0xe0624",
@@ -952,7 +1282,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "DSC_I1": {
       "address": 41,
@@ -966,7 +1325,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_i1.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "194a9313b4b2f9347ea646fb34603eb387d2a477881c1d546aa99d2226d1cf46",
       "reset_listing_sha256": "0c2ccc49c30ce678c34767cafcf22305871df92009b6f171a7482efd35607e5a",
       "read_job_offset": "0xdf8e4",
@@ -974,7 +1333,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "EDMEI1": {
       "address": 18,
@@ -988,7 +1376,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/edmei1.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "90b9e72f245037ddf7d7201b247768cb8ae3abd006bb5463010fa231c3dfcd25",
       "reset_listing_sha256": "94b164d16f50455645ad0513ddfff0dc4a41d65fd7386a4d235b396d9414195c",
       "read_job_offset": "0xe2027",
@@ -996,7 +1384,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "EHC_01": {
       "address": 56,
@@ -1010,7 +1415,7 @@
         "G_EHC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ehc_01.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "f0075f31ba54488bdf3939569d533d01d5430de742ad24ff6e6331ed69ded897",
       "reset_listing_sha256": "ed5af64c9b32b35dd4b142857ced178f9f30423103423eac23a4161ed3196c9c",
       "read_job_offset": "0xfa728",
@@ -1018,7 +1423,23 @@
       "detail": false,
       "disposition": "current-source observations; primary reset owner remains a source investigation",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "GSGE01QW": {
       "address": 24,
@@ -1032,7 +1453,7 @@
         "G_EGS"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/gsge01qw.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "7707db0d94981398237a47b417db80ef7a7d13a531bf816360edaf3e6b2a6533",
       "reset_listing_sha256": "dcfa9fe393ce6c5ffcc8c5aad9659799fb0095227cfe6e527f66c4e7c3af82a4",
       "read_job_offset": "0xdf933",
@@ -1040,7 +1461,36 @@
       "detail": true,
       "disposition": "current-source observations; primary reset owner remains a source investigation",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "IB_G05": {
       "address": 41,
@@ -1054,7 +1504,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_g05.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "e3c85374a3693d96c8d41e676cc75b1071f0733469cdc8572082510c85fc40c7",
       "reset_listing_sha256": "26d3bf8274ef1817ff0f48d17c7e2a4337fd36bc23412b4d91cdf7d0c6133d30",
       "read_job_offset": "0xe2a1b",
@@ -1062,7 +1512,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "IB_G2X": {
       "address": 41,
@@ -1076,7 +1555,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_g2x.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "bdbfef4b98015179f2003a7b4168ec9c33edd54f93d670b00ed24628eaaa9fa9",
       "reset_listing_sha256": "8214b9701ee052a3d9743e540589a072063a706bb776d91f897a4857c0881b56",
       "read_job_offset": "0xe04fc",
@@ -1084,7 +1563,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "IB_I20": {
       "address": 41,
@@ -1098,7 +1606,7 @@
         "G_DSC"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_i20.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "79677ec0247e4a29e65c691feb1d439a485da3cd7abc8284ebdb9868c4dc3dd6",
       "reset_listing_sha256": "eda5f95275a128b97251ed1893c474db52e3e1bedb4302baafa06184498b4699",
       "read_job_offset": "0xe5aa2",
@@ -1657,7 +2165,36 @@
             ]
           ]
         }
-      }
+      },
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBS_7_0_KENNUNG"
     },
     "KOMB01": {
       "address": 96,
@@ -1671,7 +2208,7 @@
         "G_KOMBI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb01.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "d402a8b9bf59f7542ea4ae6a4f8456cce02be086a4e32152d804dca42e7a8c7c",
       "reset_listing_sha256": "609eb6436f2c7db7de6693040402d3e066338a32064e47b162ff01f7735112db",
       "read_job_offset": "0xdd538",
@@ -1679,7 +2216,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "KOMB25": {
       "address": 96,
@@ -1693,7 +2247,7 @@
         "G_KOMBI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb25.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "a8f9236ce1266b480b70f7d07d3180f0f8c915936454fe5fbf635d45ee93cf5b",
       "reset_listing_sha256": "4d127306c4951c5f150bc4c2d759d1d711189b7a0c9ddc4223d0f686a63a1668",
       "read_job_offset": "0xe2129",
@@ -1701,7 +2255,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "KOMBRDCT": {
       "address": 96,
@@ -1715,7 +2286,7 @@
         "G_KOMBI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombrdct.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "f1ed1558db292ebbc8429d63d8ebaaa8cdb0410499a07eb9ee29be800490bd63",
       "reset_listing_sha256": "dbe8351f71abe155008e20e0a7d50a1597471c4ffa2c2fb3eb453e2134ba0f57",
       "read_job_offset": "0xe649d",
@@ -1723,7 +2294,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "KOMBSP18": {
       "address": 96,
@@ -1737,7 +2337,7 @@
         "G_KOMBI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombsp18.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "3473460789c1d1409892c3ffe7d61f5f02c8204830052d68cc7de4d20df1b85c",
       "reset_listing_sha256": "288befb5d42df2310096ba3209fefbad3160a789b421c49868a3c3116a106fc9",
       "read_job_offset": "0xde86d",
@@ -1745,7 +2345,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "KOMBSP21": {
       "address": 96,
@@ -2318,11 +2947,40 @@
       "source_groups": [
         "G_KOMBI"
       ],
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "e6d0122eee3389151b84769c8f9ab2798c7a91e3e3e8a96fba0863fd336ed571",
       "reset_listing_sha256": "d5a68444ecb04636befd223309457834fe2f75e57c69993b5a1aaf0c6b303c80",
       "read_job_offset": "0xe70a9",
-      "reset_job_offset": "0xe2b12"
+      "reset_job_offset": "0xe2b12",
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBS_7_0_KENNUNG"
     },
     "KOMB_G11": {
       "address": 96,
@@ -2336,7 +2994,7 @@
         "G_KOMBI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb_g11.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "3fa01419454eec47aad90f5c0a52c2230439ad097238c02c25f43d0900d9bba0",
       "reset_listing_sha256": "f2813daec86b41fc60d8a2814321b84eb3ea5f5725033160a14d070a2d2739c9",
       "read_job_offset": "0xe2a75",
@@ -2344,7 +3002,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "KOMB_J29": {
       "address": 96,
@@ -2358,7 +3045,7 @@
         "G_KOMBI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb_j29.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "6211706ea543f182fc0049ca64e79edd09823fc9cd48bf2f34270a66e38cc10a",
       "reset_listing_sha256": "8004782071d2991c25c26ab9d6513f1abd2e2acdfd62c6b3cdc5414f96d7602e",
       "read_job_offset": "0xe2a7d",
@@ -2366,7 +3053,36 @@
       "detail": true,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "LMV_01": {
       "address": 25,
@@ -2380,7 +3096,7 @@
         "G_LMV"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/lmv_01.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "8517d5617890303d81fbe0092ba2a566502fdd95b858defb433cfe3bff9386c7",
       "reset_listing_sha256": "92cfa834c98453859e3cf9417b424352af6444f4b7b8f5d984cfcb7a4f9fc334",
       "read_job_offset": "0x68955",
@@ -2388,7 +3104,23 @@
       "detail": false,
       "disposition": "current-source observations; primary reset owner remains a source investigation",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MEVD172": {
       "address": 18,
@@ -2402,7 +3134,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "cd09840afcb71c46bf1f8656c5eb194b0169d87ebc28a22014e8f59ea3eee50d",
       "reset_listing_sha256": "8fb1fe623cc4cd65dc834b1fd5021d208b70eab0202ea67e2e8feb596d6e4fb9",
       "read_job_offset": "0x6ea4c",
@@ -2410,7 +3142,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MEVD1724": {
       "address": 18,
@@ -2424,7 +3173,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1724.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "e31ce7db2e7df1033b0635043517fcdc7a08c8a279405f82879bd09bc179375e",
       "reset_listing_sha256": "3893d54f8550fdff3fbb185cce24a77c5da672180a4ae7114870ce581a5b3577",
       "read_job_offset": "0x6ea62",
@@ -2432,7 +3181,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MEVD1725": {
       "address": 18,
@@ -2446,7 +3212,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1725.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "177e9e3fe4109436f19c9f511576fc917c8083c13acb72308dd42cb083828487",
       "reset_listing_sha256": "b15aa10011c3d72b223aba44600547553c27eedcdf8820f748779d684c34c0a9",
       "read_job_offset": "0x54e35",
@@ -2454,7 +3220,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MEVD172Y": {
       "address": 18,
@@ -2468,7 +3250,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172y.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "4055e6c466a46f51ad3d5f91442801c677e256fea3e71ee623291dfb26930843",
       "reset_listing_sha256": "f96e3f0ab5669e25b0672295872adcc60ed0d124f03b574ec79f8932a6f98037",
       "read_job_offset": "0x6eaa1",
@@ -2476,7 +3258,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MGU_02_A": {
       "address": 99,
@@ -2490,7 +3289,7 @@
         "G_MMI"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mgu_02_a.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "b04baf967a613078b53bb6830a5b20b74194a2606f3c2a3fb35f0e36b67a17e3",
       "reset_listing_sha256": "97a7edcc278d2d484f2f341604c411afcf35af2f5c9ac96babb57831ab0dbeda",
       "read_job_offset": "0xe6111",
@@ -3049,7 +3848,36 @@
             ]
           ]
         }
-      }
+      },
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_items_table": "CBS_7_0_KENNUNG"
     },
     "MSD85L6": {
       "address": 18,
@@ -3063,7 +3891,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85l6.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "4423a0a992a205df0b9844abcecb6a158aae776f69c53723755cd6a8694b07dc",
       "reset_listing_sha256": "1db380dbba29d4af038628410b78abb99e7182d8961540e51af11bdb870c4b5a",
       "read_job_offset": "0x31444",
@@ -3071,7 +3899,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MSD85YL6": {
       "address": 18,
@@ -3085,7 +3929,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85yl6.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "5ec5bc565e201cdc29b4d4ab7bff022f900d8aac5457a5f9f4a1c0084d633bf9",
       "reset_listing_sha256": "0731d11595a0cb3851735060f56028f442a4a502a9182e1823740f05e4716d75",
       "read_job_offset": "0x1e6f2",
@@ -3093,7 +3937,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MSD87": {
       "address": 18,
@@ -3107,7 +3967,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "bc4b2ece186553deebb8f09faeb5a97a99bcefcb405f8461a29798f300fa3b95",
       "reset_listing_sha256": "46d44b454f2c7da010c71267a75309fabdea7acc069af7dff9180e0bd813e14c",
       "read_job_offset": "0x3145b",
@@ -3115,7 +3975,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MSD87_R0": {
       "address": 18,
@@ -3129,7 +4005,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87_r0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "cc755d5a2a0276b16b0936f4f553c86dc6f26efae5003fab1574159917f6abce",
       "reset_listing_sha256": "9b9ef955718e9569048529efbe84ea39e1d7ad07acb3271178874f117d7c3b73",
       "read_job_offset": "0xa882f",
@@ -3137,7 +4013,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "MSV90": {
       "address": 18,
@@ -3151,7 +4044,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msv90.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "24f42df088185321ab2a6e0c5fabdd3cc7dbb9fa7418a9196bc0681879b5a749",
       "reset_listing_sha256": "a1a7eb1ae9a47a092e71c998eb5efa41db9806ff83f0f30c2265a294912739e5",
       "read_job_offset": "0x31431",
@@ -3159,7 +4052,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "N55_ALP": {
       "address": 18,
@@ -3173,7 +4082,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/n55_alp.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "105695875500157910c5c2135dea76758df0f93b900a87c507e0b265e6e4d26d",
       "reset_listing_sha256": "e6279a719f58f285cbd1be5f21ad52b719729a951154b2370795d129326c88b4",
       "read_job_offset": "0x346be",
@@ -3181,7 +4090,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "N63TU_R0": {
       "address": 18,
@@ -3195,7 +4120,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/n63tu_r0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "e6bcf9971a150bb7928375b58a179cffe7174c9ec4e9e06be45613d4a158b212",
       "reset_listing_sha256": "94b5576fe781cef718dcbcce01caf3bf79d34df49a445f1a336430fa47bb272a",
       "read_job_offset": "0x6ea66",
@@ -3203,7 +4128,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "S55": {
       "address": 18,
@@ -3217,7 +4159,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s55.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "d93b11597dc51abc069b795cb750416d5b21fa15a004be08af9948640cd57aa0",
       "reset_listing_sha256": "b4867090cb2796635b945bd9d93f6bf8e67e694dcd27791ba61ee2e41d5358ea",
       "read_job_offset": "0xaa441",
@@ -3225,7 +4167,24 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "S63TU_L0": {
       "address": 19,
@@ -3239,7 +4198,7 @@
         "G_MOTOR2"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_l0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "bd41e99b3fde9612786cef3a88c4562504d91a0d8d9202f1692eca156c9a47bb",
       "reset_listing_sha256": "19ec89d6b24ec62783658bade7dde7d090269565746f2301ba1627a390ff6fe8",
       "read_job_offset": "0x6ea59",
@@ -3247,7 +4206,23 @@
       "detail": false,
       "disposition": "current-source observations; primary reset owner remains a source investigation",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     },
     "S63TU_R0": {
       "address": 18,
@@ -3261,7 +4236,7 @@
         "G_MOTOR"
       ],
       "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_r0.prg",
-      "read_vectors_checked": 14,
+      "read_vectors_checked": 22,
       "read_listing_sha256": "369f23f4cee463b841b8a5ae95225a7abca871573ee5240916b849400139372e",
       "reset_listing_sha256": "2ebd5901408bce85c2be3689ed64ed7f8850b93b89a3b4111db5ea653fa0206f",
       "read_job_offset": "0x6d75d",
@@ -3269,7 +4244,23 @@
       "detail": false,
       "disposition": "current-source read plus checked reset",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
-      "reset_xsend_count": 1
+      "reset_xsend_count": 1,
+      "software_request": "22f101",
+      "software_job": "SVK_LESEN",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_items_table": "CBSKENNUNG"
     }
   },
   "ownership": {
@@ -3278,14 +4269,14 @@
       "groups": [
         "G_ZGW"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: group G_ZGW has no established CBS reset route in the current service orchestration"
     },
     "CMEDIA": {
       "role": "owner-not-recovered",
       "groups": [
         "G_TEL"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: group G_TEL has no established CBS reset route in the current service orchestration"
     },
     "D70BX7A0": {
       "role": "primary",
@@ -3341,7 +4332,7 @@
       "groups": [
         "G_MOTOR2"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: current reset orchestration selects DME8FF_R; no left-controller reset route is established"
     },
     "DME8FF_R": {
       "role": "primary",
@@ -3418,14 +4409,14 @@
       "groups": [
         "G_EHC"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: group G_EHC has no established CBS reset route in the current service orchestration"
     },
     "GSGE01QW": {
       "role": "owner-not-recovered",
       "groups": [
         "G_EGS"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: group G_EGS has no established CBS reset route in the current service orchestration"
     },
     "IB_G05": {
       "role": "primary",
@@ -3502,7 +4493,7 @@
       "groups": [
         "G_LMV"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: group G_LMV has no established CBS reset route in the current service orchestration"
     },
     "MEVD172": {
       "role": "primary",
@@ -3537,7 +4528,7 @@
       "groups": [
         "G_MMI"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: group G_MMI has no established CBS reset route in the current service orchestration"
     },
     "MSD85L6": {
       "role": "primary",
@@ -3600,7 +4591,7 @@
       "groups": [
         "G_MOTOR2"
       ],
-      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+      "basis": "Observation only: current reset orchestration selects S63TU_R0; no left-controller reset route is established"
     },
     "S63TU_R0": {
       "role": "primary",
@@ -3803,5 +4794,7 @@
     }
   ],
   "audit_sha256": "c58b072361981908e52c1c5891b07817739d9f7883e41c02365a5d1ab6bca4b8",
-  "historical_claims_preserved_in": "docs/evidence/task-b-cbs-contract.json"
+  "historical_claims_preserved_in": "docs/evidence/task-b-cbs-contract.json",
+  "task_c_followup": "docs/evidence/task-c-cbs-reliability.md",
+  "task_c_updated": "2026-11-05"
 }

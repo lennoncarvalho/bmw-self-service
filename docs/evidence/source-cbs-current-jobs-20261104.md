@@ -1,5 +1,12 @@
 # Current-source CBS jobs — 2026-11-04
 
+2026-11-05 follow-up: [Task C reliability evidence](task-c-cbs-reliability.md)
+records the expanded source matrix, 1,034 native read vectors, 754 encoders,
+software identity preflight and native/owner/UI corrections. The paired contract
+has an explicit Task C update marker; the original provenance audit remains a
+historical 2026-11-04 result. BCP_SP21's encoder is now recovered after repairing
+the native table-directory limit; it still has no established primary reset role.
+
 Authority: static PRG tables/comments/listings and controlled offline execution
 of those jobs in the embedded native interpreter. No reference application was
 executed and no physical vehicle traffic occurred. Exact artifact hashes,

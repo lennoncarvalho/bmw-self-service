@@ -126,6 +126,23 @@ def build(
                     "source_reset_policy",
                 )
             }
+            if definition.get("software_request") != "22f101":
+                raise ValueError(f"Missing reviewed software identity reader: {name}")
+            definitions[name]["software_request"] = definition["software_request"]
+            definitions[name]["ownership_reason"] = ownership[name]["basis"]
+            reset_items = definition.get("reset_items")
+            if (
+                not isinstance(reset_items, list)
+                or not reset_items
+                or any(not isinstance(item, str) for item in reset_items)
+            ):
+                raise ValueError(f"Missing reviewed per-item reset identifiers: {name}")
+            reset_items = [item.upper() for item in reset_items]
+            if any(len(item) != 2 or not 0 <= int(item, 16) <= 255 for item in reset_items) or set(
+                reset_items
+            ) & {"E0", "E1", "FF"}:
+                raise ValueError(f"Missing reviewed per-item reset identifiers: {name}")
+            definitions[name]["reset_items"] = reset_items
             if definition["version"] == "7.0":
                 definitions[name]["routine_codes"] = {
                     table: {

@@ -136,6 +136,13 @@ Execution order is now the owner's [Tasks C–F](../tasks/task-c-through-f-roadm
 starting with **CBS reading and individual reset reliability (Task C)**. The
 inventory below supplies those tasks; it does not supersede that priority.
 
+Task C implementation/verification is now recorded in its
+[evidence and complete matrix](evidence/task-c-cbs-reliability.md): 47 current
+readers, software-bound preflight, native table loading/decoding corrections,
+exclusive foreground flow and actual-owner pending/interruption checks. The
+eight observational reset-owner branches and absent D94 remain explicit source
+restrictions. Separate review and physical acceptance have not been performed.
+
 1. Three CAFD 02.00.00 files use a different `codingArea/sigId/sigLen` layout;
    the current converter records their exact identities/dispositions instead of
    pretending the byte-layout importer covers them.

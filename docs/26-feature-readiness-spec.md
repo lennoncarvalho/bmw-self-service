@@ -293,6 +293,18 @@ Source recovery, offline byte/error checks, visual Qt/DEMO verification,
 independent review and full preflight are required; physical observations stay
 separate, and no additional vehicle is a development dependency.
 
+Task C's [implementation evidence](evidence/task-c-cbs-reliability.md) and
+[complete matrix](evidence/task-c-cbs-reliability.json) supersede the older CBS
+counts/decoding assumptions. Explicit reads retain the source software identity;
+reset confirmation requires a unique primary record, valid availability/count,
+source-defined item identifier and exact definition. Default-session handling,
+identity/software/before checks and mutation/post-read share one owner operation.
+CBS7 start/result and DSC ordered side effects retain their separate contracts.
+Unknown/pending routine results remain uncertain. Failed refreshes retain stale
+values without reset authority, and uncertain/journal-failed operations require
+reconnect/read before further resets. Source restrictions, same-assistant review,
+separate-review status and physical acceptance are recorded independently.
+
 ## Packed vehicle-order increment
 
 Gateway3F06 uses the recovered packed six-bit contract, not FA XML. Dashboard

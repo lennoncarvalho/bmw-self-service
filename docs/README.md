@@ -1,6 +1,9 @@
 # Documentation index and authority
 
-Next development is **[Task C — CBS reading and individual resets](../tasks/task-c-cbs-read-reset-reliability.md)**.
+**[Task C — CBS reading and individual resets](../tasks/task-c-cbs-read-reset-reliability.md)**
+is implemented and verified offline. Its [evidence and complete matrix](evidence/task-c-cbs-reliability.md)
+record the remaining ownership/artifact restrictions, pending separate review
+and unperformed physical acceptance.
 The owner-ordered [C–F roadmap](../tasks/task-c-through-f-roadmap.md) supersedes
 historical Task B priority/checkpoint lists. Use supplied source applications,
 REA, decrypted databases and existing jobs; implement and verify the recovered

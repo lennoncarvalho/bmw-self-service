@@ -6,7 +6,10 @@ mean erasing headunit history or sending a generic fault-clear request. Those
 operations have separate contracts. The owner’s repeated final task letter is
 interpreted as sequential Tasks C, D, E and F.
 
-Status: **planned implementation work**, not a completion or safety certificate.
+Status: Task C is implemented and verified offline, with separate review and
+physical acceptance pending; Tasks D–F remain planned. See the
+[Task C evidence](../docs/evidence/task-c-cbs-reliability.md) for exact source
+restrictions. This is not a universal completion or safety certificate.
 This queue supersedes the priority order in historical Task B continuation files.
 Use [the capability map](../CAPABILITY-MAP.md) and
 [current source reconciliation](../docs/29-source-reuse-continuation.md) for the

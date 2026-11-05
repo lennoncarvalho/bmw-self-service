@@ -1,0 +1,3448 @@
+{
+  "schema": 1,
+  "date": "2026-11-05",
+  "authority": "source tables/CIL and controlled offline native execution; no physical vehicle observations",
+  "source_contract_sha256": "229e604d89e7086c0ddda29b9391ac9c008d57be01309add9f9d151b108e9e01",
+  "runtime_asset_sha256": "b91a24ee28ea897906314a501a06d993727e56d9414e9d1c59c98213dfc4668f",
+  "counts": {
+    "definitions": 48,
+    "current_readers": 47,
+    "historical_absent": 1,
+    "source_primary_roles": 40,
+    "current_primary_roles": 39,
+    "observational_roles": 8,
+    "read_vectors": 1034,
+    "native_item_encoders": 754,
+    "software_readers": 47,
+    "native_assets_loaded": 530
+  },
+  "rea_bundle": "/Users/lennon/BMW-Tool/investigations/task-c-20261105/rea-evidence-final.json",
+  "rea_bundle_sha256": "6e2ce7c59188adeb2c132e8fe807d12b9430aad27323b7cde415b1671346498a",
+  "workflow_evidence": "ev_d17bfe8339598b52f4c2b052e47d2a93b0679834bf61c83ac0a4e63ae7a876b7",
+  "workflow_anchors": [
+    {
+      "name": "CBS_Daten_Lesen_NEW",
+      "token": "0x0600000a",
+      "il_sha256": "771c452d9d55f2c0c61b0ce7d9d700d39778f7fd6131ebf608aa9011ad6a28df",
+      "anchors": [
+        {
+          "il_offset": "0xad4",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x1c59",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x20e3",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x20e8",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x22c7",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x22cc",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3317",
+          "literal": "IB_I20",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x3a5b",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3dc7",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3dcc",
+          "literal": "DME8FF_R",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4238",
+          "literal": "DME8FF_R",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x536b",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5370",
+          "literal": "IB_I20",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SG_Gruppen_NEW",
+      "token": "0x0600000b",
+      "il_sha256": "fba662598f4ee6f6c8a9d5919e86c642a5e987a6eaa1fe4e757bdd866b51d899",
+      "anchors": [
+        {
+          "il_offset": "0xb73",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xc6c",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xd07",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xe9c",
+          "literal": "G_DSC",
+          "following_calls": [
+            "op_Equality"
+          ]
+        },
+        {
+          "il_offset": "0x1027",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1422",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1570",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x166d",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x17b0",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x181e",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1866",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1979",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1d1b",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1e66",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1e6b",
+          "literal": "DME8FF_R",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1f31",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "op_Equality"
+          ]
+        },
+        {
+          "il_offset": "0x20b6",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x22d6",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x23e0",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x24dc",
+          "literal": "IB_I20",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x2549",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x27b0",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2a93",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2f02",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3023",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x367a",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3924",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3b40",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3b88",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3c22",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x3e39",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x4065",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x421b",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4265",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x459a",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4734",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "op_Equality"
+          ]
+        },
+        {
+          "il_offset": "0x4829",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x482e",
+          "literal": "S63TU_R0",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4bc4",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4cd5",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4cda",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4e4b",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x55b1",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x55b6",
+          "literal": "KOMB_J29",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5740",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5788",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5829",
+          "literal": "KOMB_J29",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x58be",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5a13",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5a75",
+          "literal": "IB_I20",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x5c02",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5f7c",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x606b",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6334",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x637d",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6382",
+          "literal": "KOMB_J29",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6908",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x690d",
+          "literal": "IB_I20",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x69f2",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6afd",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6c98",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6d05",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6f74",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x70af",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x712c",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x71ba",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x71bf",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x7246",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x728f",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x730a",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x73ac",
+          "literal": "DME8FF_R",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x7835",
+          "literal": "KOMB_J29",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x7b10",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x7c10",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x7c90",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x806f",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x8214",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x8219",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x83b7",
+          "literal": "S63TU_R0",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x84bb",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x85ab",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x883c",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x8841",
+          "literal": "IB_I20",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CBS_Reset_NEW",
+      "token": "0x06000012",
+      "il_sha256": "da5f35a8104980a1a49eb681b69a9ebaeb1d520988161f235438293e0a75305d",
+      "anchors": [
+        {
+          "il_offset": "0x307",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x369",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x6d7",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6dc",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x97b",
+          "literal": "IB_I20",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x9ff",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xa04",
+          "literal": "IB_I20",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x108c",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "op_Equality"
+          ]
+        },
+        {
+          "il_offset": "0x1555",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x155a",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1a4b",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x1b0d",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x1c3b",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x1f8c",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x2078",
+          "literal": "G_DSC",
+          "following_calls": [
+            "op_Equality"
+          ]
+        },
+        {
+          "il_offset": "0x20b9",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "op_Equality"
+          ]
+        },
+        {
+          "il_offset": "0x2211",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2216",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2266",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x226b",
+          "literal": "IB_I20",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2505",
+          "literal": "IB_I20",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x261d",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2622",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Überprüfung_CBS_Reset_NEW",
+      "token": "0x06000013",
+      "il_sha256": "c28210a5b58222080d1662b6ce6212397bde53620ab26c1f45923bec75fb4b15",
+      "anchors": [
+        {
+          "il_offset": "0xe87",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x1502",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x18a9",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x2d01",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x2d7f",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2d84",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x2e8d",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x44b5",
+          "literal": "IB_I20",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x4b19",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x4ef5",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x4efa",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x54bb",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x54c0",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5bc8",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5bcd",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5cf5",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x5cfa",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x6bba",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x72a0",
+          "literal": "G_DSC",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x72a5",
+          "literal": "IB_I20",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x7ffd",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0x8818",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0x881d",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xa730",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        },
+        {
+          "il_offset": "0xac9e",
+          "literal": "G_MOTOR",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xaca3",
+          "literal": "D94BX7A0",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xae39",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xae3e",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xb5a4",
+          "literal": "G_KOMBI",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xb5a9",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "HasVehicleVariant"
+          ]
+        },
+        {
+          "il_offset": "0xc6a5",
+          "literal": "KOMBSP21",
+          "following_calls": [
+            "get_FastaProtocoler",
+            "Execute"
+          ]
+        }
+      ]
+    }
+  ],
+  "vectors": {
+    "normal": "0104e201033e03051b0c0000",
+    "percent": "01003700033e03051b0c0000",
+    "days": "01003702033e03051b0c0000",
+    "high_status": "0104e2a1033e03051b0c0000",
+    "positive_sentinel": "017fff01033e03051b0c0000",
+    "negative_sentinel": "01800001033e03051b0c0000",
+    "count_invalid": "0104e2011f3e03051b0c0000",
+    "availability_no_information": "0104e20103fd03051b0c0000",
+    "availability_new": "0104e20103fe03051b0c0000",
+    "availability_invalid": "0104e20103ff03051b0c0000",
+    "no_month_year": "0104e201033e0300000c0000",
+    "invalid_month_year": "0104e201033e030f3f0c0000",
+    "invalid_forecast": "0104e201033eff051bff0000",
+    "day31": "0104e201033e03051b0c1f00",
+    "count250": "0104e201fa3e03051b0c0000",
+    "count249": "0104e201f93e03051b0c0000",
+    "count255": "0104e201ff3e03051b0c0000",
+    "negative": "01ffce01033e03051b0c0000",
+    "availability150": "0104e201039603051b0c0000",
+    "year249": "0104e201033e0305f90c0000",
+    "forecast_zero": "0104e201033e00051b000000",
+    "calendar_flags": "0104e201033e03355b0c0700"
+  },
+  "read_mismatches": [],
+  "release_missing_uses": [
+    "_bfh_ext",
+    "_bfs_ext",
+    "_cas4",
+    "_fah_ext",
+    "_fas_ext"
+  ],
+  "release_missing_jobs": [
+    "acf_01",
+    "amphhi12",
+    "asa_25",
+    "asa_f15",
+    "asa_g11",
+    "asda_i01",
+    "bat48_15",
+    "bat48_22",
+    "bcp01_ap",
+    "bmt01hl",
+    "bmt01hr",
+    "bzm_f70",
+    "cas4",
+    "ccu_01b",
+    "ccu_01c",
+    "ccu_01d",
+    "ccu_22",
+    "ccu_22b",
+    "ccu_22c",
+    "ccu_22d",
+    "ccu_p1",
+    "ccu_p1b",
+    "ccu_p1c",
+    "ccu_p1d",
+    "cdm_rr25",
+    "d94bx7a0",
+    "dme98_l",
+    "dme98_r",
+    "dme9ff_r",
+    "emars_h2",
+    "emars_v2",
+    "eme_psa",
+    "eme_z",
+    "eme_zpsa",
+    "ens_sp21",
+    "eps_g45",
+    "eps_u06",
+    "fccu",
+    "flm03_l",
+    "flm03_r",
+    "g_bmt_hl",
+    "g_bmt_hr",
+    "g_srr_l",
+    "gsge02hy",
+    "gsge02ph",
+    "gsge02qz",
+    "gsma02pl",
+    "gsma02pu",
+    "gsma02qz",
+    "gszf04ga",
+    "gszf04gd",
+    "gszf04gf",
+    "gwm_bms1",
+    "gwm_mcu1",
+    "gwm_odp1",
+    "gwm_vcu1",
+    "gws_g05b",
+    "hsscu",
+    "hvs_01b",
+    "hvs_01c",
+    "hvs_01d",
+    "hvs_02",
+    "hvs_02b",
+    "hvs_02c",
+    "hvs_02d",
+    "hvsgr_01",
+    "hvsgr_1b",
+    "ib_g70",
+    "ifm_01",
+    "lege02",
+    "lema02hg",
+    "lema02hl",
+    "lezf04vb",
+    "lezf04vc",
+    "lezfvh",
+    "lezfvhb",
+    "lezfvhc",
+    "lezfvhd",
+    "lmv_u06",
+    "mars01",
+    "nivi2n",
+    "pcu_10",
+    "piu_01",
+    "scr05",
+    "spnm03hl",
+    "spnm03hr",
+    "spnm03vl",
+    "spnm03vr",
+    "srr40_l",
+    "tee1_01b",
+    "tee1_01c",
+    "tee1_01d",
+    "tgl_u25",
+    "wsg_01"
+  ],
+  "definitions": [
+    {
+      "name": "BCP_SP21",
+      "address": "10",
+      "version": "7.0",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_ZGW"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: group G_ZGW has no established CBS reset route in the current service orchestration",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/bcp_sp21.prg",
+      "sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "read_offset": "0x152ad0",
+      "reset_offset": "0x12c606",
+      "table_count": 1844,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBS_7_0_KENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "CMEDIA",
+      "address": "36",
+      "version": "5",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_TEL"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: group G_TEL has no established CBS reset route in the current service orchestration",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/cmedia.prg",
+      "sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xeb1b7",
+      "reset_offset": "0xeff72",
+      "table_count": 86,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D70BX7A0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/d70bx7a0.prg",
+      "sha256": "4609b1ec33c0f6040da9e84d9aa80cfd56a5796b03e41d74d65475f7311150f6",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x9763c",
+      "reset_offset": "0x9c57c",
+      "table_count": 103,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D72N47A0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/d72n47a0.prg",
+      "sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x91a7a",
+      "reset_offset": "0x969ba",
+      "table_count": 89,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D73N57A0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57a0.prg",
+      "sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x8f0fc",
+      "reset_offset": "0x9403c",
+      "table_count": 73,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D73N57E0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57e0.prg",
+      "sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x91a23",
+      "reset_offset": "0x96963",
+      "table_count": 88,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D75BX7A0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/d75bx7a0.prg",
+      "sha256": "7e6678d772c668dd7077fc541c47458417d43c4916a419d84ea19bfb925ae10e",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x97624",
+      "reset_offset": "0x9c564",
+      "table_count": 103,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D83BX7C0",
+      "address": "12",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/d83bx7c0.prg",
+      "sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x10d0a5",
+      "reset_offset": "0x114dca",
+      "table_count": 429,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "D94BX7A0",
+      "address": "12",
+      "version": "6.3",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "routine-6.3",
+      "disposition": "Historical D94 definition only: canonical job is absent, no current software/item contracts, reset unavailable",
+      "source_available": false,
+      "historical_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c"
+    },
+    {
+      "name": "DME8FF_L",
+      "address": "13",
+      "version": "6",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_MOTOR2"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: current reset orchestration selects DME8FF_R; no left-controller reset route is established",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_l.prg",
+      "sha256": "36ad3cad7a0eeb7b002c6c250a59c249257ab0bf56dddbe6883dfbc5e42107e3",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x10ade0",
+      "reset_offset": "0x112b05",
+      "table_count": 757,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DME8FF_R",
+      "address": "12",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_r.prg",
+      "sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x10adec",
+      "reset_offset": "0x112b11",
+      "table_count": 760,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DME_BX8",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme_bx8.prg",
+      "sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe3007",
+      "reset_offset": "0xe7f47",
+      "table_count": 408,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_01",
+      "address": "29",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_01.prg",
+      "sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xd30b3",
+      "reset_offset": "0xd7ff3",
+      "table_count": 81,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_10",
+      "address": "29",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_10.prg",
+      "sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xd9676",
+      "reset_offset": "0xde5b6",
+      "table_count": 131,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_25",
+      "address": "29",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "dsc25-plain",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_25.prg",
+      "sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe21be",
+      "reset_offset": "0xe6f79",
+      "table_count": 117,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "02",
+        "06"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 0,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_G11",
+      "address": "29",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g11.prg",
+      "sha256": "3b96336aa05b38d47256c03dea4e249e99c3d5082a7e4c89ab09df28ce333ba8",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe1f20",
+      "reset_offset": "0xe9c45",
+      "table_count": 290,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_G20",
+      "address": "29",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g20.prg",
+      "sha256": "12cfd8b2c3a0e5cf57f05148db0c43ef1363d75d8968602652f79e7d8524be58",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe2a30",
+      "reset_offset": "0xea755",
+      "table_count": 193,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_G30N",
+      "address": "29",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g30n.prg",
+      "sha256": "0fe812ebf70afe31b453d26d1072d9b7fdb7708bce3cfdc096be072cd1d81968",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe0624",
+      "reset_offset": "0xe8349",
+      "table_count": 215,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "DSC_I1",
+      "address": "29",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_i1.prg",
+      "sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xdf8e4",
+      "reset_offset": "0xe7609",
+      "table_count": 216,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "EDMEI1",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/edmei1.prg",
+      "sha256": "f5564d839090f25dec1dad1b505061d0cfe81e5fad23bcf8295d8f73c1e531c5",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe2027",
+      "reset_offset": "0xe6f67",
+      "table_count": 124,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "EHC_01",
+      "address": "38",
+      "version": "5",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_EHC"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: group G_EHC has no established CBS reset route in the current service orchestration",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/ehc_01.prg",
+      "sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xfa728",
+      "reset_offset": "0xff668",
+      "table_count": 63,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "GSGE01QW",
+      "address": "18",
+      "version": "6",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_EGS"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: group G_EGS has no established CBS reset route in the current service orchestration",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/gsge01qw.prg",
+      "sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xdf933",
+      "reset_offset": "0xe7658",
+      "table_count": 605,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "IB_G05",
+      "address": "29",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_g05.prg",
+      "sha256": "83622fe6b18414229d78868a12608f4ee8899d4f8339db7873b632a807d1402c",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe2a1b",
+      "reset_offset": "0xea740",
+      "table_count": 190,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "IB_G2X",
+      "address": "29",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_g2x.prg",
+      "sha256": "1c54f283353b5703228bc7356fa4e1337c8c248ff650c308e6f8c28028f91a0d",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe04fc",
+      "reset_offset": "0xe8221",
+      "table_count": 182,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "IB_I20",
+      "address": "29",
+      "version": "7.0",
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "reset_policy": "routine-7.0",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_i20.prg",
+      "sha256": "445144b5bafddc0fba3aa502c9a48be4b44e04a9481ed794449c0713de46a5f3",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "read_offset": "0xe5aa2",
+      "reset_offset": "0xe0eb1",
+      "table_count": 268,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBS_7_0_KENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMB01",
+      "address": "60",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb01.prg",
+      "sha256": "71b474ab7a18d8a01f305f15688ae5661d80167d08dae5b7cc3e818e0103a7db",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xdd538",
+      "reset_offset": "0xe2478",
+      "table_count": 150,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMB25",
+      "address": "60",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb25.prg",
+      "sha256": "6dfb80eee4e5b9d7b94dfe97f43da25fd80ef0abac2adf0f8a113d50d47b2bc4",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe2129",
+      "reset_offset": "0xe7069",
+      "table_count": 165,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMBRDCT",
+      "address": "60",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombrdct.prg",
+      "sha256": "1245018cfc2bdaa944311f0bb8228e50fbb13216e68e92a5e6fef9a1668ca3ad",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe649d",
+      "reset_offset": "0xee1c2",
+      "table_count": 172,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMBSP18",
+      "address": "60",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombsp18.prg",
+      "sha256": "33aa21d5e03f1445ec98e8412959d452d73d64834d1e3082bb4bfddaff59887f",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xde86d",
+      "reset_offset": "0xe6592",
+      "table_count": 217,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMBSP21",
+      "address": "60",
+      "version": "7.0",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "routine-7.0",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombsp21.prg",
+      "sha256": "656c5cd27932fca9cc27ad2568d7eda4faad0d0d80090ca038e22eb47c5339db",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "read_offset": "0xe70a9",
+      "reset_offset": "0xe2b12",
+      "table_count": 328,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBS_7_0_KENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMB_G11",
+      "address": "60",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb_g11.prg",
+      "sha256": "ecf05aeef3478b5eadd020244764be9b52451676a07a0f79f7280dc52f2830f4",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe2a75",
+      "reset_offset": "0xea79a",
+      "table_count": 183,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "KOMB_J29",
+      "address": "60",
+      "version": "6",
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb_j29.prg",
+      "sha256": "a29439942caa37e27cd24368e2c8d03e4b4d3287d3d40ad19f91a9bdbdce7578",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xe2a7d",
+      "reset_offset": "0xea7a2",
+      "table_count": 150,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "LMV_01",
+      "address": "19",
+      "version": "5",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_LMV"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: group G_LMV has no established CBS reset route in the current service orchestration",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/lmv_01.prg",
+      "sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x68955",
+      "reset_offset": "0x6d895",
+      "table_count": 66,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MEVD172",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172.prg",
+      "sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x6ea4c",
+      "reset_offset": "0x7398c",
+      "table_count": 122,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MEVD1724",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1724.prg",
+      "sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x6ea62",
+      "reset_offset": "0x739a2",
+      "table_count": 154,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MEVD1725",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1725.prg",
+      "sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x54e35",
+      "reset_offset": "0x59d75",
+      "table_count": 148,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MEVD172Y",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172y.prg",
+      "sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x6eaa1",
+      "reset_offset": "0x739e1",
+      "table_count": 150,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MGU_02_A",
+      "address": "63",
+      "version": "7.0",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_MMI"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: group G_MMI has no established CBS reset route in the current service orchestration",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/mgu_02_a.prg",
+      "sha256": "a274f22c573e6fbcd84c94258eefa658102d3c8f0b4af71806f5c187a726af98",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "read_offset": "0xe6111",
+      "reset_offset": "0xe317e",
+      "table_count": 455,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "reset_table": "CBS_7_0_KENNUNG",
+      "native_item_encoders_checked": 24,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MSD85L6",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85l6.prg",
+      "sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x31444",
+      "reset_offset": "0x36384",
+      "table_count": 108,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MSD85YL6",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85yl6.prg",
+      "sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x1e6f2",
+      "reset_offset": "0x23632",
+      "table_count": 99,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MSD87",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87.prg",
+      "sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x3145b",
+      "reset_offset": "0x3639b",
+      "table_count": 144,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MSD87_R0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87_r0.prg",
+      "sha256": "0055e880abd9151f5f031fb2087e9949ff6d84e94ccec3219e82ffb6e60aa2ad",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xa882f",
+      "reset_offset": "0xad76f",
+      "table_count": 115,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "MSV90",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/msv90.prg",
+      "sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x31431",
+      "reset_offset": "0x36371",
+      "table_count": 140,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "N55_ALP",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/n55_alp.prg",
+      "sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x346be",
+      "reset_offset": "0x395fe",
+      "table_count": 150,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "N63TU_R0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/n63tu_r0.prg",
+      "sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x6ea66",
+      "reset_offset": "0x739a6",
+      "table_count": 146,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "S55",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/s55.prg",
+      "sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0xaa441",
+      "reset_offset": "0xaf381",
+      "table_count": 178,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 12,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "S63TU_L0",
+      "address": "13",
+      "version": "5",
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_MOTOR2"
+      ],
+      "reset_policy": "blocked",
+      "disposition": "Observation only: current reset orchestration selects S63TU_R0; no left-controller reset route is established",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_l0.prg",
+      "sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x6ea59",
+      "reset_offset": "0x73999",
+      "table_count": 127,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    },
+    {
+      "name": "S63TU_R0",
+      "address": "12",
+      "version": "5",
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "reset_policy": "default",
+      "disposition": "current exact group table plus supplied CBS reset orchestration routes",
+      "source": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_r0.prg",
+      "sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "read_job": "CBS_DATEN_LESEN",
+      "read_offset": "0x6d75d",
+      "reset_offset": "0x7269d",
+      "table_count": 142,
+      "uses": [],
+      "missing_dependencies": [],
+      "read_vectors": 22,
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "06",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "20",
+        "21",
+        "64"
+      ],
+      "reset_table": "CBSKENNUNG",
+      "native_item_encoders_checked": 11,
+      "software_reader": "SVK_LESEN",
+      "software_request": "22f101"
+    }
+  ],
+  "remaining_source_branches": [
+    "The eight observations have no established reset-owner route in the examined current orchestration; no global read-only claim is made",
+    "D94BX7A0 remains absent from this supplied release; no current job/decoder verification",
+    "DoIP feature address mappings are outside the current HSFZ milestone"
+  ],
+  "managed_sources": [
+    {
+      "evidence_id": "ev_3d14196fde2fc290ad34aff1602293c10141bdaa862c054411dd743eb0b844b4",
+      "artifact": {
+        "byte_length": 516096,
+        "format": "pe",
+        "path": "/Users/lennon/git/rea_bmw/sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_DIT_SCBS_6001.dll",
+        "sha256": "42da6eae97eb4628ac49d33b64404dedfa1468559e92de3add81b51e19abf04c"
+      },
+      "mvid": "b59b1e2f-01b8-40fa-a60c-99046f730614"
+    },
+    {
+      "evidence_id": "ev_7e06b9e3b620989ca9d59b5cb925681d777477409908954c94ecb0dc0ccd0090",
+      "artifact": {
+        "byte_length": 14336,
+        "format": "pe",
+        "path": "/Users/lennon/git/rea_bmw/sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AS6100_CBS_RESET_RETURN_CODE.dll",
+        "sha256": "b09b9fed123875a80c2ac58bcdf96b712772a41d66ede66ca51f307db70c6daa"
+      },
+      "mvid": "8cbe065f-be6a-441d-a249-95356f26c3e3"
+    },
+    {
+      "evidence_id": "ev_bbd2edca20190d05ca5dcebed646dc9de5c14f71a9f582595191bc8dec0ebdd3",
+      "artifact": {
+        "byte_length": 223232,
+        "format": "pe",
+        "path": "/Users/lennon/git/rea_bmw/sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_AS6100_CBS_RESET.dll",
+        "sha256": "dc0a7c72b9d48a1466cc26ae2c21e1ff2b844278c46cc1965c6c64e3da77438a"
+      },
+      "mvid": "f3990a7d-a4ae-4c12-9b99-7318b69563f3"
+    },
+    {
+      "evidence_id": "ev_c9738da88b40008b022529935c11f7bc2557992dae89d30e13fa2755363f6aaf",
+      "artifact": {
+        "byte_length": 97280,
+        "format": "pe",
+        "path": "/Users/lennon/git/rea_bmw/sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_DIT_AS6100_CBS5_RESET_KORR_MOTOR.dll",
+        "sha256": "d72f0e7e0b9ae89867b7493bc08b03edd1518a7ac2c98364c924ec4651762914"
+      },
+      "mvid": "05582c28-c6b5-4eac-83b0-ec01a8254b0e"
+    },
+    {
+      "evidence_id": "ev_d17bfe8339598b52f4c2b052e47d2a93b0679834bf61c83ac0a4e63ae7a876b7",
+      "artifact": {
+        "byte_length": 479232,
+        "format": "pe",
+        "path": "/Users/lennon/git/rea_bmw/sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AS6100_CBS_RESET.dll",
+        "sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db"
+      },
+      "mvid": "a0cc540b-847c-45a4-9447-d3f1bd30cfc4"
+    }
+  ],
+  "cbs_module_inventory": [
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_AUS_RETROFITCBSVEHICLEDATACORRECTION.dll",
+      "sha256": "6d57d3c71c302a9e46dfc344e5bdf74e14c11f0b300b1e99ec534568d8a1a4c9"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_AUS_RETROFITCBSVEHICLEDATACORRECTION_F010.dll",
+      "sha256": "ff07827a9a84cba263a1ede7b91258f79b7477318be34d278e5d0cf2f9859ad4"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_AUS_RETROFITCBSVEHICLEDATACORRECTION_F025.dll",
+      "sha256": "c0e9093f05f3cd7916f4651646c328b9edf261371196cc1ac7a332a01c3bdced"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_DIT_AS6100_CBS5_RESET_KORR_MOTOR.dll",
+      "sha256": "d72f0e7e0b9ae89867b7493bc08b03edd1518a7ac2c98364c924ec4651762914"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_DIT_AS6100_CBS_SERVICE_INCLUSIVE.dll",
+      "sha256": "ed286c543957e6ab9cd84cd442c534e898d109d007671c04668ed45509d3d96c"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_DIT_SCBS_6001.dll",
+      "sha256": "42da6eae97eb4628ac49d33b64404dedfa1468559e92de3add81b51e19abf04c"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_DIT_SCBS_6001_M12.dll",
+      "sha256": "4773551161616134cb2ad70a7ccc3821b755bea844006326818bd10d12ff9352"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AG3450_DSC_CBS_BUGFIX.dll",
+      "sha256": "46fbce35814d2932330f70ae6dbcf13665fa937e3e71df6b099a217d671d4c87"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AG6100_CBS_PROGNOSERESET_OEL_UDS.dll",
+      "sha256": "15604d8378351c5d7cf58b3116a06a9b6a134f0c063eda295eb301fce5054b38"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AG6100_SH2CBS.dll",
+      "sha256": "b817812133ae76c21999a44a3b6a1e6132f5f79ef9022306f1f6c67541dad93c"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AS6100_CBS_RESET.dll",
+      "sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AS6100_CBS_RESET_RETURN_CODE.dll",
+      "sha256": "b09b9fed123875a80c2ac58bcdf96b712772a41d66ede66ca51f307db70c6daa"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_GS6100_PROG_CBS_OEL_NACH.dll",
+      "sha256": "00aed9ab1a8890908c32fb792cbb002414967bee0a53076e1f4354a98f00d29c"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_GS6100_PROG_CBS_OEL_VOR.dll",
+      "sha256": "099ff37f08979a47797797f49fa0c9901c0fa2dfa8db2a50795765f50b72c3da"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GES_AT6211_BACKUP_CBSDATEN.dll",
+      "sha256": "b39ea7ada19511bc58da604821e224f01012c0df811edcff014920a0cb06c586"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_MNF_AG6100_CBS_PROGNOSERESET_OEL_UDS.dll",
+      "sha256": "9dc2232d62300c32d61149594620e95d65f1f422b232869fe4e8d8b43478c055"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_MNS_AS6100_CBS_OEL_NACH.dll",
+      "sha256": "6354fa9d396153b664bc7f0aa1839919a68fda3f44c33a95942284856ae45ed2"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_MNS_AS6100_CBS_SERVICE_INCLUSIVE.dll",
+      "sha256": "c2ffb76d1c82b233726f1b293d3d86dc14adae476baadc0ef02185c0e06be983"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_MPB_RESTORECBSDATA.dll",
+      "sha256": "54d192fd25bab89185eb6c2c32e06cec2bf8cf70b75c8488cb0450cfd49fcc2a"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_MPB_SAFECBS.dll",
+      "sha256": "815acd9fa111d21e029e75d8aa5902f62ea9a48a1ccab2ae0f4ee66af8326913"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_MVS_AS6100_CBS_OEL_VOR.dll",
+      "sha256": "67d46c11479ea22288c2679eac94f5af85256ff908cdacfcd33715107c0be3ea"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_AS6100_CBS_EINFAHR_RESET.dll",
+      "sha256": "de808d2b00b2e7ec129979051b41b0f8c14bbe13fe86ca9a6179e56846305b54"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_AS6100_CBS_KORR.dll",
+      "sha256": "7b465f7d7f5da792c703d303718db893a20c59df7d703f3e9a4d57decead79f6"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_AS6100_CBS_RESET.dll",
+      "sha256": "dc0a7c72b9d48a1466cc26ae2c21e1ff2b844278c46cc1965c6c64e3da77438a"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBSR_0001.dll",
+      "sha256": "b752aa3f668995522bae6184c6f0a9d238507b5e7a1b60ba1bce77222038034e"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBSR_0002.dll",
+      "sha256": "4bdeb4660ede7762d580cd1937986b151434997934004eece79cff2b480d32f0"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBSR_0003.dll",
+      "sha256": "0f001befc129a97176e34485c269ed1c871963631da2ab2281d50ad3fd104639"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBSR_0004.dll",
+      "sha256": "66496a36f1392c18f7c744f6aa0843c4647c9a8ad447a5498f45d5fbcc1cc892"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBS_0001.dll",
+      "sha256": "b0798e94fc335507cc3e2e0e82418a350db2fb5674f5776badfc0fb8b28844c9"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBS_6003.dll",
+      "sha256": "9ae5640b1d0e2c2f30ea53a2f58d73f577f6a311dd071045ed761107939a627f"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBS_6004.dll",
+      "sha256": "cf1f757bce9dcbdd19a6755e90203e0f8531c1e689dd78153062f5b55b903f5c"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBS_6005.dll",
+      "sha256": "deb704f6197b0ffd1cbeb48f036429276fc8b674c962ad8aaa5574d3e63b8f00"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBS_6005_M12.dll",
+      "sha256": "777f41e0640236da258245a97ff265c44ba1c0d3fb41b87f53a8e8d233e577fc"
+    },
+    {
+      "path": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_WAR_SCBS_6006.dll",
+      "sha256": "dec0260b616a207b2906506423f594e4038511ce1f34ce4ce00367e709261dfe"
+    }
+  ]
+}
