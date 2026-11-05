@@ -5,8 +5,13 @@ Read `AGENTS.md`, `.agents/skills/spec-driven-development/SKILL.md`,
 [the current reconciliation](docs/29-source-reuse-continuation.md).
 Doc29 owns current source locations and implemented baseline. The remaining
 implementation queue is [Tasks C–F](tasks/task-c-through-f-roadmap.md):
-**Task C — reliable CBS reading and individual resets — is next**, before DTC
-details (D), Easy Coding readiness (E) and history/integrated acceptance (F).
+**Task C — reliable CBS reading and individual resets — precedes** DTC details
+(D), Easy Coding readiness (E) and history/integrated acceptance (F).
+Its implementation and offline verification are now retained in
+`tasks/task-c-implementation.md` and `docs/evidence/task-c-cbs-reliability.md`.
+Read those before repeating work: eight observational owner routes and absent
+D94 remain explicit restrictions; separate review and physical acceptance are
+pending. No physical reset or new PR was performed.
 Older Task B checkpoints are historical, not instructions to repeat merged work.
 
 PR18 is merged in the current baseline. Inspect Git/PR status and fetch origin

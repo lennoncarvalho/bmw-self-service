@@ -29,6 +29,9 @@ class CbsPanel(QWidget):
         """Build the service-status toggle and expanding record container."""
         super().__init__(parent)
         self._resets_allowed = False
+        self._busy = False
+        self._selection = 0
+        self._has_result = False
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
@@ -40,6 +43,14 @@ class CbsPanel(QWidget):
         self.read_button.clicked.connect(self.read_requested)
         header.addWidget(self.read_button)
         layout.addLayout(header)
+        self.message_label = QLabel()
+        self.message_label.setWordWrap(True)
+        self.message_label.setTextFormat(Qt.TextFormat.PlainText)
+        layout.addWidget(self.message_label)
+        self.outcome_label = QLabel()
+        self.outcome_label.setWordWrap(True)
+        self.outcome_label.setTextFormat(Qt.TextFormat.PlainText)
+        layout.addWidget(self.outcome_label)
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
         self.status_label.setTextFormat(Qt.TextFormat.PlainText)
@@ -60,6 +71,7 @@ class CbsPanel(QWidget):
 
     def set_busy(self, busy: bool, text: str = "") -> None:
         """Disable actions while a CBS read/reset or another mutation runs."""
+        self._busy = busy
         self.read_button.setEnabled(not busy)
         self.read_button.setText(
             "Reading service status…" if busy and text else "Read service status"
@@ -67,9 +79,36 @@ class CbsPanel(QWidget):
         for button in self.container.findChildren(QPushButton):
             button.setEnabled(not busy and self._resets_allowed)
 
+    def invalidate_resets(self, text: str = "") -> None:
+        """Keep the settled display but revoke every previous reset selection."""
+        self._selection += 1
+        self._resets_allowed = False
+        for button in self.container.findChildren(QPushButton):
+            button.setEnabled(False)
+        if text:
+            self.message_label.setText(text)
+
+    def show_error(self, text: str) -> None:
+        """Retain previous values as stale and keep the failure visible when collapsed."""
+        self.invalidate_resets(text + "\nPrevious values may be stale; read service status again.")
+
+    def show_outcome(self, report: dict[str, Any]) -> None:
+        """Retain completion separately from the subsequent refresh and its errors."""
+        detail = f"Reset {report['state']}: {report['detail']}\n{report['instructions']}"
+        if report.get("persistence_failed"):
+            detail += "\nThe local operation record could not be saved; see the session log."
+        elif report.get("path"):
+            detail += f"\nRecord: {report['path']}"
+        self.invalidate_resets()
+        self.outcome_label.setText(detail)
+
     def clear(self, text: str) -> None:
         """Discard displayed records (new session, disconnect or stale state)."""
         self._clear_rows()
+        self._has_result = False
+        self.invalidate_resets()
+        self.message_label.clear()
+        self.outcome_label.clear()
         self.status_label.setText(text)
         self.rows.addStretch()
 
@@ -98,6 +137,11 @@ class CbsPanel(QWidget):
             parts.append(f"availability {item['availability']} %")
         if item.get("count") is not None:
             parts.append(f"services done {item['count']}")
+        for key, unit in (("forecast_km", "km"), ("forecast_months", "months")):
+            if item.get(key) is not None:
+                parts.append(f"forecast interval {locale.toString(item[key])} {unit}")
+        if item.get("status") is not None:
+            parts.append(f"status 0x{item['status']:X}")
         owner = item["owner"]
         version = (
             f", CBS {owner['version']}" if owner.get("version") not in (None, "unknown") else ""
@@ -109,6 +153,8 @@ class CbsPanel(QWidget):
         ]
         if item.get("job_text") and item["job_text"] != item["label"]:
             lines.append(f"ECU job text: {item['job_text']}")
+        if item.get("status_text"):
+            lines.append(f"ECU status: {item['status_text']}")
         if item.get("notes"):
             lines.append("; ".join(item["notes"]))
         if owner.get("reset") == "demo":
@@ -119,18 +165,29 @@ class CbsPanel(QWidget):
 
     def show_result(self, result: dict[str, Any], *, resets_allowed: bool, note: str = "") -> None:
         """Publish one settled read with per-owner coverage and per-item actions."""
-        self._clear_rows()
-        self._resets_allowed = resets_allowed
         owners = result.get("owners", [])
         coverage = (
             "\n".join(
                 f"{o['name']} 0x{o['address']:02X}: {o['state']}"
+                + (f" — software {o['software_state']}" if o.get("software_state") else "")
                 + (f" — {o['source']}" if o.get("source") else "")
                 for o in owners
             )
             or "no ECU with a CBS reader was identified"
         )
         self.status_label.setText((note + "\n" if note else "") + f"Sources:\n{coverage}")
+        if (
+            self._has_result
+            and not result.get("items")
+            and any(owner["state"] not in ("read", "not-held", "DEMO") for owner in owners)
+        ):
+            self.show_error("Service status read failed; see the source coverage below.")
+            return
+        self._clear_rows()
+        self._has_result = bool(result.get("items"))
+        self._selection += 1
+        self._resets_allowed = resets_allowed
+        self.message_label.clear()
         for item in result.get("items", []):
             frame = QFrame()
             frame.setObjectName("card")
@@ -142,9 +199,13 @@ class CbsPanel(QWidget):
             row.addWidget(label, 1)
             if item.get("resettable"):
                 button = QPushButton("Reset…")
-                button.setEnabled(resets_allowed)
+                button.setEnabled(resets_allowed and not self._busy)
+                button.setToolTip(note if not resets_allowed else "Reset this service item")
+                selection = self._selection
                 button.clicked.connect(
-                    lambda _=False, chosen=item: self.reset_requested.emit(chosen)
+                    lambda _=False, chosen=item, generation=selection: self._request_reset(
+                        chosen, generation
+                    )
                 )
                 row.addWidget(button, 0, Qt.AlignmentFlag.AlignTop)
             self.rows.addWidget(frame)
@@ -153,3 +214,10 @@ class CbsPanel(QWidget):
             self.rows.addWidget(empty)
         self.rows.addStretch()
         self.toggle_button.setChecked(True)
+
+    def _request_reset(self, item: dict[str, Any], selection: int) -> None:
+        """Reject stale queued clicks after refresh, failure or another operation."""
+        if selection != self._selection or self._busy or not self._resets_allowed:
+            self.message_label.setText("Reset selection expired — read service status again.")
+            return
+        self.reset_requested.emit(item)

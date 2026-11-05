@@ -8,6 +8,7 @@
 #define OFFSET_JOB_LIST   0x88
 #define JOB_ENTRY_SIZE    0x44
 #define TABLE_ENTRY_SIZE  0x50
+#define MAX_TABLE_COUNT  20000
 
 
 static uint32_t xor_u32(const uint8_t *p) {
@@ -131,22 +132,27 @@ static edxn_error_t parse_ediabas_tables(edxn_prg_t *prg) {
     if (len < OFFSET_TABLE_LIST + 4) return EDXN_OK;
 
     uint32_t tbl_list_off = edxn_read_u32_le(buf + OFFSET_TABLE_LIST);
-    if (tbl_list_off == 0 || tbl_list_off + 4 > len) return EDXN_OK;
+    if (tbl_list_off == 0) return EDXN_OK;
+    if ((size_t)tbl_list_off > len - 4) return EDXN_ERR_INVALID_PRG;
 
     /* Table count encoding is inconsistent — try raw first, then XOR */
     int32_t count = (int32_t)edxn_read_u32_le(buf + tbl_list_off);
-    if (count <= 0 || count > 1000) {
+    if (count < 0 || count > MAX_TABLE_COUNT) {
         count = (int32_t)xor_u32(buf + tbl_list_off);
     }
-    if (count <= 0 || count > 1000) return EDXN_OK;
+    /* Large current controllers exceed 1,000 tables. Validate the complete
+       directory against its actual bytes instead of silently losing all tables. */
+    size_t entries_start = (size_t)tbl_list_off + 4;
+    if (count < 0 || count > MAX_TABLE_COUNT ||
+        (size_t)count > (len - entries_start) / TABLE_ENTRY_SIZE)
+        return EDXN_ERR_INVALID_PRG;
+    if (count == 0) return EDXN_OK;
 
     prg->tables = (edxn_prg_table_t *)calloc((size_t)count, sizeof(edxn_prg_table_t));
     if (!prg->tables) return EDXN_ERR_NOMEM;
 
-    uint32_t entries_start = tbl_list_off + 4;
     for (int32_t i = 0; i < count; i++) {
-        uint32_t entry_off = entries_start + (uint32_t)i * TABLE_ENTRY_SIZE;
-        if (entry_off + TABLE_ENTRY_SIZE > len) break;
+        size_t entry_off = entries_start + (size_t)i * TABLE_ENTRY_SIZE;
 
         edxn_prg_table_t *tbl = &prg->tables[prg->table_count];
         xor_string(buf, len, entry_off, tbl->name, EDXN_MAX_TABLE_NAME);

@@ -1,8 +1,8 @@
 {
   "files": {
     "coding_data/cbs_definitions.json": {
-      "bytes": 45574,
-      "sha256": "af691c65f95300bd46bee6ebd5a2eecdb4593dd8f9eaf9c9b69a30644ffe24f2"
+      "bytes": 64295,
+      "sha256": "b91a24ee28ea897906314a501a06d993727e56d9414e9d1c59c98213dfc4668f"
     },
     "coding_data/coding_catalog.db": {
       "bytes": 254234624,
@@ -2222,7 +2222,7 @@
     },
     "native/build/libedx.dylib": {
       "bytes": 189840,
-      "sha256": "10fb6d7cda60326ce7c2b213fc1bf83b3809e19fb76453fcbcc140e995030b22"
+      "sha256": "2aacecbdf5a9e6cad0e8b2f327af6ec0040ae9451fae925c31b50eb7f013bfd0"
     }
   },
   "schema_version": 1

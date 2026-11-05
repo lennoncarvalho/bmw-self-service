@@ -125,7 +125,23 @@ class DiagnosticConnection:
     ) -> bytes:
         self._check_worker()
         if self._executor == get_ident():
-            return operation(self._active or ctx)
+            active = self._active
+            if active is None or active is ctx:
+                return operation(ctx)
+            # Native job callbacks supply a per-telegram context. Keep its
+            # transmission flags accurate while retaining the enclosing owner's
+            # deadline, cancellation, correlation and aggregate mutation state.
+            ctx.deadline = min(ctx.deadline, active.deadline)
+            ctx.cancelled = active.cancelled
+            ctx.operation_id = active.operation_id
+            try:
+                return operation(ctx)
+            finally:
+                active.sent |= ctx.sent
+                active.mutation |= ctx.sent and ctx.mutation
+                if ctx.sent:
+                    active.request_id = ctx.request_id
+                    active.ecu = ctx.ecu
         handle = self._owner.submit(operation, ctx)
         # The operation owner also checks the context; caller cancellation wakes
         # bounded socket reads rather than releasing stream ownership prematurely.
