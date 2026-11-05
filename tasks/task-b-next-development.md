@@ -1,5 +1,10 @@
 # Task B — continuation after PR13
 
+> 2026-11-05 continuation: [Tasks C–F](task-c-through-f-roadmap.md) now own the
+> remaining implementation order. **Task C (CBS read/reset reliability) is next.**
+> This file retains historical Task B context; do not repeat implemented substeps
+> or treat the old PR13 branch/priority instructions as the current handoff.
+
 > Current reconciliation (2026-11-04): [source reuse and continuation](../docs/29-source-reuse-continuation.md).
 > Use its current source paths, status and queue before the historical checkpoints
 > below. Reuse existing definitions/jobs first; session limitations are not scope

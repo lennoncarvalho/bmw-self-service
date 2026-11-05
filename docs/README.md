@@ -1,5 +1,11 @@
 # Documentation index and authority
 
+Next development is **[Task C — CBS reading and individual resets](../tasks/task-c-cbs-read-reset-reliability.md)**.
+The owner-ordered [C–F roadmap](../tasks/task-c-through-f-roadmap.md) supersedes
+historical Task B priority/checkpoint lists. Use supplied source applications,
+REA, decrypted databases and existing jobs; implement and verify the recovered
+contracts rather than stop at research or recreate source behavior from scratch.
+
 Current source-runtime implementation is summarized in
 [doc 29](29-source-reuse-continuation.md) and
 [the implementation/verification record](../tasks/source-reuse-runtime-implementation.md).

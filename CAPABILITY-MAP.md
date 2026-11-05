@@ -25,9 +25,10 @@ Current status is reconciled in [doc 29](docs/29-source-reuse-continuation.md).
 This table describes implementation boundaries, not a fresh end-to-end acceptance
 run. Historical source/capture evidence remains in the linked feature records.
 
-Development order: verify current sources/runtime → finish remaining CBS and
-diagnostic branches using jobs/data → remaining coding source formats and
-semantic mappings, followed by richer details and later advanced editing. Reuse implemented history and source contracts.
+Development order: [Tasks C–F](tasks/task-c-through-f-roadmap.md): **CBS read/reset
+reliability first (Task C)**, diagnostic details/clearing (D), Easy Coding readiness
+and deferred-target gating (E), then history/integrated acceptance (F). Reuse the
+implemented source contracts; advanced and unvalidated safety coding are deferred.
 Only the owner's F48 is available for physical observations; other vehicles do
 not gate source-based implementation. Do not open a PR without owner instruction.
 

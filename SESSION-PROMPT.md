@@ -3,12 +3,16 @@
 Read `AGENTS.md`, `.agents/skills/spec-driven-development/SKILL.md`,
 `docs/README.md`, docs 19/20/21 and
 [the current reconciliation](docs/29-source-reuse-continuation.md).
-Doc 29 owns current source locations, implementation status and continuation;
-older task checkpoints are historical, not instructions to repeat merged work.
+Doc29 owns current source locations and implemented baseline. The remaining
+implementation queue is [Tasks C–F](tasks/task-c-through-f-roadmap.md):
+**Task C — reliable CBS reading and individual resets — is next**, before DTC
+details (D), Easy Coding readiness (E) and history/integrated acceptance (F).
+Older Task B checkpoints are historical, not instructions to repeat merged work.
 
-PRs through #17 are merged in the current local baseline. Inspect Git status and
-fetch origin before development; preserve unrelated changes and start a fresh
-`codex/` branch from current origin/main. Never reuse a merged branch or commit
+PR18 is merged in the current baseline. Inspect Git/PR status and fetch origin
+before development; preserve unrelated changes and unpublished UI/task follow-ups.
+For a new increment after the preceding PR merges, start a fresh `codex/` branch
+from current origin/main; do not drop unmerged local work to do so. Never reuse a merged branch or commit
 to main. **Do not open a PR unless the owner explicitly asks.** Never merge it
 for the owner. Use the personal `lennoncarvalho` account before push/PR commands.
 
@@ -48,8 +52,11 @@ explicit remaining investigation tasks. Do not reintroduce exact-file-only,
 learn-by-diff or source-folder runtime prerequisites.
 
 Use `tasks/source-reuse-runtime-implementation.md` and its linked subtask/evidence
-records before repeating work. Continue doc 29's concrete remaining source work;
-source/offline/physical status must stay separate. No PR creation is authorized.
+records before repeating work. Execute Task C first, then the ordered C–F queue;
+doc29's source gaps remain its input, not an alternate priority order.
+Source/offline/physical status must stay separate. Advanced and unvalidated
+safety-ECU coding are deferred; the live safety-coding gate remains Task E work.
+No PR creation is authorized.
 
 All car I/O stays on CarWorker and one protocol owner. Preserve settled initial
 page results, bounded refresh, mutation lockout and checked completion. Current
