@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSizePolicy,
@@ -87,6 +88,7 @@ class MainWindow(QMainWindow):
         self._retired_workers: list[QThread] = []
         self._closing = False
         self._mutation_active = False
+        self._coding_loading = False
         self._overview_ecus: list[dict] = []
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
         self._cbs_journal = CbsJournalStore()
@@ -128,6 +130,8 @@ class MainWindow(QMainWindow):
         self.coding_page = CodingPage()
         self.coding_page.can_mutate = self._can_start_mutation
         self.coding_page.mutation_active.connect(self._set_mutation_active)
+        self.coding_page.loading_changed.connect(self._set_coding_loading)
+        self.coding_page.loading_progress.connect(self._on_coding_loading_progress)
         self.stack.addWidget(self.coding_page)
 
         self.history_page = ServiceHistoryPage()
@@ -227,7 +231,10 @@ class MainWindow(QMainWindow):
         return page
 
     def _build_spinner(self) -> QFrame:
-        overlay = QFrame(self)
+        self.loading_backdrop = QFrame(self)
+        self.loading_backdrop.setObjectName("loadingBackdrop")
+        self.loading_backdrop.hide()
+        overlay = QFrame(self.loading_backdrop)
         overlay.setObjectName("spinnerOverlay")
         overlay.setFixedSize(320, 160)
         overlay.setVisible(False)
@@ -241,6 +248,13 @@ class MainWindow(QMainWindow):
         self.spinner_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.spinner_text.setWordWrap(True)
         layout.addWidget(self.spinner_text)
+        progress = QProgressBar()
+        progress.setObjectName("loadingProgress")
+        progress.setAccessibleName("Loading")
+        progress.setRange(0, 0)
+        progress.setTextVisible(False)
+        progress.setFixedHeight(6)
+        layout.addWidget(progress)
 
         # G-13: Cancel button (appears after 10s)
         self._cancel_btn = QPushButton("Cancel")
@@ -266,11 +280,11 @@ class MainWindow(QMainWindow):
 
     def _show_spinner_cancel(self) -> None:
         """G-13: Show cancel button after 10s."""
-        self._cancel_btn.setVisible(not self._mutation_active)
+        self._cancel_btn.setVisible(not self._mutation_active and not self._coding_loading)
 
     def _show_retry_dialog(self) -> None:
         """G-13: Show retry dialog after 30s timeout."""
-        if self._mutation_active:
+        if self._mutation_active or self._coding_loading:
             return
         self.hide_spinner()
         reply = QMessageBox.question(
@@ -288,8 +302,11 @@ class MainWindow(QMainWindow):
     def _position_spinner(self) -> None:
         """Center the operation overlay within the visible content viewport."""
         if self.spinner_overlay and self.stack:
+            self.loading_backdrop.setGeometry(self.rect())
             viewport = self.content_scroll.viewport()
-            center = viewport.mapTo(self, viewport.rect().center())
+            center = self.loading_backdrop.mapFrom(
+                self, viewport.mapTo(self, viewport.rect().center())
+            )
             self.spinner_overlay.move(
                 center.x() - self.spinner_overlay.width() // 2,
                 center.y() - self.spinner_overlay.height() // 2,
@@ -303,16 +320,45 @@ class MainWindow(QMainWindow):
         self.spinner_text.setText(message)
         self._cancel_btn.setVisible(False)
         self._position_spinner()
+        central = self.centralWidget()
+        if central is not None:
+            central.setEnabled(False)
+        self.loading_backdrop.show()
+        self.loading_backdrop.raise_()
         self.spinner_overlay.setVisible(True)
         # G-13: Start timers for cancel (10s) and retry (30s)
         self._spinner_cancel_timer.start(10000)
         self._spinner_retry_timer.start(30000)
 
     def hide_spinner(self) -> None:
+        if self._coding_loading:
+            return
+        self.loading_backdrop.hide()
+        central = self.centralWidget()
+        if central is not None:
+            central.setEnabled(True)
         self.spinner_overlay.setVisible(False)
         self._cancel_btn.setVisible(False)
         self._spinner_cancel_timer.stop()
         self._spinner_retry_timer.stop()
+
+    @Slot(bool)
+    def _set_coding_loading(self, active: bool) -> None:
+        """Keep foreground coding work exclusive behind a loading backdrop."""
+        self._coding_loading = active
+        if active:
+            self.show_spinner("Reading coding data...")
+            # These timers cancel/retry connection setup, not coding workers.
+            self._spinner_cancel_timer.stop()
+            self._spinner_retry_timer.stop()
+        else:
+            self.hide_spinner()
+
+    @Slot(str)
+    def _on_coding_loading_progress(self, message: str) -> None:
+        """Display progress from the current foreground coding operation."""
+        if self._coding_loading:
+            self.spinner_text.setText(message)
 
     # ---- Gear menu ----
 
@@ -377,7 +423,7 @@ class MainWindow(QMainWindow):
             getattr(self._connection, "trace_id", "demo/disconnected"),
             self._read_only,
         )
-        if not self._mutation_active:
+        if not self._mutation_active and not self._coding_loading:
             if index == 0 and not self._connected:
                 self.stack.setCurrentWidget(self.welcome_page)
             else:
@@ -395,7 +441,10 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.coding_page)
         self.nav_group.button(2).setChecked(True)
         self.content_scroll.verticalScrollBar().setValue(0)
-        self.coding_page.restore_vehicle_backup(path)
+        reason = self.coding_page.restore_vehicle_backup(path)
+        if reason:
+            QMessageBox.information(self, "Coding restoration unavailable", reason)
+            self.coding_page.activate()
 
     # ---- Connection flow ----
 
@@ -627,6 +676,7 @@ class MainWindow(QMainWindow):
             self._connection is None
             or self._closing
             or self._mutation_active
+            or self._coding_loading
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
         ):
@@ -915,7 +965,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Keep worker objects alive while cooperative shutdown completes."""
-        if self._mutation_active:
+        if self._mutation_active or self._coding_loading:
             event.ignore()
             return
         if self.coding_page.has_unexported_results():
@@ -1026,6 +1076,7 @@ class MainWindow(QMainWindow):
         worker = self._post_connect_worker
         return (
             not self._mutation_active
+            and not self._coding_loading
             and self._cbs_worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
@@ -1038,7 +1089,12 @@ class MainWindow(QMainWindow):
         """Read CBS from identified owners; DEMO decodes its simulated snapshot."""
         connection = self._connection
         panel = self.vehicle_page.cbs_panel
-        if connection is None or self._cbs_worker is not None or self._mutation_active:
+        if (
+            connection is None
+            or self._cbs_worker is not None
+            or self._mutation_active
+            or self._coding_loading
+        ):
             return
         if self._demo_mode:
             data = getattr(connection, "data", {}) or {}
@@ -1213,7 +1269,7 @@ class MainWindow(QMainWindow):
         self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
-        elif self._connected:
+        elif self._connected and not self._coding_loading:
             QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
             btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3)) and not active)

@@ -82,10 +82,25 @@ ECU titles are description data, not proof of an installed ECU or write support.
 - Wrong ECU and wrong memory return empty; an SQL-injection-shaped ECU name
   remains a parameter, not SQL. Four concurrent threads repeat the same lookup
   without sharing connections.
-- One-off ambiguity fixture with two different texts returns empty. Updated in
-  the PR18 follow-up to honor D-43: English requests return empty when English
-  is absent; explicit German requests retain German text. This applies to both
-  fault descriptions and ECU titles. No automated suite or `tests/` was created.
+- The owner's 2026-11-05 clarification supersedes the earlier English-only
+  fallback interpretation: preserve every fault code and prefer English, while
+  showing available descriptions in another language. English is selected only
+  if **every** exact-identity candidate has nonempty, agreeing English text.
+  Missing, null, whitespace-only or conflicting English candidates trigger a
+  separate German agreement query; there is no per-row language mixing or
+  arbitrary first-row selection. Conflicting German candidates remain empty.
+  Explicit German requests retain their existing lookup behavior. This applies
+  to both fault descriptions and ECU titles. No automated suite or `tests/`
+  was created.
+- Retained one-off 2026-11-05 checks cover 40 fault/title assertions across
+  complete/partial translations, null/empty/whitespace English, shared and
+  conflicting German, and ambiguous English. Actual asset English DME fault and
+  title lookups pass; the current generated asset contains no nonempty-German /
+  missing-English row, so that fallback boundary is exercised with standalone
+  SQLite fixtures. An actual Qt diagnostics page renders both supplied codes,
+  including an empty-description row. The worker appends every decoded record;
+  description lookup is not a filter. Checks/logs are retained under
+  `/Users/lennon/BMW-Tool/investigations/diagnostic-language-fallback-20261105/`.
 - Python audit observations show runtime lookup opens only the generated asset,
   with no path under `sources/` and no codec/provider subprocess.
 - Generated SQLite `PRAGMA integrity_check` returns `ok`.

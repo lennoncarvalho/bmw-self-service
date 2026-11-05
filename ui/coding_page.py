@@ -101,6 +101,8 @@ class CodingPage(QWidget):
     """Coding tab with Easy/Advanced sub-pages and shared pending-changes bar."""
 
     mutation_active = Signal(bool)
+    loading_changed = Signal(bool)
+    loading_progress = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build coding previews with live writes and backup loading disabled until configured."""
@@ -113,6 +115,7 @@ class CodingPage(QWidget):
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
         self._sensitive_worker: CarWorker | None = None
+        self._loading_worker: CarWorker | None = None
         self._is_real = False  # True when categories come from car, not mock
         self._live_unavailable = True
         self._snapshot_workers: list[CarWorker] = []
@@ -590,6 +593,7 @@ class CodingPage(QWidget):
         worker.result_ready.connect(self._on_snapshot)
         worker.error.connect(self._on_snapshot_error)
         worker.finished.connect(self._on_snapshot_finished)
+        self._start_loading(worker, "Reading coding values...")
         worker.start()
 
     def is_reading(self) -> bool:
@@ -621,6 +625,28 @@ class CodingPage(QWidget):
             self._coding_reader = None
         if isinstance(worker, CarWorker):
             self._release_source_worker(worker)
+            self._finish_loading(worker)
+
+    def _start_loading(self, worker: CarWorker, message: str) -> None:
+        """Block foreground controls before starting a coding read or preparation."""
+        self._loading_worker = worker
+        worker.progress.connect(self._on_loading_progress)
+        self.loading_changed.emit(True)
+        self.loading_progress.emit(message)
+
+    def _finish_loading(self, worker: CarWorker) -> None:
+        """Release the backdrop only for the worker that acquired it."""
+        if worker is self._loading_worker:
+            self._loading_worker = None
+            self.loading_changed.emit(False)
+
+    @Slot(str)
+    def _on_loading_progress(self, message: str) -> None:
+        """Publish current foreground progress without accepting stale workers."""
+        worker = self.sender()
+        if worker is self._loading_worker and worker.connection is self._connection:
+            self._pending_label.setText(message)
+            self.loading_progress.emit(message)
 
     @Slot(object)
     def _begin_sensitive_read(self, permission: object) -> None:
@@ -981,22 +1007,29 @@ class CodingPage(QWidget):
         self._bottom_bar.setVisible(self._pending > 0)
         self._write_btn.setEnabled(bool(self._pending) and not self.is_reading())
 
-    def _prepare_source_write(self, restore_path: Path | None = None) -> None:
-        """Freshly identify/read/compose off the GUI thread before confirmation."""
+    def _prepare_source_write(self, restore_path: Path | None = None) -> str | None:
+        """Start preparation, or return a visible reason why it cannot begin."""
         from app.coding_write import CodingPrepareWorker
 
         connection = self._connection
-        if (
-            connection is None
-            or getattr(connection, "data", None)
-            or getattr(connection, "read_only", True)
-            or not connection.alive_ok
-            or self.is_reading()
-            or not self.can_mutate()
-            or (not self._live_selections and restore_path is None)
-            or self.has_unexported_results()
-        ):
-            return
+        reason = ""
+        if connection is None or not getattr(connection, "alive_ok", False):
+            reason = "Connect to the vehicle before preparing coding or restoration."
+        elif hasattr(connection, "data"):
+            reason = "DEMO previews cannot prepare live coding or restoration."
+        elif getattr(connection, "read_only", True):
+            reason = "Coding and restoration are unavailable in a read-only connection."
+        elif self.is_reading():
+            reason = "Wait for the current coding read or preparation to finish, then retry."
+        elif not self.can_mutate():
+            reason = "Wait for the current vehicle operation to finish, then retry."
+        elif self.has_unexported_results():
+            reason = "Export the retained coding results before preparing another operation."
+        elif not self._live_selections and restore_path is None:
+            reason = "Select a coding change before preparing an operation."
+        if reason:
+            self._pending_label.setText(reason)
+            return reason
         changes = [
             {
                 "address": address,
@@ -1021,7 +1054,9 @@ class CodingPage(QWidget):
         worker.result_ready.connect(self._source_plan_ready)
         worker.error.connect(self._source_error)
         worker.finished.connect(self._source_prepare_finished)
+        self._start_loading(worker, "Reading and checking the coding plan...")
         worker.start()
+        return None
 
     @Slot(object)
     def _source_plan_ready(self, plan: Any) -> None:
@@ -1040,11 +1075,21 @@ class CodingPage(QWidget):
         if worker is self._worker:
             self._worker = None
         self._release_source_worker(worker)
+        self._finish_loading(worker)
+        error = worker.property("preparation_error")
+        if current and isinstance(error, str) and error:
+            QMessageBox.warning(self, "Coding preparation unavailable", error)
+            if worker.connection is not self._connection:
+                return
         if current and self._pending_plan is not None:
             plan, self._pending_plan = self._pending_plan, None
             self._confirm_source_plan(plan, worker.connection)
         elif current:
             self._write_btn.setEnabled(bool(self._live_selections))
+        if current and self._coding_writer is None:
+            # A first visit through Backups may have deferred the snapshot.
+            # Retry only after preparation/review settles, never beside a write.
+            self.activate()
 
     def _confirm_source_plan(self, plan: Any, connection: Any) -> None:
         """Show a concrete frozen plan and mandatory power acknowledgement."""
@@ -1236,6 +1281,10 @@ class CodingPage(QWidget):
             self._write_report = copy.deepcopy(report)
             self._evidence_export_btn.setVisible(bool(report.get("persistence_failed")))
         self._pending_label.setText(message)
+        if worker is self._loading_worker:
+            worker.setProperty("preparation_error", message)
+            self.loading_progress.emit(message)
+            return
         QMessageBox.warning(self, "Coding unavailable", message)
 
     @Slot()
@@ -1263,9 +1312,9 @@ class CodingPage(QWidget):
         if not worker.property("retired_by_main"):
             worker.deleteLater()
 
-    def restore_vehicle_backup(self, path: Path) -> None:
-        """Prepare an explicit restore; importing or selecting a file never writes."""
-        self._prepare_source_write(restore_path=path)
+    def restore_vehicle_backup(self, path: Path) -> str | None:
+        """Prepare an explicit restore or explain its rejection; never write on selection."""
+        return self._prepare_source_write(restore_path=path)
 
     def _export_coding_report(self) -> None:
         """Publish retained interruption evidence off the GUI thread."""

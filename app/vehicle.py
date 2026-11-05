@@ -350,7 +350,7 @@ class DiagnosticCatalog:
         return result
 
     def describe(self, name: str, code: str, memory: str = "Fault") -> str | None:
-        """Use only the exact variant's English entry; never borrow another ECU."""
+        """Prefer English for the exact variant, retaining available source-language text."""
         try:
             text = diagnostic_texts.describe(
                 int(code.upper().removeprefix("0X"), 16),

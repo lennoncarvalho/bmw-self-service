@@ -28,8 +28,10 @@ class DiagnosticTexts:
         """Select the embedded data file or an explicit standalone data fixture."""
         self.path = path if path is not None else resource_path("coding_data/diagnostic_texts.db")
 
-    def _texts(self, query: str, parameters: tuple[str | int, ...]) -> str:
-        """Return a single invariant description, or empty for unavailable/ambiguous."""
+    def _texts(
+        self, query: str, parameters: tuple[str | int, ...], *, require_complete: bool = False
+    ) -> str:
+        """Return agreeing text, optionally requiring every candidate to be nonempty."""
         try:
             if not self.path.is_file() or self.path.stat().st_size > _MAX_ASSET_BYTES:
                 return ""
@@ -40,6 +42,10 @@ class DiagnosticTexts:
                 rows = connection.execute(query, parameters).fetchmany(_MAX_CANDIDATES + 1)
                 if len(rows) > _MAX_CANDIDATES:
                     return ""
+                if require_complete and any(
+                    row[0] is None or not str(row[0]).strip() for row in rows
+                ):
+                    return ""
                 texts = {str(row[0]).strip() for row in rows if row[0]}
                 return texts.pop() if len(texts) == 1 else ""
         except (OSError, sqlite3.Error, ValueError):
@@ -47,33 +53,39 @@ class DiagnosticTexts:
             return ""
 
     def describe(self, code: int, *, ecu: str, fault_type: str = "F", language: str = "en") -> str:
-        """Return an exact variant/code/memory description in the requested language.
+        """Return agreeing exact-identity text, preferring complete English candidates.
 
         Args:
             code: Numeric diagnostic code, independent of its display width.
             ecu: Identified variant name, never a marketing model or chassis hint.
             fault_type: Source memory datatype F (fault) or I (information).
-            language: en requests English only; de requests German only.
+            language: en prefers English, then agreeing German; de requests German only.
         """
         if isinstance(code, bool) or not 0 <= code <= 0xFFFFFF or not ecu:
             return ""
         if fault_type not in {"F", "I"} or language not in {"en", "de"}:
             return ""
-        column = "text_en" if language == "en" else "text_de"
-        return self._texts(
-            f"SELECT {column} FROM fault_texts "
-            "WHERE variant=? COLLATE NOCASE AND code=? AND fault_type=? LIMIT 129",
-            (ecu, code, fault_type),
+        query = (
+            "SELECT {column} FROM fault_texts "
+            "WHERE variant=? COLLATE NOCASE AND code=? AND fault_type=? LIMIT 129"
         )
+        parameters = (ecu, code, fault_type)
+        if language == "en":
+            english = self._texts(query.format(column="text_en"), parameters, require_complete=True)
+            if english:
+                return english
+        return self._texts(query.format(column="text_de"), parameters)
 
     def ecu_title(self, ecu: str, *, language: str = "en") -> str:
-        """Return a sourced ECU title only when exact-name candidates agree."""
+        """Prefer complete agreeing English titles, then agreeing German titles."""
         if not ecu or language not in {"en", "de"}:
             return ""
-        column = "text_en" if language == "en" else "text_de"
-        return self._texts(
-            f"SELECT {column} FROM ecu_titles WHERE variant=? COLLATE NOCASE LIMIT 129", (ecu,)
-        )
+        query = "SELECT {column} FROM ecu_titles WHERE variant=? COLLATE NOCASE LIMIT 129"
+        if language == "en":
+            english = self._texts(query.format(column="text_en"), (ecu,), require_complete=True)
+            if english:
+                return english
+        return self._texts(query.format(column="text_de"), (ecu,))
 
 
 diagnostic_texts = DiagnosticTexts()

@@ -187,3 +187,75 @@ Focused verification (outside the repository; no suite):
 
 No runtime asset bytes, cryptographic contracts or vehicle storage requirements
 were changed by this review batch. Full preflight is rerun before push.
+
+## Third review batch and owner clarification — 2026-11-05
+
+The owner supersedes the diagnostic-language part of D-43: never hide a read
+fault because of language; prefer complete, agreeing English text but display
+another available source language when English is unavailable. Ambiguous source
+candidates still cannot be arbitrarily selected. This is an explicit product
+clarification, not a technical limitation or a new translation requirement.
+
+Plan: require complete English candidate agreement before coherent German
+fallback; keep explicit German lookup behavior. Show a blocking loading backdrop
+for foreground coding reads/preparation and existing loading flows; disable
+underlying buttons instead of permitting competing operations. Release loading
+only at worker completion, then use the existing preparation completion flow to
+load an initially missing snapshot after failure/cancel without reading alongside
+a confirmed write. Return a specific preparation rejection reason to the restore
+handler and show it on the now-visible coding page. Independently check actual
+Qt lifecycle, dismissal, failure and success; full preflight before push.
+
+### Third batch results
+
+- English candidates now require every exact-identity row to contain agreeing,
+  nonempty text. If that English result is unavailable, the lookup performs a
+  separate coherent German lookup under the owner's new preference. Explicit
+  German behavior is preserved; conflicting candidates remain unavailable.
+  Fault rows are never filtered by description availability. UI placeholders
+  say "Description unavailable", not "English description unavailable".
+- Coding snapshots and preparation signal foreground loading through their
+  actual owning worker. A full-window backdrop, indeterminate progress bar and
+  current progress block underlying controls/navigation until thread completion.
+  The connection Cancel/Retry controls are stopped/guarded for coding loads;
+  unrelated background hide/refresh callbacks cannot uncover or start another
+  foreground action. Existing mutation lockout remains separate and unchanged.
+- Preparation failures retain a visible warning after worker completion, before
+  any first-snapshot retry. Cancelled review also triggers the missing initial
+  snapshot through the existing completion flow. Confirmed writes never start
+  a competing snapshot. No write intent is automatically replayed.
+- Preparation returns specific unavailable, DEMO, read-only, busy or retained-
+  evidence reasons. The restore handler displays these after navigating to
+  Coding, then activates an initial read when appropriate; it cannot strand a
+  fresh coding view behind a rejected restore request.
+
+Independent review caught and corrected two introduced issues: failure text
+being overwritten by the follow-up read, and mapping the spinner directly
+between sibling widget trees. Error acknowledgement now precedes the retry;
+coordinates map through the common MainWindow ancestor.
+
+Verification retained outside the repository:
+
+- `~/BMW-Tool/investigations/diagnostic-language-fallback-20261105/`:40 SQLite
+  fault/title cases with partial, null, blank and conflicting translations;
+  explicit German behavior; actual English source-asset lookups; actual Qt
+  display retains codes whose descriptions are empty. The current generated
+  asset has no German-nonempty/English-missing row, so fallback edge cases are
+  fixture checks rather than claimed observations of such asset rows.
+- `~/BMW-Tool/investigations/source-runtime-20261104/pr18_batch3_loading_check.py`:
+  actual Qt/CarWorker failure, cancel and success; missing first snapshot resumes
+  only after preparation settles, zero snapshot allocation during confirmed
+  writing, actual-finished backdrop ownership, disabled controls, progress,
+  resize, close/nav guards and connection timers. Read-only and unavailable
+  rejections are visible; no car I/O. Screenshots `loading-{failure,cancel,success}.png`
+  visually inspected, including the indeterminate progress indicator.
+- Independent `/tmp/coding_backdrop_review.py` and the existing actual MainWindow
+  confirmation/export harness pass; no remaining actionable review findings.
+  Existing actual-source coding/restore UI harness still passes157 synthetic
+  requests with power/restore acknowledgement and zero GUI-thread car I/O.
+- Actual DEMO connection/four-page rendering/close pass. Full app Ruff check,
+  Ruff format check and mypy pass across52 files, with final pre-push gate below.
+
+No source asset/database rebuild, tests/ directory, real-car operation or protocol
+contract change was needed. This batch implements the owner's clarified behavior
+rather than reinstating the superseded English-only fallback restriction.

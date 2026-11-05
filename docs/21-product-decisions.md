@@ -86,7 +86,7 @@ D-01–D-20 originated before this interview; D-21–D-55 were answered on
 | D-40 | Display an existing value outside preset options as Custom. Preserve it by default, including its original raw bytes in the backup; do not normalize/overwrite it merely because it is not a preset. The owner notes it may already work in the car. |
 | D-41 | Keep all backups without automatic pruning; allow users to delete them. No special prohibition on deleting unresolved-operation backups was approved. Explain loss of backup/recovery material on deletion; require a durable coding ECU baseline/intent or history local snapshot/intent/results before a new write. |
 | D-42 | Support backup export/import between computers. Check vehicle/ECU/software compatibility before restoration; import alone never mutates the vehicle. |
-| D-43 | Translate all user-facing content to English for the first release. Portuguese comes later. This includes diagnostic/coding/history labels and descriptions, not just app controls. German is not an approved normal-display fallback. |
+| D-43 | Translate all user-facing content to English for the first release. Portuguese comes later. This includes diagnostic/coding/history labels and descriptions, not just app controls. German is not an approved normal-display fallback except diagnostic content under the 2026-11-05 owner clarification below. |
 | D-44 | Detect system format/region where practical. Fallback is Brazilian Portuguese regional formatting and kilometres. Implementation interpretation: interface text remains English under D-43; regional settings govern dates/numbers and distance-unit defaults. |
 | D-45 | Use ordinary, unencrypted backup files with the simplest practical read/write format. No password/export-encryption feature required. |
 | D-46 | Do not mask vehicle identifiers in diagnostic logs/exports. Retain complete diagnostic records, including VIN; no automatic export redaction. |
@@ -304,3 +304,18 @@ No automated suite is authorized. New behavior questions discovered through REA
 must be recorded specifically, not filled with assumptions or used to reopen
 already answered choices. CBS read/write priority is now governed by D-58.
 Later advanced coding, history editing and public release choices do not block this milestone.
+
+
+## Owner clarification — 2026-11-05 diagnostic language and loading
+
+Read faults must remain visible regardless of description language. English is
+preferred, but available source-language diagnostic descriptions and ECU titles
+may be shown when a complete, unambiguous English result is unavailable. Missing
+or ambiguous descriptions never remove a fault code. This supersedes only the
+diagnostic-language fallback restriction in D-43; English interface/translation
+goals remain. Do not guess among conflicting source candidates.
+
+During foreground loading/preparation, block competing UI actions and display a
+loading indicator with a backdrop. Coding reads and preparation remain sequential;
+failure or cancelled confirmation must not strand the first snapshot. Rejections
+must explain what prevents preparation rather than silently leaving Backups.
