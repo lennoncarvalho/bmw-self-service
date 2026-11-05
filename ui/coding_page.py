@@ -130,8 +130,9 @@ class CodingPage(QWidget):
         self._evidence_export_btn.clicked.connect(self._export_coding_report)
         self._evidence_export_btn.setVisible(False)
         page_layout = self.layout()
-        assert page_layout is not None
+        assert isinstance(page_layout, QVBoxLayout)
         page_layout.addWidget(self._evidence_export_btn)
+        page_layout.addStretch()
         self._write_btn.setEnabled(False)
 
     def _setup_ui(self) -> None:
@@ -191,7 +192,7 @@ class CodingPage(QWidget):
         self._sub_stack = PageStack(content_height=True)
         self._sub_stack.addWidget(self._build_easy_page())
         self._sub_stack.addWidget(self._build_advanced_page())
-        layout.addWidget(self._sub_stack, stretch=1)
+        layout.addWidget(self._sub_stack)
 
         # Bottom bar (visible when pending > 0)
         self._bottom_bar = QFrame()
@@ -250,9 +251,6 @@ class CodingPage(QWidget):
             card_layout.setSpacing(4)
 
             top = QHBoxLayout()
-            icon_label = QLabel(cat["icon"])
-            icon_label.setStyleSheet("font-size: 24px; background: transparent;")
-            top.addWidget(icon_label)
             name_label = QLabel(cat["name"])
             name_label.setStyleSheet(
                 "font-size: 15px; font-weight: bold; color: #e0e0e0; background: transparent;"
