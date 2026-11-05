@@ -4,6 +4,7 @@ Displays decoded per-owner CBS records with raw bytes and explicit unavailable
 states. All vehicle I/O belongs to CarWorkers started by the main window.
 """
 
+from copy import deepcopy
 from typing import Any
 
 from PySide6.QtCore import Qt, Signal
@@ -32,6 +33,7 @@ class CbsPanel(QWidget):
         self._busy = False
         self._selection = 0
         self._has_result = False
+        self._items: list[dict[str, Any]] = []
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         header = QHBoxLayout()
@@ -106,11 +108,13 @@ class CbsPanel(QWidget):
         """Discard displayed records (new session, disconnect or stale state)."""
         self._clear_rows()
         self._has_result = False
+        self._items.clear()
         self.invalidate_resets()
         self.message_label.clear()
         self.outcome_label.clear()
         self.status_label.setText(text)
         self.rows.addStretch()
+        self.set_busy(False)
 
     def _clear_rows(self) -> None:
         while self.rows.count():
@@ -176,19 +180,40 @@ class CbsPanel(QWidget):
             or "no ECU with a CBS reader was identified"
         )
         self.status_label.setText((note + "\n" if note else "") + f"Sources:\n{coverage}")
-        if (
-            self._has_result
-            and not result.get("items")
-            and any(owner["state"] not in ("read", "not-held", "DEMO") for owner in owners)
-        ):
-            self.show_error("Service status read failed; see the source coverage below.")
-            return
+        failed = {
+            (owner["name"], owner["address"])
+            for owner in owners
+            if owner["state"] not in ("read", "not-held", "DEMO")
+        }
+        items = deepcopy(
+            [
+                item
+                for item in result.get("items", [])
+                if (item["owner"]["name"], item["owner"]["address"]) not in failed
+            ]
+        )
+        stale_note = "Stale value: this ECU could not be refreshed; reset disabled"
+        for previous in self._items:
+            owner = previous["owner"]
+            if (owner["name"], owner["address"]) in failed:
+                retained = deepcopy(previous)
+                retained["resettable"] = False
+                notes = retained.setdefault("notes", [])
+                if stale_note not in notes:
+                    notes.append(stale_note)
+                items.append(retained)
         self._clear_rows()
-        self._has_result = bool(result.get("items"))
+        self._items = items
+        self._has_result = bool(items)
         self._selection += 1
         self._resets_allowed = resets_allowed
         self.message_label.clear()
-        for item in result.get("items", []):
+        if failed:
+            self.message_label.setText(
+                "Service status refresh failed for some sources. "
+                "Any retained values are stale; their resets are disabled."
+            )
+        for item in items:
             frame = QFrame()
             frame.setObjectName("card")
             row = QHBoxLayout(frame)
@@ -209,7 +234,7 @@ class CbsPanel(QWidget):
                 )
                 row.addWidget(button, 0, Qt.AlignmentFlag.AlignTop)
             self.rows.addWidget(frame)
-        if not result.get("items"):
+        if not items:
             empty = QLabel("No CBS records were returned")
             self.rows.addWidget(empty)
         self.rows.addStretch()

@@ -134,9 +134,13 @@ def build(
             if (
                 not isinstance(reset_items, list)
                 or not reset_items
-                or any(len(item) != 2 or not 0 <= int(item, 16) <= 255 for item in reset_items)
-                or set(reset_items) & {"E0", "E1", "FF"}
+                or any(not isinstance(item, str) for item in reset_items)
             ):
+                raise ValueError(f"Missing reviewed per-item reset identifiers: {name}")
+            reset_items = [item.upper() for item in reset_items]
+            if any(len(item) != 2 or not 0 <= int(item, 16) <= 255 for item in reset_items) or set(
+                reset_items
+            ) & {"E0", "E1", "FF"}:
                 raise ValueError(f"Missing reviewed per-item reset identifiers: {name}")
             definitions[name]["reset_items"] = reset_items
             if definition["version"] == "7.0":

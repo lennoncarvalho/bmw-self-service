@@ -565,7 +565,7 @@ def _read_cbs(
                 owners.append({**owner, "state": state, "response": response.hex()})
                 continue
         owner["software"] = ""
-        if owner["ownership"] == "primary" and target.get("software_request"):
+        if target.get("software_request"):
             try:
                 if deadline <= time.monotonic():
                     raise TimeoutError("CBS software identity budget exhausted")
@@ -1066,7 +1066,13 @@ class CbsResetWorker(CarWorker):
             if execution is not None
             else f"app request ({backend.fallback_source(owner['name'])})"
         )
-        path = self.store.prepare(plan.intent(execution))
+        try:
+            path = self.store.prepare(plan.intent(execution))
+        except (OSError, ValueError):
+            logger.warning("CBS reset journal preparation failed", exc_info=True)
+            self.report["persistence_failed"] = True
+            self.report["detail"] = "The local operation record could not be saved; reset not sent"
+            return self.report
         self.report["path"] = str(path)
         catalog = DiagnosticCatalog()
         state: dict[str, Any] = {

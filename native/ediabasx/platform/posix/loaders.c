@@ -66,6 +66,7 @@ static edxn_error_t load_prg_from_dir(const char *dir, const char *filename,
 
     edxn_error_t err = edxn_prg_parse(prg, data, len);
     if (err != EDXN_OK) {
+        edxn_prg_free(prg);
         free(prg);
         free(data);
         return err;

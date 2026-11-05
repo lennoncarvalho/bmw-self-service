@@ -2222,7 +2222,7 @@
     },
     "native/build/libedx.dylib": {
       "bytes": 189840,
-      "sha256": "2aacecbdf5a9e6cad0e8b2f327af6ec0040ae9451fae925c31b50eb7f013bfd0"
+      "sha256": "ed3d4cd97c54b3b08c9922bf913352ff76f4b402a8d46ec0190a73dc5bce82f0"
     }
   },
   "schema_version": 1
