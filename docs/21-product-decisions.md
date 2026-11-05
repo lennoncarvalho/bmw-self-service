@@ -319,3 +319,18 @@ During foreground loading/preparation, block competing UI actions and display a
 loading indicator with a backdrop. Coding reads and preparation remain sequential;
 failure or cancelled confirmation must not strand the first snapshot. Rejections
 must explain what prevents preparation rather than silently leaving Backups.
+
+
+## Owner readiness scope — 2026-11-05
+
+The owner is willing to postpone advanced coding and safety-ECU coding that is
+not working and validated. Keep them outside the current acceptance claim;
+source recovery and offline work can continue without requiring additional cars.
+This does not defer ordinary diagnostics/clearing, CBS or supported history
+writes merely because their target is involved in a safety-related system.
+
+Current implementation boundary: Advanced is deferred. Live Easy does not yet
+apply a global safety-ECU exclusion; its source guards and preparation checks are
+not such a gate. Track explicit scope gating as unfinished before claiming these
+targets are excluded. Do not invent a permanent ECU blacklist or describe an
+unvalidated path as physically accepted. See the current capability map.

@@ -365,6 +365,12 @@ Both Easy and Advanced Coding share these elements:
 Categories and options filtered to the specific vehicle model (FA/VO).
 Data from the curated coding database (see docs/11).
 
+Owner clarification (2026-11-05): section headings use normal titles such as
+Lighting and Comfort, without oversized initials or decorative letter icons.
+The Easy/Advanced tab row stays at the same top inset on both short and long
+pages; unused vertical space belongs below the content and action controls.
+
+
 ### Option detail (click into a category → pick an option)
 
 ```

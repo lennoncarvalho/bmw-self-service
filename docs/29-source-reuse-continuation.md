@@ -132,6 +132,10 @@ No physical car operation or universal vehicle validation is claimed.
 
 ## Remaining concrete source work
 
+Execution order is now the owner's [Tasks C–F](../tasks/task-c-through-f-roadmap.md),
+starting with **CBS reading and individual reset reliability (Task C)**. The
+inventory below supplies those tasks; it does not supersede that priority.
+
 1. Three CAFD 02.00.00 files use a different `codingArea/sigId/sigLen` layout;
    the current converter records their exact identities/dispositions instead of
    pretending the byte-layout importer covers them.

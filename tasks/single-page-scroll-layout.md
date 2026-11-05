@@ -71,3 +71,31 @@ wrapped labels retained their full required heights and the window still had
 exactly one QScrollArea. Nested wrapped content shrank/reflowed correctly on
 resize, short-tab switching and reopening. Keyboard Tab reveals an offscreen
 final control through the outer viewport. No remaining actionable review findings.
+
+## Easy tab spacing/title follow-up — 2026-11-05
+
+Owner reports excess vertical space around Easy/Advanced tabs on a short Easy
+page, normal spacing on the taller Advanced page, and dislikes large repeated
+initials in category headings. Reproduce actual MainWindow geometry before
+editing. Keep the coding content at its natural height and direct unused vertical
+space below the page controls, preserving one outer viewport. Remove decorative
+initial labels while retaining ordinary section names. Verify initial/returning
+Easy, live placeholders/results, Advanced, expanded/collapsed sections and resizing;
+visual Qt/DEMO, independent review and full preflight. PR18 was confirmed merged
+before delivery, so this follow-up moved to `codex/coding-tab-layout` from the
+latest `origin/main`; no new PR was opened.
+
+Reproduced before fix: initial/returned Easy tab y76px and content y174px,
+versus Advanced y16/content y54. The fixed-height content stack could not consume
+its old layout stretch allocation, so spare height inflated the tab row.
+Removed that stretch allocation and placed an explicit spacer after the final
+page control. Tabs now remain y16/content y54 on initial Easy, Advanced and return.
+Removed only the decorative category initial widgets; titles/descriptions remain.
+
+Actual MainWindow+theme checks: root
+`~/BMW-Tool/investigations/source-runtime-20261104/coding_tab_spacing_check.py`
+and independent `/tmp/coding_spacing_independent.py` pass initial/switch/return,
+expanded Easy, live placeholders,20 long live source rows,800x650 and1400x1100,
+pending actions and retained-export reachability through the sole outer scrollbar.
+Visually inspected `coding-tab-spacing-fixed.png`. Full Ruff check/format/mypy
+pass52 files, with clean diff whitespace. No car I/O or test suite.
