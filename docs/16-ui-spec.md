@@ -57,8 +57,9 @@ Every operation that talks to the car shows a **centered spinner** with a
 status label. While loading:
 
 - Navigation buttons are disabled (prevent double-clicks)
-- A cancel/timeout button appears after 10 seconds
-- After 30 seconds of no response: "The car is not responding. Check ignition
+- During connection setup, a cancel/timeout button appears after 10 seconds.
+  These setup controls do not cancel or retry coding reads/preparation or writes.
+- During connection setup, after 30 seconds of no response: "The car is not responding. Check ignition
   and ENET cable connection. [Retry] [Cancel]"
 
 No operation blocks the UI thread — all car I/O runs on background threads
@@ -70,6 +71,15 @@ The app uses a **bottom navigation bar** with 4 tabs. On desktop, it also
 appears as a bottom bar (not a sidebar) so the layout is consistent across
 screen sizes. On narrow windows (< 600px), content margins shrink and cards
 stack vertically.
+
+Owner clarification (2026-11-04): main-page content has one outer vertical
+scrollbar. Expanding any accordion grows it until all of its content is visible;
+configuration, ECU, CBS, diagnostic, coding, local history and journal sections
+must not create nested vertical viewports or fixed-height scrolling boxes.
+The current page alone determines the content height, including wrapped text;
+hidden pages/tabs do not reserve space. The header and bottom navigation remain
+outside that scrolling content and stay anchored. Dialog forms and confirmation
+previews retain their separate scrolling where needed.
 
 ---
 
@@ -546,3 +556,16 @@ backups/2026-10-25_14-22/
 | Coding database missing | "Coding database not found. Reinstall the application." |
 | DTC database missing | "DTC descriptions unavailable. Reinstall the application." |
 | Backup disk full | "Cannot save backup — disk is full. Free up space and try again." |
+
+
+### Foreground loading clarification — 2026-11-05
+
+Foreground coding reads and restore/coding preparation use a loading backdrop
+that blocks underlying controls and navigation while the worker runs. Progress
+remains visible; release loading at actual worker completion before review.
+Unavailable/read-only/busy restore requests give a visible reason. If initial
+snapshot loading was deferred by preparation, failure or cancelled review starts
+that snapshot afterward; confirmed writing never starts a competing read.
+Read diagnostic codes stay visible regardless of language, preferring complete
+English descriptions and then unambiguous available source-language descriptions
+(owner clarification to D-43).

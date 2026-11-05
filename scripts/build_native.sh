@@ -19,6 +19,8 @@ CFLAGS=(-std=c11 -D_DEFAULT_SOURCE -O2 -Wall -Wextra -Werror -fPIC -fvisibility=
 SOURCES=(native/edx_shim.c native/ediabasx/platform/posix/loaders.c native/ediabasx/src/*.c)
 OUT_DIR=native/build
 mkdir -p "$OUT_DIR"
+build_temporary=$(mktemp -d "$OUT_DIR/.library-build.XXXXXX")
+trap 'rm -rf "$build_temporary"' EXIT
 
 case "$(uname -s)" in
     Darwin)
@@ -31,12 +33,15 @@ case "$(uname -s)" in
         fi
         rm -rf "$PROBE"
         "$CC" "${CFLAGS[@]}" ${ARCHS[@]+"${ARCHS[@]}"} -dynamiclib \
-            -install_name @rpath/libedx.dylib -o "$OUT" "${SOURCES[@]}"
+            -install_name @rpath/libedx.dylib -o "$build_temporary/libedx.dylib" "${SOURCES[@]}"
         ;;
     *)
         OUT="$OUT_DIR/libedx.so"
-        "$CC" "${CFLAGS[@]}" -shared -o "$OUT" "${SOURCES[@]}"
+        "$CC" "${CFLAGS[@]}" -shared -o "$build_temporary/libedx.so" "${SOURCES[@]}"
         ;;
 esac
 
+# Existing processes keep their mapped inode while new jobs load the complete
+# new library; never truncate a library another worker may still be using.
+mv -f "$build_temporary/$(basename "$OUT")" "$OUT"
 echo "built $OUT"

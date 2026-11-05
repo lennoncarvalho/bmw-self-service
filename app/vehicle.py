@@ -12,7 +12,9 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, cast
 
-from app.ista_jobs import JobBackend, fault_records
+from app.diagnostic_texts import diagnostic_texts
+from app.ista_data import DataFormatError
+from app.ista_jobs import JobBackend, data_source, fault_records
 from app.protocol.contracts import TransportKind
 from app.resources import resource_path
 from app.uds import decode_dtc_records
@@ -285,6 +287,7 @@ class DiagnosticCatalog:
     """Exact address/variant definitions and English fault descriptions."""
 
     def __init__(self, path: Path | None = None) -> None:
+        """Load the bundled diagnostic catalogue and optional exact text mappings."""
         self.path = path or resource_path("coding_data/diagnostic_catalog.json.gz")
         self.variants: dict[str, dict[str, Any]] = {}
         self.descriptions: dict[str, dict[str, str]] = {}
@@ -296,6 +299,20 @@ class DiagnosticCatalog:
             self.variants = data["variants"]
             self.descriptions = data["descriptions"]
             self.info_descriptions = data["info_descriptions"]
+        # The embedded job table covers identities absent from the older
+        # diagnostic catalogue. A row identifies a variant, not write permission
+        # or proof that its job file is present on this installation.
+        try:
+            for key, name in data_source().uds_variants().items():
+                if key not in self.variants:
+                    self.variants[key] = {
+                        "name": name,
+                        "description": name,
+                        "uds": True,
+                        "identity_source": "embedded job table",
+                    }
+        except (OSError, ValueError, DataFormatError):
+            logger.warning("Embedded job identities unavailable", exc_info=True)
 
     def uds_addresses(self) -> tuple[int, ...]:
         """Return all distinct source-catalogue UDS addresses for identity fallback.
@@ -327,10 +344,23 @@ class DiagnosticCatalog:
         if match:
             result.update(match)
             result["identified"] = True
+            title = diagnostic_texts.ecu_title(str(result["name"]))
+            if title:
+                result["description"] = title
         return result
 
     def describe(self, name: str, code: str, memory: str = "Fault") -> str | None:
-        """Use only the exact variant's English entry; never borrow another ECU."""
+        """Prefer English for the exact variant, retaining available source-language text."""
+        try:
+            text = diagnostic_texts.describe(
+                int(code.upper().removeprefix("0X"), 16),
+                ecu=name,
+                fault_type="I" if memory == "Information" else "F",
+            )
+        except ValueError:
+            text = ""
+        if text:
+            return text
         descriptions = self.info_descriptions if memory == "Information" else self.descriptions
         return descriptions.get(name, {}).get(code.upper().removeprefix("0X"))
 

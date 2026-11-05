@@ -17,10 +17,12 @@ Usage:
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import struct
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -79,24 +81,59 @@ def table_references(path: Path, table_files: set[str]) -> set[str]:
     return tokens & table_files
 
 
-def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
+def _record_recovery(final: Path, backup: Path) -> Path:
+    """Publish a flushed, manifest-bound recovery pointer before moving the old bundle."""
+    marker = final.parent / f".{final.name}.recovery.json"
+    record = {
+        "schema": 1,
+        "directory": backup.name,
+        "manifest_sha256": sha256(final / "manifest.json"),
+    }
+    temporary: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=final.parent, prefix=".bundle-recovery-", delete=False
+        ) as out:
+            temporary = out.name
+            out.write(json.dumps(record).encode())
+            out.flush()
+            os.fsync(out.fileno())
+        os.replace(temporary, marker)
+        temporary = None
+        return marker
+    finally:
+        if temporary is not None:
+            Path(temporary).unlink(missing_ok=True)
+
+
+def build(
+    ista: Path, out: Path, requested: list[str], *, all_source_series: bool = False
+) -> dict[str, Any]:
     """Export ECU lists and job files; returns the manifest."""
     check = validate_ista_folder(ista)
     if not check.ok or check.root is None:
         raise SystemExit(f"Not a usable ISTA folder: {check.message}")
+    if not check.version_supported:
+        raise SystemExit(f"Only the 4.29 data release is supported, got {check.version!r}")
     rheingold = check.root
     folder = FolderProvider(rheingold)
     ecu_dir = folder.ecu_dir
-    available = {
-        p.stem.lower(): p for p in ecu_dir.iterdir() if p.suffix.lower() in (".prg", ".grp")
-    }
+    available: dict[str, Path] = {}
+    for path in ecu_dir.iterdir():
+        if path.suffix.lower() not in (".prg", ".grp") or not path.is_file():
+            continue
+        key = path.stem.lower()
+        if key in available:
+            raise ValueError(f"Ambiguous job stem {key!r} in the data source")
+        available[key] = path
     series_map = read_series_map(rheingold / "PSdZ" / "mapping" / "brref.xml")
     table_path = available[GROUP_TABLE_FILE]
     assignments = read_group_assignments(table_path)
     groups_for = groups_by_address(assignments)
 
     resolved: dict[str, str | None] = {}
-    for code in requested:
+    selected_series = check.kis_series if all_source_series else requested
+    for code in selected_series:
         series = normalize_series(code)
         main = series if series in check.kis_series else series_map.get(series)
         resolved[series] = main if main in check.kis_series else None
@@ -104,85 +141,104 @@ def build(ista: Path, out: Path, requested: list[str]) -> dict[str, Any]:
     if out.exists() and not (out / "manifest.json").is_file() and any(out.iterdir()):
         raise SystemExit(f"{out} exists and is not a bundle; refusing to overwrite it")
     # Build beside the target and swap at the end, so a failed run keeps the old bundle.
-    final, out = out, out.with_name(out.name + ".building")
-    if out.exists():
-        shutil.rmtree(out)
-    (out / "series").mkdir(parents=True)
-    (out / "ecu").mkdir()
+    final = out
+    final.parent.mkdir(parents=True, exist_ok=True)
+    out = Path(tempfile.mkdtemp(prefix=f".{final.name}.building-", dir=final.parent))
+    try:
+        (out / "series").mkdir()
+        (out / "ecu").mkdir()
 
-    main_series: dict[str, Any] = {}
-    addresses: set[int] = set()
-    for main in sorted({m for m in resolved.values() if m}):
-        kis_dir = rheingold / "PSdZ" / "kiswb" / main
-        ecus = read_kis_ecus(kis_dir, groups_for)
-        addresses.update(e["address"] for e in ecus)
-        members = sorted(s for s, m in series_map.items() if m == main)
-        target = out / "series" / f"{main}.json"
-        content = {"main_series": main, "series": members, "ecus": ecus}
-        target.write_text(json.dumps(content, ensure_ascii=False, indent=1), encoding="utf-8")
-        main_series[main] = {
-            "series": members,
-            "ecus": len(ecus),
-            "addresses": len({e["address"] for e in ecus}),
-            "file": f"series/{main}.json",
-            "sha256": sha256(target),
-            "kis_script_sha256": sha256(kis_dir / "KIS.script"),
-            "kis_data_sha256": sha256(kis_dir / "KIS.data"),
+        main_series: dict[str, Any] = {}
+        addresses: set[int] = set()
+        for main in sorted({m for m in resolved.values() if m}):
+            kis_dir = rheingold / "PSdZ" / "kiswb" / main
+            ecus = read_kis_ecus(kis_dir, groups_for)
+            addresses.update(e["address"] for e in ecus)
+            members = sorted(s for s, m in series_map.items() if m == main)
+            target = out / "series" / f"{main}.json"
+            content = {"main_series": main, "series": members, "ecus": ecus}
+            target.write_text(json.dumps(content, ensure_ascii=False, indent=1), encoding="utf-8")
+            main_series[main] = {
+                "series": members,
+                "ecus": len(ecus),
+                "addresses": len({e["address"] for e in ecus}),
+                "file": f"series/{main}.json",
+                "sha256": sha256(target),
+                "kis_script_sha256": sha256(kis_dir / "KIS.script"),
+                "kis_data_sha256": sha256(kis_dir / "KIS.data"),
+            }
+
+        groups = {g for a in addresses for g in groups_for.get(a, [])}
+        wanted = {GROUP_TABLE_FILE} | groups
+        wanted |= {row.variant for row in assignments if row.group in groups}
+        missing = sorted(n for n in wanted if n not in available)
+        selected = {n for n in wanted if n in available}
+        table_files = {n for n in available if n.startswith("t_")}
+        missing_uses: set[str] = set()
+        queue = sorted(selected)
+        while queue:
+            name = queue.pop()
+            for ref in set(uses(available[name])) | table_references(available[name], table_files):
+                if ref not in available:
+                    missing_uses.add(ref)
+                elif ref not in selected:
+                    selected.add(ref)
+                    queue.append(ref)
+
+        files: dict[str, Any] = {}
+        total = 0
+        for name in sorted(selected):
+            source = available[name]
+            target = out / "ecu" / source.name
+            shutil.copyfile(source, target)
+            digest = sha256(target)
+            if digest != sha256(source):
+                raise SystemExit(f"Copy of {source.name} does not match its source")
+            size = target.stat().st_size
+            total += size
+            files[f"ecu/{source.name}"] = {"sha256": digest, "size": size}
+
+        manifest = {
+            "format": BUNDLE_FORMAT,
+            "generated": datetime.now(UTC).isoformat(timespec="seconds"),
+            "source": {
+                "version": check.version,
+                "group_table_sha256": sha256(table_path),
+                "brref_sha256": sha256(rheingold / "PSdZ" / "mapping" / "brref.xml"),
+            },
+            "requested": resolved,
+            "main_series": main_series,
+            "series_map": series_map,
+            "groups": sorted(groups),
+            "missing_job_files": missing,
+            "missing_uses": sorted(missing_uses),
+            "files": files,
+            "job_bytes": total,
         }
-
-    groups = {g for a in addresses for g in groups_for.get(a, [])}
-    wanted = {GROUP_TABLE_FILE} | groups
-    wanted |= {row.variant for row in assignments if row.group in groups}
-    missing = sorted(n for n in wanted if n not in available)
-    selected = {n for n in wanted if n in available}
-    table_files = {n for n in available if n.startswith("t_")}
-    missing_uses: set[str] = set()
-    queue = sorted(selected)
-    while queue:
-        name = queue.pop()
-        for ref in set(uses(available[name])) | table_references(available[name], table_files):
-            if ref not in available:
-                missing_uses.add(ref)
-            elif ref not in selected:
-                selected.add(ref)
-                queue.append(ref)
-
-    files: dict[str, Any] = {}
-    total = 0
-    for name in sorted(selected):
-        source = available[name]
-        target = out / "ecu" / source.name
-        shutil.copyfile(source, target)
-        digest = sha256(target)
-        if digest != sha256(source):
-            raise SystemExit(f"Copy of {source.name} does not match its source")
-        size = target.stat().st_size
-        total += size
-        files[f"ecu/{source.name}"] = {"sha256": digest, "size": size}
-
-    manifest = {
-        "format": BUNDLE_FORMAT,
-        "generated": datetime.now(UTC).isoformat(timespec="seconds"),
-        "source": {
-            "folder": rheingold.parent.name,
-            "version": check.version,
-            "group_table_sha256": sha256(table_path),
-            "brref_sha256": sha256(rheingold / "PSdZ" / "mapping" / "brref.xml"),
-        },
-        "requested": resolved,
-        "main_series": main_series,
-        "series_map": series_map,
-        "groups": sorted(groups),
-        "missing_job_files": missing,
-        "missing_uses": sorted(missing_uses),
-        "files": files,
-        "job_bytes": total,
-    }
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    if final.exists():
-        shutil.rmtree(final)
-    out.rename(final)
-    return manifest
+        (out / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
+        # Preserve the old bundle if publication fails. Each builder uses its own
+        # staging directory; never remove a predictable sibling owned by another run.
+        backup = Path(tempfile.mkdtemp(prefix=f".{final.name}.previous-", dir=final.parent))
+        backup.rmdir()
+        had_previous = final.exists()
+        marker = final.parent / f".{final.name}.recovery.json"
+        if had_previous:
+            if (final / "manifest.json").is_file():
+                _record_recovery(final, backup)
+            final.rename(backup)
+        try:
+            out.rename(final)
+        except BaseException:
+            if had_previous:
+                backup.rename(final)
+            raise
+        marker.unlink(missing_ok=True)
+        if had_previous:
+            shutil.rmtree(backup, ignore_errors=True)
+        return manifest
+    finally:
+        if out.exists():
+            shutil.rmtree(out, ignore_errors=True)
 
 
 def main() -> None:
@@ -190,9 +246,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("ista", type=Path, help="ISTA installation or its Rheingold folder")
     parser.add_argument("--out", type=Path, default=bundle_root())
-    parser.add_argument("--series", nargs="+", default=DEFAULT_SERIES)
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--series", nargs="+", default=DEFAULT_SERIES)
+    selection.add_argument(
+        "--all-source-series",
+        action="store_true",
+        help="Include every KIS main-series list available in the supplied source release",
+    )
     args = parser.parse_args()
-    manifest = build(args.ista, args.out, args.series)
+    manifest = build(args.ista, args.out, args.series, all_source_series=args.all_source_series)
     for series, main in manifest["requested"].items():
         print(f"{series}: {main or 'ABSENT from this ISTA folder'}")
     for main, info in manifest["main_series"].items():

@@ -94,7 +94,7 @@ present files [derived].
   `mainseries/F056/*/mapping/sweseq_*.xml` (`baseVariantName`,
   `diagnosticAddress physicalOffset`). Actual topology: gateway read
   (`G_ZGW_AUSLESEN`) and SVK (`doEcuReadSvk`); colour/status logic is in obfuscated
-  `CreateEcuTree` and DiagDocDb bordnet XML (not recoverable statically).
+  `CreateEcuTree` and DiagDocDb bordnet XML (not recovered in that investigation; static recovery was not disproven).
 - `mainseries/F056/*/odx/src/odx-v/F056.odx-v` is an ODX 2.0.1 vehicle-info spec with
   CAN/Ethernet comparams (`CP_BASIS_10_ETHERNET` etc.); no DoIP address table [observed].
 - Mainseries present: F001 F010 F020 F025 F056 I001 K001 KE01 KS01 RR21 S15A S15C
@@ -166,7 +166,13 @@ values are in IL constants and need the F48 EDIABAS trace or IL reading to confi
   IDs are also in ISTA); 4,130 ISTA ID+version files are not in `coding_data/`.
   Coverage is useful only if decrypted.
 
-## 5. `Ecu/` vs repo `sources/Ecu/`
+## 5. Historical comparison with the former `sources/Ecu/`
+
+2026-11-04: the owner removed the separate `sources/Ecu/` collection. The current
+canonical directory is `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Counts and version
+comparisons below describe the former two-tree inventory, not two directories
+currently present. The collections were not byte-identical; retain old evidence
+hashes and compare current files before using previous offsets/contracts.
 
 ISTA has 1,227 `.prg` + 394 `.grp`, 1.0 GB; repo has 2,478 PRG/GRP files. 1,548
 names are in both: 1,287 are byte-identical and 261 differ. For the 261 that differ,

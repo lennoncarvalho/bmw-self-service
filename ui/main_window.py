@@ -6,6 +6,7 @@ Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
 
 import logging
 from collections.abc import Callable
+from pathlib import Path
 from threading import Event
 from typing import Any
 
@@ -23,16 +24,17 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
+    QProgressBar,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
-    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
 
 from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
-from app.ista_jobs import remember_ista_folder
+from app.ista_jobs import refresh_bundled_data
 from app.mock_connection import MockConnection
 from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
@@ -40,6 +42,7 @@ from ui.backups_page import BackupsPage
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
 from ui.ista_settings_dialog import IstaSettingsDialog
+from ui.page_stack import PageStack
 from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
@@ -85,17 +88,19 @@ class MainWindow(QMainWindow):
         self._retired_workers: list[QThread] = []
         self._closing = False
         self._mutation_active = False
+        self._coding_loading = False
         self._overview_ecus: list[dict] = []
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
         self._cbs_journal = CbsJournalStore()
         # Job data folder is read here; CarWorkers must not create QSettings.
-        remember_ista_folder()
+        refresh_bundled_data()
         self._worker_reap_timer = QTimer(self)
         self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
         self._apply_theme()
 
     def _setup_ui(self) -> None:
+        """Build fixed chrome around the shared scrolling page stack."""
         central = QWidget()
         self.setCentralWidget(central)
         main_layout = QVBoxLayout(central)
@@ -104,7 +109,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self._build_top_bar())
 
-        self.stack = QStackedWidget()
+        self.stack = PageStack()
 
         self.welcome_page = WelcomePage()
         self.welcome_page.connect_clicked.connect(self._on_connect_requested)
@@ -123,6 +128,10 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.diag_page)
 
         self.coding_page = CodingPage()
+        self.coding_page.can_mutate = self._can_start_mutation
+        self.coding_page.mutation_active.connect(self._set_mutation_active)
+        self.coding_page.loading_changed.connect(self._set_coding_loading)
+        self.coding_page.loading_progress.connect(self._on_coding_loading_progress)
         self.stack.addWidget(self.coding_page)
 
         self.history_page = ServiceHistoryPage()
@@ -131,9 +140,14 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.history_page)
 
         self.backups_page = BackupsPage()
+        self.backups_page.restore_requested.connect(self._review_coding_restore)
         self.stack.addWidget(self.backups_page)
 
-        main_layout.addWidget(self.stack, stretch=1)
+        self.content_scroll = QScrollArea()
+        self.content_scroll.setObjectName("pageScrollArea")
+        self.content_scroll.setWidgetResizable(True)
+        self.content_scroll.setWidget(self.stack)
+        main_layout.addWidget(self.content_scroll, stretch=1)
 
         self.spinner_overlay = self._build_spinner()
 
@@ -217,7 +231,10 @@ class MainWindow(QMainWindow):
         return page
 
     def _build_spinner(self) -> QFrame:
-        overlay = QFrame(self)
+        self.loading_backdrop = QFrame(self)
+        self.loading_backdrop.setObjectName("loadingBackdrop")
+        self.loading_backdrop.hide()
+        overlay = QFrame(self.loading_backdrop)
         overlay.setObjectName("spinnerOverlay")
         overlay.setFixedSize(320, 160)
         overlay.setVisible(False)
@@ -231,6 +248,13 @@ class MainWindow(QMainWindow):
         self.spinner_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.spinner_text.setWordWrap(True)
         layout.addWidget(self.spinner_text)
+        progress = QProgressBar()
+        progress.setObjectName("loadingProgress")
+        progress.setAccessibleName("Loading")
+        progress.setRange(0, 0)
+        progress.setTextVisible(False)
+        progress.setFixedHeight(6)
+        layout.addWidget(progress)
 
         # G-13: Cancel button (appears after 10s)
         self._cancel_btn = QPushButton("Cancel")
@@ -256,11 +280,11 @@ class MainWindow(QMainWindow):
 
     def _show_spinner_cancel(self) -> None:
         """G-13: Show cancel button after 10s."""
-        self._cancel_btn.setVisible(not self._mutation_active)
+        self._cancel_btn.setVisible(not self._mutation_active and not self._coding_loading)
 
     def _show_retry_dialog(self) -> None:
         """G-13: Show retry dialog after 30s timeout."""
-        if self._mutation_active:
+        if self._mutation_active or self._coding_loading:
             return
         self.hide_spinner()
         reply = QMessageBox.question(
@@ -276,12 +300,17 @@ class MainWindow(QMainWindow):
             self._on_disconnect()
 
     def _position_spinner(self) -> None:
+        """Center the operation overlay within the visible content viewport."""
         if self.spinner_overlay and self.stack:
-            stack_geo = self.stack.geometry()
-            x = (stack_geo.width() - self.spinner_overlay.width()) // 2
-            y = (stack_geo.height() - self.spinner_overlay.height()) // 2
-            if x >= 0 and y >= 0:
-                self.spinner_overlay.move(x, y)
+            self.loading_backdrop.setGeometry(self.rect())
+            viewport = self.content_scroll.viewport()
+            center = self.loading_backdrop.mapFrom(
+                self, viewport.mapTo(self, viewport.rect().center())
+            )
+            self.spinner_overlay.move(
+                center.x() - self.spinner_overlay.width() // 2,
+                center.y() - self.spinner_overlay.height() // 2,
+            )
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -291,16 +320,45 @@ class MainWindow(QMainWindow):
         self.spinner_text.setText(message)
         self._cancel_btn.setVisible(False)
         self._position_spinner()
+        central = self.centralWidget()
+        if central is not None:
+            central.setEnabled(False)
+        self.loading_backdrop.show()
+        self.loading_backdrop.raise_()
         self.spinner_overlay.setVisible(True)
         # G-13: Start timers for cancel (10s) and retry (30s)
         self._spinner_cancel_timer.start(10000)
         self._spinner_retry_timer.start(30000)
 
     def hide_spinner(self) -> None:
+        if self._coding_loading:
+            return
+        self.loading_backdrop.hide()
+        central = self.centralWidget()
+        if central is not None:
+            central.setEnabled(True)
         self.spinner_overlay.setVisible(False)
         self._cancel_btn.setVisible(False)
         self._spinner_cancel_timer.stop()
         self._spinner_retry_timer.stop()
+
+    @Slot(bool)
+    def _set_coding_loading(self, active: bool) -> None:
+        """Keep foreground coding work exclusive behind a loading backdrop."""
+        self._coding_loading = active
+        if active:
+            self.show_spinner("Reading coding data...")
+            # These timers cancel/retry connection setup, not coding workers.
+            self._spinner_cancel_timer.stop()
+            self._spinner_retry_timer.stop()
+        else:
+            self.hide_spinner()
+
+    @Slot(str)
+    def _on_coding_loading_progress(self, message: str) -> None:
+        """Display progress from the current foreground coding operation."""
+        if self._coding_loading:
+            self.spinner_text.setText(message)
 
     # ---- Gear menu ----
 
@@ -365,14 +423,28 @@ class MainWindow(QMainWindow):
             getattr(self._connection, "trace_id", "demo/disconnected"),
             self._read_only,
         )
-        if not self._mutation_active:
+        if not self._mutation_active and not self._coding_loading:
             if index == 0 and not self._connected:
                 self.stack.setCurrentWidget(self.welcome_page)
             else:
                 self.stack.setCurrentIndex(index + 1)
+            self.content_scroll.verticalScrollBar().setValue(0)
             page = self.stack.currentWidget()
             if page in (self.diag_page, self.coding_page):
                 page.activate()
+
+    @Slot(object)
+    def _review_coding_restore(self, path: object) -> None:
+        """Show preparation progress before starting a reviewed backup restore."""
+        if self._mutation_active or not isinstance(path, Path):
+            return
+        self.stack.setCurrentWidget(self.coding_page)
+        self.nav_group.button(2).setChecked(True)
+        self.content_scroll.verticalScrollBar().setValue(0)
+        reason = self.coding_page.restore_vehicle_backup(path)
+        if reason:
+            QMessageBox.information(self, "Coding restoration unavailable", reason)
+            self.coding_page.activate()
 
     # ---- Connection flow ----
 
@@ -604,6 +676,7 @@ class MainWindow(QMainWindow):
             self._connection is None
             or self._closing
             or self._mutation_active
+            or self._coding_loading
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
         ):
@@ -892,8 +965,18 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Keep worker objects alive while cooperative shutdown completes."""
-        if self._mutation_active:
+        if self._mutation_active or self._coding_loading:
             event.ignore()
+            return
+        if self.coding_page.has_unexported_results():
+            event.ignore()
+            self.stack.setCurrentWidget(self.coding_page)
+            QMessageBox.warning(
+                self,
+                "Export coding results",
+                "Some coding results could not be saved. Use Export retained coding results "
+                "before closing so the operation outcome remains available.",
+            )
             return
         if not self._closing:
             self._closing = True
@@ -993,6 +1076,7 @@ class MainWindow(QMainWindow):
         worker = self._post_connect_worker
         return (
             not self._mutation_active
+            and not self._coding_loading
             and self._cbs_worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
@@ -1005,7 +1089,12 @@ class MainWindow(QMainWindow):
         """Read CBS from identified owners; DEMO decodes its simulated snapshot."""
         connection = self._connection
         panel = self.vehicle_page.cbs_panel
-        if connection is None or self._cbs_worker is not None or self._mutation_active:
+        if (
+            connection is None
+            or self._cbs_worker is not None
+            or self._mutation_active
+            or self._coding_loading
+        ):
             return
         if self._demo_mode:
             data = getattr(connection, "data", {}) or {}
@@ -1092,22 +1181,36 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(dialog)
         text = QLabel(
             f"Reset “{item['label']}” in {owner['name']} (0x{owner['address']:02X}, CBS "
-            f"{owner['version']})?\n\nThe ECU sets availability to 100 % and counts one more "
-            "service; it then recalculates the next due values. Other fields are sent as "
-            "“unchanged”. This cannot be undone by the app. The current record is saved "
-            "locally first.\n\nThis is separate from the headunit service history."
+            f"{owner['version']})?\n\nThe ECU applies its standard reset and recalculates "
+            "the next due values. The app checks completion and rereads service status. "
+            "This cannot be undone by the app. The current record and intended requests "
+            "are saved locally first.\n\nThis is separate from the headunit service history."
         )
         text.setWordWrap(True)
         layout.addWidget(text)
         power = QCheckBox("Battery charger connected or supply voltage is stable")
         layout.addWidget(power)
+        dsc_extra = owner.get("reset") == "dsc25-plain"
+        extra_ack = QCheckBox(
+            "I understand this ECU may also clear all DSC faults, run its reset "
+            "completion routine and temporarily stop/restart event reporting. "
+            "The extra sequence sends two planned reset writes to the ECU."
+        )
+        extra_ack.setVisible(dsc_extra)
+        layout.addWidget(extra_ack)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
         ok.setText("Reset")
         ok.setEnabled(False)
-        power.toggled.connect(ok.setEnabled)
+
+        def update_reset_confirmation() -> None:
+            """Require power and applicable DSC side-effect acknowledgement."""
+            ok.setEnabled(power.isChecked() and (not dsc_extra or extra_ack.isChecked()))
+
+        power.toggled.connect(update_reset_confirmation)
+        extra_ack.toggled.connect(update_reset_confirmation)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
         layout.addWidget(buttons)
@@ -1118,7 +1221,11 @@ class MainWindow(QMainWindow):
         ):
             return
         worker = CbsResetWorker(
-            connection, plan, self._cbs_journal, power_acknowledged=power.isChecked()
+            connection,
+            plan,
+            self._cbs_journal,
+            power_acknowledged=power.isChecked(),
+            dsc_extra_acknowledged=extra_ack.isChecked(),
         )
         self._cbs_worker = worker
         self._set_mutation_active(True)
@@ -1155,11 +1262,14 @@ class MainWindow(QMainWindow):
         """Keep the GUI responsive while blocking disruptive app actions."""
         self._mutation_active = active
         self.history_page.setEnabled(not active)
+        self.coding_page.setEnabled(not active)
+        self.backups_page.setEnabled(not active)
+        self.diag_page.setEnabled(not active)
         self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
         self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
-        elif self._connected:
+        elif self._connected and not self._coding_loading:
             QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
             btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3)) and not active)

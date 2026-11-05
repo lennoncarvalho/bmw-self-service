@@ -77,7 +77,7 @@ def decode_record(record: bytes, version: str) -> dict[str, Any]:
     """Decode one 12-byte CBS record by its PRG version; raw bytes are always kept."""
     if len(record) != RECORD:
         raise ValueError("CBS record has an unsupported length")
-    v63 = version == "6.3"
+    v63 = version in ("6.3", "7.0")
     remaining = int.from_bytes(record[1:3], "big", signed=True)
     unit = record[3] & 0x0F
     item: dict[str, Any] = {
@@ -102,9 +102,9 @@ def decode_record(record: bytes, version: str) -> dict[str, Any]:
         item["notes"].append(f"Remaining: {sentinel}")
     elif unit == 1:
         item.update(remaining=remaining * 10, unit="km")
-    elif unit == 0 and not v63:
+    elif unit == 0 and version != "6.3":
         item.update(remaining=remaining, unit="%")
-    elif unit == 2 and not v63:
+    elif unit == 2 and version != "6.3":
         item.update(remaining=remaining, unit="days")
     else:
         item["notes"].append("Remaining value has no valid unit")
@@ -142,7 +142,7 @@ def decode_cbs_response(response: bytes, version: str) -> list[dict[str, Any]]:
     return [decode_record(data[i : i + RECORD], version) for i in range(0, len(data), RECORD)]
 
 
-RESET_POLICIES = frozenset({"default", "dsc25-plain", "routine-6.3"})
+RESET_POLICIES = frozenset({"default", "dsc25-plain", "routine-6.3", "routine-7.0"})
 JOB_READ = "CBS_DATEN_LESEN"
 JOB_RESET = "CBS_RESET"
 # Policies whose CBS_RESET job telegram equals reset_request() (verified offline for
@@ -156,13 +156,6 @@ JOB_RESET_VALUES = "100;31"
 _JOB_UNITS = {0: "%", 1: "km", 2: "days"}
 _JOB_UNIT_TEXTS = {"%": "%", "Weg": "km", "Tage": "days", "Zeit": "days"}
 _JOB_REMAINING_UNITS = frozenset({"x 10 km", "Tage", "%"})
-# DSC_25 CBS_RESET 0x0E8892: these SVK versions (22 F101 bytes 0x29-0x2B) need an
-# extra sequence that also clears all DSC fault memory; that path is not enabled.
-DSC25_EXTRA_SVK = frozenset(
-    {bytes.fromhex("340501"), bytes.fromhex("010804"), bytes.fromhex("010B03")}
-)
-# DSC_25 tests a fixed 22 1001 position per item (0x0E9278): data offset of the record.
-DSC25_RECORD_INDEX = {0x02: 0, 0x06: 1}
 # D94BX7A0 TAB_CBS_RETURN_CODE general codes (6.3 routine reset).
 ROUTINE_COMPONENT_CODES = {0xFE: "no information", 0xFF: "invalid"}
 ROUTINE_CODES = {
@@ -190,15 +183,40 @@ def reset_request(item: int, policy: str = "default") -> bytes:
     """
     if not 0 <= item <= 0xFF:
         raise ValueError("Invalid CBS item")
-    if policy == "routine-6.3":
+    if policy in ("routine-6.3", "routine-7.0"):
         return bytes.fromhex("31011000") + bytes((item,)) + bytes.fromhex("02FFFFFF")
     if policy not in ("default", "dsc25-plain"):
         raise ValueError("No recovered reset for this CBS owner")
     return bytes.fromhex("2E100101") + bytes((item,)) + bytes.fromhex("641F80000FFF0F3FFF00")
 
 
-def check_reset_reply(policy: str, reply: bytes) -> tuple[str, str]:
+def check_reset_reply(
+    policy: str, reply: bytes, *, routine_codes: dict[str, Any] | None = None
+) -> tuple[str, str]:
     """Classify a final reset reply: accepted, rejected (final, nothing applied) or uncertain."""
+    if policy == "routine-7.0":
+        if len(reply) == 3 and reply[:2] == b"\x7f\x31":
+            return "uncertain", "The ECU rejected the result query; reset completion is unknown"
+        if len(reply) != 8 or reply[:4] != b"\x71\x03\x10\x00":
+            return "uncertain", "Unexpected CBS routine result"
+        if reply[4] == 0 and reply[5] == 0:
+            return "accepted", ""
+        if reply[4] in (0xFE, 0xFF) or reply[5] in (0xFE, 0xFF):
+            return "uncertain", "The ECU returned an unavailable CBS routine result"
+        if routine_codes is None:
+            return "uncertain", "The CBS routine result tables are unavailable"
+        codes = routine_codes
+        messages = []
+        for value, table in (
+            (reply[4], "TAB_CBS_RETURN_CODE_ALLGEMEIN"),
+            (reply[5], "TAB_CBS_RETURN_CODE_KOMPONENTE"),
+        ):
+            if value:
+                message = codes[table].get(f"{value:02X}")
+                if message is None:
+                    return "uncertain", "The ECU returned an unknown CBS routine result code"
+                messages.append(message)
+        return "rejected", "ECU job result: " + "; ".join(messages)
     if policy == "routine-6.3":
         if reply[:2] == b"\x7f\x31" and len(reply) == 3:
             return "rejected", f"ECU rejected the reset routine ({reply.hex()})"
@@ -232,10 +250,12 @@ def job_record(values: dict[str, Any], version: str) -> dict[str, Any]:
 
     The job's own unit and validity texts decide which values are meaningful.
     """
+    status = _job_int(values, "STATUS_MESSUNG")
     item: dict[str, Any] = {
         "item": _job_int(values, "ID_FN_CBS_MESS_WERT"),
         "raw": "",
-        "status": _job_int(values, "STATUS_MESSUNG"),
+        "status": status >> 4 if status is not None else None,
+        "status_text": _job_text(values, "STATUS_MESSUNG_TEXT"),
         "remaining": None,
         "unit": None,
         "count": None,
@@ -299,6 +319,57 @@ def job_record(values: dict[str, Any], version: str) -> dict[str, Any]:
     return item
 
 
+def job_record_v7(values: dict[str, Any]) -> dict[str, Any]:
+    """Use CBS7.0's named job results, whose forecast/year are already scaled."""
+    item: dict[str, Any] = {
+        "item": _job_int(values, "ID_CBS_MESS"),
+        "raw": "",
+        "status": _job_int(values, "STATUS_MESSUNG_BOS"),
+        "remaining": None,
+        "unit": None,
+        "count": None,
+        "availability": None,
+        "due_month": None,
+        "due_year": None,
+        "due_day": None,
+        "forecast_km": None,
+        "forecast_months": None,
+        "notes": [],
+        "job_text": _job_text(values, "ID_CBS_MESS_TEXT"),
+    }
+    remaining = _job_int(values, "RMMI_CBS")
+    unit_code = _job_int(values, "ST_UN_CBS")
+    unit = _JOB_UNITS.get(unit_code) if unit_code is not None else None
+    info = _job_text(values, "RMMI_CBS_INFO")
+    if remaining is not None and unit is not None and info in ("* 10km", "Tage", "%"):
+        item.update(remaining=remaining * 10 if unit == "km" else remaining, unit=unit)
+    else:
+        item["notes"].append(f"Remaining: {info or 'not reported'} (ECU job text)")
+    count = _job_int(values, "COU_RSTG_CBS_MESS")
+    if count is not None and 0 <= count < 0xFA:
+        item["count"] = count
+    else:
+        item["notes"].append("Service count not available")
+    availability = _job_int(values, "AVAI_CBS")
+    if availability is not None and 0 <= availability <= 100:
+        item["availability"] = availability
+    else:
+        item["notes"].append(
+            f"Availability: {_job_text(values, 'AVAI_CBS_TEXT') or 'not reported'} (ECU job text)"
+        )
+    for field, source, low, high in (
+        ("due_month", "TARD_MON_CBS_MESS", 1, 12),
+        ("due_year", "TARD_YR_CBS_MESS", 2001, 2249),
+        ("due_day", "TARD_DY_CBS_MESS", 1, 31),
+        ("forecast_km", "FRC_INTM_WAY_CBS_MESS", 0, 254000),
+        ("forecast_months", "FRC_INTM_T_CBS_MESS", 1, 254),
+    ):
+        value = _job_int(values, source)
+        if value is not None and low <= value <= high:
+            item[field] = value
+    return item
+
+
 def job_cbs_records(run: JobRun, version: str) -> list[dict[str, Any]]:
     """Records of a successful CBS_DATEN_LESEN run, each with its raw 12-byte record.
 
@@ -318,9 +389,10 @@ def job_cbs_records(run: JobRun, version: str) -> list[dict[str, Any]]:
     )
     records = []
     for values in run.result.sets:
-        if not isinstance(values.get("ID_FN_CBS_MESS_WERT"), int):
+        id_field = "ID_CBS_MESS" if version == "7.0" else "ID_FN_CBS_MESS_WERT"
+        if not isinstance(values.get(id_field), int):
             continue
-        record = job_record(values, version)
+        record = job_record_v7(values) if version == "7.0" else job_record(values, version)
         matches = [raw for raw in raws if raw[0] == record["item"]]
         if len(matches) == 1:
             record["raw"] = matches[0].hex()
@@ -366,10 +438,19 @@ def cbs_targets(
         definition = definitions.get(name)
         if definition is not None and address != definition["address"]:
             continue
-        job = backend is not None and backend.has_job(name, JOB_READ)
+        read_job = definition.get("read_job", JOB_READ) if definition else JOB_READ
+        job = backend is not None and backend.has_job(name, read_job)
         if definition is None and not job:
             continue
-        base = definition or {"address": address, "version": "unknown", "reset": "none"}
+        base = dict(definition or {"address": address, "version": "unknown", "reset": "none"})
+        base.setdefault("ownership", "owner-not-recovered")
+        if base["version"] == "7.0" and (
+            not job
+            or backend is None
+            or not backend.has_job(name, JOB_RESET)
+            or backend.file_sha256(name) != base["prg_sha256"]
+        ):
+            base["reset"] = "blocked"
         targets.append(
             {
                 **base,
@@ -395,6 +476,7 @@ def read_cbs(
 
 
 def _read_cbs(connection: Any, ecus: list[dict[str, Any]], jobs: JobBackend) -> dict[str, Any]:
+    """Read source-selected CBS owners within one bounded batch."""
     data = cbs_definitions()
     labels: dict[str, str] = data["items"]
     blocked_items = set(data["not_resettable"])
@@ -402,7 +484,11 @@ def _read_cbs(connection: Any, ecus: list[dict[str, Any]], jobs: JobBackend) -> 
     items: list[dict[str, Any]] = []
     deadline = time.monotonic() + 30.0
     for target in cbs_targets(ecus, jobs):
-        owner = {k: target[k] for k in ("name", "address", "version", "index", "reset")}
+        owner = {
+            k: target[k] for k in ("name", "address", "version", "index", "reset", "ownership")
+        }
+        if "read_job" in target:
+            owner["read_job"] = target["read_job"]
         owner["source"] = jobs.fallback_source(target["name"])
         remaining = deadline - time.monotonic()
         if not connection.alive_ok or remaining <= 0:
@@ -412,7 +498,12 @@ def _read_cbs(connection: Any, ecus: list[dict[str, Any]], jobs: JobBackend) -> 
         records: list[dict[str, Any]] | None = None
         response = b""
         if target["job"]:
-            run = jobs.run(target["name"], target["address"], JOB_READ, timeout=remaining)
+            run = jobs.run(
+                target["name"],
+                target["address"],
+                target.get("read_job", JOB_READ),
+                timeout=remaining,
+            )
             if run.interpreter_failed and target["defined"]:
                 owner["source"] = f"{APP_SOURCE} (job {JOB_READ} failed: {run.error})"
             else:
@@ -457,19 +548,33 @@ def _read_cbs(connection: Any, ecus: list[dict[str, Any]], jobs: JobBackend) -> 
                     ),
                     "owner": owner,
                     "resettable": (
-                        owner["reset"] in RESET_POLICIES
+                        owner["ownership"] == "primary"
+                        and owner["reset"] in RESET_POLICIES
                         and bool(record["raw"])
                         and key not in blocked_items
-                        and (owner["reset"] != "dsc25-plain" or record["item"] in (2, 6))
+                        and (
+                            owner["reset"] != "dsc25-plain"
+                            or f"{record['item']:02X}" in target.get("record_index", {})
+                        )
                     ),
                 }
             )
     seen: dict[int, int] = {}
     for record in items:
-        seen[record["item"]] = seen.get(record["item"], 0) + 1
-    complete = all(owner["state"] in ("read", "not-held") for owner in owners)
+        if record["owner"]["ownership"] == "primary":
+            seen[record["item"]] = seen.get(record["item"], 0) + 1
+    complete = all(
+        owner["state"] in ("read", "not-held")
+        for owner in owners
+        if owner["ownership"] == "primary"
+    )
     for record in items:
-        if seen[record["item"]] > 1:
+        if record["owner"]["ownership"] != "primary":
+            record["resettable"] = False
+            record["notes"].append(
+                "Primary service-reset owner not recovered for this observation source"
+            )
+        elif seen.get(record["item"], 0) > 1:
             # No source rule picks a winner between owners; never guess one.
             record["resettable"] = False
             record["notes"].append("Reported by more than one ECU; reset blocked")
@@ -672,12 +777,31 @@ class CbsResetPlan:
             "before_raw": self.before_raw,
             "before_provenance": "read-in-this-connection",
             "request": reset_request(self.item, self.owner["reset"]).hex(),
+            "request_sequence": (
+                [reset_request(self.item, self.owner["reset"]).hex(), "31031000"]
+                if self.owner["reset"] == "routine-7.0"
+                else [reset_request(self.item, self.owner["reset"]).hex()]
+            ),
             "completion": (
-                "exact 71 01 1000 00 00 RR RR, then re-read after settle"
+                "exact 71 01 1000, then 71 03 1000 with zero application codes and re-read"
+                if self.owner["reset"] == "routine-7.0"
+                else "exact 71 01 1000 00 00 RR RR, then re-read after settle"
                 if self.owner["reset"] == "routine-6.3"
                 else "exact 6E1001, then re-read after settle"
             ),
         }
+
+
+def _primary_reset_owner(owner: dict[str, Any]) -> bool:
+    """Require the exact source-defined primary reset owner metadata."""
+    definition = cbs_definitions()["definitions"].get(owner.get("name"), {})
+    return (
+        definition.get("ownership") == "primary"
+        and definition.get("address") == owner.get("address")
+        and definition.get("version") == owner.get("version")
+        and definition.get("reset") == owner.get("reset")
+        and owner.get("ownership") == "primary"
+    )
 
 
 def plan_reset(vin: str, item: dict[str, Any]) -> CbsResetPlan:
@@ -687,10 +811,16 @@ def plan_reset(vin: str, item: dict[str, Any]) -> CbsResetPlan:
     if not item.get("resettable"):
         raise PermissionError("This CBS item has no source-supported reset")
     owner = item["owner"]
+    if not _primary_reset_owner(owner):
+        raise PermissionError("This source is not an established primary service-reset owner")
     policy = owner.get("reset")
-    if policy not in RESET_POLICIES or (policy == "routine-6.3") != (owner.get("version") == "6.3"):
+    if policy not in RESET_POLICIES or (
+        (policy in ("routine-6.3", "routine-7.0")) != (owner.get("version") in ("6.3", "7.0"))
+    ):
         raise PermissionError("This CBS owner has no source-supported reset")
-    if policy == "dsc25-plain" and int(item["item"]) not in DSC25_RECORD_INDEX:
+    if policy == "dsc25-plain" and f"{int(item['item']):02X}" not in (
+        cbs_definitions()["definitions"].get(owner["name"], {}).get("record_index", {})
+    ):
         raise PermissionError("This DSC software defines a reset only for brake pads")
     return CbsResetPlan(vin, dict(owner), int(item["item"]), str(item["label"]), str(item["raw"]))
 
@@ -705,11 +835,14 @@ class CbsResetWorker(CarWorker):
         store: CbsJournalStore,
         *,
         power_acknowledged: bool = False,
+        dsc_extra_acknowledged: bool = False,
         backend: JobBackend | None = None,
     ) -> None:
+        """Retain the frozen reset plan, storage and explicit power acknowledgement."""
         super().__init__(connection)
         self.plan, self.store = plan, store
         self.power_acknowledged = power_acknowledged
+        self.dsc_extra_acknowledged = dsc_extra_acknowledged
         self.backend = backend
         self._executed = False
         self.report: dict[str, Any] = {
@@ -726,10 +859,57 @@ class CbsResetWorker(CarWorker):
     def _job_execution(self, backend: JobBackend, request: bytes) -> dict[str, Any] | None:
         """The CBS_RESET job call for a default-policy owner with a job file, else ``None``."""
         owner = self.plan.owner
+        if owner["reset"] == "dsc25-plain" and self.dsc_extra_acknowledged:
+            definition = cbs_definitions()["definitions"].get(owner["name"], {})
+            if (
+                not definition.get("extra_sequence")
+                or not backend.has_job(owner["name"], JOB_RESET)
+                or backend.file_sha256(owner["name"]) != definition.get("prg_sha256")
+            ):
+                return None
+            sequence = [
+                request.hex() if part == "{reset}" else part
+                for part in definition["extra_sequence"]
+            ]
+            return {
+                "path": "job-dsc25",
+                "job": JOB_RESET,
+                "job_file": str(getattr(backend.job_file(owner["name"]), "name", "")),
+                "job_file_sha256": definition["prg_sha256"],
+                "args": job_reset_args(backend, owner["name"], self.plan.item),
+                "grant": ["2E", "86", "31", "14"],
+                "request_sequence": sequence,
+                "allowed_request_sequences": [[request.hex()], sequence],
+                "side_effects": list(definition["side_effects"]),
+                "extra_svk": list(definition["extra_svk"]),
+                "record_index": dict(definition["record_index"]),
+            }
+        if owner["reset"] == "routine-7.0":
+            definition = cbs_definitions()["definitions"].get(owner["name"], {})
+            if (
+                definition.get("reset") != "routine-7.0"
+                or not backend.has_job(owner["name"], JOB_RESET)
+                or backend.file_sha256(owner["name"]) != definition.get("prg_sha256")
+            ):
+                raise PermissionError("The exact CBS7.0 job definition is not available")
+            return {
+                "path": "job-routine",
+                "job": JOB_RESET,
+                "job_file": str(getattr(backend.job_file(owner["name"]), "name", "")),
+                "job_file_sha256": definition["prg_sha256"],
+                "args": f"STR;0x{self.plan.item:02X};standard",
+                "results_args": "RRR",
+                "grant": ["31"],
+                "expected_request": request.hex(),
+                "results_request": "31031000",
+            }
         if owner["reset"] not in JOB_RESET_POLICIES or not backend.has_job(
             owner["name"], JOB_RESET
         ):
             return None
+        definition = cbs_definitions()["definitions"].get(owner["name"], {})
+        if backend.file_sha256(owner["name"]) != definition.get("prg_sha256"):
+            raise PermissionError("The current CBS job hash has no reviewed reset contract")
         return {
             "path": "ista-job",
             "job_file": str(getattr(backend.job_file(owner["name"]), "name", "")),
@@ -746,6 +926,8 @@ class CbsResetWorker(CarWorker):
             raise PermissionError("A CBS reset cannot be replayed")
         self._executed = True
         connection, plan = self.connection, self.plan
+        if not _primary_reset_owner(plan.owner):
+            raise PermissionError("The source primary reset owner changed or is not recovered")
         if (
             not self.power_acknowledged
             or not valid_vin(plan.vin)
@@ -764,6 +946,7 @@ class CbsResetWorker(CarWorker):
                 backend.close()
 
     def _reset(self, backend: JobBackend) -> dict[str, Any]:
+        """Persist intent and execute the exact reset policy with observed outcomes."""
         connection, plan = self.connection, self.plan
         owner = plan.owner
         policy = owner["reset"]
@@ -780,7 +963,13 @@ class CbsResetWorker(CarWorker):
         path = self.store.prepare(plan.intent(execution))
         self.report["path"] = str(path)
         catalog = DiagnosticCatalog()
-        state = {"sent": False, "accepted": False, "step": "", "checked": False}
+        state: dict[str, Any] = {
+            "sent": False,
+            "accepted": False,
+            "step": "",
+            "checked": False,
+            "dsc_extra": False,
+        }
         deadline = time.monotonic() + 30.0
 
         def record(
@@ -824,16 +1013,21 @@ class CbsResetWorker(CarWorker):
                 )
                 return False
             record("read", "svk", b"\x22\xf1\x01", svk)
-            if svk[0x29:0x2C] not in DSC25_EXTRA_SVK:
+            state["svk"] = svk
+            definition = cbs_definitions()["definitions"][owner["name"]]
+            if svk[0x29:0x2C].hex() not in definition["extra_svk"]:
                 return True
             # The job reads a fixed record position, not the item ID; require both to agree.
-            start = 3 + RECORD * DSC25_RECORD_INDEX[plan.item]
+            start = 3 + RECORD * int(definition["record_index"][f"{plan.item:02X}"])
             fixed = before[start : start + RECORD]
             if (
                 len(fixed) == RECORD
                 and fixed[0] == plan.item
                 and int.from_bytes(fixed[1:3], "big", signed=True) > 0
             ):
+                return True
+            state["dsc_extra"] = True
+            if self.dsc_extra_acknowledged and execution is not None:
                 return True
             record(
                 "blocked",
@@ -875,6 +1069,7 @@ class CbsResetWorker(CarWorker):
                 )
                 return b""
             record("accepted", "before", b"\x22\x10\x01", before)
+            state["before"] = before
             if policy == "dsc25-plain" and not dsc25_plain_allowed(services, ctx, before):
                 return b""
             state["checked"] = True
@@ -914,6 +1109,179 @@ class CbsResetWorker(CarWorker):
             if left <= 0:
                 raise TimeoutError("Vehicle operation timed out")
             return left
+
+        def execute_dsc_job(services: Any, ctx: OperationContext) -> bytes:
+            """Run the source's exact occurrence plan, with durable per-send results."""
+            assert execution is not None
+            check(services, ctx)
+            if not state["checked"]:
+                return b""
+            sequence = (
+                tuple(bytes.fromhex(part) for part in execution["request_sequence"])
+                if state["dsc_extra"]
+                else (request,)
+            )
+            self.report["request_sequence"] = [part.hex() for part in sequence]
+            if state["dsc_extra"]:
+                self.report["side_effects"] = list(execution["side_effects"])
+                self.report["instructions"] += (
+                    " An interrupted DSC sequence may leave event reporting paused or fault "
+                    "memory cleared; inspect the recorded outcomes before another reset."
+                )
+            position = 0
+            active = ""
+
+            def sending(payload: bytes) -> None:
+                """Persist the exact next reset-sequence telegram before transmission."""
+                nonlocal position, active
+                active = f"reset-step-{position + 1}"
+                record("sending", active, payload)
+                position += 1
+
+            def received(payload: bytes, reply: bytes) -> None:
+                """Check source preconditions and classify each reset-sequence response."""
+                if payload in (b"\x22\xf1\x01", b"\x22\x10\x01") and position == 0:
+                    field = "svk" if payload == b"\x22\xf1\x01" else "before"
+                    if reply != state[field]:
+                        self.report["reset_reason"] = (
+                            "CBS state or software changed before the reset"
+                        )
+                        record("changed", field, payload, reply, "Source precondition changed")
+                        raise ValueError(self.report["reset_reason"])
+                if payload not in sequence:
+                    return
+                state["sent"] = True
+                if payload == request:
+                    accepted = reply == b"\x6e\x10\x01"
+                elif payload[0] == 0x86:
+                    accepted = reply[:2] == bytes((0xC6, payload[1]))
+                elif payload[0] == 0x31:
+                    accepted = reply[:4] == b"\x71\x01\x03\x04"
+                else:
+                    accepted = reply == b"\x54"
+                verdict = "accepted" if accepted else "uncertain"
+                if len(reply) == 3 and reply[:2] == bytes((0x7F, payload[0])):
+                    verdict = "rejected"
+                    if position == 1:
+                        self.report["reset_reason"] = (
+                            "The ECU rejected the reset before side effects"
+                        )
+                        record("rejected", "reset", payload, reply, self.report["reset_reason"])
+                record(verdict, active, payload, reply)
+                if not accepted:
+                    raise ValueError("A DSC reset sequence step was rejected or unconfirmed")
+
+            run = backend.run(
+                owner["name"],
+                owner["address"],
+                JOB_RESET,
+                execution["args"],
+                timeout=remaining(),
+                grant=frozenset({0x2E, 0x86, 0x31, 0x14}),
+                expected=frozenset(sequence),
+                sequence=sequence,
+                on_send=sending,
+                on_reply=received,
+            )
+            state["sent"] = state["sent"] or run.sent(request)
+            if run.error is not None:
+                raise run.error
+            if (
+                not run.ok
+                or position != len(sequence)
+                or run.result is None
+                or not run.result.mutated
+            ):
+                raise ValueError("The DSC reset job did not complete its full recorded sequence")
+            state["accepted"] = True
+            record("accepted", "reset", request, run.reply(request), f"JOB_STATUS {run.status}")
+            self._cancelled.wait(min(SETTLE_SECONDS, max(0.0, remaining() - 5.0)))
+            after_run = backend.run(owner["name"], owner["address"], JOB_READ, timeout=remaining())
+            if after_run.ok:
+                after = after_run.response()
+                self.report["after"] = after.hex()
+                record("read", "after", b"\x22\x10\x01", after, after_run.source)
+            elif after_run.interpreter_failed:
+                reread(services, ctx)
+            else:
+                raise after_run.error or ValueError(f"Re-read {after_run.state()}")
+            return b""
+
+        def execute_routine_job(services: Any, ctx: OperationContext) -> bytes:
+            """CBS7.0 start/results jobs remain under one exclusive owner operation."""
+            assert execution is not None
+            check(services, ctx)
+            if not state["checked"]:
+                return b""
+            record("sending", "reset", request, detail=self.report["execution"])
+            run = backend.run(
+                owner["name"],
+                owner["address"],
+                JOB_RESET,
+                execution["args"],
+                timeout=remaining(),
+                grant=frozenset({0x31}),
+                expected=frozenset({request}),
+            )
+            state["sent"] = run.sent(request)
+            if run.error is not None and not run.write_rejected(request):
+                raise run.error
+            reply = run.reply(request)
+            if len(reply) == 3 and reply[:2] == b"\x7f\x31":
+                record("rejected", "reset", request, reply, "The ECU rejected reset start")
+                self.report["reset_reason"] = "The ECU rejected reset start"
+                return b""
+            if (
+                reply != b"\x71\x01\x10\x00"
+                or not run.ok
+                or run.result is None
+                or not run.result.mutated
+            ):
+                record("uncertain", "reset", request, reply, "Reset start was not confirmed")
+                return b""
+            record("accepted", "reset-start", request, reply, "Routine started; results pending")
+            result_request = bytes.fromhex(execution["results_request"])
+            record("sending", "reset-results", result_request)
+            results = backend.run(
+                owner["name"],
+                owner["address"],
+                JOB_RESET,
+                execution["results_args"],
+                timeout=remaining(),
+                grant=frozenset({0x31}),
+                expected=frozenset({result_request}),
+            )
+            if results.error is not None and not results.write_rejected(result_request):
+                raise results.error
+            reply = results.reply(result_request)
+            verdict, reason = check_reset_reply(
+                policy,
+                reply,
+                routine_codes=cbs_definitions()["definitions"][owner["name"]]["routine_codes"],
+            )
+            if verdict == "accepted" and not results.ok:
+                verdict, reason = "uncertain", "The CBS results job did not complete successfully"
+            state["accepted"] = verdict == "accepted"
+            record(verdict, "reset", result_request, reply, reason)
+            self.report["reset_reason"] = reason
+            if verdict != "accepted":
+                return b""
+            self._cancelled.wait(min(SETTLE_SECONDS, max(0.0, remaining() - 5.0)))
+            after_run = backend.run(
+                owner["name"],
+                owner["address"],
+                owner.get("read_job", JOB_READ),
+                timeout=remaining(),
+            )
+            if after_run.ok:
+                after = after_run.response()
+                self.report["after"] = after.hex()
+                record("read", "after", b"\x22\x10\x01", after, after_run.source)
+            elif after_run.interpreter_failed:
+                reread(services, ctx)
+            else:
+                raise after_run.error or ValueError(f"Re-read {after_run.state()}")
+            return b""
 
         def execute_job() -> None:
             assert execution is not None
@@ -978,7 +1346,19 @@ class CbsResetWorker(CarWorker):
 
         failure = ""
         try:
-            if execution is not None:
+            if execution is not None and execution["path"] == "job-dsc25":
+                connection.run_operation(
+                    owner["address"],
+                    execute_dsc_job,
+                    context=connection.context(remaining()),
+                )
+            elif policy == "routine-7.0":
+                connection.run_operation(
+                    owner["address"],
+                    execute_routine_job,
+                    context=connection.context(remaining()),
+                )
+            elif execution is not None:
                 execute_job()
             else:
                 connection.run_operation(
@@ -1001,6 +1381,7 @@ class CbsResetWorker(CarWorker):
         return self.report
 
     def _outcome(self, state: dict[str, Any], failure: str) -> tuple[str, str]:
+        """Classify reset completion from observed sends, responses and rereads."""
         events = {(e["step"], e["state"]) for e in self.report["events"]}
         if ("reset", "rejected") in events:
             return "rejected", self.report.get("reset_reason") or "The ECU rejected the reset"
@@ -1023,7 +1404,7 @@ class CbsResetWorker(CarWorker):
                 records, before = [], {}
             match = [rec for rec in records if rec["item"] == self.plan.item]
             if len(match) == 1 and match[0]["availability"] == 100:
-                limit = 250 if self.plan.owner["version"] == "6.3" else 30
+                limit = 250 if self.plan.owner["version"] in ("6.3", "7.0") else 30
                 saturated = before.get("count") is not None and before["count"] >= limit
                 if saturated:
                     before["count"] = None  # no source wrap rule; require an observed change

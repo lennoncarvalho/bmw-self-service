@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -43,6 +42,7 @@ class VehiclePage(QWidget):
         self.reset()
 
     def _setup_ui(self) -> None:
+        """Build overview facts and fully expanding equipment, CBS and ECU sections."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
@@ -98,16 +98,12 @@ class VehiclePage(QWidget):
         self.order_button.setCheckable(True)
         self.order_button.toggled.connect(self._toggle_order)
         layout.addWidget(self.order_button)
-        self.order_scroll = QScrollArea()
-        self.order_scroll.setWidgetResizable(True)
-        self.order_scroll.setMaximumHeight(160)
         self.order_details = QLabel()
         self.order_details.setWordWrap(True)
         self.order_details.setTextFormat(Qt.TextFormat.PlainText)
         self.order_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.order_scroll.setWidget(self.order_details)
-        self.order_scroll.hide()
-        layout.addWidget(self.order_scroll)
+        self.order_details.hide()
+        layout.addWidget(self.order_details)
 
         self.cbs_panel = CbsPanel()
         layout.addWidget(self.cbs_panel)
@@ -118,22 +114,21 @@ class VehiclePage(QWidget):
         self.details_button.setCheckable(True)
         self.details_button.toggled.connect(self._toggle_details)
         layout.addWidget(self.details_button)
-        self.ecu_scroll = QScrollArea()
-        self.ecu_scroll.setWidgetResizable(True)
         self.ecu_container = QWidget()
         self.ecu_layout = QVBoxLayout(self.ecu_container)
-        self.ecu_scroll.setWidget(self.ecu_container)
-        self.ecu_scroll.hide()
-        layout.addWidget(self.ecu_scroll, 1)
+        self.ecu_container.hide()
+        layout.addWidget(self.ecu_container)
         layout.addStretch()
 
     def _toggle_order(self, visible: bool) -> None:
-        self.order_scroll.setVisible(visible)
+        """Expand configuration details without a nested viewport."""
+        self.order_details.setVisible(visible)
         self.order_button.setText(
             "Hide vehicle configuration" if visible else "Show vehicle configuration"
         )
 
     def _populate_order(self, order: dict[str, Any] | None) -> None:
+        """Display decoded equipment or clear unavailable configuration details."""
         self.order_button.setEnabled(order is not None)
         if order is None:
             self.order_button.setChecked(False)
@@ -154,7 +149,8 @@ class VehiclePage(QWidget):
         self.order_details.setText("\n".join(lines))
 
     def _toggle_details(self, visible: bool) -> None:
-        self.ecu_scroll.setVisible(visible)
+        """Expand the complete ECU list within the outer page viewport."""
+        self.ecu_container.setVisible(visible)
         self.details_button.setText("Hide ECU details" if visible else "Show ECU details")
 
     def reset(self) -> None:
@@ -308,6 +304,7 @@ class VehiclePage(QWidget):
             self.invalidate("Stale observation — refresh to read the current MIL")
 
     def _populate_ecus(self, ecus: list[dict[str, Any]]) -> None:
+        """Replace ECU detail rows without retaining prior session widgets."""
         while self.ecu_layout.count():
             item = self.ecu_layout.takeAt(0)
             child = item.widget() if item is not None else None

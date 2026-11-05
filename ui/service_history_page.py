@@ -260,6 +260,7 @@ class ServiceHistoryPage(QWidget):
         return button
 
     def _setup_ui(self) -> None:
+        """Build local history cards, journal expansion and explicit write controls."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         title = _label("Local service records")
@@ -289,12 +290,9 @@ class ServiceHistoryPage(QWidget):
         layout.addLayout(contexts)
         self.message = _label("")
         layout.addWidget(self.message)
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
         self.entry_container = QWidget()
         self.entry_layout = QVBoxLayout(self.entry_container)
-        self.scroll_area.setWidget(self.entry_container)
-        layout.addWidget(self.scroll_area, 1)
+        layout.addWidget(self.entry_container)
         self.add_btn = self._button("+ Add local entry", self._on_add_clicked)
         layout.addWidget(self.add_btn)
         self.replace_btn = self._button(
@@ -304,15 +302,11 @@ class ServiceHistoryPage(QWidget):
         self.journal_button = QPushButton("Show history operation journals")
         self.journal_button.setCheckable(True)
         layout.addWidget(self.journal_button)
-        self.journal_scroll = QScrollArea()
-        self.journal_scroll.setWidgetResizable(True)
-        self.journal_scroll.setMaximumHeight(220)
         self.journal_container = QWidget()
         self.journal_layout = QVBoxLayout(self.journal_container)
-        self.journal_scroll.setWidget(self.journal_container)
-        self.journal_scroll.hide()
-        self.journal_button.toggled.connect(self.journal_scroll.setVisible)
-        layout.addWidget(self.journal_scroll)
+        self.journal_container.hide()
+        self.journal_button.toggled.connect(self.journal_container.setVisible)
+        layout.addWidget(self.journal_container)
         self.report_export = self._button(
             "Export interrupted operation evidence…", self._export_memory_report
         )

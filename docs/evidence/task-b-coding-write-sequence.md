@@ -1,5 +1,12 @@
 # Task B — Coding write UDS sequence (F/G-series, ENET)
 
+> 2026-11-04 source corrections: the shared engine and
+> [catalogue contract](source-coding-catalogue-20261104.md) recover authorization,
+> normal baseline NCD signatures, lower-patch layout selection and source guards.
+> The old checksum attribution below is withdrawn: `models.w` is storage info;
+> XOR checksum updates are called by the E-series path, not general F-series
+> baseline coding. See [execution record](../../tasks/source-coding-write-implementation.md).
+
 Status: recovered from static source. Protocol behavior only.
 
 **Source:** `sources/BimmerCode_v4.25.04-12743.apk`
@@ -73,21 +80,19 @@ TesterPresent `3E 80` (suppress positive response) is sent before the first bloc
 and between blocks. Progress/ETA is reported from response timing. First negative
 response aborts.
 
-### 4. Block checksum (`k/j.f` + `k/j.a`)
-Before the write, a block may have a checksum byte recomputed and embedded in its
-data. Position (and an invert flag) come from the coding definition metadata
-(`models.w`). Algorithm: one-byte XOR of every block byte except the checksum slot,
-optionally XOR `0xFF`. This is a plain XOR-8 field inside the block payload, not a
-cryptographic signature. `models.w` is the established source of the checksum
-position/invert metadata. ISTA CAFD definitions are a possible source of equivalent
-metadata (easy source path, not taken by Claude; left for another coder; see
-[../claude-session-limitations.md](../claude-session-limitations.md)). That mapping
-is unverified: check it against one exact field's `models.w` metadata before CAFD
-metadata is used to compose writes.
+### 4. Baseline coding signatures (corrected 2026-11-04)
 
-(D-66's learn-by-diff capture, under which the already-correct checksum byte would
-be part of the captured before/after bytes, is **superseded by D-67** — on-car
-capture was rejected and that code removed.)
+For normal F-series coding with a complete baseline, `s0.A` calls `k.a.i`.
+Each definition's declared group payloads, excluding its signature destination,
+are concatenated in source order and signed with the exact bootloader's NCDS
+entry. The source has RSA and an alternate MD5 sandwich implementation; actual
+key/digest/byte-order selection is recovered in the catalogue evidence. `models.w`
+contains function start/end/mask, not an independent checksum definition.
+
+The previously described XOR8 checksum is real code in `k.j`, but its update
+call belongs to `ESeriesVehicleInterface`; it must not be generalized to this
+F/G ENET baseline path. The no-baseline CIC/other special signature paths are
+separate source branches and do not authorize omitting the required baseline.
 
 ### 5. SIGNATURE_CHECK
 ECU-address dependent (`CodingDataWriter.e()`): DME-class addresses `0x12`/`0x50`
@@ -139,10 +144,11 @@ On success the writer signals completion.
 ## Open questions
 
 1. No ENET packet capture yet confirms the recovered bytes on a live BDC/KOMBI/NBT.
-   This is static-only; byte order and the `10 41` session need a capture to pin.
-2. The invert flag and checksum slot for each DID come from the coding definition
-   (`models.w`); for app-composed blocks (not snapshot-diff presets) that metadata
-   must be sourced independently.
+   Physical observations remain separate; source arrays/call paths establish
+   the implemented byte order and `10 41` session without a capture prerequisite.
+2. The former generic checksum requirement is withdrawn above. The current
+   baseline/signature implementation is source-bound and independently checked
+   offline; this is not universal physical validation.
 3. Security `27 02` requires the variant-specific key path; whether any target
    coding DIDs are writable without `27` on a given ECU is unverified per variant.
 4. The CPS string origin/format (what the last 7 ASCII chars encode) is not traced.

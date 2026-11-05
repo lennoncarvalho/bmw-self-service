@@ -1,0 +1,6352 @@
+{
+  "date": "2026-11-04",
+  "source_contract_sha256": "9f2c8866ecac5b81523f6f625dbd46aa2ca8c360ee36e04fe69063d73cdf8907",
+  "vectors": {
+    "normal": "0104e201033e03051b0c0000",
+    "percent": "01003700033e03051b0c0000",
+    "days": "01003702033e03051b0c0000",
+    "high_status": "0104e2a1033e03051b0c0000",
+    "positive_sentinel": "017fff01033e03051b0c0000",
+    "negative_sentinel": "01800001033e03051b0c0000",
+    "count_invalid": "0104e2011f3e03051b0c0000",
+    "availability_no_information": "0104e20103fd03051b0c0000",
+    "availability_new": "0104e20103fe03051b0c0000",
+    "availability_invalid": "0104e20103ff03051b0c0000",
+    "no_month_year": "0104e201033e0300000c0000",
+    "invalid_month_year": "0104e201033e030f3f0c0000",
+    "invalid_forecast": "0104e201033eff051bff0000",
+    "calendar_flags": "0104e201033e03355b0c0700"
+  },
+  "records": [
+    {
+      "name": "BCP_SP21",
+      "historical_sha256": null,
+      "historical_version": null,
+      "groups": [
+        "G_ZGW"
+      ],
+      "current_sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
+      "current_version": "7.0",
+      "address": 16,
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "info_result": "JOBNAME:STATUS_CBS_DATEN_LESEN JOBCOMMENT:CBS Daten auslesen (fuer CBS-Version 7.0) JOBCOMMENT:UDS: $22 ReadDataByIdentifier JOBCOMMENT:UDS: $1001 Data Identifier JOBCOMMENT:Modus  : Default ARG:CBS_K ARGTYPE:string ARGCOMMENT:Filter over CBS_K Identifier RESULT:JOB_STATUS RESULTTYPE:string RESULTCOMMENT:OKAY, wenn fehlerfrei RESULTCOMMENT:table JobResult STATUS_TEXT RESULT:ID_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:CBS-Identifier RESULT:ID_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:CBS-Identifier description RESULT:RMMI_CBS RESULTTYPE:int RESULTCOMMENT:Remaining distance RESULT:RMMI_CBS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:ST_UN_CBS RESULTTYPE:unsigned char RESULTCOMMENT:unit base RESULT:ST_UN_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:info RESULT:STATUS_MESSUNG_BOS RESULTTYPE:unsigned char RESULTCOMMENT:Status flag RESULT:STATUS_MESSUNG_BOS_TEXT RESULTTYPE:string RESULTCOMMENT:Status flag text RESULT:COU_RSTG_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Service counter RESULT:COU_RSTG_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS RESULTTYPE:unsigned char RESULTCOMMENT:Availability RESULT:AVAI_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:Availability text RESULT:FRC_INTM_WAY_CBS_MESS RESULTTYPE:long RESULTCOMMENT:CBS: Forecast distance interval/ CBR: Distance since service  RESULT:FRC_INTM_WAY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_MON_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target month RESULT:TARD_MON_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:Target month text RESULT:CHOV_CBS_CBR RESULTTYPE:unsigned char RESULTCOMMENT:Decision Logic CBS:CBR: Visibility RESULT:CHOV_CBS_CBR_TEXT RESULTTYPE:string RESULTCOMMENT:Decision Logic text RESULT:TARD_YR_CBS_MESS RESULTTYPE:int RESULTCOMMENT:Target year RESULT:TARD_YR_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:FRC_INTM_T_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Forecast time interval month RESULT:FRC_INTM_T_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_DY_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target day RESULT:TARD_DY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:availability OIL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:Service counter engine oil, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:availability BR_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:Service counter brake pad front, for test sequence at line end RESULT:AVAI_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:availability BRFL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:Service counter brake fluid, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:availability BR_H in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:Service counter brake pad rear, for test sequence at line end RESULT:AVAI_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:availability NOX in %, for test sequence at line end RESULT:COUNT_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:Service counter NOx additive  , for test sequence at line end RESULT:AVAI_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:availability SIC in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:availability Efk in %, for test sequence at line end RESULT:COUNT_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:Service counter Pre delivery inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:availability SIC_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection/vehicle check linked, for test sequence at line end RESULT:_REQUEST RESULTTYPE:binary RESULTCOMMENT:Request to ECU RESULT:_RESPONSE RESULTTYPE:binary RESULTCOMMENT:Response from ECU",
+      "read_job_offset": "0x152ad0",
+      "read_listing_sha256": "4e9bbfad9987dcdfe44be3c5a22aea88939a874c37223413d2f122fdd5121900",
+      "reset_job_offset": "0x12c606",
+      "reset_listing_sha256": "7e0f6fed180dd202022ec8f244df38a72ea1bfac4a1dde405412de9811e1b8e8",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "state": "error",
+      "error": "AssertionError: ('BCP_SP21', 'ERROR_ARGUMENT')",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/bcp_sp21.prg"
+    },
+    {
+      "name": "CMEDIA",
+      "historical_sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
+      "historical_version": "5",
+      "groups": [
+        "G_TEL"
+      ],
+      "current_sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
+      "current_version": "5",
+      "address": 54,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "nicht erlaubt",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xeb1b7",
+      "read_listing_sha256": "0937800d726f3f4d99f40317fe17cb0a6ba02911a4e406fe6b105e25670d5fbf",
+      "reset_job_offset": "0xeff72",
+      "reset_listing_sha256": "945f7f953b74eeb7280960c62af29124d51bece92c34a746829eb9c0cc71692a",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/cmedia.prg"
+    },
+    {
+      "name": "D70BX7A0",
+      "historical_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "4609b1ec33c0f6040da9e84d9aa80cfd56a5796b03e41d74d65475f7311150f6",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x9763c",
+      "read_listing_sha256": "9ac51d0554df92cd2ecc1b9c87cdf68df44920135f81c0f1cda4c37926470f98",
+      "reset_job_offset": "0x9c57c",
+      "reset_listing_sha256": "70a860287d4a89d113457d8a3d014ca79ff17dfc513ef9e8a5c24046a1764ce8",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/d70bx7a0.prg"
+    },
+    {
+      "name": "D72N47A0",
+      "historical_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x91a7a",
+      "read_listing_sha256": "7504f903be532b0d975a55f0489be95c9123fdb427ed4f019023a6e263d183f9",
+      "reset_job_offset": "0x969ba",
+      "reset_listing_sha256": "f06fc830a878e97491041f4eb3d82b2de0a76152137500361dc2ba56164128f4",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/d72n47a0.prg"
+    },
+    {
+      "name": "D73N57A0",
+      "historical_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x8f0fc",
+      "read_listing_sha256": "4d3dcf1f2b38d1b361ffa4a0336075a23a2d68475545322823195caba71cfca3",
+      "reset_job_offset": "0x9403c",
+      "reset_listing_sha256": "915e5d2ed45e2089d35bebe5f0b8e4cb429f5a661bcd9e0765f396876708aefa",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/d73n57a0.prg"
+    },
+    {
+      "name": "D73N57E0",
+      "historical_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x91a23",
+      "read_listing_sha256": "10e064dc28f365e0cd576d9b796fe38088a665cab9dd776f3dbb162d0456d05e",
+      "reset_job_offset": "0x96963",
+      "reset_listing_sha256": "ac6113becaba290b873407024cbbea0f3aded5b87e029604515dbee3033a199b",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/d73n57e0.prg"
+    },
+    {
+      "name": "D75BX7A0",
+      "historical_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "7e6678d772c668dd7077fc541c47458417d43c4916a419d84ea19bfb925ae10e",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x97624",
+      "read_listing_sha256": "c856f9c7f793d2c79af4f17b8b39fd7191e30514969c0262bf576a88b2a18676",
+      "reset_job_offset": "0x9c564",
+      "reset_listing_sha256": "41ec81c44c39b92f8d7bdaa66de3673d3bd4de4d8a84e0b66732de214a5dc09c",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/d75bx7a0.prg"
+    },
+    {
+      "name": "D83BX7C0",
+      "historical_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+      "historical_version": "6",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648",
+      "current_version": "6",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0x10d0a5",
+      "read_listing_sha256": "71f6dfc4ef3dd72999b3d6ab440983b75a69b7ec1eeea86ef74c13fa12a2a442",
+      "reset_job_offset": "0x114dca",
+      "reset_listing_sha256": "625187c03edc074d9591132ed61e485e375058bb8d80f720c8d243209075f791",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/d83bx7c0.prg"
+    },
+    {
+      "name": "D94BX7A0",
+      "historical_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "historical_version": "6.3",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "state": "absent"
+    },
+    {
+      "name": "DME8FF_L",
+      "historical_sha256": "0a27292b892a0600af355b3913657891f2a081071cbb2670ad735cb335ccf026",
+      "historical_version": "6",
+      "groups": [
+        "G_MOTOR2"
+      ],
+      "current_sha256": "36ad3cad7a0eeb7b002c6c250a59c249257ab0bf56dddbe6883dfbc5e42107e3",
+      "current_version": "6",
+      "address": 19,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE_Slave",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0x10ade0",
+      "read_listing_sha256": "6f6b0b90305be122965f3afe28f52963842db7d82e8b8f4ca06be08fb229391d",
+      "reset_job_offset": "0x112b05",
+      "reset_listing_sha256": "4794b5fd634c56b71f40f396525adcaa9144453a9aeb4e9d98ab3197ae48c479",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dme8ff_l.prg"
+    },
+    {
+      "name": "DME8FF_R",
+      "historical_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+      "historical_version": "6",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf",
+      "current_version": "6",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0x10adec",
+      "read_listing_sha256": "1198092e2ef331ec790384ba59c3155147c12960f6df2417b49e0617c7fc317d",
+      "reset_job_offset": "0x112b11",
+      "reset_listing_sha256": "fa5806cea8048c82139ddeee26c3a1d36f2c9d8a200e2b03c94b2d4a3ec71074",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dme8ff_r.prg"
+    },
+    {
+      "name": "DME_BX8",
+      "historical_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xe3007",
+      "read_listing_sha256": "43fdd1e0b9a2e8d29329087d1f8955bcfd579f7a29464f09701911c24cec776c",
+      "reset_job_offset": "0xe7f47",
+      "reset_listing_sha256": "ac9d3d0bf4474b6f2e375734121ffd76a1c23e7a27eb1fc24cf57e8be79787d4",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dme_bx8.prg"
+    },
+    {
+      "name": "DSC_01",
+      "historical_sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+      "historical_version": "5",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+      "current_version": "5",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xd30b3",
+      "read_listing_sha256": "e6c9593b1cdc2f8390af7c3856d4f1fe6e1729b67f5a532ece84cd6efb8c6881",
+      "reset_job_offset": "0xd7ff3",
+      "reset_listing_sha256": "0f1efa6dca68c629080da2d931823cc11edbac586c654e23c6d08678fd5ac03a",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_01.prg"
+    },
+    {
+      "name": "DSC_10",
+      "historical_sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "historical_version": "5",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "current_version": "5",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xd9676",
+      "read_listing_sha256": "b9fa7a22650361c62ef7652d0bdbbdf49654cf4d075d89d720cb2966f79d6447",
+      "reset_job_offset": "0xde5b6",
+      "reset_listing_sha256": "6f2fc610ac85053856205a007aa640e197530e6f951fdc88f80d0d974fd5e317",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_10.prg"
+    },
+    {
+      "name": "DSC_25",
+      "historical_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "historical_version": "5",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "current_version": "5",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xe21be",
+      "read_listing_sha256": "3827aedc51bbda4e0b59a13e56e36ff408647860e0e39d53c7b894943000b9f6",
+      "reset_job_offset": "0xe6f79",
+      "reset_listing_sha256": "4e9e5cefd7b2ea2a98c61f64fa53d46ec5bddbedcb1acd876b8da3fa2bc44c41",
+      "reset_xsend_count": 9,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_25.prg"
+    },
+    {
+      "name": "DSC_G11",
+      "historical_sha256": "61b0482df5d3092a25510fea3e9491022a9b14f41bad7d3b219a089cf876cc1e",
+      "historical_version": "6",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "3b96336aa05b38d47256c03dea4e249e99c3d5082a7e4c89ab09df28ce333ba8",
+      "current_version": "6",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC/IB",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe1f20",
+      "read_listing_sha256": "f1ce18b04fe9e67c9fec08d26291d8f4ebf8488561910dfe9af268c809fe3653",
+      "reset_job_offset": "0xe9c45",
+      "reset_listing_sha256": "259570ee70b0cbe4ed19b1aadcf53d4bba0f36a6fefe715beb10f04c88ec5028",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_g11.prg"
+    },
+    {
+      "name": "DSC_G20",
+      "historical_sha256": "ec13c59498f7fb8986bb364fff9889ea2177524a36ad8042562f4c608bd939b3",
+      "historical_version": "6",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "12cfd8b2c3a0e5cf57f05148db0c43ef1363d75d8968602652f79e7d8524be58",
+      "current_version": "6",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC/IB",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe2a30",
+      "read_listing_sha256": "3d119ca68fe69a3387e9c68436cb8f02c70fe3067061e99df97321b3766e23df",
+      "reset_job_offset": "0xea755",
+      "reset_listing_sha256": "a9cdb72d1ac393bd0389674d8961862fe753ed2039593b600e7cdf54401a90c6",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_g20.prg"
+    },
+    {
+      "name": "DSC_G30N",
+      "historical_sha256": "523cd64d32bd6c5314cb3a3e7c7fa126b98d6d476b872700c5a948c0ec86c6ae",
+      "historical_version": "6",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "0fe812ebf70afe31b453d26d1072d9b7fdb7708bce3cfdc096be072cd1d81968",
+      "current_version": "6",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC/IB",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe0624",
+      "read_listing_sha256": "bb0fa19d0c8c6d8eebd1f367e9ebe225b1f6aef1e8805a07f24d24808529de80",
+      "reset_job_offset": "0xe8349",
+      "reset_listing_sha256": "20a31720418051943162e06bfd42fa84188174721c4534a345e4a91accbbdf12",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_g30n.prg"
+    },
+    {
+      "name": "DSC_I1",
+      "historical_sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "historical_version": "6",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "current_version": "6",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC/IB",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xdf8e4",
+      "read_listing_sha256": "194a9313b4b2f9347ea646fb34603eb387d2a477881c1d546aa99d2226d1cf46",
+      "reset_job_offset": "0xe7609",
+      "reset_listing_sha256": "0c2ccc49c30ce678c34767cafcf22305871df92009b6f171a7482efd35607e5a",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/dsc_i1.prg"
+    },
+    {
+      "name": "EDMEI1",
+      "historical_sha256": "54affb2706cdb7b6edf2584ab0255a07d03f5b458818a60027324db3fddc4f54",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "f5564d839090f25dec1dad1b505061d0cfe81e5fad23bcf8295d8f73c1e531c5",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xe2027",
+      "read_listing_sha256": "90b9e72f245037ddf7d7201b247768cb8ae3abd006bb5463010fa231c3dfcd25",
+      "reset_job_offset": "0xe6f67",
+      "reset_listing_sha256": "94b164d16f50455645ad0513ddfff0dc4a41d65fd7386a4d235b396d9414195c",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/edmei1.prg"
+    },
+    {
+      "name": "EHC_01",
+      "historical_sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
+      "historical_version": "5",
+      "groups": [
+        "G_EHC"
+      ],
+      "current_sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
+      "current_version": "5",
+      "address": 56,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "nicht erlaubt",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xfa728",
+      "read_listing_sha256": "f0075f31ba54488bdf3939569d533d01d5430de742ad24ff6e6331ed69ded897",
+      "reset_job_offset": "0xff668",
+      "reset_listing_sha256": "ed5af64c9b32b35dd4b142857ced178f9f30423103423eac23a4161ed3196c9c",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/ehc_01.prg"
+    },
+    {
+      "name": "GSGE01QW",
+      "historical_sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
+      "historical_version": "6",
+      "groups": [
+        "G_EGS"
+      ],
+      "current_sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
+      "current_version": "6",
+      "address": 24,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "EGS",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xdf933",
+      "read_listing_sha256": "7707db0d94981398237a47b417db80ef7a7d13a531bf816360edaf3e6b2a6533",
+      "reset_job_offset": "0xe7658",
+      "reset_listing_sha256": "dcfa9fe393ce6c5ffcc8c5aad9659799fb0095227cfe6e527f66c4e7c3af82a4",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/gsge01qw.prg"
+    },
+    {
+      "name": "IB_G05",
+      "historical_sha256": "a0dcf4f5a9636072c1e28db7e1a96d6179269f6c41083d84077c442f8a7a11bf",
+      "historical_version": "6",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "83622fe6b18414229d78868a12608f4ee8899d4f8339db7873b632a807d1402c",
+      "current_version": "6",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC/IB",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe2a1b",
+      "read_listing_sha256": "e3c85374a3693d96c8d41e676cc75b1071f0733469cdc8572082510c85fc40c7",
+      "reset_job_offset": "0xea740",
+      "reset_listing_sha256": "26d3bf8274ef1817ff0f48d17c7e2a4337fd36bc23412b4d91cdf7d0c6133d30",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/ib_g05.prg"
+    },
+    {
+      "name": "IB_G2X",
+      "historical_sha256": "40949a1660eacb386be650bc00ec9f9abe8fa6eb794f1956a75852f674283d86",
+      "historical_version": "6",
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "1c54f283353b5703228bc7356fa4e1337c8c248ff650c308e6f8c28028f91a0d",
+      "current_version": "6",
+      "address": 41,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DSC/IB",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe04fc",
+      "read_listing_sha256": "bdbfef4b98015179f2003a7b4168ec9c33edd54f93d670b00ed24628eaaa9fa9",
+      "reset_job_offset": "0xe8221",
+      "reset_listing_sha256": "8214b9701ee052a3d9743e540589a072063a706bb776d91f897a4857c0881b56",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/ib_g2x.prg"
+    },
+    {
+      "name": "IB_I20",
+      "historical_sha256": null,
+      "historical_version": null,
+      "groups": [
+        "G_DSC"
+      ],
+      "current_sha256": "445144b5bafddc0fba3aa502c9a48be4b44e04a9481ed794449c0713de46a5f3",
+      "current_version": "7.0",
+      "address": 41,
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "info_result": "JOBNAME:STATUS_CBS_DATEN_LESEN JOBCOMMENT:CBS Daten auslesen (fuer CBS-Version 7.0) JOBCOMMENT:UDS: $22 ReadDataByIdentifier JOBCOMMENT:UDS: $1001 Data Identifier JOBCOMMENT:Modus  : Default ARG:CBS_K ARGTYPE:string ARGCOMMENT:Filter over CBS_K Identifier RESULT:JOB_STATUS RESULTTYPE:string RESULTCOMMENT:OKAY, wenn fehlerfrei RESULTCOMMENT:table JobResult STATUS_TEXT RESULT:ID_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:CBS-Identifier RESULT:ID_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:CBS-Identifier description RESULT:RMMI_CBS RESULTTYPE:int RESULTCOMMENT:Remaining distance RESULT:RMMI_CBS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:ST_UN_CBS RESULTTYPE:unsigned char RESULTCOMMENT:unit base RESULT:ST_UN_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:info RESULT:STATUS_MESSUNG_BOS RESULTTYPE:unsigned char RESULTCOMMENT:Status flag RESULT:STATUS_MESSUNG_BOS_TEXT RESULTTYPE:string RESULTCOMMENT:Status flag text RESULT:COU_RSTG_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Service counter RESULT:COU_RSTG_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS RESULTTYPE:unsigned char RESULTCOMMENT:Availability RESULT:AVAI_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:Availability text RESULT:FRC_INTM_WAY_CBS_MESS RESULTTYPE:long RESULTCOMMENT:CBS: Forecast distance interval/ CBR: Distance since service  RESULT:FRC_INTM_WAY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_MON_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target month RESULT:TARD_MON_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:Target month text RESULT:CHOV_CBS_CBR RESULTTYPE:unsigned char RESULTCOMMENT:Decision Logic CBS:CBR: Visibility RESULT:CHOV_CBS_CBR_TEXT RESULTTYPE:string RESULTCOMMENT:Decision Logic text RESULT:TARD_YR_CBS_MESS RESULTTYPE:int RESULTCOMMENT:Target year RESULT:TARD_YR_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:FRC_INTM_T_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Forecast time interval month RESULT:FRC_INTM_T_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_DY_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target day RESULT:TARD_DY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:availability OIL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:Service counter engine oil, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:availability BR_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:Service counter brake pad front, for test sequence at line end RESULT:AVAI_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:availability BRFL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:Service counter brake fluid, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:availability BR_H in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:Service counter brake pad rear, for test sequence at line end RESULT:AVAI_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:availability NOX in %, for test sequence at line end RESULT:COUNT_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:Service counter NOx additive  , for test sequence at line end RESULT:AVAI_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:availability SIC in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:availability Efk in %, for test sequence at line end RESULT:COUNT_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:Service counter Pre delivery inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:availability SIC_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection/vehicle check linked, for test sequence at line end RESULT:_REQUEST RESULTTYPE:binary RESULTCOMMENT:Request to ECU RESULT:_RESPONSE RESULTTYPE:binary RESULTCOMMENT:Response from ECU",
+      "read_job_offset": "0xe5aa2",
+      "read_listing_sha256": "79677ec0247e4a29e65c691feb1d439a485da3cd7abc8284ebdb9868c4dc3dd6",
+      "reset_job_offset": "0xe0eb1",
+      "reset_listing_sha256": "eda5f95275a128b97251ed1893c474db52e3e1bedb4302baafa06184498b4699",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "routine-7.0",
+        "requests": [
+          "310110000102ffffff",
+          "31031000"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/ib_i20.prg"
+    },
+    {
+      "name": "KOMB01",
+      "historical_sha256": "014a0730df2b993380aff00afabd7794b2672cbf171ae3390feb1ed0ffb122b1",
+      "historical_version": "5",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "71b474ab7a18d8a01f305f15688ae5661d80167d08dae5b7cc3e818e0103a7db",
+      "current_version": "5",
+      "address": 96,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "Kombi",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xdd538",
+      "read_listing_sha256": "d402a8b9bf59f7542ea4ae6a4f8456cce02be086a4e32152d804dca42e7a8c7c",
+      "reset_job_offset": "0xe2478",
+      "reset_listing_sha256": "609eb6436f2c7db7de6693040402d3e066338a32064e47b162ff01f7735112db",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/komb01.prg"
+    },
+    {
+      "name": "KOMB25",
+      "historical_sha256": "38c3b5de88402bef28c2697b0c03615e79097a03d29640e22b60c071f5f1a688",
+      "historical_version": "5",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "6dfb80eee4e5b9d7b94dfe97f43da25fd80ef0abac2adf0f8a113d50d47b2bc4",
+      "current_version": "5",
+      "address": 96,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "Kombi",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xe2129",
+      "read_listing_sha256": "a8f9236ce1266b480b70f7d07d3180f0f8c915936454fe5fbf635d45ee93cf5b",
+      "reset_job_offset": "0xe7069",
+      "reset_listing_sha256": "4d127306c4951c5f150bc4c2d759d1d711189b7a0c9ddc4223d0f686a63a1668",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/komb25.prg"
+    },
+    {
+      "name": "KOMBRDCT",
+      "historical_sha256": "b7ef99297a062ad860012c3877dc3a33a1bbdc431250dc003cb326f5065d2c2d",
+      "historical_version": "6",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "1245018cfc2bdaa944311f0bb8228e50fbb13216e68e92a5e6fef9a1668ca3ad",
+      "current_version": "6",
+      "address": 96,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "KOMBI",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe649d",
+      "read_listing_sha256": "f1ed1558db292ebbc8429d63d8ebaaa8cdb0410499a07eb9ee29be800490bd63",
+      "reset_job_offset": "0xee1c2",
+      "reset_listing_sha256": "dbe8351f71abe155008e20e0a7d50a1597471c4ffa2c2fb3eb453e2134ba0f57",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/kombrdct.prg"
+    },
+    {
+      "name": "KOMBSP18",
+      "historical_sha256": "a611ef427b42354b518e62d6b9de53addf2e437d8029c1b4b2eb13147ae66a20",
+      "historical_version": "6",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "33aa21d5e03f1445ec98e8412959d452d73d64834d1e3082bb4bfddaff59887f",
+      "current_version": "6",
+      "address": 96,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "KOMBI",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xde86d",
+      "read_listing_sha256": "3473460789c1d1409892c3ffe7d61f5f02c8204830052d68cc7de4d20df1b85c",
+      "reset_job_offset": "0xe6592",
+      "reset_listing_sha256": "288befb5d42df2310096ba3209fefbad3160a789b421c49868a3c3116a106fc9",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/kombsp18.prg"
+    },
+    {
+      "name": "KOMBSP21",
+      "historical_sha256": "20603da513132ee750561c56bf099834315306da1ab0d51c70ff56e92fd04706",
+      "historical_version": "6.3",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "656c5cd27932fca9cc27ad2568d7eda4faad0d0d80090ca038e22eb47c5339db",
+      "current_version": "7.0",
+      "address": 96,
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "info_result": "JOBNAME:STATUS_CBS_DATEN_LESEN JOBCOMMENT:CBS Daten auslesen (fuer CBS-Version 7.0) JOBCOMMENT:UDS: $22 ReadDataByIdentifier JOBCOMMENT:UDS: $1001 Data Identifier JOBCOMMENT:Modus  : Default ARG:CBS_K ARGTYPE:string ARGCOMMENT:Filter over CBS_K Identifier RESULT:JOB_STATUS RESULTTYPE:string RESULTCOMMENT:OKAY, wenn fehlerfrei RESULTCOMMENT:table JobResult STATUS_TEXT RESULT:ID_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:CBS-Identifier RESULT:ID_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:CBS-Identifier description RESULT:RMMI_CBS RESULTTYPE:int RESULTCOMMENT:Remaining distance RESULT:RMMI_CBS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:ST_UN_CBS RESULTTYPE:unsigned char RESULTCOMMENT:unit base RESULT:ST_UN_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:info RESULT:STATUS_MESSUNG_BOS RESULTTYPE:unsigned char RESULTCOMMENT:Status flag RESULT:STATUS_MESSUNG_BOS_TEXT RESULTTYPE:string RESULTCOMMENT:Status flag text RESULT:COU_RSTG_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Service counter RESULT:COU_RSTG_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS RESULTTYPE:unsigned char RESULTCOMMENT:Availability RESULT:AVAI_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:Availability text RESULT:FRC_INTM_WAY_CBS_MESS RESULTTYPE:long RESULTCOMMENT:CBS: Forecast distance interval/ CBR: Distance since service  RESULT:FRC_INTM_WAY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_MON_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target month RESULT:TARD_MON_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:Target month text RESULT:CHOV_CBS_CBR RESULTTYPE:unsigned char RESULTCOMMENT:Decision Logic CBS:CBR: Visibility RESULT:CHOV_CBS_CBR_TEXT RESULTTYPE:string RESULTCOMMENT:Decision Logic text RESULT:TARD_YR_CBS_MESS RESULTTYPE:int RESULTCOMMENT:Target year RESULT:TARD_YR_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:FRC_INTM_T_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Forecast time interval month RESULT:FRC_INTM_T_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_DY_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target day RESULT:TARD_DY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:availability OIL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:Service counter engine oil, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:availability BR_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:Service counter brake pad front, for test sequence at line end RESULT:AVAI_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:availability BRFL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:Service counter brake fluid, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:availability BR_H in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:Service counter brake pad rear, for test sequence at line end RESULT:AVAI_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:availability NOX in %, for test sequence at line end RESULT:COUNT_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:Service counter NOx additive  , for test sequence at line end RESULT:AVAI_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:availability SIC in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:availability Efk in %, for test sequence at line end RESULT:COUNT_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:Service counter Pre delivery inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:availability SIC_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection/vehicle check linked, for test sequence at line end RESULT:_REQUEST RESULTTYPE:binary RESULTCOMMENT:Request to ECU RESULT:_RESPONSE RESULTTYPE:binary RESULTCOMMENT:Response from ECU",
+      "read_job_offset": "0xe70a9",
+      "read_listing_sha256": "e6d0122eee3389151b84769c8f9ab2798c7a91e3e3e8a96fba0863fd336ed571",
+      "reset_job_offset": "0xe2b12",
+      "reset_listing_sha256": "d5a68444ecb04636befd223309457834fe2f75e57c69993b5a1aaf0c6b303c80",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "routine-7.0",
+        "requests": [
+          "310110000102ffffff",
+          "31031000"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/kombsp21.prg"
+    },
+    {
+      "name": "KOMB_G11",
+      "historical_sha256": "3c509b8eb4a50479944e623d3b52cdda563b208ae42272e9c9bf0f939eb591a1",
+      "historical_version": "6",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "ecf05aeef3478b5eadd020244764be9b52451676a07a0f79f7280dc52f2830f4",
+      "current_version": "6",
+      "address": 96,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "KOMBI",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe2a75",
+      "read_listing_sha256": "3fa01419454eec47aad90f5c0a52c2230439ad097238c02c25f43d0900d9bba0",
+      "reset_job_offset": "0xea79a",
+      "reset_listing_sha256": "f2813daec86b41fc60d8a2814321b84eb3ea5f5725033160a14d070a2d2739c9",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/komb_g11.prg"
+    },
+    {
+      "name": "KOMB_J29",
+      "historical_sha256": null,
+      "historical_version": null,
+      "groups": [
+        "G_KOMBI"
+      ],
+      "current_sha256": "a29439942caa37e27cd24368e2c8d03e4b4d3287d3d40ad19f91a9bdbdce7578",
+      "current_version": "6",
+      "address": 96,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "KOMBI",
+          "CBS_VERSION_TEXT": "CBS 6",
+          "CBS_VERSION_HEX": "0x06"
+        }
+      ],
+      "read_job_offset": "0xe2a7d",
+      "read_listing_sha256": "6211706ea543f182fc0049ca64e79edd09823fc9cd48bf2f34270a66e38cc10a",
+      "reset_job_offset": "0xea7a2",
+      "reset_listing_sha256": "8004782071d2991c25c26ab9d6513f1abd2e2acdfd62c6b3cdc5414f96d7602e",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/komb_j29.prg"
+    },
+    {
+      "name": "LMV_01",
+      "historical_sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
+      "historical_version": "5",
+      "groups": [
+        "G_LMV"
+      ],
+      "current_sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
+      "current_version": "5",
+      "address": 25,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "nicht erlaubt",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x68955",
+      "read_listing_sha256": "8517d5617890303d81fbe0092ba2a566502fdd95b858defb433cfe3bff9386c7",
+      "reset_job_offset": "0x6d895",
+      "reset_listing_sha256": "92cfa834c98453859e3cf9417b424352af6444f4b7b8f5d984cfcb7a4f9fc334",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/lmv_01.prg"
+    },
+    {
+      "name": "MEVD172",
+      "historical_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x6ea4c",
+      "read_listing_sha256": "cd09840afcb71c46bf1f8656c5eb194b0169d87ebc28a22014e8f59ea3eee50d",
+      "reset_job_offset": "0x7398c",
+      "reset_listing_sha256": "8fb1fe623cc4cd65dc834b1fd5021d208b70eab0202ea67e2e8feb596d6e4fb9",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/mevd172.prg"
+    },
+    {
+      "name": "MEVD1724",
+      "historical_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x6ea62",
+      "read_listing_sha256": "e31ce7db2e7df1033b0635043517fcdc7a08c8a279405f82879bd09bc179375e",
+      "reset_job_offset": "0x739a2",
+      "reset_listing_sha256": "3893d54f8550fdff3fbb185cce24a77c5da672180a4ae7114870ce581a5b3577",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/mevd1724.prg"
+    },
+    {
+      "name": "MEVD1725",
+      "historical_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x54e35",
+      "read_listing_sha256": "177e9e3fe4109436f19c9f511576fc917c8083c13acb72308dd42cb083828487",
+      "reset_job_offset": "0x59d75",
+      "reset_listing_sha256": "b15aa10011c3d72b223aba44600547553c27eedcdf8820f748779d684c34c0a9",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/mevd1725.prg"
+    },
+    {
+      "name": "MEVD172Y",
+      "historical_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x6eaa1",
+      "read_listing_sha256": "4055e6c466a46f51ad3d5f91442801c677e256fea3e71ee623291dfb26930843",
+      "reset_job_offset": "0x739e1",
+      "reset_listing_sha256": "f96e3f0ab5669e25b0672295872adcc60ed0d124f03b574ec79f8932a6f98037",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/mevd172y.prg"
+    },
+    {
+      "name": "MGU_02_A",
+      "historical_sha256": null,
+      "historical_version": null,
+      "groups": [
+        "G_MMI"
+      ],
+      "current_sha256": "a274f22c573e6fbcd84c94258eefa658102d3c8f0b4af71806f5c187a726af98",
+      "current_version": "7.0",
+      "address": 99,
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "info_result": "JOBNAME:STATUS_CBS_DATEN_LESEN JOBCOMMENT:CBS Daten auslesen (fuer CBS-Version 7.0) JOBCOMMENT:UDS: $22 ReadDataByIdentifier JOBCOMMENT:UDS: $1001 Data Identifier JOBCOMMENT:Modus  : Default ARG:CBS_K ARGTYPE:string ARGCOMMENT:Filter over CBS_K Identifier RESULT:JOB_STATUS RESULTTYPE:string RESULTCOMMENT:OKAY, wenn fehlerfrei RESULTCOMMENT:table JobResult STATUS_TEXT RESULT:ID_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:CBS-Identifier RESULT:ID_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:CBS-Identifier description RESULT:RMMI_CBS RESULTTYPE:int RESULTCOMMENT:Remaining distance RESULT:RMMI_CBS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:ST_UN_CBS RESULTTYPE:unsigned char RESULTCOMMENT:unit base RESULT:ST_UN_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:info RESULT:STATUS_MESSUNG_BOS RESULTTYPE:unsigned char RESULTCOMMENT:Status flag RESULT:STATUS_MESSUNG_BOS_TEXT RESULTTYPE:string RESULTCOMMENT:Status flag text RESULT:COU_RSTG_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Service counter RESULT:COU_RSTG_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS RESULTTYPE:unsigned char RESULTCOMMENT:Availability RESULT:AVAI_CBS_TEXT RESULTTYPE:string RESULTCOMMENT:Availability text RESULT:FRC_INTM_WAY_CBS_MESS RESULTTYPE:long RESULTCOMMENT:CBS: Forecast distance interval/ CBR: Distance since service  RESULT:FRC_INTM_WAY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_MON_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target month RESULT:TARD_MON_CBS_MESS_TEXT RESULTTYPE:string RESULTCOMMENT:Target month text RESULT:CHOV_CBS_CBR RESULTTYPE:unsigned char RESULTCOMMENT:Decision Logic CBS:CBR: Visibility RESULT:CHOV_CBS_CBR_TEXT RESULTTYPE:string RESULTCOMMENT:Decision Logic text RESULT:TARD_YR_CBS_MESS RESULTTYPE:int RESULTCOMMENT:Target year RESULT:TARD_YR_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:FRC_INTM_T_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Forecast time interval month RESULT:FRC_INTM_T_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:TARD_DY_CBS_MESS RESULTTYPE:unsigned char RESULTCOMMENT:Target day RESULT:TARD_DY_CBS_MESS_INFO RESULTTYPE:string RESULTCOMMENT:info RESULT:AVAI_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:availability OIL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_OEL RESULTTYPE:int RESULTCOMMENT:Service counter engine oil, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:availability BR_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_V RESULTTYPE:int RESULTCOMMENT:Service counter brake pad front, for test sequence at line end RESULT:AVAI_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:availability BRFL in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BRFL RESULTTYPE:int RESULTCOMMENT:Service counter brake fluid, for test sequence at line end RESULT:AVAI_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:availability BR_H in %, for test sequence at line end RESULT:COUNT_CBS_WERT_BR_H RESULTTYPE:int RESULTCOMMENT:Service counter brake pad rear, for test sequence at line end RESULT:AVAI_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:availability NOX in %, for test sequence at line end RESULT:COUNT_CBS_WERT_NOX RESULTTYPE:int RESULTCOMMENT:Service counter NOx additive  , for test sequence at line end RESULT:AVAI_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:availability SIC in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:availability Efk in %, for test sequence at line end RESULT:COUNT_CBS_WERT_EFK RESULTTYPE:int RESULTCOMMENT:Service counter Pre delivery inspection, for test sequence at line end RESULT:AVAI_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:availability SIC_V in %, for test sequence at line end RESULT:COUNT_CBS_WERT_SIC_V RESULTTYPE:int RESULTCOMMENT:Service counter visual inspection/vehicle check linked, for test sequence at line end RESULT:_REQUEST RESULTTYPE:binary RESULTCOMMENT:Request to ECU RESULT:_RESPONSE RESULTTYPE:binary RESULTCOMMENT:Response from ECU",
+      "read_job_offset": "0xe6111",
+      "read_listing_sha256": "b04baf967a613078b53bb6830a5b20b74194a2606f3c2a3fb35f0e36b67a17e3",
+      "reset_job_offset": "0xe317e",
+      "reset_listing_sha256": "97a7edcc278d2d484f2f341604c411afcf35af2f5c9ac96babb57831ab0dbeda",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "routine-7.0",
+        "requests": [
+          "310110000102ffffff",
+          "31031000"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/mgu_02_a.prg"
+    },
+    {
+      "name": "MSD85L6",
+      "historical_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x31444",
+      "read_listing_sha256": "4423a0a992a205df0b9844abcecb6a158aae776f69c53723755cd6a8694b07dc",
+      "reset_job_offset": "0x36384",
+      "reset_listing_sha256": "1db380dbba29d4af038628410b78abb99e7182d8961540e51af11bdb870c4b5a",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/msd85l6.prg"
+    },
+    {
+      "name": "MSD85YL6",
+      "historical_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x1e6f2",
+      "read_listing_sha256": "5ec5bc565e201cdc29b4d4ab7bff022f900d8aac5457a5f9f4a1c0084d633bf9",
+      "reset_job_offset": "0x23632",
+      "reset_listing_sha256": "0731d11595a0cb3851735060f56028f442a4a502a9182e1823740f05e4716d75",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/msd85yl6.prg"
+    },
+    {
+      "name": "MSD87",
+      "historical_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x3145b",
+      "read_listing_sha256": "bc4b2ece186553deebb8f09faeb5a97a99bcefcb405f8461a29798f300fa3b95",
+      "reset_job_offset": "0x3639b",
+      "reset_listing_sha256": "46d44b454f2c7da010c71267a75309fabdea7acc069af7dff9180e0bd813e14c",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/msd87.prg"
+    },
+    {
+      "name": "MSD87_R0",
+      "historical_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "0055e880abd9151f5f031fb2087e9949ff6d84e94ccec3219e82ffb6e60aa2ad",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xa882f",
+      "read_listing_sha256": "cc755d5a2a0276b16b0936f4f553c86dc6f26efae5003fab1574159917f6abce",
+      "reset_job_offset": "0xad76f",
+      "reset_listing_sha256": "9b9ef955718e9569048529efbe84ea39e1d7ad07acb3271178874f117d7c3b73",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/msd87_r0.prg"
+    },
+    {
+      "name": "MSV90",
+      "historical_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x31431",
+      "read_listing_sha256": "24f42df088185321ab2a6e0c5fabdd3cc7dbb9fa7418a9196bc0681879b5a749",
+      "reset_job_offset": "0x36371",
+      "reset_listing_sha256": "a1a7eb1ae9a47a092e71c998eb5efa41db9806ff83f0f30c2265a294912739e5",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/msv90.prg"
+    },
+    {
+      "name": "N55_ALP",
+      "historical_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x346be",
+      "read_listing_sha256": "105695875500157910c5c2135dea76758df0f93b900a87c507e0b265e6e4d26d",
+      "reset_job_offset": "0x395fe",
+      "reset_listing_sha256": "e6279a719f58f285cbd1be5f21ad52b719729a951154b2370795d129326c88b4",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/n55_alp.prg"
+    },
+    {
+      "name": "N63TU_R0",
+      "historical_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x6ea66",
+      "read_listing_sha256": "e6bcf9971a150bb7928375b58a179cffe7174c9ec4e9e06be45613d4a158b212",
+      "reset_job_offset": "0x739a6",
+      "reset_listing_sha256": "94b5576fe781cef718dcbcce01caf3bf79d34df49a445f1a336430fa47bb272a",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/n63tu_r0.prg"
+    },
+    {
+      "name": "S55",
+      "historical_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0xaa441",
+      "read_listing_sha256": "d93b11597dc51abc069b795cb750416d5b21fa15a004be08af9948640cd57aa0",
+      "reset_job_offset": "0xaf381",
+      "reset_listing_sha256": "b4867090cb2796635b945bd9d93f6bf8e67e694dcd27791ba61ee2e41d5358ea",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/s55.prg"
+    },
+    {
+      "name": "S63TU_L0",
+      "historical_sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR2"
+      ],
+      "current_sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
+      "current_version": "5",
+      "address": 19,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE_Slave",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x6ea59",
+      "read_listing_sha256": "bd41e99b3fde9612786cef3a88c4562504d91a0d8d9202f1692eca156c9a47bb",
+      "reset_job_offset": "0x73999",
+      "reset_listing_sha256": "19ec89d6b24ec62783658bade7dde7d090269565746f2301ba1627a390ff6fe8",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/s63tu_l0.prg"
+    },
+    {
+      "name": "S63TU_R0",
+      "historical_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "historical_version": "5",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "current_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "current_version": "5",
+      "address": 18,
+      "read_job": "CBS_DATEN_LESEN",
+      "info_result": [
+        {
+          "JOB_STATUS": "OKAY",
+          "ECU_NAME": "DME/DDE",
+          "CBS_VERSION_TEXT": "CBS 5",
+          "CBS_VERSION_HEX": "0x05"
+        }
+      ],
+      "read_job_offset": "0x6d75d",
+      "read_listing_sha256": "369f23f4cee463b841b8a5ae95225a7abca871573ee5240916b849400139372e",
+      "reset_job_offset": "0x7269d",
+      "reset_listing_sha256": "2ebd5901408bce85c2be3689ed64ed7f8850b93b89a3b4111db5ea653fa0206f",
+      "reset_xsend_count": 1,
+      "read_vectors": {
+        "normal": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "percent": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "days": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "high_status": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "positive_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "negative_sentinel": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "count_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_no_information": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_new": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "availability_invalid": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "no_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_month_year": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "invalid_forecast": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        },
+        "calendar_flags": {
+          "differences": {},
+          "job_status": "OKAY",
+          "request": [
+            "221001"
+          ]
+        }
+      },
+      "read_verified": true,
+      "reset_probe": {
+        "policy": "default",
+        "requests": [
+          "2e10010101641f80000fff0f3fff00"
+        ],
+        "status": "OKAY"
+      },
+      "state": "checked",
+      "current_path": "/Users/lennon/git/rea_bmw/ista_bundle/ecu/s63tu_r0.prg"
+    }
+  ],
+  "mismatches": [],
+  "normalization_corrections": [
+    "CBS5 numeric status is a high-nibble bitmask; normalized to0..15",
+    "CBS7.0 supports sourced percent/day unit bases; unlike the older6.3 distance-only branch"
+  ],
+  "unrecovered_owner_groups": [
+    "G_EGS",
+    "G_EHC",
+    "G_LMV",
+    "G_MMI",
+    "G_MOTOR2",
+    "G_TEL",
+    "G_ZGW"
+  ]
+}

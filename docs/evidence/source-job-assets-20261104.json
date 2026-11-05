@@ -1,0 +1,368 @@
+{
+  "date": "2026-11-04",
+  "selection": "all-source-series; metadata inclusion is not product support or physical validation",
+  "source_version": "4.29.14 (ENGB)",
+  "source_group_table_sha256": "4514f12d917039ecac65f753d163e4a8f30fcce5c61111a5e762d85c94b57d61",
+  "bundle_manifest_sha256": "502ba84b6abd4f47aded11e0a2fb23dbb337fb7f0435cce145414847057bdd31",
+  "native_library_sha256": "10fb6d7cda60326ce7c2b213fc1bf83b3809e19fb76453fcbcc140e995030b22",
+  "native_architectures": [
+    "arm64",
+    "x86_64"
+  ],
+  "job_files": 530,
+  "job_bytes": 592028562,
+  "main_series": {
+    "F001": {
+      "ecus": 156,
+      "addresses": 81,
+      "series": [
+        "F001",
+        "F002",
+        "F003",
+        "F004",
+        "F007",
+        "RR04",
+        "RR05",
+        "RR06"
+      ]
+    },
+    "F010": {
+      "ecus": 148,
+      "addresses": 78,
+      "series": [
+        "F005",
+        "F006",
+        "F010",
+        "F011",
+        "F012",
+        "F013",
+        "F018"
+      ]
+    },
+    "F020": {
+      "ecus": 119,
+      "addresses": 53,
+      "series": [
+        "F020",
+        "F021",
+        "F022",
+        "F023",
+        "F030",
+        "F031",
+        "F032",
+        "F033",
+        "F034",
+        "F035",
+        "F036",
+        "F080",
+        "F082",
+        "F083",
+        "F087",
+        "F088"
+      ]
+    },
+    "F025": {
+      "ecus": 128,
+      "addresses": 67,
+      "series": [
+        "F015",
+        "F016",
+        "F025",
+        "F026",
+        "F085",
+        "F086"
+      ]
+    },
+    "F056": {
+      "ecus": 78,
+      "addresses": 43,
+      "series": [
+        "F039",
+        "F045",
+        "F046",
+        "F047",
+        "F048",
+        "F049",
+        "F052",
+        "F054",
+        "F055",
+        "F056",
+        "F057",
+        "F060"
+      ]
+    },
+    "I001": {
+      "ecus": 57,
+      "addresses": 40,
+      "series": [
+        "I001",
+        "I012",
+        "I015"
+      ]
+    },
+    "K001": {
+      "ecus": 38,
+      "addresses": 16,
+      "series": [
+        "K010",
+        "K018",
+        "K019",
+        "K021",
+        "K022",
+        "K023",
+        "K032",
+        "K033",
+        "K034",
+        "K035",
+        "K045",
+        "K046",
+        "K047",
+        "K048",
+        "K049",
+        "K050",
+        "K051",
+        "K052",
+        "K053",
+        "K054",
+        "K061",
+        "K063",
+        "K066",
+        "K067",
+        "K069",
+        "K080",
+        "K081",
+        "K082",
+        "K083",
+        "K084",
+        "KM03"
+      ]
+    },
+    "KE01": {
+      "ecus": 10,
+      "addresses": 8,
+      "series": [
+        "K007",
+        "K017"
+      ]
+    },
+    "KS01": {
+      "ecus": 13,
+      "addresses": 7,
+      "series": [
+        "K002",
+        "K003",
+        "K008",
+        "K009",
+        "K060"
+      ]
+    },
+    "RR21": {
+      "ecus": 49,
+      "addresses": 46,
+      "series": [
+        "RR21",
+        "RR22",
+        "RR25"
+      ]
+    },
+    "S15A": {
+      "ecus": 140,
+      "addresses": 76,
+      "series": [
+        "F090",
+        "F097",
+        "F098",
+        "G001",
+        "G002",
+        "G011",
+        "G012",
+        "G013",
+        "G030",
+        "G031",
+        "G032",
+        "RR11",
+        "RR12",
+        "RR31"
+      ]
+    },
+    "S15C": {
+      "ecus": 83,
+      "addresses": 49,
+      "series": [
+        "G008",
+        "G038"
+      ]
+    },
+    "S18A": {
+      "ecus": 102,
+      "addresses": 66,
+      "series": [
+        "F040",
+        "F042",
+        "F044",
+        "F091",
+        "F092",
+        "F093",
+        "F095",
+        "F096",
+        "G005",
+        "G006",
+        "G007",
+        "G009",
+        "G014",
+        "G015",
+        "G016",
+        "G018",
+        "G020",
+        "G021",
+        "G022",
+        "G023",
+        "G024",
+        "G026",
+        "G028",
+        "G029",
+        "G042",
+        "G080",
+        "G081",
+        "G082",
+        "G083",
+        "G087"
+      ]
+    }
+  },
+  "missing_job_files": [
+    "acf_01",
+    "amphhi12",
+    "asa_25",
+    "asa_f15",
+    "asa_g11",
+    "asda_i01",
+    "bat48_15",
+    "bat48_22",
+    "bcp01_ap",
+    "bmt01hl",
+    "bmt01hr",
+    "bzm_f70",
+    "cas4",
+    "ccu_01b",
+    "ccu_01c",
+    "ccu_01d",
+    "ccu_22",
+    "ccu_22b",
+    "ccu_22c",
+    "ccu_22d",
+    "ccu_p1",
+    "ccu_p1b",
+    "ccu_p1c",
+    "ccu_p1d",
+    "cdm_rr25",
+    "d94bx7a0",
+    "dme98_l",
+    "dme98_r",
+    "dme9ff_r",
+    "emars_h2",
+    "emars_v2",
+    "eme_psa",
+    "eme_z",
+    "eme_zpsa",
+    "ens_sp21",
+    "eps_g45",
+    "eps_u06",
+    "fccu",
+    "flm03_l",
+    "flm03_r",
+    "g_bmt_hl",
+    "g_bmt_hr",
+    "g_srr_l",
+    "gsge02hy",
+    "gsge02ph",
+    "gsge02qz",
+    "gsma02pl",
+    "gsma02pu",
+    "gsma02qz",
+    "gszf04ga",
+    "gszf04gd",
+    "gszf04gf",
+    "gwm_bms1",
+    "gwm_mcu1",
+    "gwm_odp1",
+    "gwm_vcu1",
+    "gws_g05b",
+    "hsscu",
+    "hvs_01b",
+    "hvs_01c",
+    "hvs_01d",
+    "hvs_02",
+    "hvs_02b",
+    "hvs_02c",
+    "hvs_02d",
+    "hvsgr_01",
+    "hvsgr_1b",
+    "ib_g70",
+    "ifm_01",
+    "lege02",
+    "lema02hg",
+    "lema02hl",
+    "lezf04vb",
+    "lezf04vc",
+    "lezfvh",
+    "lezfvhb",
+    "lezfvhc",
+    "lezfvhd",
+    "lmv_u06",
+    "mars01",
+    "nivi2n",
+    "pcu_10",
+    "piu_01",
+    "scr05",
+    "spnm03hl",
+    "spnm03hr",
+    "spnm03vl",
+    "spnm03vr",
+    "srr40_l",
+    "tee1_01b",
+    "tee1_01c",
+    "tee1_01d",
+    "tgl_u25",
+    "wsg_01"
+  ],
+  "missing_uses": [
+    "_bfh_ext",
+    "_bfs_ext",
+    "_cas4",
+    "_fah_ext",
+    "_fas_ext"
+  ],
+  "job_inventory": {
+    "counts": {
+      "variant_files_loaded": 399,
+      "FS_LESEN": 395,
+      "FS_LOESCHEN": 395,
+      "IS_LESEN": 392,
+      "IS_LOESCHEN": 384,
+      "STATUS_LESEN": 389,
+      "STATUS_CBS_DATEN_LESEN": 4,
+      "CBS_RESET": 47,
+      "CBS_DATEN_LESEN": 43
+    },
+    "failures": []
+  },
+  "identity_table_rows": 620,
+  "identity_rows_additional_to_existing_catalogue": 0,
+  "verification": "Generated bundle only; stale source-folder preferences ignored; sources opens/listdir/scandir rejected; missing bundle explicit unavailable; real PRG offline jobs and CBS reset checks passed",
+  "physical_validation": false,
+  "native_signed_width_verification": {
+    "opcodes": [
+      "0x18 ASR",
+      "0x68 fix2flt"
+    ],
+    "primitive_cases": 13,
+    "history_profiles": 12,
+    "history_boundaries": [
+      "signed distance -2147483648",
+      "negative multiples -256/-65536",
+      "unsigned mileage 4294967295"
+    ],
+    "result": "passed after correcting undefined 32-bit shift/sign-extension; no physical I/O"
+  }
+}

@@ -234,6 +234,10 @@ class UdsServices:
 # that feature's write contract. Unsolicited-reply services are never sent.
 RAW_READS = frozenset({0x19, 0x1A, 0x22})
 RAW_NEVER = frozenset({0x2A, 0x86})
+# These two source-defined controls stop/restart an existing event mechanism;
+# they do not register a periodic/event diagnostic response. The feature must
+# still grant the service and freeze its complete ordered mutation plan.
+RAW_EVENT_CONTROLS = frozenset({b"\x86\x00\x02", b"\x86\x05\x02"})
 
 
 def _raw_request(payload: bytes, grant: frozenset[int] = frozenset()) -> Request:
@@ -250,7 +254,8 @@ def _raw_request(payload: bytes, grant: frozenset[int] = frozenset()) -> Request
         or (sid == 0x10 and payload[1:] in (b"\x01", b"\x03"))
         or payload == b"\x3e\x00"
     )
-    if sid in RAW_NEVER or not (readable or sid in grant):
+    event_control = sid == 0x86 and payload in RAW_EVENT_CONTROLS and sid in grant
+    if (sid in RAW_NEVER and not event_control) or not (readable or sid in grant):
         raise PermissionError("This job request needs a write grant it was not given")
     request = Request.from_payload(payload)
     if request.service is None:

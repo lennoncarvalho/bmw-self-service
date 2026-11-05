@@ -1,5 +1,11 @@
 # Odometer, identity extras and DoIP addressing — 2026-10-30
 
+> Source location update, 2026-11-04: `sources/Ecu/` below is a historical
+> artifact path; that collection was removed. Current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Names, bytes and versions can differ.
+> Preserve this record's hashes/offsets; compare current files before reuse.
+> See [current inventory](../29-source-reuse-continuation.md).
+
 Static source recovery only. No vehicle traffic, no APK/PRG execution, no app
 change. Labels: **primary-reference** = traced in a supplied original artifact;
 **hypothesis** = plausible but not traced to bytes; **unresolved** = searched and

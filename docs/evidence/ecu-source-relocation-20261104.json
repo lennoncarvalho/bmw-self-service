@@ -1,0 +1,204 @@
+{
+  "date": "2026-11-04",
+  "scope": "24 retained MIL artifact identities; not the entire deleted collection",
+  "canonical_directory": "sources/ISTA_4.29.1x/Rheingold/Ecu",
+  "counts": {
+    "changed": 8,
+    "identical": 14,
+    "absent": 2
+  },
+  "files": [
+    {
+      "name": "D70BX7A0",
+      "historical_path": "sources/Ecu/D70BX7A0.prg",
+      "historical_sha256": "e55173850756165524aca1b713dba60b9d26a1bfad4a34f4644e47d1d6bf3259",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d70bx7a0.prg",
+      "current_sha256": "4609b1ec33c0f6040da9e84d9aa80cfd56a5796b03e41d74d65475f7311150f6",
+      "state": "changed"
+    },
+    {
+      "name": "D72N47A0",
+      "historical_path": "sources/Ecu/D72N47A0.prg",
+      "historical_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d72n47a0.prg",
+      "current_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "state": "identical"
+    },
+    {
+      "name": "D73N57A0",
+      "historical_path": "sources/Ecu/D73N57A0.prg",
+      "historical_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57a0.prg",
+      "current_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "state": "identical"
+    },
+    {
+      "name": "D73N57E0",
+      "historical_path": "sources/Ecu/D73N57E0.prg",
+      "historical_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57e0.prg",
+      "current_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "state": "identical"
+    },
+    {
+      "name": "D75BX7A0",
+      "historical_path": "sources/Ecu/D75BX7A0.prg",
+      "historical_sha256": "4ed388459ba4f0f8dcac83689d6a8d2ac6caf0db9ef6e12d7fcf6b1de7cbd195",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d75bx7a0.prg",
+      "current_sha256": "7e6678d772c668dd7077fc541c47458417d43c4916a419d84ea19bfb925ae10e",
+      "state": "changed"
+    },
+    {
+      "name": "D83BX7C0",
+      "historical_path": "sources/Ecu/D83BX7C0.prg",
+      "historical_sha256": "21233b794564a10f9d6f4ffef08de605ebe33ae16bee6840d574f122df44ab04",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d83bx7c0.prg",
+      "current_sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648",
+      "state": "changed"
+    },
+    {
+      "name": "D94BX7A0",
+      "historical_path": "sources/Ecu/D94BX7A0.prg",
+      "historical_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "current_path": null,
+      "current_sha256": null,
+      "state": "absent"
+    },
+    {
+      "name": "DME8FF_R",
+      "historical_path": "sources/Ecu/DME8FF_R.prg",
+      "historical_sha256": "d497dfd594e74b8416a99b54f3359265209abee6f7378d9f5e1600715ecafe28",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_r.prg",
+      "current_sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf",
+      "state": "changed"
+    },
+    {
+      "name": "DME9FF_R",
+      "historical_path": "sources/Ecu/DME9FF_R.prg",
+      "historical_sha256": "96657f0d481f0f8f21f1eb4de66774fcd490b183912278ae9553255e579587e2",
+      "current_path": null,
+      "current_sha256": null,
+      "state": "absent"
+    },
+    {
+      "name": "DME_BX8",
+      "historical_path": "sources/Ecu/DME_BX8.prg",
+      "historical_sha256": "2c199a9974bd699ce5b6f85ea7c5dc7dc3b731ba00bc063f794078e85769e7c7",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme_bx8.prg",
+      "current_sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db",
+      "state": "changed"
+    },
+    {
+      "name": "EDMEI1",
+      "historical_path": "sources/Ecu/EDMEI1.prg",
+      "historical_sha256": "54affb2706cdb7b6edf2584ab0255a07d03f5b458818a60027324db3fddc4f54",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/edmei1.prg",
+      "current_sha256": "f5564d839090f25dec1dad1b505061d0cfe81e5fad23bcf8295d8f73c1e531c5",
+      "state": "changed"
+    },
+    {
+      "name": "MEVD172",
+      "historical_path": "sources/Ecu/MEVD172.prg",
+      "historical_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172.prg",
+      "current_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "state": "identical"
+    },
+    {
+      "name": "MEVD1724",
+      "historical_path": "sources/Ecu/MEVD1724.prg",
+      "historical_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1724.prg",
+      "current_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "state": "identical"
+    },
+    {
+      "name": "MEVD1725",
+      "historical_path": "sources/Ecu/MEVD1725.prg",
+      "historical_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1725.prg",
+      "current_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "state": "identical"
+    },
+    {
+      "name": "MEVD172Y",
+      "historical_path": "sources/Ecu/MEVD172Y.prg",
+      "historical_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172y.prg",
+      "current_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "state": "identical"
+    },
+    {
+      "name": "MSD85L6",
+      "historical_path": "sources/Ecu/MSD85L6.prg",
+      "historical_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85l6.prg",
+      "current_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "state": "identical"
+    },
+    {
+      "name": "MSD85YL6",
+      "historical_path": "sources/Ecu/MSD85YL6.prg",
+      "historical_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85yl6.prg",
+      "current_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "state": "identical"
+    },
+    {
+      "name": "MSD87",
+      "historical_path": "sources/Ecu/MSD87.prg",
+      "historical_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87.prg",
+      "current_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "state": "identical"
+    },
+    {
+      "name": "MSD87_R0",
+      "historical_path": "sources/Ecu/MSD87_R0.prg",
+      "historical_sha256": "581f80274303517b56547b76aeaad039858cafa0462b4122476a80dd65012c1b",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87_r0.prg",
+      "current_sha256": "0055e880abd9151f5f031fb2087e9949ff6d84e94ccec3219e82ffb6e60aa2ad",
+      "state": "changed"
+    },
+    {
+      "name": "MSV90",
+      "historical_path": "sources/Ecu/MSV90.prg",
+      "historical_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msv90.prg",
+      "current_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "state": "identical"
+    },
+    {
+      "name": "N55_ALP",
+      "historical_path": "sources/Ecu/N55_ALP.prg",
+      "historical_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/n55_alp.prg",
+      "current_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "state": "identical"
+    },
+    {
+      "name": "N63TU_R0",
+      "historical_path": "sources/Ecu/N63TU_R0.prg",
+      "historical_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/n63tu_r0.prg",
+      "current_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "state": "identical"
+    },
+    {
+      "name": "S55",
+      "historical_path": "sources/Ecu/S55.prg",
+      "historical_sha256": "efdfd4aa667e3a1ed3009bed3ec71f7b33416d718ffa0fcdadbf9be3ff75a688",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s55.prg",
+      "current_sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b",
+      "state": "changed"
+    },
+    {
+      "name": "S63TU_R0",
+      "historical_path": "sources/Ecu/S63TU_R0.prg",
+      "historical_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "current_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_r0.prg",
+      "current_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "state": "identical"
+    }
+  ]
+}

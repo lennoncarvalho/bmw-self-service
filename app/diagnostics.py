@@ -259,7 +259,7 @@ class DiagnosticReadWorker(CarWorker):
                             "ecu_name": name,
                             "ecu_addr": address,
                             "memory": memory,
-                            "description": description or "English description unavailable",
+                            "description": description or "Description unavailable",
                             "job_text": record["text"],
                             "job_presence": record["presence"],
                             "source": row["source"],

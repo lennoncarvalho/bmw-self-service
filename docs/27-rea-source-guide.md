@@ -3,6 +3,21 @@
 Updated 2026-10-28 after the owner configured REA and restarted. This is the
 route to protocol answers, not a list of validated BMW wire constants.
 
+## Current source location — 2026-11-04
+
+Read [current source reuse and continuation](29-source-reuse-continuation.md)
+first. ISTA 4.29 is now present under `sources/ISTA_4.29.1x/Rheingold/`.
+The canonical ECU directory is its `Ecu/` child; `sources/Ecu/` was removed.
+Historical records keep original paths and hashes. Do not assume equal names
+mean equal bytes: compare current files before reusing offsets or contracts.
+
+Current generated runtime assets and actual decoding results are in doc 29.
+DiagDocDb access and every supplied CAFD/FAFP now decode successfully; source
+applications and codecs are never runtime dependencies. The owner explicitly
+retired runtime source-folder fallback under D-68. Existing source-compatible
+coding patch selection is recovered; do not reintroduce arbitrary first-version
+selection or the disproven exact-file-only gate.
+
 ## Start with the right task
 
 - [Task A](../tasks/protocol-library-migration.md) + [spec 25](25-library-migration-spec.md):
@@ -61,14 +76,16 @@ through constructor/asset selection/callers to the actual request engine.
 ## Existing local source map
 
 Paths below are relative to repository root `/Users/lennon/git/rea_bmw`.
-All ignored originals remain research-only, absent from shipped dependencies.
+Reference applications and REA tooling remain development-only. Under D-61/D-62,
+selected PRG/GRP jobs and data may be bundled or loaded by the standalone native
+interpreter; they do not require the reference application or REA at runtime.
 
 | Source ID / artifact | Questions it should answer | Concrete entry points / cautions |
 |----------------------|----------------------------|---------------------------------|
 | S-01 `sources/BimmerLink_v2.36.1.apk` | Connection, ECU inventory, diagnostics/clear/MIL, sensor codecs | Connect/error-memory/sensor activities; `BMWSensorValueDeserializer.b` → `j6.m`; `j6.h` loads `dat/ecu-variants.enc`, `j6.e` loads `dat/%s.enc`; `asyncTasks.FileDecompression` for decrypt/GZIP. Trace all into sends and decoders. |
 | S-02 `sources/BimmerCode_v4.25.04-12743.apk` | ENET/transport branches, ECU/software/CAFD selection, easy presets, current coded-data reads/writes | Connection/vehicle interfaces plus packaged coding assets; old ESeries-only trace cannot establish F/G/U/I behavior. Start with format-aware package/class inventory. |
 | S-03 `sources/SHM/SHM.exe` and adjacent runtime files | History read/add/edit/delete/replace and how jobs are invoked | Identify native/managed/package type first, then UI action → dependency calls → PRG job/arguments → actual buffers; do not assume job arguments travel as ASCII. |
-| S-04 `sources/NBT.prg`, `CIC.prg`, `NBTEVO.prg`, `HU_MGU.prg`, `sources/Ecu/` | Actual job encoders/decoders, headunit differences, ECU variants | BEST/PRG bytecode requires a format-aware parser/VM or verified interpreter trace. Ghidra x86 disassembly of raw PRG is not a job decoder. NBT is first validation target. |
+| S-04 `sources/NBT.prg`, `CIC.prg`, `NBTEVO.prg`, `HU_MGU.prg`, `sources/ISTA_4.29.1x/Rheingold/Ecu/` | Actual job encoders/decoders, headunit differences, ECU variants | BEST/PRG bytecode requires a format-aware parser/VM or verified interpreter trace. Ghidra x86 disassembly of raw PRG is not a job decoder. NBT is first validation target. |
 | S-05 `sources/SHM/history.2026.09.24.bmwsh` | Local backup/import format | Local serialization, not wire evidence. Preserve identity and distinguish personal record data. |
 | S-06 `bimmerlink_extracted/`, `bimmercode_extracted/` | Existing smali/resources/assets and simulation examples | Reuse focused reads; verify file/member provenance against original APK. Simulations are examples, not physical support proof. |
 | S-07 `coding_data/`, `dtc_descriptions.db`, extraction scripts | Definition/label selection, description schema/collisions and packaging | Definitions differ from live coded bytes. Match ECU/software/version; inspect extraction provenance before trusting counts or duplicate resolution. |
@@ -93,7 +110,7 @@ Legacy formats named in the source inventory are research references only.
    source for inventory/variant selection, diagnostic jobs, DTC details, MIL,
    measurement decoders and CBS (current priority before coding under D-58). Inventory version/hash and dependencies
    before selecting REA tools; an executable without required data may not answer
-   the question. No ISTA+ artifact is currently inventoried in `sources/`.
+   the question. ISTA 4.29 is now available; see doc 29 for the current inventory and limits.
    BMW's [official diagnostic portal](https://bmwtechinfo.bmwgroup.com/tisUI/?oss_module=ISTA3)
    provides an authoritative acquisition/documentation route.
 2. **EdiabasLib open source:** recommended additional reference for BEST job
@@ -111,12 +128,17 @@ Legacy formats named in the source inventory are research references only.
 > **Easy source path (not taken by Claude; left for another coder).** Several coding
 > and description gaps above may not need a new source request: the already-supplied
 > protected sources are proposed candidates, once decrypted/derived. Their contents
-> and usability are unverified. BimmerCode `coding_data/*.enc` (key in
-> `app/coding_db.py`) or ISTA 4.29 CAFD may provide the named preset catalogue and
+> and usability were unverified by that session. The local coding files have
+> since decrypted/parsed successfully (doc 29); exact applicability remains work.
+> Decrypted coding assets and ISTA 4.29 CAFD are available development inputs;
+> their recovery is recorded in `docs/evidence/source-cafd-access-20261104.md`.
+> They may provide the named preset catalogue and
 > the 12 missing F48 ECU definitions; BimmerCode `de.appomotive.bimmercode.e.*`
 > holds the referenced key-derivation classes and may provide the security-access
-> seed/key; ISTA `DiagDocDb.sqlite` (encrypted, not opened) may provide English
-> fault/ECU/CBS texts, service-function rules and type-key→model data.
+> seed/key. ISTA `DiagDocDb.sqlite` has now been opened and diagnostic texts
+> extracted into `coding_data/diagnostic_texts.db`; service-function rules,
+> type-key→model data and named preset catalogue coverage remain separate
+> investigations.
 > See [claude-session-limitations.md](claude-session-limitations.md).
 
 Use current sources first. A source request must state the unresolved contract,

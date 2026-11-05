@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -25,7 +24,10 @@ logger = logging.getLogger(__name__)
 class BackupsPage(QWidget):
     """Preview/import/export records; restoring needs an exact vehicle contract."""
 
+    restore_requested = Signal(object)
+
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the expanding backup record list and local file actions."""
         super().__init__(parent)
         self.store = OperationStore()
         layout = QVBoxLayout(self)
@@ -34,13 +36,10 @@ class BackupsPage(QWidget):
         location = QLabel(f"Backup location: {self.store.root}")
         location.setWordWrap(True)
         layout.addWidget(location)
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
         container = QWidget()
         self.list_layout = QVBoxLayout(container)
         self.list_layout.addStretch()
-        scroll.setWidget(container)
-        layout.addWidget(scroll)
+        layout.addWidget(container)
         actions = QHBoxLayout()
         for label, handler in (("Import JSON backup", self._import), ("Refresh", self.refresh)):
             button = QPushButton(label)
@@ -87,6 +86,12 @@ class BackupsPage(QWidget):
                         "Restoration requires a supported operation and matching vehicle/software identity."
                     )
                 )
+                if original["kind"] == "coding" and original["mode"] == "live":
+                    restore = QPushButton("Review coding restoration")
+                    restore.clicked.connect(
+                        lambda checked=False, source=path: self.restore_requested.emit(source)
+                    )
+                    box.addWidget(restore)
                 export = QPushButton("Export JSON")
                 export.clicked.connect(lambda checked=False, source=path: self._export(source))
                 box.addWidget(export)

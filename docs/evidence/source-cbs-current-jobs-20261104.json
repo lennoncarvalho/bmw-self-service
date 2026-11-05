@@ -1,0 +1,3807 @@
+{
+  "schema": 1,
+  "date": "2026-11-04",
+  "authority": "current PRG tables/comments/listings and controlled offline native job execution; no physical validation",
+  "rea_cross_reference": {
+    "artifact": "sources/ISTA_4.29.1x/Rheingold/Testmodule/ABL_GEN_AS6100_CBS_RESET.dll",
+    "sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db",
+    "members_parent": "ev_d17bfe8339598b52f4c2b052e47d2a93b0679834bf61c83ac0a4e63ae7a876b7"
+  },
+  "definitions": {
+    "BCP_SP21": {
+      "address": 16,
+      "version": "7.0",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "prg_sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
+      "source_reset_policy": "unrecovered",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_ZGW"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/bcp_sp21.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "4e9bbfad9987dcdfe44be3c5a22aea88939a874c37223413d2f122fdd5121900",
+      "reset_listing_sha256": "7e0f6fed180dd202022ec8f244df38a72ea1bfac4a1dde405412de9811e1b8e8",
+      "read_job_offset": "0x152ad0",
+      "reset_job_offset": "0x12c606",
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "start_request": "31011000{item}02ffffff",
+      "start_positive": "71011000",
+      "results_request": "31031000",
+      "results_positive": "71031000{general}{component}{reserved2}",
+      "tables": {
+        "TAB_RESET_ART": {
+          "columns": [
+            "WERT",
+            "ART",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "plant",
+              "Werksreset"
+            ],
+            [
+              "0x02",
+              "standard",
+              "Standardreset"
+            ],
+            [
+              "0x03",
+              "service_counter",
+              "Korrekturreset Servicezaehler"
+            ],
+            [
+              "0x04",
+              "time",
+              "Korrekturreset Zieltermin"
+            ],
+            [
+              "0x05",
+              "distance",
+              "Korrekturreset Restweg"
+            ],
+            [
+              "0x06",
+              "forecast_distance",
+              "Korrekturreset Restwegprognose"
+            ],
+            [
+              "0x07",
+              "availability",
+              "Korrekturreset Verfuegbarkeit"
+            ],
+            [
+              "0x08",
+              "display",
+              "Anzeige-Reset"
+            ],
+            [
+              "0x0A",
+              "rda",
+              "Anlieferzustand herstellen"
+            ],
+            [
+              "0xFF",
+              "-",
+              "not defined"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x01",
+              "ungültiger km-Stand"
+            ],
+            [
+              "0x02",
+              "ungültiges Borddatum"
+            ],
+            [
+              "0x03",
+              "ungültige Codierung"
+            ],
+            [
+              "0x04",
+              "SG nicht initialisiert oder im falschen Zustand"
+            ],
+            [
+              "0x05",
+              "Fahrzeug im fahrenden Zustand"
+            ],
+            [
+              "0x06",
+              "Reset bei CBR nicht erlaubt"
+            ],
+            [
+              "0x07",
+              "Reset bei aktivem Ersatzwert nicht erlaubt"
+            ],
+            [
+              "0x08",
+              "Verfügbarkeit ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x09",
+              "Servicezähler ist nicht zwischen 1 und 250"
+            ],
+            [
+              "0x0A",
+              "Zieltermin ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0B",
+              "Restweg ist ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0C",
+              "Keine gültigen RDA Daten erhalten"
+            ],
+            [
+              "0xFE",
+              "keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x80",
+              "Bremsdruck vorhanden"
+            ],
+            [
+              "0x81",
+              "Sensor angeschliffen/ Fehlerhaft"
+            ],
+            [
+              "0x82",
+              "EMF angezogen"
+            ],
+            [
+              "0x83",
+              "EMF Fehler vorhanden"
+            ],
+            [
+              "0x84",
+              "aktiver Druckaufbau"
+            ],
+            [
+              "0x85",
+              "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)"
+            ],
+            [
+              "0x86",
+              "Daten werden gerade persistiert"
+            ],
+            [
+              "0x87",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 08"
+            ],
+            [
+              "0x88",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 09"
+            ],
+            [
+              "0x89",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 10"
+            ],
+            [
+              "0x8A",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 11"
+            ],
+            [
+              "0x8B",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 12"
+            ],
+            [
+              "0x8C",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 13"
+            ],
+            [
+              "0x8D",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 14"
+            ],
+            [
+              "0x8E",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 15"
+            ],
+            [
+              "0x8F",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 16"
+            ],
+            [
+              "0x90",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 17"
+            ],
+            [
+              "0x91",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 18"
+            ],
+            [
+              "0x92",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 19"
+            ],
+            [
+              "0x93",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 20"
+            ],
+            [
+              "0x94",
+              "Restwegvorgabe höher als Maximalwert"
+            ],
+            [
+              "0x95",
+              "Ungültige Vorgabe Verfügbarkeit"
+            ],
+            [
+              "0x96",
+              "Ungültige Vorgabe Servicezähler"
+            ],
+            [
+              "0x97",
+              "Ungültige Vorgabe Zielmonat"
+            ],
+            [
+              "0x98",
+              "Ungültige Vorgabe Zieljahr"
+            ],
+            [
+              "0x99",
+              "Ungültige Vorgabe Zieltag"
+            ],
+            [
+              "0x9A",
+              "Ungültige Vorgabe Zieldatum"
+            ],
+            [
+              "0x9B",
+              "Ungültige Vorgabe Restweg"
+            ],
+            [
+              "0x9C",
+              "Ungültige Vorgabe Restwegprognose"
+            ],
+            [
+              "0x9D",
+              "Manipulation festgestellt"
+            ],
+            [
+              "0x9E",
+              "Keine Kodierung zum Prognosereset festgestellt"
+            ],
+            [
+              "0x9F",
+              "Werksreset des Clients Getriebeöl nur bei Neufahrzeugen möglich"
+            ],
+            [
+              "0xA0",
+              "Deaktivierung der Anzeige bei Client Getriebeöl im Fälligkeitsbereich nicht erlaubt"
+            ],
+            [
+              "0xA1",
+              "Korrekturreset Verfügbarkeit bei den Umfängen Motoröl, Zündkerze und Partikelfilter nicht erlaubt"
+            ],
+            [
+              "0xA2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 35"
+            ],
+            [
+              "0xA3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 36"
+            ],
+            [
+              "0xA4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 37"
+            ],
+            [
+              "0xA5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 38"
+            ],
+            [
+              "0xA6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 39"
+            ],
+            [
+              "0xA7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 40"
+            ],
+            [
+              "0xA8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 41"
+            ],
+            [
+              "0xA9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 42"
+            ],
+            [
+              "0xAA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 43"
+            ],
+            [
+              "0xAB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 44"
+            ],
+            [
+              "0xAC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 45"
+            ],
+            [
+              "0xAD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 46"
+            ],
+            [
+              "0xAE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 47"
+            ],
+            [
+              "0xAF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 48"
+            ],
+            [
+              "0xB0",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 49"
+            ],
+            [
+              "0xB1",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 50"
+            ],
+            [
+              "0xB2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 51"
+            ],
+            [
+              "0xB3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 52"
+            ],
+            [
+              "0xB4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 53"
+            ],
+            [
+              "0xB5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 54"
+            ],
+            [
+              "0xB6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 55"
+            ],
+            [
+              "0xB7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 56"
+            ],
+            [
+              "0xB8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 57"
+            ],
+            [
+              "0xB9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 58"
+            ],
+            [
+              "0xBA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 59"
+            ],
+            [
+              "0xBB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 60"
+            ],
+            [
+              "0xBC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 61"
+            ],
+            [
+              "0xBD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 62"
+            ],
+            [
+              "0xBE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 63"
+            ],
+            [
+              "0xBF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 64"
+            ],
+            [
+              "0xFE",
+              "Keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "CBS_7_0_KENNUNG": {
+          "columns": [
+            "WERT",
+            "CBS_K",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "Oel",
+              "Motoroel"
+            ],
+            [
+              "0x02",
+              "Br_v",
+              "Bremsbelaege vorne"
+            ],
+            [
+              "0x03",
+              "Brfl",
+              "Bremsfluessigkeit"
+            ],
+            [
+              "0x05",
+              "Bsi",
+              "Service Inclusive"
+            ],
+            [
+              "0x06",
+              "Br_h",
+              "Bremsbelaege hinten"
+            ],
+            [
+              "0x07",
+              "Pf",
+              "Partikelfilter"
+            ],
+            [
+              "0x08",
+              "Soh",
+              "State of Health"
+            ],
+            [
+              "0x0A",
+              "Zuend",
+              "Zuendkerzen/Gluehkerzen"
+            ],
+            [
+              "0x0D",
+              "NOx_a",
+              "NOx-Additiv"
+            ],
+            [
+              "0x11",
+              "Sic",
+              "Sichtpruefung/Fahrzeugcheck"
+            ],
+            [
+              "0x14",
+              "Ueb",
+              "Uebergabedurchsicht"
+            ],
+            [
+              "0x15",
+              "Efk",
+              "Einfahrkontrolle"
+            ],
+            [
+              "0x17",
+              "Wf",
+              "Wasserfilter"
+            ],
+            [
+              "0x20",
+              "TUV",
+              "Fahrzeuguntersuchung"
+            ],
+            [
+              "0x21",
+              "AU",
+              "Abgasuntersuchung"
+            ],
+            [
+              "0x23",
+              "Goel",
+              "Getriebeoel"
+            ],
+            [
+              "0x31",
+              "Reif",
+              "Reifenalter"
+            ],
+            [
+              "0x32",
+              "Kup",
+              "Kupplung"
+            ],
+            [
+              "0x33",
+              "Gdf",
+              "Gasdruckdaempfer Frontklappe bei aktivem Fussgaengerschutz"
+            ],
+            [
+              "0x34",
+              "Verb",
+              "Verbandskasten"
+            ],
+            [
+              "0x35",
+              "Tir_f",
+              "Tire Fit"
+            ],
+            [
+              "0x36",
+              "Kat",
+              "Katalysator"
+            ],
+            [
+              "0x37",
+              "Sto",
+              "Stoßdaempfer"
+            ],
+            [
+              "0x64",
+              "Sic_v",
+              "Sichtpruefung/Fahrzeugcheck verknuepft"
+            ],
+            [
+              "0xE0",
+              "Cbs_e",
+              "CBS Evalboard"
+            ],
+            [
+              "0xE1",
+              "Cbr_e",
+              "CBR Evalboard"
+            ],
+            [
+              "0xFF",
+              "rda",
+              "Anlieferzustand"
+            ]
+          ]
+        }
+      }
+    },
+    "CMEDIA": {
+      "address": 54,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
+      "source_reset_policy": "default",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_TEL"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/cmedia.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "0937800d726f3f4d99f40317fe17cb0a6ba02911a4e406fe6b105e25670d5fbf",
+      "reset_listing_sha256": "945f7f953b74eeb7280960c62af29124d51bece92c34a746829eb9c0cc71692a",
+      "read_job_offset": "0xeb1b7",
+      "reset_job_offset": "0xeff72",
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "D70BX7A0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "4609b1ec33c0f6040da9e84d9aa80cfd56a5796b03e41d74d65475f7311150f6",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d70bx7a0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "9ac51d0554df92cd2ecc1b9c87cdf68df44920135f81c0f1cda4c37926470f98",
+      "reset_listing_sha256": "70a860287d4a89d113457d8a3d014ca79ff17dfc513ef9e8a5c24046a1764ce8",
+      "read_job_offset": "0x9763c",
+      "reset_job_offset": "0x9c57c",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "D72N47A0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d72n47a0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "7504f903be532b0d975a55f0489be95c9123fdb427ed4f019023a6e263d183f9",
+      "reset_listing_sha256": "f06fc830a878e97491041f4eb3d82b2de0a76152137500361dc2ba56164128f4",
+      "read_job_offset": "0x91a7a",
+      "reset_job_offset": "0x969ba",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "D73N57A0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57a0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "4d3dcf1f2b38d1b361ffa4a0336075a23a2d68475545322823195caba71cfca3",
+      "reset_listing_sha256": "915e5d2ed45e2089d35bebe5f0b8e4cb429f5a661bcd9e0765f396876708aefa",
+      "read_job_offset": "0x8f0fc",
+      "reset_job_offset": "0x9403c",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "D73N57E0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d73n57e0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "10e064dc28f365e0cd576d9b796fe38088a665cab9dd776f3dbb162d0456d05e",
+      "reset_listing_sha256": "ac6113becaba290b873407024cbbea0f3aded5b87e029604515dbee3033a199b",
+      "read_job_offset": "0x91a23",
+      "reset_job_offset": "0x96963",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "D75BX7A0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "7e6678d772c668dd7077fc541c47458417d43c4916a419d84ea19bfb925ae10e",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d75bx7a0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "c856f9c7f793d2c79af4f17b8b39fd7191e30514969c0262bf576a88b2a18676",
+      "reset_listing_sha256": "41ec81c44c39b92f8d7bdaa66de3673d3bd4de4d8a84e0b66732de214a5dc09c",
+      "read_job_offset": "0x97624",
+      "reset_job_offset": "0x9c564",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "D83BX7C0": {
+      "address": 18,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/d83bx7c0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "71f6dfc4ef3dd72999b3d6ab440983b75a69b7ec1eeea86ef74c13fa12a2a442",
+      "reset_listing_sha256": "625187c03edc074d9591132ed61e485e375058bb8d80f720c8d243209075f791",
+      "read_job_offset": "0x10d0a5",
+      "reset_job_offset": "0x114dca",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DME8FF_L": {
+      "address": 19,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "36ad3cad7a0eeb7b002c6c250a59c249257ab0bf56dddbe6883dfbc5e42107e3",
+      "source_reset_policy": "default",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_MOTOR2"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_l.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "6f6b0b90305be122965f3afe28f52963842db7d82e8b8f4ca06be08fb229391d",
+      "reset_listing_sha256": "4794b5fd634c56b71f40f396525adcaa9144453a9aeb4e9d98ab3197ae48c479",
+      "read_job_offset": "0x10ade0",
+      "reset_job_offset": "0x112b05",
+      "detail": true,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DME8FF_R": {
+      "address": 18,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme8ff_r.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "1198092e2ef331ec790384ba59c3155147c12960f6df2417b49e0617c7fc317d",
+      "reset_listing_sha256": "fa5806cea8048c82139ddeee26c3a1d36f2c9d8a200e2b03c94b2d4a3ec71074",
+      "read_job_offset": "0x10adec",
+      "reset_job_offset": "0x112b11",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DME_BX8": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dme_bx8.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "43fdd1e0b9a2e8d29329087d1f8955bcfd579f7a29464f09701911c24cec776c",
+      "reset_listing_sha256": "ac9d3d0bf4474b6f2e375734121ffd76a1c23e7a27eb1fc24cf57e8be79787d4",
+      "read_job_offset": "0xe3007",
+      "reset_job_offset": "0xe7f47",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DSC_01": {
+      "address": 41,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "94c6d7ee1036d435e8ca2622dd3a33def95879fd4bed8c51a9ca7abf97f2d502",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_01.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "e6c9593b1cdc2f8390af7c3856d4f1fe6e1729b67f5a532ece84cd6efb8c6881",
+      "reset_listing_sha256": "0f1efa6dca68c629080da2d931823cc11edbac586c654e23c6d08678fd5ac03a",
+      "read_job_offset": "0xd30b3",
+      "reset_job_offset": "0xd7ff3",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DSC_10": {
+      "address": 41,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_10.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "b9fa7a22650361c62ef7652d0bdbbdf49654cf4d075d89d720cb2966f79d6447",
+      "reset_listing_sha256": "6f2fc610ac85053856205a007aa640e197530e6f951fdc88f80d0d974fd5e317",
+      "read_job_offset": "0xd9676",
+      "reset_job_offset": "0xde5b6",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DSC_25": {
+      "address": 41,
+      "version": "5",
+      "reset": "dsc25-plain",
+      "prg_sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_25.prg",
+      "read_job": "CBS_DATEN_LESEN",
+      "extra_sequence": [
+        "{reset}",
+        "860002",
+        "3101030400",
+        "14ffffff",
+        "{reset}",
+        "860502"
+      ],
+      "extra_svk": [
+        "340501",
+        "010804",
+        "010b03"
+      ],
+      "record_index": {
+        "02": 0,
+        "06": 1
+      },
+      "side_effects": [
+        "May clear all DSC fault memory",
+        "Temporarily stops and restarts ECU event reporting",
+        "Runs ECU routine 0304",
+        "The extra branch intentionally sends the reset twice as separate source-planned steps"
+      ],
+      "source_reset_policy": "dsc25-plain",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "3827aedc51bbda4e0b59a13e56e36ff408647860e0e39d53c7b894943000b9f6",
+      "reset_listing_sha256": "4e9e5cefd7b2ea2a98c61f64fa53d46ec5bddbedcb1acd876b8da3fa2bc44c41",
+      "read_job_offset": "0xe21be",
+      "reset_job_offset": "0xe6f79"
+    },
+    "DSC_G11": {
+      "address": 41,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "3b96336aa05b38d47256c03dea4e249e99c3d5082a7e4c89ab09df28ce333ba8",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g11.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "f1ce18b04fe9e67c9fec08d26291d8f4ebf8488561910dfe9af268c809fe3653",
+      "reset_listing_sha256": "259570ee70b0cbe4ed19b1aadcf53d4bba0f36a6fefe715beb10f04c88ec5028",
+      "read_job_offset": "0xe1f20",
+      "reset_job_offset": "0xe9c45",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DSC_G20": {
+      "address": 41,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "12cfd8b2c3a0e5cf57f05148db0c43ef1363d75d8968602652f79e7d8524be58",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g20.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "3d119ca68fe69a3387e9c68436cb8f02c70fe3067061e99df97321b3766e23df",
+      "reset_listing_sha256": "a9cdb72d1ac393bd0389674d8961862fe753ed2039593b600e7cdf54401a90c6",
+      "read_job_offset": "0xe2a30",
+      "reset_job_offset": "0xea755",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DSC_G30N": {
+      "address": 41,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "0fe812ebf70afe31b453d26d1072d9b7fdb7708bce3cfdc096be072cd1d81968",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_g30n.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "bb0fa19d0c8c6d8eebd1f367e9ebe225b1f6aef1e8805a07f24d24808529de80",
+      "reset_listing_sha256": "20a31720418051943162e06bfd42fa84188174721c4534a345e4a91accbbdf12",
+      "read_job_offset": "0xe0624",
+      "reset_job_offset": "0xe8349",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "DSC_I1": {
+      "address": 41,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/dsc_i1.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "194a9313b4b2f9347ea646fb34603eb387d2a477881c1d546aa99d2226d1cf46",
+      "reset_listing_sha256": "0c2ccc49c30ce678c34767cafcf22305871df92009b6f171a7482efd35607e5a",
+      "read_job_offset": "0xdf8e4",
+      "reset_job_offset": "0xe7609",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "EDMEI1": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "f5564d839090f25dec1dad1b505061d0cfe81e5fad23bcf8295d8f73c1e531c5",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/edmei1.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "90b9e72f245037ddf7d7201b247768cb8ae3abd006bb5463010fa231c3dfcd25",
+      "reset_listing_sha256": "94b164d16f50455645ad0513ddfff0dc4a41d65fd7386a4d235b396d9414195c",
+      "read_job_offset": "0xe2027",
+      "reset_job_offset": "0xe6f67",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "EHC_01": {
+      "address": 56,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
+      "source_reset_policy": "default",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_EHC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ehc_01.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "f0075f31ba54488bdf3939569d533d01d5430de742ad24ff6e6331ed69ded897",
+      "reset_listing_sha256": "ed5af64c9b32b35dd4b142857ced178f9f30423103423eac23a4161ed3196c9c",
+      "read_job_offset": "0xfa728",
+      "reset_job_offset": "0xff668",
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "GSGE01QW": {
+      "address": 24,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
+      "source_reset_policy": "default",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_EGS"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/gsge01qw.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "7707db0d94981398237a47b417db80ef7a7d13a531bf816360edaf3e6b2a6533",
+      "reset_listing_sha256": "dcfa9fe393ce6c5ffcc8c5aad9659799fb0095227cfe6e527f66c4e7c3af82a4",
+      "read_job_offset": "0xdf933",
+      "reset_job_offset": "0xe7658",
+      "detail": true,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "IB_G05": {
+      "address": 41,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "83622fe6b18414229d78868a12608f4ee8899d4f8339db7873b632a807d1402c",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_g05.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "e3c85374a3693d96c8d41e676cc75b1071f0733469cdc8572082510c85fc40c7",
+      "reset_listing_sha256": "26d3bf8274ef1817ff0f48d17c7e2a4337fd36bc23412b4d91cdf7d0c6133d30",
+      "read_job_offset": "0xe2a1b",
+      "reset_job_offset": "0xea740",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "IB_G2X": {
+      "address": 41,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "1c54f283353b5703228bc7356fa4e1337c8c248ff650c308e6f8c28028f91a0d",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_g2x.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "bdbfef4b98015179f2003a7b4168ec9c33edd54f93d670b00ed24628eaaa9fa9",
+      "reset_listing_sha256": "8214b9701ee052a3d9743e540589a072063a706bb776d91f897a4857c0881b56",
+      "read_job_offset": "0xe04fc",
+      "reset_job_offset": "0xe8221",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "IB_I20": {
+      "address": 41,
+      "version": "7.0",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "prg_sha256": "445144b5bafddc0fba3aa502c9a48be4b44e04a9481ed794449c0713de46a5f3",
+      "source_reset_policy": "routine-7.0",
+      "reset": "routine-7.0",
+      "ownership": "primary",
+      "source_groups": [
+        "G_DSC"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/ib_i20.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "79677ec0247e4a29e65c691feb1d439a485da3cd7abc8284ebdb9868c4dc3dd6",
+      "reset_listing_sha256": "eda5f95275a128b97251ed1893c474db52e3e1bedb4302baafa06184498b4699",
+      "read_job_offset": "0xe5aa2",
+      "reset_job_offset": "0xe0eb1",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "start_request": "31011000{item}02ffffff",
+      "start_positive": "71011000",
+      "results_request": "31031000",
+      "results_positive": "71031000{general}{component}{reserved2}",
+      "tables": {
+        "TAB_RESET_ART": {
+          "columns": [
+            "WERT",
+            "ART",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "plant",
+              "Werksreset"
+            ],
+            [
+              "0x02",
+              "standard",
+              "Standardreset"
+            ],
+            [
+              "0x03",
+              "service_counter",
+              "Korrekturreset Servicezaehler"
+            ],
+            [
+              "0x04",
+              "time",
+              "Korrekturreset Zieltermin"
+            ],
+            [
+              "0x05",
+              "distance",
+              "Korrekturreset Restweg"
+            ],
+            [
+              "0x06",
+              "forecast_distance",
+              "Korrekturreset Restwegprognose"
+            ],
+            [
+              "0x07",
+              "availability",
+              "Korrekturreset Verfuegbarkeit"
+            ],
+            [
+              "0x08",
+              "display",
+              "Anzeige-Reset"
+            ],
+            [
+              "0x0A",
+              "rda",
+              "Anlieferzustand herstellen"
+            ],
+            [
+              "0xFF",
+              "-",
+              "not defined"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x01",
+              "ungültiger km-Stand"
+            ],
+            [
+              "0x02",
+              "ungültiges Borddatum"
+            ],
+            [
+              "0x03",
+              "ungültige Codierung"
+            ],
+            [
+              "0x04",
+              "SG nicht initialisiert oder im falschen Zustand"
+            ],
+            [
+              "0x05",
+              "Fahrzeug im fahrenden Zustand"
+            ],
+            [
+              "0x06",
+              "Reset bei CBR nicht erlaubt"
+            ],
+            [
+              "0x07",
+              "Reset bei aktivem Ersatzwert nicht erlaubt"
+            ],
+            [
+              "0x08",
+              "Verfügbarkeit ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x09",
+              "Servicezähler ist nicht zwischen 1 und 250"
+            ],
+            [
+              "0x0A",
+              "Zieltermin ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0B",
+              "Restweg ist ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0C",
+              "Keine gültigen RDA Daten erhalten"
+            ],
+            [
+              "0xFE",
+              "keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x80",
+              "Bremsdruck vorhanden"
+            ],
+            [
+              "0x81",
+              "Sensor angeschliffen/ Fehlerhaft"
+            ],
+            [
+              "0x82",
+              "EMF angezogen"
+            ],
+            [
+              "0x83",
+              "EMF Fehler vorhanden"
+            ],
+            [
+              "0x84",
+              "aktiver Druckaufbau"
+            ],
+            [
+              "0x85",
+              "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)"
+            ],
+            [
+              "0x86",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 07"
+            ],
+            [
+              "0x87",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 08"
+            ],
+            [
+              "0x88",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 09"
+            ],
+            [
+              "0x89",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 10"
+            ],
+            [
+              "0x8A",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 11"
+            ],
+            [
+              "0x8B",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 12"
+            ],
+            [
+              "0x8C",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 13"
+            ],
+            [
+              "0x8D",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 14"
+            ],
+            [
+              "0x8E",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 15"
+            ],
+            [
+              "0x8F",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 16"
+            ],
+            [
+              "0x90",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 17"
+            ],
+            [
+              "0x91",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 18"
+            ],
+            [
+              "0x92",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 19"
+            ],
+            [
+              "0x93",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 20"
+            ],
+            [
+              "0x94",
+              "Restwegvorgabe höher als Maximalwert"
+            ],
+            [
+              "0x95",
+              "Ungültige Vorgabe Verfügbarkeit"
+            ],
+            [
+              "0x96",
+              "Ungültige Vorgabe Servicezähler"
+            ],
+            [
+              "0x97",
+              "Ungültige Vorgabe Zielmonat"
+            ],
+            [
+              "0x98",
+              "Ungültige Vorgabe Zieljahr"
+            ],
+            [
+              "0x99",
+              "Ungültige Vorgabe Zieltag"
+            ],
+            [
+              "0x9A",
+              "Ungültige Vorgabe Zieldatum"
+            ],
+            [
+              "0x9B",
+              "Ungültige Vorgabe Restweg"
+            ],
+            [
+              "0x9C",
+              "Ungültige Vorgabe Restwegprognose"
+            ],
+            [
+              "0x9D",
+              "Manipulation festgestellt"
+            ],
+            [
+              "0x9E",
+              "Keine Kodierung zum Prognosereset festgestellt"
+            ],
+            [
+              "0x9F",
+              "Werksreset des Clients Getriebeöl nur bei Neufahrzeugen möglich"
+            ],
+            [
+              "0xA0",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 33"
+            ],
+            [
+              "0xA1",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 34"
+            ],
+            [
+              "0xA2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 35"
+            ],
+            [
+              "0xA3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 36"
+            ],
+            [
+              "0xA4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 37"
+            ],
+            [
+              "0xA5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 38"
+            ],
+            [
+              "0xA6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 39"
+            ],
+            [
+              "0xA7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 40"
+            ],
+            [
+              "0xA8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 41"
+            ],
+            [
+              "0xA9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 42"
+            ],
+            [
+              "0xAA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 43"
+            ],
+            [
+              "0xAB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 44"
+            ],
+            [
+              "0xAC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 45"
+            ],
+            [
+              "0xAD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 46"
+            ],
+            [
+              "0xAE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 47"
+            ],
+            [
+              "0xAF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 48"
+            ],
+            [
+              "0xB0",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 49"
+            ],
+            [
+              "0xB1",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 50"
+            ],
+            [
+              "0xB2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 51"
+            ],
+            [
+              "0xB3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 52"
+            ],
+            [
+              "0xB4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 53"
+            ],
+            [
+              "0xB5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 54"
+            ],
+            [
+              "0xB6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 55"
+            ],
+            [
+              "0xB7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 56"
+            ],
+            [
+              "0xB8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 57"
+            ],
+            [
+              "0xB9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 58"
+            ],
+            [
+              "0xBA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 59"
+            ],
+            [
+              "0xBB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 60"
+            ],
+            [
+              "0xBC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 61"
+            ],
+            [
+              "0xBD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 62"
+            ],
+            [
+              "0xBE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 63"
+            ],
+            [
+              "0xBF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 64"
+            ],
+            [
+              "0xFE",
+              "Keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "CBS_7_0_KENNUNG": {
+          "columns": [
+            "WERT",
+            "CBS_K",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "Oel",
+              "Motoroel"
+            ],
+            [
+              "0x02",
+              "Br_v",
+              "Bremsbelaege vorne"
+            ],
+            [
+              "0x03",
+              "Brfl",
+              "Bremsfluessigkeit"
+            ],
+            [
+              "0x05",
+              "Bsi",
+              "Service Inclusive"
+            ],
+            [
+              "0x06",
+              "Br_h",
+              "Bremsbelaege hinten"
+            ],
+            [
+              "0x07",
+              "Pf",
+              "Partikelfilter"
+            ],
+            [
+              "0x08",
+              "Soh",
+              "State of Health"
+            ],
+            [
+              "0x0A",
+              "Zuend",
+              "Zuendkerzen/Gluehkerzen"
+            ],
+            [
+              "0x0D",
+              "NOx_a",
+              "NOx-Additiv"
+            ],
+            [
+              "0x11",
+              "Sic",
+              "Sichtpruefung/Fahrzeugcheck"
+            ],
+            [
+              "0x14",
+              "Ueb",
+              "Uebergabedurchsicht"
+            ],
+            [
+              "0x15",
+              "Efk",
+              "Einfahrkontrolle"
+            ],
+            [
+              "0x17",
+              "Wf",
+              "Wasserfilter"
+            ],
+            [
+              "0x20",
+              "TUV",
+              "Fahrzeuguntersuchung"
+            ],
+            [
+              "0x21",
+              "AU",
+              "Abgasuntersuchung"
+            ],
+            [
+              "0x23",
+              "Goel",
+              "Getriebeoel"
+            ],
+            [
+              "0x31",
+              "Reif",
+              "Reifenalter"
+            ],
+            [
+              "0x32",
+              "Kup",
+              "Kupplung"
+            ],
+            [
+              "0x33",
+              "Gdf",
+              "Gasdruckdaempfer Frontklappe bei aktivem Fussgaengerschutz"
+            ],
+            [
+              "0x34",
+              "Verb",
+              "Verbandskasten"
+            ],
+            [
+              "0x35",
+              "Tir_f",
+              "Tire Fit"
+            ],
+            [
+              "0x36",
+              "Kat",
+              "Katalysator"
+            ],
+            [
+              "0x37",
+              "Sto",
+              "Stoßdaempfer"
+            ],
+            [
+              "0x64",
+              "Sic_v",
+              "Sichtpruefung/Fahrzeugcheck verknuepft"
+            ],
+            [
+              "0xE0",
+              "Cbs_e",
+              "CBS Evalboard"
+            ],
+            [
+              "0xE1",
+              "Cbr_e",
+              "CBR Evalboard"
+            ],
+            [
+              "0xFF",
+              "rda",
+              "Anlieferzustand"
+            ]
+          ]
+        }
+      }
+    },
+    "KOMB01": {
+      "address": 96,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "71b474ab7a18d8a01f305f15688ae5661d80167d08dae5b7cc3e818e0103a7db",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb01.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "d402a8b9bf59f7542ea4ae6a4f8456cce02be086a4e32152d804dca42e7a8c7c",
+      "reset_listing_sha256": "609eb6436f2c7db7de6693040402d3e066338a32064e47b162ff01f7735112db",
+      "read_job_offset": "0xdd538",
+      "reset_job_offset": "0xe2478",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "KOMB25": {
+      "address": 96,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "6dfb80eee4e5b9d7b94dfe97f43da25fd80ef0abac2adf0f8a113d50d47b2bc4",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb25.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "a8f9236ce1266b480b70f7d07d3180f0f8c915936454fe5fbf635d45ee93cf5b",
+      "reset_listing_sha256": "4d127306c4951c5f150bc4c2d759d1d711189b7a0c9ddc4223d0f686a63a1668",
+      "read_job_offset": "0xe2129",
+      "reset_job_offset": "0xe7069",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "KOMBRDCT": {
+      "address": 96,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "1245018cfc2bdaa944311f0bb8228e50fbb13216e68e92a5e6fef9a1668ca3ad",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombrdct.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "f1ed1558db292ebbc8429d63d8ebaaa8cdb0410499a07eb9ee29be800490bd63",
+      "reset_listing_sha256": "dbe8351f71abe155008e20e0a7d50a1597471c4ffa2c2fb3eb453e2134ba0f57",
+      "read_job_offset": "0xe649d",
+      "reset_job_offset": "0xee1c2",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "KOMBSP18": {
+      "address": 96,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "33aa21d5e03f1445ec98e8412959d452d73d64834d1e3082bb4bfddaff59887f",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombsp18.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "3473460789c1d1409892c3ffe7d61f5f02c8204830052d68cc7de4d20df1b85c",
+      "reset_listing_sha256": "288befb5d42df2310096ba3209fefbad3160a789b421c49868a3c3116a106fc9",
+      "read_job_offset": "0xde86d",
+      "reset_job_offset": "0xe6592",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "KOMBSP21": {
+      "address": 96,
+      "version": "7.0",
+      "reset": "routine-7.0",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "prg_sha256": "656c5cd27932fca9cc27ad2568d7eda4faad0d0d80090ca038e22eb47c5339db",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/kombsp21.prg",
+      "job_offsets": {
+        "CBS_RESET": "0xe2b12",
+        "STATUS_CBS_DATEN_LESEN": "0xe70a9"
+      },
+      "start_request": "31011000{item}02ffffff",
+      "start_positive": "71011000",
+      "results_request": "31031000",
+      "results_positive": "71031000{general}{component}{reserved2}",
+      "tables": {
+        "TAB_RESET_ART": {
+          "columns": [
+            "WERT",
+            "ART",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "plant",
+              "Werksreset"
+            ],
+            [
+              "0x02",
+              "standard",
+              "Standardreset"
+            ],
+            [
+              "0x03",
+              "service_counter",
+              "Korrekturreset Servicezaehler"
+            ],
+            [
+              "0x04",
+              "time",
+              "Korrekturreset Zieltermin"
+            ],
+            [
+              "0x05",
+              "distance",
+              "Korrekturreset Restweg"
+            ],
+            [
+              "0x06",
+              "forecast_distance",
+              "Korrekturreset Restwegprognose"
+            ],
+            [
+              "0x07",
+              "availability",
+              "Korrekturreset Verfuegbarkeit"
+            ],
+            [
+              "0x08",
+              "display",
+              "Anzeige-Reset"
+            ],
+            [
+              "0x0A",
+              "rda",
+              "Anlieferzustand herstellen"
+            ],
+            [
+              "0xFF",
+              "-",
+              "not defined"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x01",
+              "ungültiger km-Stand"
+            ],
+            [
+              "0x02",
+              "ungültiges Borddatum"
+            ],
+            [
+              "0x03",
+              "ungültige Codierung"
+            ],
+            [
+              "0x04",
+              "SG nicht initialisiert oder im falschen Zustand"
+            ],
+            [
+              "0x05",
+              "Fahrzeug im fahrenden Zustand"
+            ],
+            [
+              "0x06",
+              "Reset bei CBR nicht erlaubt"
+            ],
+            [
+              "0x07",
+              "Reset bei aktivem Ersatzwert nicht erlaubt"
+            ],
+            [
+              "0x08",
+              "Verfügbarkeit ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x09",
+              "Servicezähler ist nicht zwischen 1 und 250"
+            ],
+            [
+              "0x0A",
+              "Zieltermin ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0B",
+              "Restweg ist ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0C",
+              "Keine gültigen RDA Daten erhalten"
+            ],
+            [
+              "0xFE",
+              "keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x80",
+              "Bremsdruck vorhanden"
+            ],
+            [
+              "0x81",
+              "Sensor angeschliffen/ Fehlerhaft"
+            ],
+            [
+              "0x82",
+              "EMF angezogen"
+            ],
+            [
+              "0x83",
+              "EMF Fehler vorhanden"
+            ],
+            [
+              "0x84",
+              "aktiver Druckaufbau"
+            ],
+            [
+              "0x85",
+              "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)"
+            ],
+            [
+              "0x86",
+              "Daten werden gerade persistiert"
+            ],
+            [
+              "0x87",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 08"
+            ],
+            [
+              "0x88",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 09"
+            ],
+            [
+              "0x89",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 10"
+            ],
+            [
+              "0x8A",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 11"
+            ],
+            [
+              "0x8B",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 12"
+            ],
+            [
+              "0x8C",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 13"
+            ],
+            [
+              "0x8D",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 14"
+            ],
+            [
+              "0x8E",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 15"
+            ],
+            [
+              "0x8F",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 16"
+            ],
+            [
+              "0x90",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 17"
+            ],
+            [
+              "0x91",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 18"
+            ],
+            [
+              "0x92",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 19"
+            ],
+            [
+              "0x93",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 20"
+            ],
+            [
+              "0x94",
+              "Restwegvorgabe höher als Maximalwert"
+            ],
+            [
+              "0x95",
+              "Ungültige Vorgabe Verfügbarkeit"
+            ],
+            [
+              "0x96",
+              "Ungültige Vorgabe Servicezähler"
+            ],
+            [
+              "0x97",
+              "Ungültige Vorgabe Zielmonat"
+            ],
+            [
+              "0x98",
+              "Ungültige Vorgabe Zieljahr"
+            ],
+            [
+              "0x99",
+              "Ungültige Vorgabe Zieltag"
+            ],
+            [
+              "0x9A",
+              "Ungültige Vorgabe Zieldatum"
+            ],
+            [
+              "0x9B",
+              "Ungültige Vorgabe Restweg"
+            ],
+            [
+              "0x9C",
+              "Ungültige Vorgabe Restwegprognose"
+            ],
+            [
+              "0x9D",
+              "Manipulation festgestellt"
+            ],
+            [
+              "0x9E",
+              "Keine Kodierung zum Prognosereset festgestellt"
+            ],
+            [
+              "0x9F",
+              "Werksreset des Clients Getriebeöl nur bei Neufahrzeugen möglich"
+            ],
+            [
+              "0xA0",
+              "Deaktivierung der Anzeige bei Client Getriebeöl im Fälligkeitsbereich nicht erlaubt"
+            ],
+            [
+              "0xA1",
+              "Korrekturreset Verfügbarkeit bei den Umfängen Motoröl, Zündkerze und Partikelfilter nicht erlaubt"
+            ],
+            [
+              "0xA2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 35"
+            ],
+            [
+              "0xA3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 36"
+            ],
+            [
+              "0xA4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 37"
+            ],
+            [
+              "0xA5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 38"
+            ],
+            [
+              "0xA6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 39"
+            ],
+            [
+              "0xA7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 40"
+            ],
+            [
+              "0xA8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 41"
+            ],
+            [
+              "0xA9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 42"
+            ],
+            [
+              "0xAA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 43"
+            ],
+            [
+              "0xAB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 44"
+            ],
+            [
+              "0xAC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 45"
+            ],
+            [
+              "0xAD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 46"
+            ],
+            [
+              "0xAE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 47"
+            ],
+            [
+              "0xAF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 48"
+            ],
+            [
+              "0xB0",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 49"
+            ],
+            [
+              "0xB1",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 50"
+            ],
+            [
+              "0xB2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 51"
+            ],
+            [
+              "0xB3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 52"
+            ],
+            [
+              "0xB4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 53"
+            ],
+            [
+              "0xB5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 54"
+            ],
+            [
+              "0xB6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 55"
+            ],
+            [
+              "0xB7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 56"
+            ],
+            [
+              "0xB8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 57"
+            ],
+            [
+              "0xB9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 58"
+            ],
+            [
+              "0xBA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 59"
+            ],
+            [
+              "0xBB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 60"
+            ],
+            [
+              "0xBC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 61"
+            ],
+            [
+              "0xBD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 62"
+            ],
+            [
+              "0xBE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 63"
+            ],
+            [
+              "0xBF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 64"
+            ],
+            [
+              "0xFE",
+              "Keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "CBS_7_0_KENNUNG": {
+          "columns": [
+            "WERT",
+            "CBS_K",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "Oel",
+              "Motoroel"
+            ],
+            [
+              "0x02",
+              "Br_v",
+              "Bremsbelaege vorne"
+            ],
+            [
+              "0x03",
+              "Brfl",
+              "Bremsfluessigkeit"
+            ],
+            [
+              "0x05",
+              "Bsi",
+              "Service Inclusive"
+            ],
+            [
+              "0x06",
+              "Br_h",
+              "Bremsbelaege hinten"
+            ],
+            [
+              "0x07",
+              "Pf",
+              "Partikelfilter"
+            ],
+            [
+              "0x08",
+              "Soh",
+              "State of Health"
+            ],
+            [
+              "0x0A",
+              "Zuend",
+              "Zuendkerzen/Gluehkerzen"
+            ],
+            [
+              "0x0D",
+              "NOx_a",
+              "NOx-Additiv"
+            ],
+            [
+              "0x11",
+              "Sic",
+              "Sichtpruefung/Fahrzeugcheck"
+            ],
+            [
+              "0x14",
+              "Ueb",
+              "Uebergabedurchsicht"
+            ],
+            [
+              "0x15",
+              "Efk",
+              "Einfahrkontrolle"
+            ],
+            [
+              "0x17",
+              "Wf",
+              "Wasserfilter"
+            ],
+            [
+              "0x20",
+              "TUV",
+              "Fahrzeuguntersuchung"
+            ],
+            [
+              "0x21",
+              "AU",
+              "Abgasuntersuchung"
+            ],
+            [
+              "0x23",
+              "Goel",
+              "Getriebeoel"
+            ],
+            [
+              "0x31",
+              "Reif",
+              "Reifenalter"
+            ],
+            [
+              "0x32",
+              "Kup",
+              "Kupplung"
+            ],
+            [
+              "0x33",
+              "Gdf",
+              "Gasdruckdaempfer Frontklappe bei aktivem Fussgaengerschutz"
+            ],
+            [
+              "0x34",
+              "Verb",
+              "Verbandskasten"
+            ],
+            [
+              "0x35",
+              "Tir_f",
+              "Tire Fit"
+            ],
+            [
+              "0x36",
+              "Kat",
+              "Katalysator"
+            ],
+            [
+              "0x37",
+              "Sto",
+              "Stoßdaempfer"
+            ],
+            [
+              "0x64",
+              "Sic_v",
+              "Sichtpruefung/Fahrzeugcheck verknuepft"
+            ],
+            [
+              "0xE0",
+              "Cbs_e",
+              "CBS Evalboard"
+            ],
+            [
+              "0xE1",
+              "Cbr_e",
+              "CBR Evalboard"
+            ],
+            [
+              "0xFF",
+              "rda",
+              "Anlieferzustand"
+            ]
+          ]
+        }
+      },
+      "source_reset_policy": "routine-7.0",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "e6d0122eee3389151b84769c8f9ab2798c7a91e3e3e8a96fba0863fd336ed571",
+      "reset_listing_sha256": "d5a68444ecb04636befd223309457834fe2f75e57c69993b5a1aaf0c6b303c80",
+      "read_job_offset": "0xe70a9",
+      "reset_job_offset": "0xe2b12"
+    },
+    "KOMB_G11": {
+      "address": 96,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "ecf05aeef3478b5eadd020244764be9b52451676a07a0f79f7280dc52f2830f4",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb_g11.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "3fa01419454eec47aad90f5c0a52c2230439ad097238c02c25f43d0900d9bba0",
+      "reset_listing_sha256": "f2813daec86b41fc60d8a2814321b84eb3ea5f5725033160a14d070a2d2739c9",
+      "read_job_offset": "0xe2a75",
+      "reset_job_offset": "0xea79a",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "KOMB_J29": {
+      "address": 96,
+      "version": "6",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "a29439942caa37e27cd24368e2c8d03e4b4d3287d3d40ad19f91a9bdbdce7578",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_KOMBI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/komb_j29.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "6211706ea543f182fc0049ca64e79edd09823fc9cd48bf2f34270a66e38cc10a",
+      "reset_listing_sha256": "8004782071d2991c25c26ab9d6513f1abd2e2acdfd62c6b3cdc5414f96d7602e",
+      "read_job_offset": "0xe2a7d",
+      "reset_job_offset": "0xea7a2",
+      "detail": true,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "LMV_01": {
+      "address": 25,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
+      "source_reset_policy": "default",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_LMV"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/lmv_01.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "8517d5617890303d81fbe0092ba2a566502fdd95b858defb433cfe3bff9386c7",
+      "reset_listing_sha256": "92cfa834c98453859e3cf9417b424352af6444f4b7b8f5d984cfcb7a4f9fc334",
+      "read_job_offset": "0x68955",
+      "reset_job_offset": "0x6d895",
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MEVD172": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "cd09840afcb71c46bf1f8656c5eb194b0169d87ebc28a22014e8f59ea3eee50d",
+      "reset_listing_sha256": "8fb1fe623cc4cd65dc834b1fd5021d208b70eab0202ea67e2e8feb596d6e4fb9",
+      "read_job_offset": "0x6ea4c",
+      "reset_job_offset": "0x7398c",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MEVD1724": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1724.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "e31ce7db2e7df1033b0635043517fcdc7a08c8a279405f82879bd09bc179375e",
+      "reset_listing_sha256": "3893d54f8550fdff3fbb185cce24a77c5da672180a4ae7114870ce581a5b3577",
+      "read_job_offset": "0x6ea62",
+      "reset_job_offset": "0x739a2",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MEVD1725": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd1725.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "177e9e3fe4109436f19c9f511576fc917c8083c13acb72308dd42cb083828487",
+      "reset_listing_sha256": "b15aa10011c3d72b223aba44600547553c27eedcdf8820f748779d684c34c0a9",
+      "read_job_offset": "0x54e35",
+      "reset_job_offset": "0x59d75",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MEVD172Y": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mevd172y.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "4055e6c466a46f51ad3d5f91442801c677e256fea3e71ee623291dfb26930843",
+      "reset_listing_sha256": "f96e3f0ab5669e25b0672295872adcc60ed0d124f03b574ec79f8932a6f98037",
+      "read_job_offset": "0x6eaa1",
+      "reset_job_offset": "0x739e1",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MGU_02_A": {
+      "address": 99,
+      "version": "7.0",
+      "read_job": "STATUS_CBS_DATEN_LESEN",
+      "prg_sha256": "a274f22c573e6fbcd84c94258eefa658102d3c8f0b4af71806f5c187a726af98",
+      "source_reset_policy": "routine-7.0",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_MMI"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/mgu_02_a.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "b04baf967a613078b53bb6830a5b20b74194a2606f3c2a3fb35f0e36b67a17e3",
+      "reset_listing_sha256": "97a7edcc278d2d484f2f341604c411afcf35af2f5c9ac96babb57831ab0dbeda",
+      "read_job_offset": "0xe6111",
+      "reset_job_offset": "0xe317e",
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "start_request": "31011000{item}02ffffff",
+      "start_positive": "71011000",
+      "results_request": "31031000",
+      "results_positive": "71031000{general}{component}{reserved2}",
+      "tables": {
+        "TAB_RESET_ART": {
+          "columns": [
+            "WERT",
+            "ART",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "plant",
+              "Werksreset"
+            ],
+            [
+              "0x02",
+              "standard",
+              "Standardreset"
+            ],
+            [
+              "0x03",
+              "service_counter",
+              "Korrekturreset Servicezaehler"
+            ],
+            [
+              "0x04",
+              "time",
+              "Korrekturreset Zieltermin"
+            ],
+            [
+              "0x05",
+              "distance",
+              "Korrekturreset Restweg"
+            ],
+            [
+              "0x06",
+              "forecast_distance",
+              "Korrekturreset Restwegprognose"
+            ],
+            [
+              "0x07",
+              "availability",
+              "Korrekturreset Verfuegbarkeit"
+            ],
+            [
+              "0x08",
+              "display",
+              "Anzeige-Reset"
+            ],
+            [
+              "0x0A",
+              "rda",
+              "Anlieferzustand herstellen"
+            ],
+            [
+              "0xFF",
+              "-",
+              "not defined"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x01",
+              "ungültiger km-Stand"
+            ],
+            [
+              "0x02",
+              "ungültiges Borddatum"
+            ],
+            [
+              "0x03",
+              "ungültige Codierung"
+            ],
+            [
+              "0x04",
+              "SG nicht initialisiert oder im falschen Zustand"
+            ],
+            [
+              "0x05",
+              "Fahrzeug im fahrenden Zustand"
+            ],
+            [
+              "0x06",
+              "Reset bei CBR nicht erlaubt"
+            ],
+            [
+              "0x07",
+              "Reset bei aktivem Ersatzwert nicht erlaubt"
+            ],
+            [
+              "0x08",
+              "Verfügbarkeit ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x09",
+              "Servicezähler ist nicht zwischen 1 und 250"
+            ],
+            [
+              "0x0A",
+              "Zieltermin ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0B",
+              "Restweg ist ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0C",
+              "Keine gültigen RDA Daten erhalten"
+            ],
+            [
+              "0xFE",
+              "keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x80",
+              "Bremsdruck vorhanden"
+            ],
+            [
+              "0x81",
+              "Sensor angeschliffen/ Fehlerhaft"
+            ],
+            [
+              "0x82",
+              "EMF angezogen"
+            ],
+            [
+              "0x83",
+              "EMF Fehler vorhanden"
+            ],
+            [
+              "0x84",
+              "aktiver Druckaufbau"
+            ],
+            [
+              "0x85",
+              "Restlaufstreckenberechnung nicht aktiv (fehlende Datengrundlage des CBR Clients)"
+            ],
+            [
+              "0x86",
+              "Daten werden gerade persistiert"
+            ],
+            [
+              "0x87",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 08"
+            ],
+            [
+              "0x88",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 09"
+            ],
+            [
+              "0x89",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 10"
+            ],
+            [
+              "0x8A",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 11"
+            ],
+            [
+              "0x8B",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 12"
+            ],
+            [
+              "0x8C",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 13"
+            ],
+            [
+              "0x8D",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 14"
+            ],
+            [
+              "0x8E",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 15"
+            ],
+            [
+              "0x8F",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 16"
+            ],
+            [
+              "0x90",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 17"
+            ],
+            [
+              "0x91",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 18"
+            ],
+            [
+              "0x92",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 19"
+            ],
+            [
+              "0x93",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 20"
+            ],
+            [
+              "0x94",
+              "Restwegvorgabe höher als Maximalwert"
+            ],
+            [
+              "0x95",
+              "Ungültige Vorgabe Verfügbarkeit"
+            ],
+            [
+              "0x96",
+              "Ungültige Vorgabe Servicezähler"
+            ],
+            [
+              "0x97",
+              "Ungültige Vorgabe Zielmonat"
+            ],
+            [
+              "0x98",
+              "Ungültige Vorgabe Zieljahr"
+            ],
+            [
+              "0x99",
+              "Ungültige Vorgabe Zieltag"
+            ],
+            [
+              "0x9A",
+              "Ungültige Vorgabe Zieldatum"
+            ],
+            [
+              "0x9B",
+              "Ungültige Vorgabe Restweg"
+            ],
+            [
+              "0x9C",
+              "Ungültige Vorgabe Restwegprognose"
+            ],
+            [
+              "0x9D",
+              "Manipulation festgestellt"
+            ],
+            [
+              "0x9E",
+              "Keine Kodierung zum Prognosereset festgestellt"
+            ],
+            [
+              "0x9F",
+              "Werksreset des Clients Getriebeöl nur bei Neufahrzeugen möglich"
+            ],
+            [
+              "0xA0",
+              "Deaktivierung der Anzeige bei Client Getriebeöl im Fälligkeitsbereich nicht erlaubt"
+            ],
+            [
+              "0xA1",
+              "Korrekturreset Verfügbarkeit bei den Umfängen Motoröl, Zündkerze und Partikelfilter nicht erlaubt"
+            ],
+            [
+              "0xA2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 35"
+            ],
+            [
+              "0xA3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 36"
+            ],
+            [
+              "0xA4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 37"
+            ],
+            [
+              "0xA5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 38"
+            ],
+            [
+              "0xA6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 39"
+            ],
+            [
+              "0xA7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 40"
+            ],
+            [
+              "0xA8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 41"
+            ],
+            [
+              "0xA9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 42"
+            ],
+            [
+              "0xAA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 43"
+            ],
+            [
+              "0xAB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 44"
+            ],
+            [
+              "0xAC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 45"
+            ],
+            [
+              "0xAD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 46"
+            ],
+            [
+              "0xAE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 47"
+            ],
+            [
+              "0xAF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 48"
+            ],
+            [
+              "0xB0",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 49"
+            ],
+            [
+              "0xB1",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 50"
+            ],
+            [
+              "0xB2",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 51"
+            ],
+            [
+              "0xB3",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 52"
+            ],
+            [
+              "0xB4",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 53"
+            ],
+            [
+              "0xB5",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 54"
+            ],
+            [
+              "0xB6",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 55"
+            ],
+            [
+              "0xB7",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 56"
+            ],
+            [
+              "0xB8",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 57"
+            ],
+            [
+              "0xB9",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 58"
+            ],
+            [
+              "0xBA",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 59"
+            ],
+            [
+              "0xBB",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 60"
+            ],
+            [
+              "0xBC",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 61"
+            ],
+            [
+              "0xBD",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 62"
+            ],
+            [
+              "0xBE",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 63"
+            ],
+            [
+              "0xBF",
+              "Sensorapplikationsspezifischer Rücksetzverhinderer 64"
+            ],
+            [
+              "0xFE",
+              "Keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "CBS_7_0_KENNUNG": {
+          "columns": [
+            "WERT",
+            "CBS_K",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "Oel",
+              "Motoroel"
+            ],
+            [
+              "0x02",
+              "Br_v",
+              "Bremsbelaege vorne"
+            ],
+            [
+              "0x03",
+              "Brfl",
+              "Bremsfluessigkeit"
+            ],
+            [
+              "0x05",
+              "Bsi",
+              "Service Inclusive"
+            ],
+            [
+              "0x06",
+              "Br_h",
+              "Bremsbelaege hinten"
+            ],
+            [
+              "0x07",
+              "Pf",
+              "Partikelfilter"
+            ],
+            [
+              "0x08",
+              "Soh",
+              "State of Health"
+            ],
+            [
+              "0x0A",
+              "Zuend",
+              "Zuendkerzen/Gluehkerzen"
+            ],
+            [
+              "0x0D",
+              "NOx_a",
+              "NOx-Additiv"
+            ],
+            [
+              "0x11",
+              "Sic",
+              "Sichtpruefung/Fahrzeugcheck"
+            ],
+            [
+              "0x14",
+              "Ueb",
+              "Uebergabedurchsicht"
+            ],
+            [
+              "0x15",
+              "Efk",
+              "Einfahrkontrolle"
+            ],
+            [
+              "0x17",
+              "Wf",
+              "Wasserfilter"
+            ],
+            [
+              "0x20",
+              "TUV",
+              "Fahrzeuguntersuchung"
+            ],
+            [
+              "0x21",
+              "AU",
+              "Abgasuntersuchung"
+            ],
+            [
+              "0x23",
+              "Goel",
+              "Getriebeoel"
+            ],
+            [
+              "0x31",
+              "Reif",
+              "Reifenalter"
+            ],
+            [
+              "0x32",
+              "Kup",
+              "Kupplung"
+            ],
+            [
+              "0x33",
+              "Gdf",
+              "Gasdruckdaempfer Frontklappe bei aktivem Fussgaengerschutz"
+            ],
+            [
+              "0x34",
+              "Verb",
+              "Verbandskasten"
+            ],
+            [
+              "0x35",
+              "Tir_f",
+              "Tire Fit"
+            ],
+            [
+              "0x36",
+              "Kat",
+              "Katalysator"
+            ],
+            [
+              "0x37",
+              "Sto",
+              "Stoßdaempfer"
+            ],
+            [
+              "0x64",
+              "Sic_v",
+              "Sichtpruefung/Fahrzeugcheck verknuepft"
+            ],
+            [
+              "0xE0",
+              "Cbs_e",
+              "CBS Evalboard"
+            ],
+            [
+              "0xE1",
+              "Cbr_e",
+              "CBR Evalboard"
+            ],
+            [
+              "0xFF",
+              "rda",
+              "Anlieferzustand"
+            ]
+          ]
+        }
+      }
+    },
+    "MSD85L6": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85l6.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "4423a0a992a205df0b9844abcecb6a158aae776f69c53723755cd6a8694b07dc",
+      "reset_listing_sha256": "1db380dbba29d4af038628410b78abb99e7182d8961540e51af11bdb870c4b5a",
+      "read_job_offset": "0x31444",
+      "reset_job_offset": "0x36384",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MSD85YL6": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd85yl6.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "5ec5bc565e201cdc29b4d4ab7bff022f900d8aac5457a5f9f4a1c0084d633bf9",
+      "reset_listing_sha256": "0731d11595a0cb3851735060f56028f442a4a502a9182e1823740f05e4716d75",
+      "read_job_offset": "0x1e6f2",
+      "reset_job_offset": "0x23632",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MSD87": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "bc4b2ece186553deebb8f09faeb5a97a99bcefcb405f8461a29798f300fa3b95",
+      "reset_listing_sha256": "46d44b454f2c7da010c71267a75309fabdea7acc069af7dff9180e0bd813e14c",
+      "read_job_offset": "0x3145b",
+      "reset_job_offset": "0x3639b",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MSD87_R0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "0055e880abd9151f5f031fb2087e9949ff6d84e94ccec3219e82ffb6e60aa2ad",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msd87_r0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "cc755d5a2a0276b16b0936f4f553c86dc6f26efae5003fab1574159917f6abce",
+      "reset_listing_sha256": "9b9ef955718e9569048529efbe84ea39e1d7ad07acb3271178874f117d7c3b73",
+      "read_job_offset": "0xa882f",
+      "reset_job_offset": "0xad76f",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "MSV90": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/msv90.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "24f42df088185321ab2a6e0c5fabdd3cc7dbb9fa7418a9196bc0681879b5a749",
+      "reset_listing_sha256": "a1a7eb1ae9a47a092e71c998eb5efa41db9806ff83f0f30c2265a294912739e5",
+      "read_job_offset": "0x31431",
+      "reset_job_offset": "0x36371",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "N55_ALP": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/n55_alp.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "105695875500157910c5c2135dea76758df0f93b900a87c507e0b265e6e4d26d",
+      "reset_listing_sha256": "e6279a719f58f285cbd1be5f21ad52b719729a951154b2370795d129326c88b4",
+      "read_job_offset": "0x346be",
+      "reset_job_offset": "0x395fe",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "N63TU_R0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/n63tu_r0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "e6bcf9971a150bb7928375b58a179cffe7174c9ec4e9e06be45613d4a158b212",
+      "reset_listing_sha256": "94b5576fe781cef718dcbcce01caf3bf79d34df49a445f1a336430fa47bb272a",
+      "read_job_offset": "0x6ea66",
+      "reset_job_offset": "0x739a6",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "S55": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s55.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "d93b11597dc51abc069b795cb750416d5b21fa15a004be08af9948640cd57aa0",
+      "reset_listing_sha256": "b4867090cb2796635b945bd9d93f6bf8e67e694dcd27791ba61ee2e41d5358ea",
+      "read_job_offset": "0xaa441",
+      "reset_job_offset": "0xaf381",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "S63TU_L0": {
+      "address": 19,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
+      "source_reset_policy": "default",
+      "reset": "blocked",
+      "ownership": "owner-not-recovered",
+      "source_groups": [
+        "G_MOTOR2"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_l0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "bd41e99b3fde9612786cef3a88c4562504d91a0d8d9202f1692eca156c9a47bb",
+      "reset_listing_sha256": "19ec89d6b24ec62783658bade7dde7d090269565746f2301ba1627a390ff6fe8",
+      "read_job_offset": "0x6ea59",
+      "reset_job_offset": "0x73999",
+      "detail": false,
+      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    },
+    "S63TU_R0": {
+      "address": 18,
+      "version": "5",
+      "read_job": "CBS_DATEN_LESEN",
+      "prg_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "source_reset_policy": "default",
+      "reset": "default",
+      "ownership": "primary",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "source_path": "sources/ISTA_4.29.1x/Rheingold/Ecu/s63tu_r0.prg",
+      "read_vectors_checked": 14,
+      "read_listing_sha256": "369f23f4cee463b841b8a5ae95225a7abca871573ee5240916b849400139372e",
+      "reset_listing_sha256": "2ebd5901408bce85c2be3689ed64ed7f8850b93b89a3b4111db5ea653fa0206f",
+      "read_job_offset": "0x6d75d",
+      "reset_job_offset": "0x7269d",
+      "detail": false,
+      "disposition": "current-source read plus checked reset",
+      "verified_reset_request": "2e10010101641f80000fff0f3fff00",
+      "reset_xsend_count": 1
+    }
+  },
+  "ownership": {
+    "BCP_SP21": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_ZGW"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "CMEDIA": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_TEL"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "D70BX7A0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "D72N47A0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "D73N57A0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "D73N57E0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "D75BX7A0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "D83BX7C0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "D94BX7A0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DME8FF_L": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_MOTOR2"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "DME8FF_R": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DME_BX8": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_01": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_10": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_25": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_G11": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_G20": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_G30N": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "DSC_I1": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "EDMEI1": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "EHC_01": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_EHC"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "GSGE01QW": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_EGS"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "IB_G05": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "IB_G2X": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "IB_I20": {
+      "role": "primary",
+      "groups": [
+        "G_DSC"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMB01": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMB25": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMBRDCT": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMBSP18": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMBSP21": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMB_G11": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "KOMB_J29": {
+      "role": "primary",
+      "groups": [
+        "G_KOMBI"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "LMV_01": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_LMV"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "MEVD172": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MEVD1724": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MEVD1725": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MEVD172Y": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MGU_02_A": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_MMI"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "MSD85L6": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MSD85YL6": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MSD87": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MSD87_R0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "MSV90": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "N55_ALP": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "N63TU_R0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "S55": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    },
+    "S63TU_L0": {
+      "role": "owner-not-recovered",
+      "groups": [
+        "G_MOTOR2"
+      ],
+      "basis": "CBS observation exists, but a primary service reset route for this source group is not recovered"
+    },
+    "S63TU_R0": {
+      "role": "primary",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+    }
+  },
+  "owner_workflow": {
+    "rea_strings_evidence_id": "ev_ab4af1df56badc42f738c892cd081d99a59554448cf91f547911daa0b7dc0694",
+    "artifact_sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db",
+    "groups": [
+      "G_DSC",
+      "G_KOMBI",
+      "G_MOTOR"
+    ],
+    "explicit_new_variants": [
+      "KOMBSP21",
+      "KOMB_J29",
+      "IB_I20"
+    ],
+    "short_string_anchors": [
+      {
+        "token": "0x70000865",
+        "offset": 211629,
+        "value": "G_KOMBI"
+      },
+      {
+        "token": "0x70000963",
+        "offset": 211883,
+        "value": "KOMBSP21"
+      },
+      {
+        "token": "0x700009ff",
+        "offset": 212039,
+        "value": "KOMB_J29"
+      },
+      {
+        "token": "0x70000a49",
+        "offset": 212113,
+        "value": "SKIPPEDECUKOM_G_KOMBI"
+      },
+      {
+        "token": "0x70002dda",
+        "offset": 221218,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_DATEN_LESEN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x700063e0",
+        "offset": 235048,
+        "value": "/Run/Group/G_MOTOR/VirtualVariantJob/CBS_DATEN_LESEN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x70007248",
+        "offset": 238736,
+        "value": "G_MOTOR"
+      },
+      {
+        "token": "0x700097c9",
+        "offset": 248337,
+        "value": "/Run/Group/G_DSC/VirtualVariantJob/CBS_DATEN_LESEN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x700098b6",
+        "offset": 248574,
+        "value": "SKIPPEDECUKOM_G_MOTOR"
+      },
+      {
+        "token": "0x70009916",
+        "offset": 248670,
+        "value": "IB_I20"
+      },
+      {
+        "token": "0x70009aaa",
+        "offset": 249074,
+        "value": "SKIPPEDECUKOM_G_DSC"
+      },
+      {
+        "token": "0x70009ad2",
+        "offset": 249114,
+        "value": "G_DSC"
+      },
+      {
+        "token": "0x7000beb1",
+        "offset": 258297,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STATUS_GWSZ_ANZEIGE/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x7000c046",
+        "offset": 258702,
+        "value": "Absicherung SG-Gruppe abKOMBSP21"
+      },
+      {
+        "token": "0x7000e15f",
+        "offset": 267175,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STATUS_LESEN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x7000f92b",
+        "offset": 273267,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STEUERN_UHRZEIT_DATUM/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x70010fe9",
+        "offset": 279089,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/KOMBI_UHRZEIT_DATUM_STELLEN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x70014713",
+        "offset": 293211,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_RESET/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x700147a8",
+        "offset": 293360,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_RESET/Argument/CBS_KENNUNG"
+      },
+      {
+        "token": "0x70014831",
+        "offset": 293497,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_RESET/Argument/CBS_VERFUEGBARKEIT"
+      },
+      {
+        "token": "0x700148c8",
+        "offset": 293648,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_RESET/Argument/CBS_ANZAHL_SERVICE"
+      },
+      {
+        "token": "0x7001495f",
+        "offset": 293799,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_RESET/Argument/CBS_ZIEL_MONAT"
+      },
+      {
+        "token": "0x700149ee",
+        "offset": 293942,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/CBS_RESET/Argument/CBS_ZIEL_JAHR"
+      },
+      {
+        "token": "0x70016884",
+        "offset": 301772,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STATUS_CBS_SERVICE_AKTIVIERUNG/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x70016943",
+        "offset": 301963,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STATUS_CBS_SERVICE_AKTIVIERUNG/Argument/CBS_SERVICE"
+      },
+      {
+        "token": "0x7001890d",
+        "offset": 310101,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STEUERN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x7001c332",
+        "offset": 324986,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STEUERN_CBS_SERVICE_AKTIVIERUNG/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x7001c3f3",
+        "offset": 325179,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STEUERN_CBS_SERVICE_AKTIVIERUNG/Argument/CBS_SERVICE"
+      },
+      {
+        "token": "0x700278be",
+        "offset": 371462,
+        "value": "/Run/Group/G_MOTOR/VirtualVariantJob/CBS_RESET/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x70029b31",
+        "offset": 380281,
+        "value": "/Run/Group/G_DSC/VirtualVariantJob/STATUS_LESEN/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x700337d6",
+        "offset": 420382,
+        "value": "/Run/Group/G_DSC/VirtualVariantJob/CBS_RESET/Argument/ECUGroupOrVariant"
+      },
+      {
+        "token": "0x70033867",
+        "offset": 420527,
+        "value": "/Run/Group/G_DSC/VirtualVariantJob/CBS_RESET/Argument/CBS_KENNUNG"
+      },
+      {
+        "token": "0x70034f8f",
+        "offset": 426455,
+        "value": "/Run/Group/G_KOMBI/VirtualVariantJob/STEUERGERAETE_RESET/Argument/ECUGroupOrVariant"
+      }
+    ]
+  },
+  "missing_current_definitions": [
+    {
+      "name": "D94BX7A0",
+      "historical_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "historical_version": "6.3",
+      "groups": [
+        "G_MOTOR"
+      ],
+      "state": "absent"
+    }
+  ],
+  "audit_sha256": "c58b072361981908e52c1c5891b07817739d9f7883e41c02365a5d1ab6bca4b8",
+  "historical_claims_preserved_in": "docs/evidence/task-b-cbs-contract.json"
+}

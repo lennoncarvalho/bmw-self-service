@@ -1,6 +1,6 @@
 """Recover exact scalar MIL contracts and account for every catalogued engine.
 
-Development-only BEST table/job inspection; no PRG interpreter enters runtime.
+Development-only BEST table/job inspection; this script is not a runtime dependency.
 See docs/evidence/task-b-mil-breadth.md for the reviewed decoder fingerprints.
 """
 
@@ -32,7 +32,7 @@ REVIEWED_BLOCK_JOB = "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a8250
 BLOCK_SLOT = 0xF303
 
 
-def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None:
+def recover(root: Path, parser_path: Path, output: Path, manifest: Path, ecu_dir: Path) -> None:
     """Select exact engine rows, preserving every non-enabled disposition."""
     spec = importlib.util.spec_from_file_location("mil_prg_reference", parser_path)
     if spec is None or spec.loader is None:
@@ -49,11 +49,7 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None
     engine_rows = {
         key: row for key, row in catalog["variants"].items() if key.startswith("12 ") and row["uds"]
     }
-    files = {
-        path.stem.upper(): path
-        for path in (root / "sources/Ecu").iterdir()
-        if path.suffix.lower() == ".prg"
-    }
+    files = {path.stem.upper(): path for path in ecu_dir.iterdir() if path.suffix.lower() == ".prg"}
     definitions: dict[str, Any] = {}
     provenance: dict[str, Any] = {}
     for name in sorted({row["name"] for row in engine_rows.values()}):
@@ -71,7 +67,7 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path) -> None
             if dict(zip(table.columns, row.values, strict=True)).get("ARG") == "ISMIL"
         ]
         source: dict[str, Any] = {
-            "path": str(path.relative_to(root)),
+            "path": str(path.resolve()),
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
         source["boolean_labels"] = [
@@ -153,5 +149,6 @@ if __name__ == "__main__":
     cli.add_argument("parser_path", type=Path)
     cli.add_argument("output", type=Path)
     cli.add_argument("manifest", type=Path)
+    cli.add_argument("--ecu-dir", type=Path, required=True)
     args = cli.parse_args()
-    recover(args.root, args.parser_path, args.output, args.manifest)
+    recover(args.root, args.parser_path, args.output, args.manifest, args.ecu_dir)

@@ -443,7 +443,10 @@ edxn_error_t edxn_op_misc(edxn_vm_t *vm, uint8_t op,
         if (len2 < 1) len2 = 1;
         int32_t raw = edxn_resolve_int(vm, a1);
         uint32_t sm2 = edxn_sign_mask(len2);
-        int32_t signed_val = ((uint32_t)raw & sm2) ? raw - (int32_t)(1u << (len2 * 8)) : raw;
+        /* A long operand is already signed; only short operands need the
+           modulus subtraction. Avoid undefined 1u << 32 and signed overflow. */
+        int32_t signed_val = ((uint32_t)raw & sm2) && len2 < 4
+            ? raw - (int32_t)(1u << (len2 * 8)) : raw;
         edxn_reg_set_f(&vm->regs, a0->u.reg.index, (double)signed_val);
         return EDXN_OK;
     }

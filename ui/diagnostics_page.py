@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
@@ -112,15 +111,11 @@ class DiagnosticsPage(QWidget):
         list_layout = QVBoxLayout(self.list_container)
         list_layout.setContentsMargins(0, 0, 0, 0)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         scroll_container = QWidget()
         self.dtc_list_layout = QVBoxLayout(scroll_container)
         self.dtc_list_layout.setSpacing(8)
         self.dtc_list_layout.addStretch()
-        scroll.setWidget(scroll_container)
-        list_layout.addWidget(scroll, stretch=1)
+        list_layout.addWidget(scroll_container)
 
         # Clear button
         self.clear_btn = QPushButton("Clear All DTCs")

@@ -56,6 +56,21 @@ not a claim that every BMW/ECU/software combination has been physically tested.
 Proceed unattended through implementation, independent review, corrections,
 verification and a PR; unresolved facts are research work, not owner questions.
 
+## Current source reuse and handoff — 2026-11-04
+
+Read `docs/29-source-reuse-continuation.md` for reconciled current status and
+ordering. Use existing definitions/data and executable PRG jobs first; recover
+missing integration contracts instead of rebuilding their contents. Report exact
+assistant/tool limits without converting them into product restrictions.
+D-68 requires development-produced runtime assets only: no source-folder
+lookups, including saved legacy folder settings. The source-defined coding
+selector may resolve a reported CAFD to a compatible lower patch; retain both
+identities and exact source hashes, never an arbitrary first/nearest version.
+The canonical ECU directory is `sources/ISTA_4.29.1x/Rheingold/Ecu/`;
+`sources/Ecu/` was removed. Preserve historical hashes and compare current bytes.
+Do not open a PR without explicit owner instruction; this overrides older
+unattended-PR wording. No change to the recorded write protection requirements.
+
 ## Project identity
 
 **BMW Self Service** — cross-platform desktop app for BMW diagnostics,

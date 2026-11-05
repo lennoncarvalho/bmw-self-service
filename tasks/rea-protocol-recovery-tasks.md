@@ -1,5 +1,11 @@
 # Task B — ordered development tasks
 
+> Current reconciliation (2026-11-04): [source reuse and continuation](../docs/29-source-reuse-continuation.md).
+> Use its current source paths, status and queue before the historical checkpoints
+> below. Reuse existing definitions/jobs first; session limitations are not scope
+> decisions. `sources/Ecu/` was removed; current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+
 Status: incremental implementation through PR13; unchecked aggregate items may
 contain implemented substeps. Use the linked verification records and current
 code before repeating work. D-57 continuation: [next development](task-b-next-development.md).

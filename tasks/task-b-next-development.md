@@ -1,5 +1,11 @@
 # Task B — continuation after PR13
 
+> Current reconciliation (2026-11-04): [source reuse and continuation](../docs/29-source-reuse-continuation.md).
+> Use its current source paths, status and queue before the historical checkpoints
+> below. Reuse existing definitions/jobs first; session limitations are not scope
+> decisions. `sources/Ecu/` was removed; current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+
 Authority: owner decision D-57 in docs/21-product-decisions.md. PR13 is an
 incremental delivery; the owner handles its review and merge. Task B is unfinished.
 No new product interview is needed to start the work below.

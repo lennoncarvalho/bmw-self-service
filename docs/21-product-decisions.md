@@ -8,6 +8,35 @@ The current milestone is working personal use from Python source on macOS.
 remaining factual questions. No unanswered product question from this interview
 blocks starting those investigations or planning implementation.
 
+## Current interpretation — 2026-11-04
+
+**D-68 — Development extraction, standalone runtime (owner reaffirmation,
+2026-11-04).** Recover communication and selection from the supplied applications
+with REA; reuse their definitions, databases and job logic rather than rebuilding
+known behavior or deriving presets by car trials. Generate runtime assets during
+development. The app must not look in `sources/`, execute reference applications
+or invoke REA/research tooling. This supersedes D-62's saved source-folder runtime
+fallback; development builders may still accept the supplied folder as input.
+An assistant limitation must be disclosed precisely, never silently substituted
+for a product requirement. Source/offline verification proceeds without a car.
+
+Source-defined layout selection is part of this requirement. Keep the ECU's
+reported software/CAFD identity exact, while recording the layout actually
+selected by a recovered compatibility rule separately. Do not impose exact-file
+presence if the source implements an evidenced lower-patch selector, and never
+substitute arbitrary first/nearest versions. Retain complete baseline/intent and
+source-bound application/restore contracts; no storage requirement is relaxed.
+
+The owner requested reuse of supplied definitions and executable jobs first,
+with investigation focused on missing integration contracts. See
+[source reuse and continuation](29-source-reuse-continuation.md).
+Assistant-specific refusals or tool limitations are not product decisions.
+D-60's ISTA 4.29 milestone remains. Reconcile D-66's original popular subset
+with D-17 and the current owner direction by using it to order incremental
+delivery; D-67 itself rejects car-trial reconstruction, not the subset wording. Do not silently exclude
+applicable source-defined options or reintroduce learn-by-diff. This does not
+expand the milestone to newer ISTA/DoIP support.
+
 ## Decisions
 
 D-01–D-20 originated before this interview; D-21–D-55 were answered on
@@ -57,7 +86,7 @@ D-01–D-20 originated before this interview; D-21–D-55 were answered on
 | D-40 | Display an existing value outside preset options as Custom. Preserve it by default, including its original raw bytes in the backup; do not normalize/overwrite it merely because it is not a preset. The owner notes it may already work in the car. |
 | D-41 | Keep all backups without automatic pruning; allow users to delete them. No special prohibition on deleting unresolved-operation backups was approved. Explain loss of backup/recovery material on deletion; require a durable coding ECU baseline/intent or history local snapshot/intent/results before a new write. |
 | D-42 | Support backup export/import between computers. Check vehicle/ECU/software compatibility before restoration; import alone never mutates the vehicle. |
-| D-43 | Translate all user-facing content to English for the first release. Portuguese comes later. This includes diagnostic/coding/history labels and descriptions, not just app controls. German is not an approved normal-display fallback. |
+| D-43 | Translate all user-facing content to English for the first release. Portuguese comes later. This includes diagnostic/coding/history labels and descriptions, not just app controls. German is not an approved normal-display fallback except diagnostic content under the 2026-11-05 owner clarification below. |
 | D-44 | Detect system format/region where practical. Fallback is Brazilian Portuguese regional formatting and kilometres. Implementation interpretation: interface text remains English under D-43; regional settings govern dates/numbers and distance-unit defaults. |
 | D-45 | Use ordinary, unencrypted backup files with the simplest practical read/write format. No password/export-encryption feature required. |
 | D-46 | Do not mask vehicle identifiers in diagnostic logs/exports. Retain complete diagnostic records, including VIN; no automatic export redaction. |
@@ -101,15 +130,14 @@ prerequisite; actual encoder/session/capacity/result facts still need evidence.
   ([claude-session-limitations.md](claude-session-limitations.md)). The recovered
   write sequence ([task-b-coding-write-sequence.md](evidence/task-b-coding-write-sequence.md))
   and the popular-coding list are inputs for that work.
-- **D-66 — Popular coding subset (supersedes D-64's deferral; byte-map source
-  superseded by D-67).** Following the
-  BimmerCode model, implement a small curated set of popular codings that public
-  sources confirm exist, only for best-selling models (F48 first, then common
-  F/G). Byte maps are learned on the owner's car: snapshot the ECU's complete
-  coding, apply the option once with the owner's own BimmerCode, snapshot again
-  and store the exact ECU/coding-version/byte/mask/old/new diff as the app's
-  own preset (owner-labelled). Presets apply only to the exact coding version
-  they were learned on. Other data sources may be added later by the owner.
+- **D-66 — Historical popular-coding proposal (2026-10-30).** The original
+  proposal was a small curated set for best-selling models (F48 first, then
+  common F/G), with exact-version byte maps learned from owner-labelled car
+  captures. **The capture method was rejected by D-67.** The original subset
+  wording is retained here as history, not a permanent exclusion of the supplied
+  catalogue. Under D-17 and the owner's 2026-11-04 source-reuse direction, popular
+  options can order delivery within D-60's milestone; recover applicable options
+  from supplied definitions instead of requiring car trials.
 
 ## ISTA job engine and data — D-60–D-64 (2026-10-30)
 
@@ -124,7 +152,7 @@ Owner interview after the ISTA 4.29.15 analysis
   using the repo's ediabasx C11 interpreter completed with an HSFZ transport
   and called from Python through a small shim on the existing protocol owner.
   ediabasx is PolyForm Noncommercial: acceptable because of D-63.
-- **D-62 — Hybrid data.** A build script converts the owner's F48 (F056) plus
+- **D-62 — Historical hybrid data (runtime folder fallback superseded by D-68).** A build script converts the owner's F48 (F056) plus
   common F/G platforms (F20/F30/F15/F25, G20/G30/G05/G01) into a compact
   bundled database; every other model falls back to a user-provided ISTA 4.29
   folder (Ecu job files and PSdZ KIS ECU lists) chosen in the app.
@@ -276,3 +304,18 @@ No automated suite is authorized. New behavior questions discovered through REA
 must be recorded specifically, not filled with assumptions or used to reopen
 already answered choices. CBS read/write priority is now governed by D-58.
 Later advanced coding, history editing and public release choices do not block this milestone.
+
+
+## Owner clarification — 2026-11-05 diagnostic language and loading
+
+Read faults must remain visible regardless of description language. English is
+preferred, but available source-language diagnostic descriptions and ECU titles
+may be shown when a complete, unambiguous English result is unavailable. Missing
+or ambiguous descriptions never remove a fault code. This supersedes only the
+diagnostic-language fallback restriction in D-43; English interface/translation
+goals remain. Do not guess among conflicting source candidates.
+
+During foreground loading/preparation, block competing UI actions and display a
+loading indicator with a backdrop. Coding reads and preparation remain sequential;
+failure or cancelled confirmation must not strand the first snapshot. Rejections
+must explain what prevents preparation rather than silently leaving Backups.

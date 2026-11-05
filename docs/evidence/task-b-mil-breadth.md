@@ -1,4 +1,10 @@
 > **2026-10-30, D-59:** the app no longer reads or shows the ECU lamp command
+
+> Source location update, 2026-11-04: `sources/Ecu/` below is a historical
+> artifact path; that collection was removed. Current jobs are in
+> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Names, bytes and versions can differ.
+> Preserve this record's hashes/offsets; compare current files before reuse.
+> See [current inventory](../29-source-reuse-continuation.md).
 > (4A69 / F303). The overview indicator follows engine fault memory. This record
 > is retained as source research; `coding_data/mil_contracts.json` remains only
 > as input to `scripts/recover_engine_measurements.py`.
