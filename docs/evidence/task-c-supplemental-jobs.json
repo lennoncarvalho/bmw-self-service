@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "basis": "Explicit historical job supplement; does not replace any canonical 4.29 file",
+  "jobs": [
+    {
+      "source_path": "sources/Ecu/D94BX7A0.prg",
+      "sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c"
+    }
+  ]
+}

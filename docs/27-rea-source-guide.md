@@ -7,7 +7,10 @@ route to protocol answers, not a list of validated BMW wire constants.
 
 Read [current source reuse and continuation](29-source-reuse-continuation.md)
 first. ISTA 4.29 is now present under `sources/ISTA_4.29.1x/Rheingold/`.
-The canonical ECU directory is its `Ecu/` child; `sources/Ecu/` was removed.
+The canonical ECU directory is its `Ecu/` child. The legacy `sources/Ecu/`
+collection is currently present; Task C's [D94 continuation](evidence/task-c-source-continuation.md)
+uses one explicit, hash-bound development supplement from it, with no canonical
+file replacement or runtime folder fallback.
 Historical records keep original paths and hashes. Do not assume equal names
 mean equal bytes: compare current files before reusing offsets or contracts.
 

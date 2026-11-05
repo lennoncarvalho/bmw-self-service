@@ -2,8 +2,10 @@
 
 **[Task C — CBS reading and individual resets](../tasks/task-c-cbs-read-reset-reliability.md)**
 is implemented and verified offline. Its [evidence and complete matrix](evidence/task-c-cbs-reliability.md)
-record the remaining ownership/artifact restrictions, pending separate review
-and unperformed physical acceptance.
+record the remaining ownership restrictions and unperformed physical acceptance.
+The independently reviewed [post-PR20 continuation](evidence/task-c-source-continuation.md)
+integrates D94 as a hash-bound historical supplement; it is absent only from the
+canonical 4.29 collection, not from all supplied sources.
 The owner-ordered [C–F roadmap](../tasks/task-c-through-f-roadmap.md) supersedes
 historical Task B priority/checkpoint lists. Use supplied source applications,
 REA, decrypted databases and existing jobs; implement and verify the recovered
@@ -20,8 +22,9 @@ assumptions, determine coding layouts.
 > Current reconciliation (2026-11-04): [source reuse and continuation](29-source-reuse-continuation.md).
 > Use its current source paths, status and queue before the historical checkpoints
 > below. Reuse existing definitions/jobs first; session limitations are not scope
-> decisions. `sources/Ecu/` was removed; current jobs are in
-> `sources/ISTA_4.29.1x/Rheingold/Ecu/`. Historical hashes remain historical.
+> decisions. Canonical jobs are in `sources/ISTA_4.29.1x/Rheingold/Ecu/`.
+> The legacy `sources/Ecu/` collection is currently present; only the explicit,
+> hash-bound D94 supplement is selected from it. Historical hashes remain historical.
 
 Start with [the readiness audit](19-audit-and-readiness.md),
 [protocol corrections](20-protocol-evidence.md), and

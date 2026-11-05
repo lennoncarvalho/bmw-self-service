@@ -67,7 +67,10 @@ lookups, including saved legacy folder settings. The source-defined coding
 selector may resolve a reported CAFD to a compatible lower patch; retain both
 identities and exact source hashes, never an arbitrary first/nearest version.
 The canonical ECU directory is `sources/ISTA_4.29.1x/Rheingold/Ecu/`;
-`sources/Ecu/` was removed. Preserve historical hashes and compare current bytes.
+the legacy `sources/Ecu/` collection is currently present. Task C selects only
+the explicit hash-bound D94 supplement from it; never replace canonical files
+or restore runtime source-folder fallback. See `docs/evidence/task-c-source-continuation.md`.
+Preserve historical hashes and compare current bytes.
 Do not open a PR without explicit owner instruction; this overrides older
 unattended-PR wording. No change to the recorded write protection requirements.
 

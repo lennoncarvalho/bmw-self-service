@@ -80,12 +80,20 @@ def build(
             policy = definition.get("source_reset_policy", definition.get("reset"))
             if definition.get("read_vectors_checked", 0) < 14:
                 raise ValueError(f"Current CBS read layout has not been checked: {name}")
-            if policy == "routine-7.0":
+            if policy in ("routine-6.3", "routine-7.0"):
+                routine_version = "6.3" if policy == "routine-6.3" else "7.0"
+                reader = "CBS_DATEN_LESEN" if routine_version == "6.3" else "STATUS_CBS_DATEN_LESEN"
                 if (
-                    definition.get("version") != "7.0"
-                    or definition.get("read_job") != "STATUS_CBS_DATEN_LESEN"
+                    definition.get("version") != routine_version
+                    or definition.get("read_job") != reader
                     or definition.get("start_request") != "31011000{item}02ffffff"
                     or definition.get("results_request") != "31031000"
+                    or definition.get("start_positive")
+                    != (
+                        "71011000{general}{component}{reserved2}"
+                        if routine_version == "6.3"
+                        else "71011000"
+                    )
                 ):
                     raise ValueError(f"Unreviewed current CBS operation: {name}")
             elif policy == "dsc25-plain":
@@ -143,7 +151,11 @@ def build(
             ) & {"E0", "E1", "FF"}:
                 raise ValueError(f"Missing reviewed per-item reset identifiers: {name}")
             definitions[name]["reset_items"] = reset_items
-            if definition["version"] == "7.0":
+            if policy == "routine-6.3":
+                if definition.get("results_delay_ms") != 1000:
+                    raise ValueError(f"Unreviewed CBS result delay: {name}")
+                definitions[name]["results_delay_ms"] = definition["results_delay_ms"]
+            if definition["version"] in ("6.3", "7.0"):
                 definitions[name]["routine_codes"] = {
                     table: {
                         row[0].removeprefix("0x").upper(): row[1]

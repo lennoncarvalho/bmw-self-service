@@ -1,0 +1,1561 @@
+{
+  "schema": 1,
+  "date": "2026-11-05",
+  "authority": "source artifacts/REA CIL plus controlled native, worker, protocol-owner and Qt replay; no physical vehicle traffic",
+  "canonical_source": "sources/ISTA_4.29.1x/Rheingold/Ecu",
+  "supplement_contract": "task-c-supplemental-jobs.json",
+  "d94": {
+    "address": 18,
+    "detail": false,
+    "disposition": "supplemental native CBS6.3 reader and standard STR/RRR reset; no canonical-release provenance claim",
+    "ownership": "primary",
+    "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+    "reset": "routine-6.3",
+    "source_groups": [
+      "G_MOTOR"
+    ],
+    "version": "6.3",
+    "read_job": "CBS_DATEN_LESEN",
+    "ownership_reason": "Exact canonical G_MOTOR membership plus current service-reset orchestration; hash-bound historical PRG supplement",
+    "source_reset_policy": "routine-6.3",
+    "source_path": "sources/Ecu/D94BX7A0.prg",
+    "source_scope": "historical supplemental job; absent from canonical 4.29 ECU directory",
+    "software_request": "22f101",
+    "reset_items": [
+      "01",
+      "02",
+      "03",
+      "05",
+      "06",
+      "07",
+      "08",
+      "0A",
+      "0D",
+      "11",
+      "14",
+      "15",
+      "17",
+      "20",
+      "21",
+      "23",
+      "31",
+      "32",
+      "33",
+      "34",
+      "35",
+      "36",
+      "37",
+      "64"
+    ],
+    "read_vectors_checked": 1824,
+    "tables": {
+      "CBS_6_3_KENNUNG": {
+        "columns": [
+          "WERT",
+          "CBS_K",
+          "TEXT"
+        ],
+        "rows": [
+          [
+            "0x01",
+            "Oel",
+            "Motoroel"
+          ],
+          [
+            "0x02",
+            "Br_v",
+            "Bremsbelaege vorne"
+          ],
+          [
+            "0x03",
+            "Brfl",
+            "Bremsfluessigkeit"
+          ],
+          [
+            "0x05",
+            "Bsi",
+            "Service Inclusive"
+          ],
+          [
+            "0x06",
+            "Br_h",
+            "Bremsbelaege hinten"
+          ],
+          [
+            "0x07",
+            "Pf",
+            "Partikelfilter"
+          ],
+          [
+            "0x08",
+            "Soh",
+            "State of Health"
+          ],
+          [
+            "0x0A",
+            "Zuend",
+            "Zuendkerzen/Gluehkerzen"
+          ],
+          [
+            "0x0D",
+            "NOx_a",
+            "NOx-Additiv"
+          ],
+          [
+            "0x11",
+            "Sic",
+            "Sichtpruefung/Fahrzeugcheck"
+          ],
+          [
+            "0x14",
+            "Ueb",
+            "Uebergabedurchsicht"
+          ],
+          [
+            "0x15",
+            "Efk",
+            "Einfahrkontrolle"
+          ],
+          [
+            "0x17",
+            "Wf",
+            "Wasserfilter"
+          ],
+          [
+            "0x20",
+            "TUV",
+            "Fahrzeuguntersuchung"
+          ],
+          [
+            "0x21",
+            "AU",
+            "Abgasuntersuchung"
+          ],
+          [
+            "0x23",
+            "Goel",
+            "Getriebeoel"
+          ],
+          [
+            "0x31",
+            "Reif",
+            "Reifenalter"
+          ],
+          [
+            "0x32",
+            "Kup",
+            "Kupplung"
+          ],
+          [
+            "0x33",
+            "Gdf",
+            "Gasdruckdaempfer Frontklappe bei aktivem Fussgaengerschutz"
+          ],
+          [
+            "0x34",
+            "Verb",
+            "Verbandskasten"
+          ],
+          [
+            "0x35",
+            "Tir_f",
+            "Tire Fit"
+          ],
+          [
+            "0x36",
+            "Kat",
+            "Katalysator"
+          ],
+          [
+            "0x37",
+            "Sto",
+            "Stoßdaempfer"
+          ],
+          [
+            "0x64",
+            "Sic_v",
+            "Sichtpruefung/Fahrzeugcheck verknuepft"
+          ],
+          [
+            "0xE0",
+            "Cbs_e",
+            "CBS Evalboard"
+          ],
+          [
+            "0xE1",
+            "Cbr_e",
+            "CBR Evalboard"
+          ],
+          [
+            "0xFF",
+            "rda",
+            "Anlieferzustand"
+          ]
+        ]
+      },
+      "TAB_RESET_ART": {
+        "columns": [
+          "WERT",
+          "ART",
+          "TEXT"
+        ],
+        "rows": [
+          [
+            "0x01",
+            "plant",
+            "Werksreset"
+          ],
+          [
+            "0x02",
+            "standard",
+            "Standardreset"
+          ],
+          [
+            "0x03",
+            "service_counter",
+            "Korrekturreset Servicezaehler"
+          ],
+          [
+            "0x04",
+            "time",
+            "Korrekturreset Zieltermin"
+          ],
+          [
+            "0x05",
+            "distance",
+            "Korrekturreset Restweg"
+          ],
+          [
+            "0x06",
+            "forecast_distance",
+            "Korrekturreset Restwegprognose"
+          ],
+          [
+            "0x07",
+            "availability",
+            "Korrekturreset Verfuegbarkeit"
+          ],
+          [
+            "0x0A",
+            "rda",
+            "Anlieferzustand herstellen"
+          ],
+          [
+            "0xFF",
+            "-",
+            "not defined"
+          ]
+        ]
+      },
+      "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+        "columns": [
+          "WERT",
+          "TEXT"
+        ],
+        "rows": [
+          [
+            "0x00",
+            "Okay, keine Verhinderungsgründe"
+          ],
+          [
+            "0x01",
+            "ungültiger km-Stand"
+          ],
+          [
+            "0x02",
+            "ungültiges Borddatum"
+          ],
+          [
+            "0x03",
+            "ungültige Codierung"
+          ],
+          [
+            "0x04",
+            "SG nicht initialisiert oder im falschen Zustand"
+          ],
+          [
+            "0x05",
+            "Fahrzeug im fahrenden Zustand"
+          ],
+          [
+            "0x06",
+            "Reset bei CBR nicht erlaubt"
+          ],
+          [
+            "0x07",
+            "Reset bei aktivem Ersatzwert nicht erlaubt"
+          ],
+          [
+            "0x09",
+            "Servicezähler ist nicht zwischen 1 und 250"
+          ],
+          [
+            "0x0A",
+            "Zieltermin ausserhalb des gültigen Wertebereichs"
+          ],
+          [
+            "0x0B",
+            "Restweg ist ausserhalb des gültigen Wertebereichs"
+          ],
+          [
+            "0xFE",
+            "keine Angabe"
+          ],
+          [
+            "0xFF",
+            "Wert ungültig"
+          ]
+        ]
+      },
+      "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+        "columns": [
+          "WERT",
+          "TEXT"
+        ],
+        "rows": [
+          [
+            "0x00",
+            "Okay, keine Verhinderungsgründe"
+          ],
+          [
+            "0xFE",
+            "keine Angabe"
+          ],
+          [
+            "0xFF",
+            "ungültig"
+          ]
+        ]
+      }
+    },
+    "start_request": "31011000{item}02ffffff",
+    "start_positive": "71011000{general}{component}{reserved2}",
+    "results_request": "31031000",
+    "results_positive": "71031000{general}{component}{reserved2}",
+    "read_job_offset": "0x23c108",
+    "reset_job_offset": "0x219880",
+    "read_listing_sha256": "6ba55ab71550f4005ddf65d612bfb474a4d6874d4c6894ceabc12f78c61527bb",
+    "reset_listing_sha256": "b42f44f8e1ac558a37d0d9e304d748014f2cd33d8589bd71fb4cecbb055dce7c",
+    "results_delay_ms": 1000
+  },
+  "managed_sources": [
+    {
+      "name": "ABL_DIT_AS6100_TRAMODE_RESET_M12.dll",
+      "sha256": "edc48fb53e3729c7c8832cc9faeef8a46ffbdd281c012cd791204c0920fd8340",
+      "mvid": "db83a547-5ed2-4268-84e4-7c3a23838755",
+      "evidence_id": "ev_1822262649006d343b832f2f5462e0f2db9d22097a8a286bd718c82caf8908f7",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "836cf592b908dd8b95ae53837fd5aa9163d1593a2be882b04614ea5787059b76",
+          "contains": "CMEDIAR"
+        },
+        {
+          "sha256": "2778b39b80f0c084a64326e8118d5bff31ec87357a970e6c776ff13f959ee5d2",
+          "contains": "observation name candidate; not an established reset call"
+        }
+      ],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_WAR_SCBSR_0004.dll",
+      "sha256": "66496a36f1392c18f7c744f6aa0843c4647c9a8ad447a5498f45d5fbcc1cc892",
+      "mvid": "d3dd2148-da41-46d5-ba18-1d32f7eee45c",
+      "evidence_id": "ev_1833f5f7660e31612578d9faf6316fd02719544904dbd3d439c97e1a8b9c4742",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "complete",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "472839a96f21b8505ced9717688780234f231d479fb267ce823f6b0b5a0013c7",
+          "contains": "CMEDIAR"
+        }
+      ],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_WAR_SCBSR_0001.dll",
+      "sha256": "b752aa3f668995522bae6184c6f0a9d238507b5e7a1b60ba1bce77222038034e",
+      "mvid": "2ae1c840-712b-4afc-9314-f3aa7609d951",
+      "evidence_id": "ev_31c41271c03ec244d5f75d8195bed96e9e16d077e2c0467cacf87f755648601d",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "complete",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "472839a96f21b8505ced9717688780234f231d479fb267ce823f6b0b5a0013c7",
+          "contains": "CMEDIAR"
+        }
+      ],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_DIT_SCBS_6001.dll",
+      "sha256": "42da6eae97eb4628ac49d33b64404dedfa1468559e92de3add81b51e19abf04c",
+      "mvid": "b59b1e2f-01b8-40fa-a60c-99046f730614",
+      "evidence_id": "ev_3d14196fde2fc290ad34aff1602293c10141bdaa862c054411dd743eb0b844b4",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "e71c6017b6e500e0ef2be3e9aa6eb0872e463b1dc792f1355494d61257cd5709",
+          "contains": "CMEDIAR"
+        },
+        {
+          "sha256": "836cf592b908dd8b95ae53837fd5aa9163d1593a2be882b04614ea5787059b76",
+          "contains": "CMEDIAR"
+        },
+        {
+          "sha256": "876d25761d84a5e756e7f2693b77a45dc8d60931266720c4564b848e795616f1",
+          "contains": "CMEDIAR"
+        },
+        "CMEDIAR"
+      ],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_WAR_AS6100_CBS_KORR.dll",
+      "sha256": "7b465f7d7f5da792c703d303718db893a20c59df7d703f3e9a4d57decead79f6",
+      "mvid": "75801e60-a658-44cc-8827-05be1d4e13bb",
+      "evidence_id": "ev_7069bace6048846da468e6d78b8fc372207f9b46ad50733123d12039b699dffb",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "2778b39b80f0c084a64326e8118d5bff31ec87357a970e6c776ff13f959ee5d2",
+          "contains": "observation name candidate; not an established reset call"
+        }
+      ],
+      "cbs_reset_literals": [
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x68c",
+          "preceding_literals": [
+            "IB_I20"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x829",
+          "preceding_literals": [
+            "DSC_I1"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0xc50",
+          "preceding_literals": [
+            "DSC_G20"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0xefb",
+          "preceding_literals": [
+            "DSC_G30N"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x17df",
+          "preceding_literals": [
+            "DSC_G11"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x1d65",
+          "preceding_literals": [
+            "IB_I20"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x1e4d",
+          "preceding_literals": [
+            "IB_I20"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x2234",
+          "preceding_literals": [
+            "IB_I20"
+          ]
+        },
+        {
+          "method": "Bremsen_CBS_6",
+          "token": "0x06000012",
+          "il_offset": "0x2802",
+          "preceding_literals": [
+            "IB_G05"
+          ]
+        },
+        {
+          "method": "Offset_Fzg_Check_ver",
+          "token": "0x06000014",
+          "il_offset": "0x5a1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Offset_Fzg_Check_ver",
+          "token": "0x06000014",
+          "il_offset": "0xf56",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Offset_Fzg_Check_ver",
+          "token": "0x06000014",
+          "il_offset": "0x1da9",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Bremsflüssigkeit_150",
+          "token": "0x06000018",
+          "il_offset": "0x2cc",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Bremsflüssigkeit_150",
+          "token": "0x06000018",
+          "il_offset": "0xe48",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Bremsflüssigkeit_150",
+          "token": "0x06000018",
+          "il_offset": "0x166b",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x14c8",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x164f",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x18ad",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x2046",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x25f5",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x349d",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x35e4",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x3a4e",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x3d5b",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x4a5b",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x505a",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x57cc",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x5b5e",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x5ca5",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x70a2",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x72d1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x7669",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x7c16",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x8892",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x9dec",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x9ff7",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xa326",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xa4da",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xaae1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xadd8",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xbc0b",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xc742",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xc875",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xd6e0",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xebc3",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xf1af",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0xf956",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x103c2",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Schreiben",
+          "token": "0x0600001a",
+          "il_offset": "0x10951",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ABL_GEN_AS6100_CBS_RESET_RETURN_CODE.dll",
+      "sha256": "b09b9fed123875a80c2ac58bcdf96b712772a41d66ede66ca51f307db70c6daa",
+      "mvid": "8cbe065f-be6a-441d-a249-95356f26c3e3",
+      "evidence_id": "ev_7e06b9e3b620989ca9d59b5cb925681d777477409908954c94ecb0dc0ccd0090",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_WAR_AS6100_CBS_RESET.dll",
+      "sha256": "dc0a7c72b9d48a1466cc26ae2c21e1ff2b844278c46cc1965c6c64e3da77438a",
+      "mvid": "f3990a7d-a4ae-4c12-9b99-7318b69563f3",
+      "evidence_id": "ev_bbd2edca20190d05ca5dcebed646dc9de5c14f71a9f582595191bc8dec0ebdd3",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "complete",
+      "exact_observation_literals": [],
+      "substring_literals": [],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_DIT_AS6100_CBS5_RESET_KORR_MOTOR.dll",
+      "sha256": "d72f0e7e0b9ae89867b7493bc08b03edd1518a7ac2c98364c924ec4651762914",
+      "mvid": "05582c28-c6b5-4eac-83b0-ec01a8254b0e",
+      "evidence_id": "ev_c9738da88b40008b022529935c11f7bc2557992dae89d30e13fa2755363f6aaf",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "ed63cea4a54b9629f9dd25ae14029a01550649dff2d1af68e196edcd1a975a97",
+          "contains": "observation name candidate; not an established reset call"
+        },
+        {
+          "sha256": "32b080d957b0849dbff2fc621e5d640fa141184b4d996a11817712fddfe3268a",
+          "contains": "observation name candidate; not an established reset call"
+        }
+      ],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_GEN_AS6100_CBS_RESET.dll",
+      "sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db",
+      "mvid": "a0cc540b-847c-45a4-9447-d3f1bd30cfc4",
+      "evidence_id": "ev_d17bfe8339598b52f4c2b052e47d2a93b0679834bf61c83ac0a4e63ae7a876b7",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [],
+      "cbs_reset_literals": [
+        {
+          "method": "Reset_HU_AU_NEW",
+          "token": "0x0600000e",
+          "il_offset": "0x31b1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Reset_HU_AU_NEW",
+          "token": "0x0600000e",
+          "il_offset": "0x3894",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Reset_Motorel_NEW",
+          "token": "0x0600000f",
+          "il_offset": "0x246e",
+          "preceding_literals": [
+            "",
+            "DME9FF_R"
+          ]
+        },
+        {
+          "method": "Reset_Motorel_NEW",
+          "token": "0x0600000f",
+          "il_offset": "0x2556",
+          "preceding_literals": [
+            "D94BX7A0"
+          ]
+        },
+        {
+          "method": "Reset_Motorel_NEW",
+          "token": "0x0600000f",
+          "il_offset": "0x3825",
+          "preceding_literals": [
+            "",
+            "D94BX7A0"
+          ]
+        },
+        {
+          "method": "Reset_Motorel_NEW",
+          "token": "0x0600000f",
+          "il_offset": "0x4224",
+          "preceding_literals": [
+            "DME9FF_R"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x36e",
+          "preceding_literals": [
+            "",
+            "D94BX7A0"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x980",
+          "preceding_literals": [
+            "IB_I20"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x14a0",
+          "preceding_literals": [
+            "",
+            "DME9FF_R"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x1b12",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x1c40",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x1ea9",
+          "preceding_literals": [
+            "DME9FF_R"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x1f91",
+          "preceding_literals": [
+            "D94BX7A0"
+          ]
+        },
+        {
+          "method": "CBS_Reset_NEW",
+          "token": "0x06000012",
+          "il_offset": "0x250a",
+          "preceding_literals": [
+            "IB_I20"
+          ]
+        },
+        {
+          "method": "Überprüfung_CBS_Reset_NEW",
+          "token": "0x06000013",
+          "il_offset": "0xe8c",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Überprüfung_CBS_Reset_NEW",
+          "token": "0x06000013",
+          "il_offset": "0x18ae",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Überprüfung_CBS_Reset_NEW",
+          "token": "0x06000013",
+          "il_offset": "0x4b1e",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Überprüfung_CBS_Reset_NEW",
+          "token": "0x06000013",
+          "il_offset": "0x8002",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Überprüfung_CBS_Reset_NEW",
+          "token": "0x06000013",
+          "il_offset": "0xa735",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "Überprüfung_CBS_Reset_NEW",
+          "token": "0x06000013",
+          "il_offset": "0xc6aa",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ABL_DIT_SCBS_6001_M12.dll",
+      "sha256": "4773551161616134cb2ad70a7ccc3821b755bea844006326818bd10d12ff9352",
+      "mvid": "07691d71-7a5a-4fb3-9ee2-b3ddfd2825cc",
+      "evidence_id": "ev_f53bf8d0f090f65922ba5769fc99f4524790e508d930dd68647691570231ab04",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "e71c6017b6e500e0ef2be3e9aa6eb0872e463b1dc792f1355494d61257cd5709",
+          "contains": "CMEDIAR"
+        },
+        {
+          "sha256": "836cf592b908dd8b95ae53837fd5aa9163d1593a2be882b04614ea5787059b76",
+          "contains": "CMEDIAR"
+        },
+        {
+          "sha256": "876d25761d84a5e756e7f2693b77a45dc8d60931266720c4564b848e795616f1",
+          "contains": "CMEDIAR"
+        },
+        "CMEDIAR"
+      ],
+      "cbs_reset_literals": []
+    },
+    {
+      "name": "ABL_DIT_AS6100_TRAMODE_RESET.dll",
+      "sha256": "348119b62646ddeef9835fd140be5ccc76641ef512ff8a7b8fb523602f3f343d",
+      "mvid": "842216be-ed13-42d4-a74d-1396ac9c2f35",
+      "evidence_id": "ev_f584e25755e19c0709053138f1711bd637d79a557ce6c1c1149d0f508a745669",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [
+        {
+          "method": "Diverse",
+          "token": "0x0600000d",
+          "il_offset": "0xe20",
+          "literal": "DME8FF_L",
+          "following_literals": [
+            "STEUERN"
+          ]
+        },
+        {
+          "method": "Diverse",
+          "token": "0x0600000d",
+          "il_offset": "0x8108",
+          "literal": "DME8FF_L",
+          "following_literals": [
+            "_STEUERN_LESEMODUS_FVVM"
+          ]
+        },
+        {
+          "method": "Diverse",
+          "token": "0x0600000d",
+          "il_offset": "0x8864",
+          "literal": "DME8FF_L",
+          "following_literals": []
+        },
+        {
+          "method": "Diverse",
+          "token": "0x0600000d",
+          "il_offset": "0x8f6c",
+          "literal": "DME8FF_L",
+          "following_literals": []
+        },
+        {
+          "method": "Powermanagement",
+          "token": "0x06000022",
+          "il_offset": "0x16b7",
+          "literal": "BCP_SP21",
+          "following_literals": [
+            "STATUS_LESEN"
+          ]
+        },
+        {
+          "method": "Powermanagement",
+          "token": "0x06000022",
+          "il_offset": "0x2c64",
+          "literal": "BCP_SP21",
+          "following_literals": []
+        },
+        {
+          "method": "Powermanagement",
+          "token": "0x06000022",
+          "il_offset": "0x3cbf",
+          "literal": "BCP_SP21",
+          "following_literals": []
+        },
+        {
+          "method": "Powermanagement",
+          "token": "0x06000022",
+          "il_offset": "0x3f11",
+          "literal": "BCP_SP21",
+          "following_literals": [
+            "STATUS_BATTERIEVORSCHAEDIGUNGSHISTORIE"
+          ]
+        }
+      ],
+      "substring_literals": [
+        {
+          "sha256": "836cf592b908dd8b95ae53837fd5aa9163d1593a2be882b04614ea5787059b76",
+          "contains": "CMEDIAR"
+        },
+        {
+          "sha256": "2778b39b80f0c084a64326e8118d5bff31ec87357a970e6c776ff13f959ee5d2",
+          "contains": "observation name candidate; not an established reset call"
+        }
+      ],
+      "cbs_reset_literals": [
+        {
+          "method": "AU_Datum",
+          "token": "0x06000016",
+          "il_offset": "0xeee",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "HU_Datum",
+          "token": "0x06000017",
+          "il_offset": "0x290e",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x124b",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x16f2",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x1de1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x2095",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x234d",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x3038",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x34b9",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x36a1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x384f",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x3eb2",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x422a",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x4932",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x5443",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x5837",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x6b7f",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x7658",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x7f5d",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x853e",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x8fb3",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x91e2",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x9585",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x96d1",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x9b3b",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x9c7c",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xab02",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xbdce",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xbf48",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xc1aa",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xc9f9",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xcbcb",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xcdb3",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xd74e",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xda91",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xe1b7",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0xfd51",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        },
+        {
+          "method": "CBS_Reset",
+          "token": "0x06000019",
+          "il_offset": "0x10222",
+          "preceding_literals": [
+            "KOMBSP21"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ABL_WAR_SCBS_6004.dll",
+      "sha256": "cf1f757bce9dcbdd19a6755e90203e0f8531c1e689dd78153062f5b55b903f5c",
+      "mvid": "77c746c1-3a46-4f2c-87a1-7f06822b3726",
+      "evidence_id": "ev_fafa075085a3f5f8185691d14267c196753bf2afa1b4ae8fe6c3c2f191c73f27",
+      "coverage": {
+        "issues": [],
+        "state": "complete"
+      },
+      "string_coverage": "partial",
+      "exact_observation_literals": [],
+      "substring_literals": [
+        {
+          "sha256": "836cf592b908dd8b95ae53837fd5aa9163d1593a2be882b04614ea5787059b76",
+          "contains": "CMEDIAR"
+        },
+        "CMEDIAR"
+      ],
+      "cbs_reset_literals": []
+    }
+  ],
+  "rea_bundle": "/Users/lennon/BMW-Tool/investigations/task-c-continuation-20261105/rea-evidence.json",
+  "rea_bundle_sha256": "310516e9d30eb7fc0d4413d3b150beaa7c1ea79660d19314a1b880bc98041860",
+  "source_delay": {
+    "artifact_sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db",
+    "method": "CBS_Reset_NEW",
+    "token": "0x06000012",
+    "sleep_il": "0x21e8",
+    "milliseconds": 1000,
+    "switch_il": "0x2a",
+    "state128_target": "0x2210",
+    "d94_check_il": "0x2216",
+    "state130_target": "0x223c",
+    "branch_target": "0x1ef8",
+    "rrr_call_il": "0x1f8c"
+  },
+  "checks": {
+    "d94_native_read_vectors": 1824,
+    "baseline_native_read_vectors_all_48": 1056,
+    "unique_read_vectors": 2858,
+    "native_item_encoders": 778,
+    "native_software_readers": 48,
+    "native_assets_loaded": 531,
+    "d94_worker_scenarios": 18,
+    "d94_storage_failure_occurrences": 4,
+    "timing_deadline_cancellation_checks": 3,
+    "native_worker_regression_scenarios": 121,
+    "fragmented_real_owner_scenarios": 10,
+    "actual_qt_flow": "manual read, confirmation/cancel/power, D94 start/results/re-read, DSC regression, failed refresh, stale selection, read-only/DEMO, uncertain result lockout",
+    "build_compiler": "reproducible contracts, unrelated cwd build, hash/canonical override/duplicate refusal and original-bundle preservation",
+    "runtime_source_access": "loopback audit rejects source/research folder, parser and encrypted input reads",
+    "local_python": "3.15.2",
+    "target_python": "3.13; not executed locally"
+  },
+  "independent_review": {
+    "status": "complete for this increment; two findings fixed and rechecked",
+    "corrections": [
+      "repository-relative supplement resolution independent of cwd",
+      "source-defined one-second D94 result delay under existing overall deadline"
+    ]
+  },
+  "remaining": [
+    "Eight observation sources still lack an established primary reset route; no universal read-only claim",
+    "D94 supplement is not a canonical4.29-release file",
+    "Owner F48 physical acceptance unperformed; another car not a development dependency",
+    "DoIP CBS mappings and Windows/package acceptance outside current HSFZ/source milestone"
+  ]
+}

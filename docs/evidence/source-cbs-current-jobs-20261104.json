@@ -893,6 +893,340 @@
       ],
       "reset_items_table": "CBSKENNUNG"
     },
+    "D94BX7A0": {
+      "address": 18,
+      "detail": false,
+      "disposition": "supplemental native CBS6.3 reader and standard STR/RRR reset; no canonical-release provenance claim",
+      "ownership": "primary",
+      "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "reset": "routine-6.3",
+      "source_groups": [
+        "G_MOTOR"
+      ],
+      "version": "6.3",
+      "read_job": "CBS_DATEN_LESEN",
+      "ownership_reason": "Exact canonical G_MOTOR membership plus current service-reset orchestration; hash-bound historical PRG supplement",
+      "source_reset_policy": "routine-6.3",
+      "source_path": "sources/Ecu/D94BX7A0.prg",
+      "source_scope": "historical supplemental job; absent from canonical 4.29 ECU directory",
+      "software_request": "22f101",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "read_vectors_checked": 1824,
+      "tables": {
+        "CBS_6_3_KENNUNG": {
+          "columns": [
+            "WERT",
+            "CBS_K",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "Oel",
+              "Motoroel"
+            ],
+            [
+              "0x02",
+              "Br_v",
+              "Bremsbelaege vorne"
+            ],
+            [
+              "0x03",
+              "Brfl",
+              "Bremsfluessigkeit"
+            ],
+            [
+              "0x05",
+              "Bsi",
+              "Service Inclusive"
+            ],
+            [
+              "0x06",
+              "Br_h",
+              "Bremsbelaege hinten"
+            ],
+            [
+              "0x07",
+              "Pf",
+              "Partikelfilter"
+            ],
+            [
+              "0x08",
+              "Soh",
+              "State of Health"
+            ],
+            [
+              "0x0A",
+              "Zuend",
+              "Zuendkerzen/Gluehkerzen"
+            ],
+            [
+              "0x0D",
+              "NOx_a",
+              "NOx-Additiv"
+            ],
+            [
+              "0x11",
+              "Sic",
+              "Sichtpruefung/Fahrzeugcheck"
+            ],
+            [
+              "0x14",
+              "Ueb",
+              "Uebergabedurchsicht"
+            ],
+            [
+              "0x15",
+              "Efk",
+              "Einfahrkontrolle"
+            ],
+            [
+              "0x17",
+              "Wf",
+              "Wasserfilter"
+            ],
+            [
+              "0x20",
+              "TUV",
+              "Fahrzeuguntersuchung"
+            ],
+            [
+              "0x21",
+              "AU",
+              "Abgasuntersuchung"
+            ],
+            [
+              "0x23",
+              "Goel",
+              "Getriebeoel"
+            ],
+            [
+              "0x31",
+              "Reif",
+              "Reifenalter"
+            ],
+            [
+              "0x32",
+              "Kup",
+              "Kupplung"
+            ],
+            [
+              "0x33",
+              "Gdf",
+              "Gasdruckdaempfer Frontklappe bei aktivem Fussgaengerschutz"
+            ],
+            [
+              "0x34",
+              "Verb",
+              "Verbandskasten"
+            ],
+            [
+              "0x35",
+              "Tir_f",
+              "Tire Fit"
+            ],
+            [
+              "0x36",
+              "Kat",
+              "Katalysator"
+            ],
+            [
+              "0x37",
+              "Sto",
+              "Stoßdaempfer"
+            ],
+            [
+              "0x64",
+              "Sic_v",
+              "Sichtpruefung/Fahrzeugcheck verknuepft"
+            ],
+            [
+              "0xE0",
+              "Cbs_e",
+              "CBS Evalboard"
+            ],
+            [
+              "0xE1",
+              "Cbr_e",
+              "CBR Evalboard"
+            ],
+            [
+              "0xFF",
+              "rda",
+              "Anlieferzustand"
+            ]
+          ]
+        },
+        "TAB_RESET_ART": {
+          "columns": [
+            "WERT",
+            "ART",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x01",
+              "plant",
+              "Werksreset"
+            ],
+            [
+              "0x02",
+              "standard",
+              "Standardreset"
+            ],
+            [
+              "0x03",
+              "service_counter",
+              "Korrekturreset Servicezaehler"
+            ],
+            [
+              "0x04",
+              "time",
+              "Korrekturreset Zieltermin"
+            ],
+            [
+              "0x05",
+              "distance",
+              "Korrekturreset Restweg"
+            ],
+            [
+              "0x06",
+              "forecast_distance",
+              "Korrekturreset Restwegprognose"
+            ],
+            [
+              "0x07",
+              "availability",
+              "Korrekturreset Verfuegbarkeit"
+            ],
+            [
+              "0x0A",
+              "rda",
+              "Anlieferzustand herstellen"
+            ],
+            [
+              "0xFF",
+              "-",
+              "not defined"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0x01",
+              "ungültiger km-Stand"
+            ],
+            [
+              "0x02",
+              "ungültiges Borddatum"
+            ],
+            [
+              "0x03",
+              "ungültige Codierung"
+            ],
+            [
+              "0x04",
+              "SG nicht initialisiert oder im falschen Zustand"
+            ],
+            [
+              "0x05",
+              "Fahrzeug im fahrenden Zustand"
+            ],
+            [
+              "0x06",
+              "Reset bei CBR nicht erlaubt"
+            ],
+            [
+              "0x07",
+              "Reset bei aktivem Ersatzwert nicht erlaubt"
+            ],
+            [
+              "0x09",
+              "Servicezähler ist nicht zwischen 1 und 250"
+            ],
+            [
+              "0x0A",
+              "Zieltermin ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0x0B",
+              "Restweg ist ausserhalb des gültigen Wertebereichs"
+            ],
+            [
+              "0xFE",
+              "keine Angabe"
+            ],
+            [
+              "0xFF",
+              "Wert ungültig"
+            ]
+          ]
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "columns": [
+            "WERT",
+            "TEXT"
+          ],
+          "rows": [
+            [
+              "0x00",
+              "Okay, keine Verhinderungsgründe"
+            ],
+            [
+              "0xFE",
+              "keine Angabe"
+            ],
+            [
+              "0xFF",
+              "ungültig"
+            ]
+          ]
+        }
+      },
+      "start_request": "31011000{item}02ffffff",
+      "start_positive": "71011000{general}{component}{reserved2}",
+      "results_request": "31031000",
+      "results_positive": "71031000{general}{component}{reserved2}",
+      "read_job_offset": "0x23c108",
+      "reset_job_offset": "0x219880",
+      "read_listing_sha256": "6ba55ab71550f4005ddf65d612bfb474a4d6874d4c6894ceabc12f78c61527bb",
+      "reset_listing_sha256": "b42f44f8e1ac558a37d0d9e304d748014f2cd33d8589bd71fb4cecbb055dce7c",
+      "results_delay_ms": 1000
+    },
     "DME8FF_L": {
       "address": 19,
       "version": "6",
@@ -4325,7 +4659,7 @@
       "groups": [
         "G_MOTOR"
       ],
-      "basis": "current exact group table plus supplied CBS reset orchestration routes"
+      "basis": "Exact canonical G_MOTOR membership plus current service-reset orchestration; hash-bound historical PRG supplement"
     },
     "DME8FF_L": {
       "role": "owner-not-recovered",
@@ -4796,5 +5130,6 @@
   "audit_sha256": "c58b072361981908e52c1c5891b07817739d9f7883e41c02365a5d1ab6bca4b8",
   "historical_claims_preserved_in": "docs/evidence/task-b-cbs-contract.json",
   "task_c_followup": "docs/evidence/task-c-cbs-reliability.md",
-  "task_c_updated": "2026-11-05"
+  "task_c_updated": "2026-11-05",
+  "supplemental_reconciliation": "2026-11-05: D94 file exists in supplemental collection with exact historical hash; canonical 4.29 files remain authoritative for all existing names"
 }

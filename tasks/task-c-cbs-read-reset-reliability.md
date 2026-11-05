@@ -1,14 +1,17 @@
 # Task C — reliable CBS reading and individual resets
 
 Priority: **next development task**, explicitly set by the owner on 2026-11-05.
-Status: implementation and offline verification completed on 2026-11-05;
-separate reviewer and physical acceptance remain pending. Exact source
+Status: implementation, offline verification and independent continuation review
+completed on 2026-11-05; physical acceptance remains pending. Exact source
 restrictions are retained below rather than presented as universal coverage.
 Apply [the shared C–F workflow](task-c-through-f-roadmap.md).
 
 Implementation: [file plan and review record](task-c-implementation.md).
 Evidence: [results and physical acceptance procedure](../docs/evidence/task-c-cbs-reliability.md)
 and [complete variant matrix](../docs/evidence/task-c-cbs-reliability.json).
+Continuation after merged PR 20:
+[D94 integration and expanded caller investigation](task-c-source-completion.md),
+[source/verification record](../docs/evidence/task-c-source-continuation.md).
 
 ## Goal and scope
 
@@ -28,8 +31,8 @@ exclude legitimate, source-proven CBS resets in controllers such as DSC.
 - `app/cbs.py`, `ui/cbs_panel.py`, MainWindow CBS workers/confirmation and the
   existing single protocol owner. Live read is currently an explicit **Read
   service status** action after connection; expansion alone does not issue I/O.
-- Generated `coding_data/cbs_definitions.json`:48 definitions,47 current PRGs
-  plus the missing historical D94 entry;40 primary roles and8 observational
+- Generated `coding_data/cbs_definitions.json`: 48 definitions, 47 canonical PRGs
+  plus one hash-bound historical D94 supplement; 40 primary roles and 8 observational
   branches. Recount against current inputs before treating these as current.
 - Native job decoding, CBS7 start/result handling, DSC_25 source-planned ordered
   side effects, durable journals, and the guarded plain-reset fallback when the
@@ -52,8 +55,8 @@ exclude legitimate, source-proven CBS resets in controllers such as DSC.
   intentional read-only copy from an actual reset owner. Implement every
   recovered applicable branch; retain exact source restrictions where proven.
   Job presence, address or successful read alone never grants reset authority.
-  Investigate the missing D94 artifact/dependencies without falsely claiming
-  that the restored release contains it.
+  Reconcile the D94 supplement/dependencies without claiming canonical-release
+  provenance. The file is available in the legacy collection and now integrated.
 - [x] C3: Reconcile returned fields and versions against actual native jobs:
   units, signedness, status bits, service counters, availability, dates, distance/
   time forecasts, sentinel values and duplicate item IDs. Prefer existing decoded
@@ -87,7 +90,7 @@ exclude legitimate, source-proven CBS resets in controllers such as DSC.
 - [x] Exercise actual Qt manual read, expansion, refresh, single-item confirmation,
   power/side-effect acknowledgement, loading, read-only refusal and failure
   recovery. No hidden or enabled conflicting actions; no stale reset selection.
-- [ ] Independently review, fix and run full preflight. Update source matrix,
+- [x] Independently review, fix and run full preflight. Update source matrix,
   task/specs/assets and exact verification results. Do not close with research
   notes or a checkbox that merely says a worker exists.
 - [x] Retain an owner-F48 acceptance procedure: identify actual KOMB25/DME_BX8/
@@ -105,14 +108,18 @@ implementation. Another vehicle is not a dependency.
 
 All recovered applicable contracts are integrated. The eight named observations
 remain read-only in this implementation because an exact primary reset route is
-not established; that is not a universal claim about the controllers. D94 remains
-absent, with historical reads only and no enabled current reset contract. The
+not established; that is not a universal claim about the controllers. D94 is
+integrated as an explicit historical PRG supplement with native reading and a
+checked start/delay/result-query reset contract; it is absent only from the
+canonical 4.29 collection. The
 source matrix accounts for every row and current dependency.
 
 The verification record covers 1,034 native read vectors, 754 item encoders,
 47 software readers, 530 loaded assets, 121 worker scenarios, seven actual
 protocol-owner loopback scenarios and actual Qt flows. Full preflight passed.
-A separate diff-review pass was performed by the implementing assistant; a
-second human/agent review has not been performed, so the independent-review
-checkbox above remains open. The physical acceptance procedure is retained but
-unperformed. No other vehicle is needed to reproduce the offline checks.
+These counts describe PR 20. The continuation adds D94 and expands current
+verification to 2,858 unique native read vectors, 778 item encoders, 48 software
+readers, 531 assets and 10 actual-owner loopbacks. An independent agent reviewed
+this continuation; both findings were fixed and rechecked. The supplied six
+PR 20 findings were also fixed before its merge. Physical acceptance is retained
+but unperformed. No other vehicle is needed to reproduce the offline checks.

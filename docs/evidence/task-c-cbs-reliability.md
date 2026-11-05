@@ -8,6 +8,14 @@ address, version, role, reader/reset offsets, current SHA-256, table identifiers
 item policy, dependencies and verification counts. Historical hashes remain in
 the original contracts and the 2026-11-04 provenance audit.
 
+**Post-PR20 correction:** [D94 reconciliation and continuation](task-c-source-continuation.md)
+supersedes the original absence/review/count statements below. D94 exists in the
+legacy collection with its exact historical hash and is now bundled explicitly,
+with native CBS 6.3 read/start/result support. The canonical 4.29 collection still
+lacks it. The paired matrix reflects the updated 48-reader boundary. Independent
+review of the continuation is complete; physical acceptance remains unperformed.
+The following sections preserve the original PR 20 verification record.
+
 ## Selection and remaining source branches
 
 Recount: 48 runtime definitions, 47 current PRGs, one absent historical D94.

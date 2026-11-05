@@ -1,5 +1,10 @@
 # Task C implementation and verification
 
+Historical PR 20 implementation record. The PR merged at `3b49124`; its six
+supplied review findings were fixed in `11ccd90`. Current source availability,
+independent continuation review and verification supersede the original pending
+statements below: [post-PR20 continuation](task-c-source-completion.md).
+
 Branch: `codex/task-c-cbs-reliability`, based on the clean local main after
 fetching origin on 2026-11-05. No PR is authorized.
 

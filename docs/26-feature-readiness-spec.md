@@ -305,6 +305,17 @@ values without reset authority, and uncertain/journal-failed operations require
 reconnect/read before further resets. Source restrictions, same-assistant review,
 separate-review status and physical acceptance are recorded independently.
 
+The [post-PR20 continuation](evidence/task-c-source-continuation.md) integrates
+the available historical D94 PRG as an explicit hash-bound development supplement,
+not a canonical 4.29 file. CBS 6.3 uses its own named/scaled result fields and
+eight-byte application-checked start, a source-defined one-second delay and
+eight-byte result query. Both jobs and post-read share the existing deadline,
+protocol owner, journal and no-replay protections. Overflowed signed 16-bit job
+distance results remain unknown with raw bytes retained. Missing/mismatched
+routine jobs cannot authorize the older handwritten fallback. The eight
+observations retain their unresolved primary-reset restrictions. Independent
+review of this increment is complete; physical acceptance is unperformed.
+
 ## Packed vehicle-order increment
 
 Gateway3F06 uses the recovered packed six-bit contract, not FA XML. Dashboard

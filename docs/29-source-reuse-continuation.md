@@ -15,8 +15,11 @@ The embedded native interpreter executes the copied job assets through CarWorker
 and the existing protocol owner; it never opens a second vehicle connection.
 
 Canonical development input: `sources/ISTA_4.29.1x/Rheingold/Ecu/`.
-The former `sources/Ecu/` was removed. Historical evidence retains old hashes and
-offsets; compare actual bytes before reusing it. Do not relabel changed artifacts.
+The legacy `sources/Ecu/` collection is currently present. The explicit,
+hash-bound D94 development supplement is selected from it without replacing
+canonical files or restoring runtime folder fallback. Historical evidence retains
+old hashes and offsets; compare actual bytes before reusing it. Do not relabel
+changed artifacts.
 
 Preserve ISTA 4.29/HSFZ scope (D-60), personal use (D-63), CBS before coding (D-58),
 labelled reads/strict writes (D-65), and no learn-by-diff prerequisite (D-67).
@@ -60,7 +63,7 @@ entries; source order and unsupported key formats remain explicit.
   extra sequence, with explicit acknowledgement of fault clearing/event control.
   Readable copies do not automatically become writers; owner roles require the
   recovered service workflow, not a guessed default address. The asset includes
-  48 definitions: 47 current PRGs plus the absent historical D94 entry; 40 primary
+  48 definitions: 47 canonical PRGs plus an explicit historical D94 supplement; 40 primary
   roles and eight branches retained for observation/ownership investigation.
 - Coding reads use the reported F101 identities and source-selected layouts.
   REA recovered exact APK selection followed by the immediately lower patch
@@ -140,8 +143,11 @@ Task C implementation/verification is now recorded in its
 [evidence and complete matrix](evidence/task-c-cbs-reliability.md): 47 current
 readers, software-bound preflight, native table loading/decoding corrections,
 exclusive foreground flow and actual-owner pending/interruption checks. The
-eight observational reset-owner branches and absent D94 remain explicit source
-restrictions. Separate review and physical acceptance have not been performed.
+eight observational reset-owner branches retain explicit source restrictions.
+[The post-PR20 continuation](evidence/task-c-source-continuation.md) integrates
+the available historical D94 PRG without relabelling it a canonical 4.29 file;
+it adds native read/start/result handling and a hash-bound development supplement.
+Independent continuation review is complete; physical acceptance is unperformed.
 
 1. Three CAFD 02.00.00 files use a different `codingArea/sigId/sigLen` layout;
    the current converter records their exact identities/dispositions instead of

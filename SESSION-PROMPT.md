@@ -9,9 +9,13 @@ implementation queue is [Tasks C–F](tasks/task-c-through-f-roadmap.md):
 (D), Easy Coding readiness (E) and history/integrated acceptance (F).
 Its implementation and offline verification are now retained in
 `tasks/task-c-implementation.md` and `docs/evidence/task-c-cbs-reliability.md`.
-Read those before repeating work: eight observational owner routes and absent
-D94 remain explicit restrictions; separate review and physical acceptance are
-pending. No physical reset or new PR was performed.
+PR20 is merged at `3b49124`. Read [its continuation](tasks/task-c-source-completion.md)
+and [current evidence](docs/evidence/task-c-source-continuation.md) before repeating
+work: D94 is now an explicit hash-bound historical PRG supplement with native
+read/start/delay/result support. It is absent only from canonical 4.29 sources.
+Eight observational primary-reset routes remain unresolved. Independent review
+of this increment is complete; physical acceptance is unperformed. No physical
+reset was performed. The owner authorized a new continuation branch and PR.
 Older Task B checkpoints are historical, not instructions to repeat merged work.
 
 PR18 is merged in the current baseline. Inspect Git/PR status and fetch origin

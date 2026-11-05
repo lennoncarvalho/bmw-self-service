@@ -6,8 +6,9 @@ mean erasing headunit history or sending a generic fault-clear request. Those
 operations have separate contracts. The owner’s repeated final task letter is
 interpreted as sequential Tasks C, D, E and F.
 
-Status: Task C is implemented and verified offline, with separate review and
-physical acceptance pending; Tasks D–F remain planned. See the
+Status: Task C is implemented and verified offline; its post-PR20 continuation
+has independent review, while physical acceptance remains pending. Tasks D–F
+remain planned. See the
 [Task C evidence](../docs/evidence/task-c-cbs-reliability.md) for exact source
 restrictions. This is not a universal completion or safety certificate.
 This queue supersedes the priority order in historical Task B continuation files.
@@ -39,8 +40,9 @@ those targets are excluded. Do not exercise those coding writes in earlier tasks
    PRGs/GRPs, CAFD/FAFP data and databases. Use REA to trace the actual selector,
    orchestration, request, response and decoder. Reuse the existing interpreter,
    protocol libraries and recovered data instead of rebuilding them from scratch.
-3. Canonical jobs: `sources/ISTA_4.29.1x/Rheingold/Ecu/`; `sources/Ecu/` no longer
-   exists. Sources and REA are development-only. Use development scripts to
+3. Canonical jobs: `sources/ISTA_4.29.1x/Rheingold/Ecu/`; the legacy collection
+   supplies only Task C's explicit hash-bound D94 supplement. Sources and REA
+   are development-only. Use development scripts to
    compile the required standalone database/JSON/job assets. The app must not
    inspect `sources/`, run reference executables or require REA at runtime.
 4. Retain artifact/version/hash, exact class/method/job/table and REA evidence,
