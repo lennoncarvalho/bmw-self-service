@@ -610,28 +610,34 @@ def _read_cbs(
                     ),
                 }
             )
-    seen: dict[int, int] = {}
+    seen: dict[tuple[str, int, int], int] = {}
     for record in items:
         if record["owner"]["ownership"] == "primary":
-            seen[record["item"]] = seen.get(record["item"], 0) + 1
+            owner = record["owner"]
+            identity = (owner["name"], owner["address"], record["item"])
+            seen[identity] = seen.get(identity, 0) + 1
     complete = all(
         owner["state"] in ("read", "not-held")
         for owner in owners
         if owner["ownership"] == "primary"
     )
     for record in items:
+        owner = record["owner"]
+        identity = (owner["name"], owner["address"], record["item"])
         if record["owner"]["ownership"] != "primary":
             record["resettable"] = False
             record["notes"].append(
                 record["owner"].get("ownership_reason")
-                or "Primary service-reset owner not recovered for this observation source"
+                or "This observation source is outside the standard service-reset selector"
             )
         elif not record["owner"].get("software"):
             record["notes"].append("Software identity unavailable; read again before resetting")
-        elif seen.get(record["item"], 0) > 1:
-            # No source rule picks a winner between owners; never guess one.
+        elif seen.get(identity, 0) > 1:
+            # Selection names one source ECU; repeated records within it remain ambiguous.
             record["resettable"] = False
-            record["notes"].append("More than one primary record reports this item; reset blocked")
+            record["notes"].append(
+                "This ECU returned repeated records for this item; reset blocked"
+            )
         elif not complete and record["resettable"]:
             # An unread owner could also hold this item; ownership is not established.
             record["resettable"] = False

@@ -157,8 +157,11 @@ source records do not authorize restoring the superseded dashboard behavior.
 `app/cbs.py` uses exact generated definitions and native readers. Records are
 12 bytes under a checked `62 1001` response; malformed/unaccounted records fail
 closed. All original bytes, software and owner provenance survive normalization.
-Reset requires one established primary owner, matching job hash/version, source
-item identifier, valid count/availability, fresh F150/F101 and unchanged before-state.
+Reset requires an explicitly selected primary ECU, one matching item within that
+ECU, matching job hash/version, source item identifier, valid count/availability,
+fresh F150/F101 and unchanged before-state. Different primary ECUs may report the
+same item; keep their labelled rows and reset only the confirmed ECU. Repeated
+records within that ECU remain ambiguous and blocked.
 Observation sources never gain authority just because their encoder runs.
 
 | Branch | Required behavior |
@@ -181,10 +184,16 @@ with raw evidence rather than display wrapped values. Current managed
 
 There are 47 canonical CBS readers plus D94, 40 primary roles and eight
 observation sources. BCP_SP21, CMEDIA, DME8FF_L, EHC_01, GSGE01QW, LMV_01,
-MGU_02_A and S63TU_L0 still lack established primary reset routing. Examined
-CMEDIA caller substrings resolve to CMEDIAR; left-engine/BCP transport-delivery
-calls perform unrelated operations, not standard CBS ownership. Exact remaining
-work is in `tasks.md`, not a universal hardware read-only claim.
+MGU_02_A and S63TU_L0 are outside the standard reset selector's three primary
+groups (`G_KOMBI`, `G_MOTOR`, `G_DSC`); their extra readable observations do not
+authorize resets in this workflow. CMEDIA caller substrings resolve to CMEDIAR;
+left-engine/BCP transport-delivery calls perform unrelated operations.
+The managed caller passes an explicit `strg_List_SGVAR_CBS_Reset` group, and the
+diagnostic app's `j6.v.X` read chain retains engine/brake/cluster rows without
+deduplicating item IDs. `ServiceActivity`/`u5.p` pass the selected record through
+confirmation to `j6.g0.k0`/`i.b`, which uses that record's ECU address and item.
+The compiler checks roles against the recovered group selector. This is a
+source-workflow boundary, not a universal hardware read-only claim.
 
 Native parser corrections retain BCP's 1,844 tables (bounded directory ceiling
 20,000) and free partially parsed buffers/jobs on failure. The complete generated
