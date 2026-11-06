@@ -73,7 +73,7 @@ DOIP_TESTER_LOGICAL_ADDR = 0x0E00
 
 def list_interfaces() -> list[str]:
     """Return native names of Ethernet candidates, without Wi-Fi/virtual fallback."""
-    return sorted(info.name for info in list_interfaces_detailed())
+    return sorted(info.name for info in list_interfaces_detailed() if info.wired)
 
 
 # ── Rich interface info for UI ────────────────────────────────────────────
@@ -81,39 +81,89 @@ def list_interfaces() -> list[str]:
 
 @dataclass(slots=True)
 class _InterfaceInfo:
-    """Native Ethernet candidate; configured IPv4 does not prove vehicle reachability."""
+    """Native adapter metadata; link and IPv4 do not establish vehicle reachability."""
 
     name: str
     ip: str
     mac: str
-    connected: bool
+    connected: bool | None
     description: str
+    wired: bool = True
 
     def display_text(self) -> str:
         """Rich one-line label for use in a QComboBox."""
-        if self.connected:
-            return f"{self.name} — {self.ip} · IPv4 configured ({self.description})"
-        return f"{self.name} — IPv4 unavailable ({self.description})"
+        kind = "Wired" if self.wired else "Wireless"
+        state = (
+            "connected"
+            if self.connected is True
+            else "disconnected"
+            if self.connected is False
+            else "link status unavailable"
+        )
+        return f"{kind} — {self.description} ({state}) — {self.ip or 'No IPv4 address'}"
 
-    def sort_key(self) -> tuple[int, str]:
-        """Sort key: connected first, then by name."""
-        return (0 if self.connected else 1, self.name)
+    def sort_key(self) -> tuple[bool, bool, str, str]:
+        """Show wired adapters first, then connected links and friendly names."""
+        return (not self.wired, self.connected is not True, self.description.casefold(), self.name)
+
+
+def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool]]:
+    """Read hardware-port names and carrier status without changing host networking.
+
+    Run off the GUI thread. Each local command has a two-second limit; failure
+    retains the Qt inventory and leaves unavailable carrier status explicit.
+    """
+    names: dict[str, str] = {}
+    links: dict[str, bool] = {}
+    for command in (
+        ["/usr/sbin/networksetup", "-listallhardwareports"],
+        ["/sbin/ifconfig", "-a"],
+    ):
+        try:
+            output = subprocess.run(
+                command, capture_output=True, text=True, timeout=2.0, check=True
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            logger.warning("Adapter metadata unavailable from %s", command[0], exc_info=True)
+            continue
+        if command[0].endswith("networksetup"):
+            port = ""
+            for line in output.splitlines():
+                if line.startswith("Hardware Port: "):
+                    port = line.removeprefix("Hardware Port: ").strip()
+                elif line.startswith("Device: ") and port:
+                    names[line.removeprefix("Device: ").strip()] = port
+        else:
+            name = ""
+            for line in output.splitlines():
+                if line and not line[0].isspace():
+                    name = line.split(":", 1)[0]
+                elif name and line.strip() in ("status: active", "status: inactive"):
+                    links[name] = line.strip() == "status: active"
+    return names, links
 
 
 def list_interfaces_detailed() -> list[_InterfaceInfo]:
-    """List native Ethernet interfaces, with their actual names and IPv4 readiness.
+    """List native wired/wireless adapters for display; call off the GUI thread.
 
     Qt reports interface type across platforms. Neither an enX name nor an IP
-    address identifies Ethernet. No host configuration or subprocess is needed.
-    Internal macOS auxiliary interfaces remain excluded. An assigned address is
-    explicitly labelled configuration, never physical link or car detection.
+    address identifies Ethernet. macOS supplies friendly hardware-port names and
+    explicit carrier status separately from IPv4 configuration. Wireless rows
+    are informational; discovery still requires a native Ethernet interface.
     """
     results: list[_InterfaceInfo] = []
+    macos = platform.system() == "Darwin"
+    names, links = _macos_interface_metadata() if macos else ({}, {})
     for interface in QNetworkInterface.allInterfaces():
-        if interface.type() != QNetworkInterface.InterfaceType.Ethernet:
+        wired = interface.type() == QNetworkInterface.InterfaceType.Ethernet
+        wireless = interface.type() == QNetworkInterface.InterfaceType.Wifi
+        if not (wired or wireless):
             continue
         name = interface.name()
-        if platform.system() == "Darwin" and name.startswith("anpi"):
+        if macos and (
+            name.startswith("anpi")
+            or (wireless and name not in names and not name.startswith("en"))
+        ):
             continue
         addresses = []
         for entry in interface.addressEntries():
@@ -126,16 +176,25 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
         # Discovery requires exactly one IPv4. Do not silently choose one from
         # a multiply configured adapter and imply it is ready for connection.
         ip = addresses[0] if len(addresses) == 1 else ""
-        description = interface.humanReadableName() or name
+        description = names.get(name) or interface.humanReadableName() or name
         if len(addresses) > 1:
-            description += "; multiple IPv4 addresses — select one configuration"
+            ip = "Multiple IPv4 addresses: " + ", ".join(addresses)
+        flags = interface.flags()
         results.append(
             _InterfaceInfo(
                 name=name,
                 ip=ip,
                 mac=interface.hardwareAddress().lower(),
-                connected=bool(ip),
+                connected=(
+                    links.get(name)
+                    if macos
+                    else bool(
+                        flags & QNetworkInterface.InterfaceFlag.IsUp
+                        and flags & QNetworkInterface.InterfaceFlag.IsRunning
+                    )
+                ),
                 description=description,
+                wired=wired,
             )
         )
     return sorted(results, key=lambda candidate: candidate.sort_key())

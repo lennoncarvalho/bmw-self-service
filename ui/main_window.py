@@ -987,7 +987,7 @@ class MainWindow(QMainWindow):
             self._closing = True
             self.history_page.shutdown()
             self._on_disconnect()
-            for page in (self.diag_page, self.coding_page):
+            for page in (self.welcome_page, self.diag_page, self.coding_page):
                 worker = getattr(page, "_worker", None)
                 if isinstance(worker, QThread):
                     self._retire_worker(worker)

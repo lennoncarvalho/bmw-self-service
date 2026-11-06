@@ -6,16 +6,20 @@ interface, then clicks Connect.
 Reference: plan.md#connection-and-display and AGENTS.md#implementation-rules.
 """
 
-from PySide6.QtCore import Qt, Signal
+from typing import cast
+
+from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
+    QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-from app.connection import list_interfaces_detailed
+from app.connection import _InterfaceInfo, list_interfaces_detailed
+from app.worker import ConnectWorker
 
 
 class WelcomePage(QWidget):
@@ -44,12 +48,16 @@ class WelcomePage(QWidget):
         "Connect the ENET cable BEFORE turning on ignition",
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Create the connection choices and start a bounded adapter inventory."""
         super().__init__(parent)
         self._demo_mode = False
+        self._worker: ConnectWorker | None = None
+        self._selected_interface = ""
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Build the welcome screen and asynchronous adapter refresh controls."""
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(16)
@@ -92,9 +100,14 @@ class WelcomePage(QWidget):
 
         self.interface_combo = QComboBox()
         self.interface_combo.setMinimumWidth(400)
+        adapter_row = QHBoxLayout()
+        adapter_row.addWidget(self.interface_combo, 1)
+        self.refresh_interfaces_btn = QPushButton("Refresh")
+        self.refresh_interfaces_btn.clicked.connect(self._populate_interfaces)
+        adapter_row.addWidget(self.refresh_interfaces_btn)
+        self.interface_layout.addLayout(adapter_row)
         self._populate_interfaces()
         self.interface_combo.currentIndexChanged.connect(self._on_choices_changed)
-        self.interface_layout.addWidget(self.interface_combo)
         layout.addWidget(self.interface_container)
         layout.addSpacing(24)
 
@@ -120,29 +133,68 @@ class WelcomePage(QWidget):
 
         layout.addStretch()
 
-    def _populate_interfaces(self):
-        """Fill the interface dropdown with connected-first adapter info."""
+    @Slot()
+    def _populate_interfaces(self) -> None:
+        """Refresh bounded native metadata in the existing background-worker lifecycle."""
+        if self._worker is not None:
+            return
+        self._selected_interface = self.interface_combo.currentData() or ""
+        self.interface_combo.clear()
+        self.interface_combo.addItem("Loading network adapters…", "")
+        self.interface_combo.setEnabled(False)
+        self.refresh_interfaces_btn.setEnabled(False)
+        worker = ConnectWorker(lambda _cancelled: list_interfaces_detailed(), "")
+        self._worker = worker
+        worker.result_ready.connect(self._on_interfaces_loaded)
+        worker.error.connect(self._on_interfaces_error)
+        worker.finished.connect(self._on_interfaces_finished)
+        worker.start()
+
+    @Slot(object)
+    def _on_interfaces_loaded(self, result: object) -> None:
+        """Display friendly labels while retaining the wired system ID as item data."""
+        worker = self.sender()
+        if (
+            not isinstance(worker, ConnectWorker)
+            or worker is not self._worker
+            or worker.property("retired_by_main")
+        ):
+            return
+        adapters = cast(list[_InterfaceInfo], result)
         self.interface_combo.clear()
         self.interface_combo.addItem("-- Select interface --", "")
+        for adapter in adapters:
+            self.interface_combo.addItem(
+                adapter.display_text(), adapter.name if adapter.wired else ""
+            )
+            self.interface_combo.setItemData(
+                self.interface_combo.count() - 1,
+                f"Interface: {adapter.name}"
+                + ("" if adapter.wired else "\nENET connections require a wired Ethernet adapter."),
+                Qt.ItemDataRole.ToolTipRole,
+            )
+        index = self.interface_combo.findData(self._selected_interface)
+        if index > 0 and not self._demo_mode:
+            self.interface_combo.setCurrentIndex(index)
+        elif index > 0:
+            self._saved_interface_idx = index
 
-        try:
-            adapters = list_interfaces_detailed()
+    @Slot(str)
+    def _on_interfaces_error(self, _message: str) -> None:
+        """Keep an inventory failure explicit without offering guessed interface IDs."""
+        self.interface_combo.clear()
+        self.interface_combo.addItem("Network adapter inventory unavailable", "")
 
-            # Split into connected / disconnected groups
-            connected = [a for a in adapters if a.connected]
-            disconnected = [a for a in adapters if not a.connected]
-
-            for adapter in connected:
-                self.interface_combo.addItem(adapter.display_text(), adapter.name)
-
-            if connected and disconnected:
-                self.interface_combo.insertSeparator(self.interface_combo.count())
-
-            for adapter in disconnected:
-                self.interface_combo.addItem(adapter.display_text(), adapter.name)
-        except Exception:
-            # A failed native inventory must not offer guessed interface names.
-            self.interface_combo.addItem("Ethernet interface inventory unavailable", "")
+    @Slot()
+    def _on_interfaces_finished(self) -> None:
+        """Retain the worker until completion and cooperate with main-window shutdown."""
+        worker = self.sender()
+        if worker is self._worker:
+            self._worker = None
+            self.interface_combo.setEnabled(True)
+            self.refresh_interfaces_btn.setEnabled(True)
+        if isinstance(worker, ConnectWorker) and not worker.property("retired_by_main"):
+            worker.deleteLater()
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled
