@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 
 from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker
 from app.worker import CarWorker
+from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
 
@@ -251,7 +252,15 @@ class DiagnosticsPage(QWidget):
                 + "\n"
                 + "\n".join(lines)
             )
+            details_read = sum(dtc.get("details", {}).get("state") == "read" for dtc in dtcs)
+            if dtcs:
+                summary.setText(
+                    summary.text()
+                    + f"\nRecorded fault details: {details_read} read; "
+                    + f"{len(dtcs) - details_read} unavailable"
+                )
             summary.setWordWrap(True)
+            summary.setTextFormat(Qt.TextFormat.PlainText)
             self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, summary)
         if not dtcs:
             label = QLabel(
@@ -345,6 +354,9 @@ class DiagnosticsPage(QWidget):
                 ecu_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
                 detail_layout.addWidget(ecu_lbl)
 
+            recorded_layout = QVBoxLayout()
+            detail_layout.addLayout(recorded_layout)
+
             # Buttons row
             btn_row = QHBoxLayout()
             btn_row.setSpacing(8)
@@ -367,7 +379,12 @@ class DiagnosticsPage(QWidget):
                 event: object,
                 d: QWidget = detail,
                 a: QLabel = expand_arrow,
+                data: dict = dtc,
+                target: QVBoxLayout = recorded_layout,
             ) -> None:
+                if not d.property("recorded_details_loaded"):
+                    _add_recorded_details(target, data)
+                    d.setProperty("recorded_details_loaded", True)
                 self._toggle_detail(d, a)
 
             card.mousePressEvent = _toggle_on_click  # type: ignore[method-assign]
@@ -503,6 +520,63 @@ class DiagnosticsPage(QWidget):
 
 
 # ---- Helpers ----
+
+
+def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
+    """Lazily render settled results as plain text; expansion never requests data."""
+    details = dtc.get("details", {})
+    state = details.get("state", "not-in-scan")
+    reasons = {
+        "not-in-scan": "Recorded details were not collected in this scan.",
+        "not-defined": "Recorded details are unavailable for this memory or ECU definition.",
+        "ambiguous-record": "Recorded details are unavailable: this memory repeated the fault code.",
+        "not-attempted-budget-exhausted": "Recorded details were not read within the scan budget.",
+        "not-attempted-connection": "Recorded details were not read after communication failed.",
+        "not-attempted-cancelled": "Recorded details were not read because the scan stopped.",
+        "unsupported": "The ECU does not support this recorded-detail read.",
+        "rejected": "The ECU rejected this recorded-detail read.",
+        "timeout": "The recorded-detail read timed out.",
+        "invalid": "Recorded details could not be decoded or matched to this fault.",
+    }
+
+    def add(text: str, heading: bool = False) -> None:
+        label = QLabel(text)
+        label.setObjectName("faultDetailHeading" if heading else "faultDetailValue")
+        label.setTextFormat(Qt.TextFormat.PlainText)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        label.setWordWrap(True)
+        layout.addWidget(label)
+
+    add("Recorded fault details", True)
+    if state != "read":
+        add(reasons.get(state, "Recorded details could not be read. See the session log."))
+        return
+    records = details.get("records", [])
+    locale = regional_locale()
+    for index, record in enumerate(records, 1):
+        if len(records) > 1:
+            add(f"Recorded state {index} (ECU emission order)", True)
+        for field in record["fields"] + record["environment"]:
+            value = field["value"]
+            if value is None:
+                formatted = "Unavailable"
+            elif isinstance(value, int):
+                formatted = locale.toString(value)
+            elif isinstance(value, float):
+                formatted = locale.toString(value, "g", 12)
+            else:
+                formatted = str(value)
+            if field.get("unit") and value is not None:
+                formatted += f" {field['unit']}"
+            if field.get("note"):
+                formatted += f" — {field['note']}"
+            add(f"{field['label']}: {formatted}")
+        if record["environment"]:
+            add("Environment labels and units come from the ECU definition.")
+        if not record["fields"] and not record["environment"]:
+            add("No recorded conditions were returned.")
+    if details.get("source"):
+        add(f"Detail source: {details['source']}")
 
 
 def _decode_dtc_status(status: int) -> str:

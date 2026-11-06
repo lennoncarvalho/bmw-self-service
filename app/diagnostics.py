@@ -12,9 +12,11 @@ timeout or ambiguous stream; later targets remain not attempted.
 import json
 import logging
 import time
+from collections import Counter
 from functools import cache
 from typing import Any, cast
 
+from app.fault_details import DETAIL_JOBS, decode_fault_details
 from app.ista_jobs import APP_SOURCE, JobBackend, fault_records
 from app.protocol.contracts import FailureKind
 from app.resources import resource_path
@@ -265,6 +267,7 @@ class DiagnosticReadWorker(CarWorker):
                             "source": row["source"],
                         }
                     )
+        self._read_details(backend, dtcs, coverage, deadline)
         complete = (
             self.coverage_known
             and bool(self.ecus)
@@ -287,6 +290,76 @@ class DiagnosticReadWorker(CarWorker):
             "topology_known": self.coverage_known,
             "mil": None,
         }
+
+    def _read_details(
+        self, backend: JobBackend, dtcs: list[dict], coverage: list[dict], deadline: float
+    ) -> None:
+        """Read recorded conditions after all basic lists; retain independent failures.
+
+        Each ECU/memory detail batch shares 30 seconds, including all its native
+        jobs, within the scan's original five-minute deadline. Expansion performs
+        no I/O. Permanent-memory faults never borrow normal-memory snapshots.
+        """
+        stream_failed = False
+        for row in coverage:
+            selected = [
+                dtc
+                for dtc in dtcs
+                if (dtc["ecu_name"], dtc["ecu_addr"], dtc["memory"])
+                == (row["name"], row["addr"], row["memory"])
+            ]
+            counts = Counter(dtc["code"] for dtc in selected)
+            detail_deadline = min(deadline, time.monotonic() + 30.0)
+            job = DETAIL_JOBS.get(row["memory"])
+            for dtc in selected:
+                details: dict[str, Any] = {"state": "not-defined", "records": []}
+                dtc["details"] = details
+                if job is None or not backend.has_job(row["name"], job):
+                    continue
+                details["source"] = f"ECU job {job} ({row['name']})"
+                if counts[dtc["code"]] != 1:
+                    details["state"] = "ambiguous-record"
+                    continue
+                if self._cancelled.is_set():
+                    details["state"] = "not-attempted-cancelled"
+                    continue
+                if stream_failed or not self.connection.alive_ok:
+                    details["state"] = "not-attempted-connection"
+                    continue
+                remaining = detail_deadline - time.monotonic()
+                if remaining <= 0:
+                    details["state"] = "not-attempted-budget-exhausted"
+                    continue
+                self.progress.emit(
+                    f"Reading {row['name']}: {row['memory'].lower()} details {dtc['code']}..."
+                )
+                code = int(dtc["code"], 16)
+                # The job takes F_CODE; legacy information jobs find their own
+                # current position. Never derive F_POS from scan/list order.
+                run = backend.run(
+                    row["name"],
+                    row["addr"],
+                    job,
+                    str(code),
+                    timeout=remaining,
+                    cancelled=self._cancelled,
+                )
+                if not run.ok:
+                    details["state"] = run.state()
+                    stream_failed = run.state() in ("timeout", "failed", "cancelled")
+                    continue
+                try:
+                    dtc["details"] = decode_fault_details(run, code)
+                except ValueError:
+                    details["state"] = "invalid"
+                    logger.warning(
+                        "Invalid fault details address=%04X memory=%s code=%06X",
+                        row["addr"],
+                        row["memory"],
+                        code,
+                        exc_info=True,
+                    )
+            row["details"] = dict(Counter(dtc["details"]["state"] for dtc in selected))
 
 
 class DiagnosticClearWorker(CarWorker):

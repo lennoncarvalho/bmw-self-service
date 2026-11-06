@@ -152,6 +152,32 @@ Preserve raw status bytes. The engine indicator uses `19 02 0C` present/confirme
 faults (bits 0/3), not the old 4A69/F303 lamp-command readers. Those retained
 source records do not authorize restoring the superseded dashboard behavior.
 
+Recorded fault conditions are collected by `FS_LESEN_DETAIL` / `IS_LESEN_DETAIL`
+after the basic memory lists. Pass only decimal `F_CODE`; legacy information
+jobs resolve their own current position using `222000`, then `2220nn`. Never
+derive `F_POS` from displayed order. Standard fault jobs use `1906`/`1904` and
+optional `1909`; newer information jobs use `1919`/`1918` with memory selection
+`01`. Permanent-memory records do not borrow normal-memory details.
+Canonical anchors: BDC (`68d09353…bb94666`) detail offsets `0x35b4` / `0xc511e`;
+BDC_G05 (`03eda3f6…5794056`) `0x35bd` / `0xc5f84`. Full PRG hashes are in the
+generated bundle manifest. Job comments and decoder tables define these fields:
+`F_HFK` saturates at 255, `F_HLZ=-1` is unavailable, `F_UEBERLAUF` is 0/1,
+`F_UW_KM` is kilometres and `F_UW_ZEIT` seconds. Unavailable wire values are
+decoded to -1. Newer `*_SUPREME` strings retain unsigned/subsecond values that
+the older signed results cannot represent; synchronization is separate metadata.
+No shared calendar epoch or first/last ordering is established. Each emitted
+state survives, including later sets without repeated fault-code fields.
+`F_UW_ANZ` and `F_UWi_NR/TEXT/WERT/EINH` provide environment labels, already
+scaled values and units; keep their source language and typed raw results.
+The native `tabset` missing-table trap must set bit 10 so jobs can fall back from
+optional composite tables to simple environment decoders. Native examples:
+DSC_I1 DID `2800`, raw `78` → 12 V; KOMB25 `170C`, raw `2EE0` → 12000 mV.
+`app/fault_details.py` normalizes results; `DiagnosticReadWorker` preserves basic
+faults and independent detail failures. Each ECU/memory detail batch shares
+30 seconds within the original five-minute scan. Expansion renders settled
+values without I/O; absent definitions, ambiguity, cancellation and budget/stream
+failures remain explicit. Physical behavior remains unverified.
+
 ### CBS
 
 `app/cbs.py` uses exact generated definitions and native readers. Records are

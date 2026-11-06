@@ -65,8 +65,14 @@ edxn_error_t edxn_op_table(edxn_vm_t *vm, uint8_t op,
         vm->table_state.row = -1;
         if (idx >= 0 && idx == prev_idx && prev_src == vm->prg)
             vm->table_state.row = prev_row;
-        if (idx < 0)
+        if (idx < 0) {
             vm->flags.z = true;
+            /* Optional snapshot sub-tables are probed under the table-error
+               trap. A missing table must reach the job's jt 10 fallback. */
+            vm->error_trap_bit_nr = 10;
+            if (!(vm->error_trap_mask & (1u << 10)))
+                return EDXN_ERR_TABLE;
+        }
         return EDXN_OK;
     }
 
