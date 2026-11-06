@@ -58,7 +58,11 @@ class WelcomePage(QWidget):
 
     def _setup_ui(self) -> None:
         """Build the welcome screen and asynchronous adapter refresh controls."""
-        layout = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        content = QWidget()
+        content.setMaximumWidth(760)
+        outer.addWidget(content, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layout = QVBoxLayout(content)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(16)
 
@@ -100,6 +104,7 @@ class WelcomePage(QWidget):
 
         self.interface_combo = QComboBox()
         self.interface_combo.setMinimumWidth(400)
+        self.interface_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         adapter_row = QHBoxLayout()
         adapter_row.addWidget(self.interface_combo, 1)
         self.refresh_interfaces_btn = QPushButton("Refresh")
