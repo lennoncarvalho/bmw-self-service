@@ -3,7 +3,7 @@
 Displays fault codes with descriptions from DtcDatabase.
 Inline expand/collapse for detail view. Confirmation dialog for clears.
 
-Reference: docs/16-ui-spec.md Screen 5, docs/14-dtc-database.md
+Reference: plan.md#diagnostics-and-cbs and docs.md#diagnostic-text-database.
 """
 
 import logging

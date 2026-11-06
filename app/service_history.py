@@ -2,7 +2,7 @@
 
 The local records and recovered NBT add body have a seven-byte dealer slot.
 These codecs provide no vehicle read, authorization, baseline or write worker.
-Provenance: docs/evidence/task-b-history-deep-investigation.md.
+Provenance: docs.md#history-data.
 """
 
 import struct

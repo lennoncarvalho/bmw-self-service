@@ -2,7 +2,7 @@
 
 D-61/M4: where the identified variant's job file is available, its own jobs
 (FS_LESEN/IS_LESEN, FS_LOESCHEN/IS_LOESCHEN) are the primary source; otherwise
-the app's recovered requests (docs/evidence/task-b-recovered-contracts.md) are
+the app's recovered requests (docs.md#identity-configuration-and-diagnostics) are
 used. Every coverage row names its source. Clear jobs may only send the exact
 recovered clear request. Each ECU/memory has a 30-second absolute queued
 operation budget within a five-minute batch budget. No automatic retry follows a

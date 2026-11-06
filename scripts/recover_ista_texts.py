@@ -2,7 +2,7 @@
 
 Development-only: requires a SQLite Multiple Ciphers command-line reader with RC4
 support. The application uses the resulting ordinary SQLite asset and never opens
-this source database or requires the reader. See docs/evidence/source-database-access-20261104.md.
+this source database or requires the reader. See docs.md#diagnostic-text-database.
 """
 
 from __future__ import annotations

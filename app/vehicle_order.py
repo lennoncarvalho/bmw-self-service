@@ -1,6 +1,6 @@
 """Bounded packed vehicle-order decoding for the recovered gateway read.
 
-Wire and field provenance: docs/evidence/task-b-vehicle-order.md.
+Wire and field provenance: docs.md#identity-configuration-and-diagnostics.
 No production-date, exact model, transport or coding applicability is inferred.
 """
 

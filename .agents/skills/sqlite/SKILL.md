@@ -5,7 +5,7 @@ description: Inspect SQLite schemas, description lookup correctness and Python s
 
 # Embedded SQLite review
 
-Read `docs/14-dtc-database.md` and inspect the actual schema with a read-only
+Read `docs.md#diagnostic-text-database` and inspect the actual schema with a read-only
 connection. Use a properly escaped file URI and `mode=ro`; parameterize values.
 Do not rebuild, translate, migrate or change journal mode on the shipped asset
 as a side effect of a lookup or audit.

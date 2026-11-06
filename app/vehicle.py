@@ -1,6 +1,6 @@
 """Vehicle inventory and identification recovered from diagnostic reference artifacts.
 
-Contract/provenance: docs/evidence/task-b-recovered-contracts.md. These reads do
+Contract/provenance: docs.md#identity-configuration-and-diagnostics. These reads do
 not infer transport, software identity or write capability from a chassis hint.
 """
 
@@ -170,7 +170,7 @@ def decode_voltage(response: bytes) -> float:
 
 
 # Exact cluster/body definitions selected by F150 address-index (T_GRTB
-# ZuordnungsTabelleUDS); see docs/evidence/task-b-odometer-identity-doip.md.
+# ZuordnungsTabelleUDS); see docs.md#identity-configuration-and-diagnostics.
 CLUSTER_DISPLAYED = frozenset({"KOMBRDCT", "KOMB_G11", "KOMBSP18", "KOMBSP21"})  # 22 D122
 CLUSTER_ABSOLUTE = frozenset({"KOMB01", "KOMB25"})  # STATUS_GWSZ_ANZEIGE: D10D - D114
 BODY_COPY = frozenset({"BDC", "BDC_G11", "FEM_20"})  # STATUS_KILOMETERSTAND: 22 1700

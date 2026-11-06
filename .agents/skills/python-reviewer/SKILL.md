@@ -5,7 +5,7 @@ description: Review Python changes for correctness, resource ownership, concurre
 
 # Python correctness review
 
-Read `AGENTS.md` and the affected spec plus audit corrections. Start from the
+Read `AGENTS.md` and relevant `plan.md`/`docs.md` sections. Start from the
 actual diff and trace callers, results and failure paths before suggesting edits.
 
 Check concrete failure triggers: truncated/empty input before indexing, checked

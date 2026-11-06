@@ -3,7 +3,7 @@
 Displayed before connection. User selects series (F/G/U/I) and network
 interface, then clicks Connect.
 
-Reference: docs/16-ui-spec.md (Screen 1), docs/17-ui-decisions.md (Decisions 1-3)
+Reference: plan.md#connection-and-display and AGENTS.md#implementation-rules.
 """
 
 from PySide6.QtCore import Qt, Signal

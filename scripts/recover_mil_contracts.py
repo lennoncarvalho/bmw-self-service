@@ -1,7 +1,7 @@
 """Recover exact scalar MIL contracts and account for every catalogued engine.
 
 Development-only BEST table/job inspection; this script is not a runtime dependency.
-See docs/evidence/task-b-mil-breadth.md for the reviewed decoder fingerprints.
+See docs/evidence/task-b-mil-breadth.json for the reviewed decoder fingerprints.
 """
 
 import argparse
@@ -26,7 +26,7 @@ REVIEWED_JOBS = {
     "a71e62867f0b5a076d9ad05efce917dbca85c82482db2595d333194970e13789",
 }
 # Complete STATUS_BLOCK_LESEN listing shared by the five older engines; see
-# docs/evidence/task-b-mil-block-recovery.md for clear/define/read echo checks.
+# docs/evidence/task-b-mil-block-recovery.json for clear/define/read echo checks.
 REVIEWED_BLOCK_JOB = "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675"
 # The source application's fixed dynamic slot for engine sensor selection (k6.c0.m).
 BLOCK_SLOT = 0xF303

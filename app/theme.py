@@ -3,7 +3,7 @@
 Loads QSS from assets/theme.qss and applies it to a QApplication.
 Also provides color constants for use in Python code when QSS is insufficient.
 
-Reference: docs/17-ui-decisions.md (Decision #8: one QSS file, no per-widget styling)
+Reference: AGENTS.md#implementation-rules (one QSS file).
 """
 
 import os

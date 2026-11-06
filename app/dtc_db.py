@@ -3,7 +3,7 @@
 Read-only SQLite descriptions. 88,580 rows with indexed code lookup.
 English preferred, German fallback.
 
-Reference: docs/14-dtc-database.md
+Reference: docs.md#diagnostic-text-database
 """
 
 import logging

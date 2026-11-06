@@ -1,6 +1,6 @@
 """Development-only legacy sample codecs; never imported by the app.
 
-Retained to reproduce docs/evidence/task-b-history-deep-investigation.md.
+Retained to reproduce docs.md#history-data.
 The product uses JSON only; these helpers do not add file interchange support.
 """
 

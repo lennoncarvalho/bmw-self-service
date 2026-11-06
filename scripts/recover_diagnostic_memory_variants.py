@@ -2,7 +2,7 @@
 
 Development-only. Input: the static IS_LESEN / IS_LOESCHEN / FS_LESEN_PERMANENT
 scan of the 367 supplied PRGs whose names match catalogue UDS variants (see
-docs/evidence/task-b-diagnostic-breadth.md, G2/G7). Variants without a PRG are
+docs/evidence/task-b-diagnostic-breadth.json). Variants without a PRG are
 absent and keep the diagnostics application's uniform requests at runtime.
 """
 

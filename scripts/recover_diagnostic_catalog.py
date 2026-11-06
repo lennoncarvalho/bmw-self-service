@@ -1,7 +1,7 @@
 """Reproduce the generic diagnostic asset from the owner-supplied APK.
 
 Research-only tool; not imported by the application. Native key provenance and
-class/method anchors are in docs/evidence/task-b-recovered-contracts.md.
+class/method anchors are in docs.md#identity-configuration-and-diagnostics.
 """
 
 import argparse

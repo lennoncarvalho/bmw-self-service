@@ -3,7 +3,7 @@
 Implements the same interface as HSFZConnection but returns canned UDS
 responses from mock_data/ files instead of talking to a real car.
 
-Reference: SPEC-INFRASTRUCTURE.md Section 5 (Mock connection)
+Reference: plan.md#connection-and-display (explicit DEMO state).
 """
 
 import json

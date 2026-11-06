@@ -1,6 +1,6 @@
 """Condition Based Service read and reset (B-CBS-R / B-CBS-W, D-58).
 
-Contracts: docs/evidence/task-c-cbs-reliability.md and the retained CBS contracts.
+Contracts: docs.md#cbs and the retained CBS contracts.
 Generated definitions establish exact versions, primary roles and reset item
 identifiers. A readable observation alone never grants reset ownership.
 
