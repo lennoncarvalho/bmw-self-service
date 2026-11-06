@@ -4,7 +4,7 @@ Work in priority order. Update these steps in place when the implementation
 changes; remove completed detail instead of appending session or PR reports.
 Current source contracts and reproduction routes are in [docs.md](docs.md).
 
-## CBS — source implementation complete
+## CBS — complete for the current milestone
 
 Implemented: manual native reads, strict record accounting, software/identity
 preflight, exclusive foreground reset execution, durable journals, source-specific
@@ -15,10 +15,11 @@ the eight additional readers are outside the standard workflow's primary groups
 and remain observations. Same-item records from different primary ECUs retain
 explicit owner selection; duplicates within one ECU stay blocked. Compiler,
 native-worker, fragmented protocol-owner and Qt checks cover these boundaries.
-No source implementation step remains open for the current CBS milestone.
-- [ ] When a useful owner-car session is needed, compare actual identified CBS
-  owners/records with the vehicle display. A service reset requires a suitable
-  service and separate authorization; lack of that test does not block source work.
+The owner's F48 session confirmed KOMB25 reads and a brake-fluid reset with a
+checked application response and changed post-state. Captured distance sentinels
+are suppressed in both native-result and fallback decoding. Other source-supported
+owners retain offline verification; this is not universal vehicle acceptance.
+No implementation or owner-car acceptance step remains open for this milestone.
 
 ## Diagnostic details and clearing
 

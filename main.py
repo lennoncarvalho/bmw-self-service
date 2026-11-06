@@ -4,9 +4,9 @@ Cross-platform desktop app for BMW diagnostics, coding, and service history
 via ENET cable (F/G/U/I-series, 2011+).
 
 Usage:
-    python main.py              # normal mode (logs errors only)
-    python main.py --debug      # verbose mode (logs all UDS traffic)
-    python main.py --no-log     # no log file (console only)
+    python3 main.py             # normal console, full session log
+    python3 main.py --debug     # verbose console as well
+    python3 main.py --no-log    # no log file (console only)
 """
 
 import argparse
@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
         "--debug",
         "-d",
         action="store_true",
-        help="Enable verbose debug logging (UDS traffic, connection details)",
+        help="Show debug logging on the console (session files always retain full details)",
     )
     parser.add_argument(
         "--no-log",
@@ -57,8 +57,8 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
     """Configure logging.
 
     Console: always INFO level (DEBUG if --debug).
-    File: a unique UTC timestamp/PID session in ~/BMW-Tool/logs, 10 MiB
-    per segment plus five rotated segments. DEBUG only when --debug is selected.
+    File: a unique UTC timestamp/PID session in the app root's logs/ folder,
+    10 MiB per segment plus five rotated segments. Always retains DEBUG traffic.
     Existing session files are preserved. Returns the file path or None.
     """
     root = logging.getLogger()
@@ -77,14 +77,14 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
 
     log_path: Path | None = None
     if not no_log:
-        log_dir = Path.home() / "BMW-Tool" / "logs"
+        log_dir = Path(__file__).resolve().parent / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
         log_path = log_dir / f"session-{stamp}-{os.getpid()}.log"
         file_handler = logging.handlers.RotatingFileHandler(
             log_path, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
         )
-        file_handler.setLevel(logging.DEBUG if debug else logging.WARNING)
+        file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         root.addHandler(file_handler)
 
