@@ -20,20 +20,22 @@ No source implementation step remains open for the current CBS milestone.
   owners/records with the vehicle display. A service reset requires a suitable
   service and separate authorization; lack of that test does not block source work.
 
-## Diagnostic details and clearing — next implementation priority
+## Diagnostic details and clearing
 
-- [ ] Inspect fields already returned by `FS_`/`IS_` jobs before adding requests:
-  `app/ista_jobs.py:fault_records()` currently projects only a subset. Recover
-  separate detail/snapshot jobs only where needed from actual PRGs/callers.
-- [ ] Decode and display source-supported occurrence kilometre/time/date/counter
-  and environment values in expandable fault cards. Distinguish first/last event,
-  elapsed/operating time and calendar time; recover units/epochs/sentinels. Never
-  substitute current mileage, current clock or guessed record numbers.
+Implemented: native fault/information detail jobs selected by fault code,
+occurrence/healing counters, recorded mileage/time and source-scaled environment
+values in expandable cards. Preserve every recorded state, source units and raw
+results. Time counters have no invented calendar epoch or first/last labels.
+Basic lists settle before bounded details; failed details retain collected codes.
+Native optional-table trap handling supports environment decoding. Offline native,
+worker/error and Qt checks cover these boundaries; physical behavior is unverified.
+
 - [ ] Reconcile fault/information/permanent memory coverage and Clear All results
   for every in-scope branch, including local rejection, tainted stream, unattempted
   targets and faults remaining after reread. Keep untranslated codes visible.
-- [ ] Verify native result boundaries, partial scans, descriptions, pending/error
-  paths and actual Qt rendering/loading; review and run full preflight.
+- [ ] Verify the remaining clearing/coverage changes against native result
+  boundaries, partial scans, descriptions, pending/error paths and Qt flows;
+  review and run full preflight.
 
 ## Easy Coding readiness
 

@@ -2226,7 +2226,7 @@
     },
     "native/build/libedx.dylib": {
       "bytes": 189840,
-      "sha256": "ed3d4cd97c54b3b08c9922bf913352ff76f4b402a8d46ec0190a73dc5bce82f0"
+      "sha256": "a6fed6737d7ab1eb8abfa46420aaf6e03349b94232b8add14b7290ab679fa0a9"
     }
   },
   "schema_version": 1

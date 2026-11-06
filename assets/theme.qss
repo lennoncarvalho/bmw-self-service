@@ -380,6 +380,8 @@ QLabel#milStatus {
 QLabel#milStatus[milState="on"] { color: #ff6666; background: #382020; }
 QLabel#milStatus[milState="off"] { color: #66cc88; background: #203328; }
 QLabel#overviewCaption { color: #a0a0a0; font-size: 12px; }
+QLabel#faultDetailHeading { font-size: 12px; font-weight: bold; color: #e0e0e0; }
+QLabel#faultDetailValue { font-size: 12px; color: #a0a0a0; }
 
 /* Foreground loading blocks interaction with the underlying pages. */
 QFrame#loadingBackdrop {

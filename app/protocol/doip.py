@@ -88,11 +88,12 @@ class DoipAdapter:
             elif isinstance(message, DiagnosticMessageNegativeAcknowledgement):
                 if self._addressed(message, ecu):
                     raise ProtocolFailure(FailureKind.TRANSPORT_REJECTED)
-            elif isinstance(message, DiagnosticMessagePositiveAcknowledgement):
-                if self._addressed(message, ecu):
-                    if message.ack_code != 0:
-                        raise ConnectionError("Invalid diagnostic acknowledgement")
-                    return
+            elif isinstance(message, DiagnosticMessagePositiveAcknowledgement) and self._addressed(
+                message, ecu
+            ):
+                if message.ack_code != 0:
+                    raise ConnectionError("Invalid diagnostic acknowledgement")
+                return
 
     def receive_diagnostic(self, ecu: EcuIdentity, context: OperationContext) -> bytes:
         """Return only the addressed ECU's payload within the original deadline."""
