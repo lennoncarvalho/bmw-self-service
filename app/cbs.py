@@ -39,6 +39,7 @@ MAX_RECORD_BYTES = 1024 * 1024
 SETTLE_SECONDS = 5.0
 RESET_STATES = frozenset({"accepted", "rejected", "uncertain", "invalid", "changed", "failed"})
 FINAL_STATES = frozenset({"verified", "response-confirmed", "rejected", "uncertain", "not-started"})
+REMAINING_SENTINELS = {0x7FFF: "no information", -0x8000: "not relevant"}
 # v6 CBS_RESET_DETAIL_LESEN reasons (KOMBRDCT TAB_RUECK_GRUND, see the contract).
 DETAIL_REASONS = {
     0x00: "no reason recorded",
@@ -96,9 +97,7 @@ def decode_record(record: bytes, version: str) -> dict[str, Any]:
         "forecast_months": None,
         "notes": [],
     }
-    sentinel = ({0x7FFF: "no information", -0x8000: "not relevant"} if version != "5" else {}).get(
-        remaining
-    )
+    sentinel = REMAINING_SENTINELS.get(remaining)
     if sentinel:
         item["notes"].append(f"Remaining: {sentinel}")
     elif version == "6.3" and remaining < 0:
@@ -268,7 +267,12 @@ def job_record(values: dict[str, Any], version: str) -> dict[str, Any]:
     unit = _JOB_UNITS.get(code) if code is not None else None
     if code is None:
         unit = _JOB_UNIT_TEXTS.get(_job_text(values, "ST_UN_CBS_TEXT"))
-    if remaining is None:
+    # Older readers expose sentinel values as ordinary signed distances; the
+    # source presentation layer suppresses them independently of the job's unit.
+    sentinel = REMAINING_SENTINELS.get(remaining) if remaining is not None else None
+    if sentinel:
+        notes.append(f"Remaining: {sentinel}")
+    elif remaining is None:
         notes.append("Remaining value not reported by the job")
     elif remaining_unit not in _JOB_REMAINING_UNITS:
         notes.append(f"Remaining: {remaining_unit or 'no unit'} (ECU job text)")
