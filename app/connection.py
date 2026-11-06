@@ -14,12 +14,14 @@ Reference: docs.md#protocol-and-execution, docs.md#protocol-and-execution
 """
 
 import ipaddress
+import json
 import logging
 import os
 import platform
 import re
 import subprocess
 from dataclasses import dataclass
+from pathlib import Path
 
 from PySide6.QtNetwork import QNetworkInterface
 
@@ -179,6 +181,51 @@ def _macos_physical_interfaces(registry: str) -> set[str]:
     return result
 
 
+def _wifi_is_physical(interface: QNetworkInterface) -> bool:
+    """Validate non-macOS Wi-Fi against native hardware metadata, failing closed.
+
+    Linux sysfs identifies hardware-backed device paths. Windows' physical
+    adapter inventory is matched by interface index, never a name or MAC guess.
+    Call off the GUI thread; the Windows read has a two-second overall timeout.
+    """
+    try:
+        system = platform.system()
+        if system == "Linux":
+            path = Path("/sys/class/net") / interface.name()
+            return (
+                path.joinpath("device").exists()
+                and "virtual" not in path.resolve(strict=True).parts
+            )
+        if system == "Windows":
+            powershell = (
+                Path(os.environ.get("SYSTEMROOT", r"C:\Windows"))
+                / "System32/WindowsPowerShell/v1.0/powershell.exe"
+            )
+            output = subprocess.run(
+                [
+                    str(powershell),
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    "Get-NetAdapter -Physical -IncludeHidden -ErrorAction Stop | "
+                    "Select-Object -ExpandProperty ifIndex | ConvertTo-Json -Compress",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+                check=True,
+            ).stdout
+            indices = json.loads(output) if output.strip() else []
+            if not isinstance(indices, list):
+                indices = [indices]
+            return interface.index() in [index for index in indices if type(index) is int]
+    except (OSError, ValueError, subprocess.SubprocessError):
+        logger.warning(
+            "Physical Wi-Fi metadata unavailable for %s", interface.name(), exc_info=True
+        )
+    return False
+
+
 def list_interfaces_detailed() -> list[_InterfaceInfo]:
     """List physical Ethernet/Wi-Fi candidates; call off the GUI thread.
 
@@ -200,6 +247,12 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
             continue
         name = interface.name()
         if macos and name not in (physical or set()):
+            continue
+        if (
+            not macos
+            and interface.type() == QNetworkInterface.InterfaceType.Wifi
+            and not _wifi_is_physical(interface)
+        ):
             continue
         addresses = []
         for entry in interface.addressEntries():
@@ -256,6 +309,10 @@ def ethernet_ipv4(name: str) -> tuple[str, str]:
             raise ConnectionError(
                 "Select a physical network adapter with one configured IPv4 address"
             )
+    elif interface.type() == QNetworkInterface.InterfaceType.Wifi and not _wifi_is_physical(
+        interface
+    ):
+        raise ConnectionError("Select a physical network adapter with one configured IPv4 address")
     addresses = []
     for entry in interface.addressEntries():
         try:

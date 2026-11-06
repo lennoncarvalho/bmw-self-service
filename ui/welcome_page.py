@@ -6,9 +6,11 @@ interface, then clicks Connect.
 Reference: plan.md#connection-and-display and AGENTS.md#implementation-rules.
 """
 
+import logging
+from threading import Event
 from typing import cast
 
-from PySide6.QtCore import Qt, QTimer, Signal, Slot
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
@@ -19,6 +21,8 @@ from PySide6.QtWidgets import (
 
 from app.connection import _InterfaceInfo, list_interfaces_detailed
 from app.worker import ConnectWorker
+
+logger = logging.getLogger(__name__)
 
 
 class WelcomePage(QWidget):
@@ -54,6 +58,8 @@ class WelcomePage(QWidget):
         self._worker: ConnectWorker | None = None
         self._saved_interface = ""
         self._adapters: list[_InterfaceInfo] | None = None
+        self._inventory_logged = False
+        self._inventory_error_pending = False
         self._adapter_polling = True
         self._adapter_timer = QTimer(self)
         self._adapter_timer.setInterval(3000)
@@ -110,6 +116,7 @@ class WelcomePage(QWidget):
         self.interface_combo = QComboBox()
         self.interface_combo.setMinimumWidth(400)
         self.interface_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.interface_combo.view().installEventFilter(self)
         self.interface_layout.addWidget(self.interface_combo)
         self._populate_interfaces()
         self.interface_combo.currentIndexChanged.connect(self._on_choices_changed)
@@ -145,12 +152,38 @@ class WelcomePage(QWidget):
             return
         if not self.interface_combo.count():
             self.interface_combo.addItem("Loading network adapters…", "")
-        worker = ConnectWorker(lambda _cancelled: list_interfaces_detailed(), "")
+        worker = ConnectWorker(self._load_interfaces, "")
         self._worker = worker
         worker.result_ready.connect(self._on_interfaces_loaded)
         worker.error.connect(self._on_interfaces_error)
         worker.finished.connect(self._on_interfaces_finished)
         worker.start()
+
+    def _load_interfaces(self, _cancelled: Event) -> list[_InterfaceInfo]:
+        """Collect and log initial adapter metadata in the worker without accessing widgets."""
+        adapters = list_interfaces_detailed()
+        if not self._inventory_logged:
+            self._inventory_logged = True
+            for interface in adapters:
+                logger.info(
+                    "Adapter candidate=%s IPv4=%s MAC=%s description=%s",
+                    interface.name,
+                    interface.ip,
+                    interface.mac,
+                    interface.description,
+                )
+            try:
+                import netifaces
+
+                for interface in adapters:
+                    logger.debug(
+                        "Adapter %s IPv4 configuration=%s",
+                        interface.name,
+                        netifaces.ifaddresses(interface.name).get(netifaces.AF_INET, []),
+                    )
+            except Exception:
+                logger.warning("Interface configuration logging failed", exc_info=True)
+        return adapters
 
     @Slot(object)
     def _on_interfaces_loaded(self, result: object) -> None:
@@ -164,6 +197,7 @@ class WelcomePage(QWidget):
             or not self._adapter_polling
         ):
             return
+        self._inventory_error_pending = False
         adapters = cast(list[_InterfaceInfo], result)
         if adapters == self._adapters or self.interface_combo.view().isVisible():
             return
@@ -200,6 +234,25 @@ class WelcomePage(QWidget):
             or not self._adapter_polling
         ):
             return
+        self._inventory_error_pending = True
+        self._apply_inventory_error()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        """Apply a pending inventory failure after the popup has finished closing."""
+        if watched is self.interface_combo.view() and event.type() == QEvent.Type.Hide:
+            QTimer.singleShot(0, self._apply_inventory_error)
+        return super().eventFilter(watched, event)
+
+    @Slot()
+    def _apply_inventory_error(self) -> None:
+        """Keep open choices intact; clear them only for a still-current inventory failure."""
+        if (
+            not self._inventory_error_pending
+            or not self._adapter_polling
+            or self.interface_combo.view().isVisible()
+        ):
+            return
+        self._inventory_error_pending = False
         self._adapters = None
         self.interface_combo.clear()
         self.interface_combo.addItem("Network adapter inventory unavailable", "")
@@ -225,6 +278,7 @@ class WelcomePage(QWidget):
             self._populate_interfaces()
         else:
             self._adapter_timer.stop()
+            self._inventory_error_pending = False
             if self._worker is not None:
                 self._worker.stop()
 
