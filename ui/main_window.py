@@ -551,6 +551,7 @@ class MainWindow(QMainWindow):
         self._async_connect(do_connect, series)
 
     def _async_connect(self, connect_fn: Callable[[Event], object], series: str) -> None:
+        self.welcome_page.set_adapter_polling(False)
         worker = ConnectWorker(connect_fn, series)
         self._worker = worker
         worker.result_ready.connect(self._on_worker_result)
@@ -932,6 +933,7 @@ class MainWindow(QMainWindow):
         self._worker = None
         if isinstance(worker, QThread):
             self._retire_worker(worker)
+        self.welcome_page.set_adapter_polling(True)
         self.hide_spinner()
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Disconnected")
@@ -1040,6 +1042,7 @@ class MainWindow(QMainWindow):
             self._connection = None
 
         self._connected = False
+        self.welcome_page.set_adapter_polling(not self._closing)
 
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Disconnected")

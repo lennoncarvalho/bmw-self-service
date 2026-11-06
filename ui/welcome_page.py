@@ -8,10 +8,9 @@ Reference: plan.md#connection-and-display and AGENTS.md#implementation-rules.
 
 from typing import cast
 
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import Qt, QTimer, Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -53,11 +52,17 @@ class WelcomePage(QWidget):
         super().__init__(parent)
         self._demo_mode = False
         self._worker: ConnectWorker | None = None
-        self._selected_interface = ""
+        self._saved_interface = ""
+        self._adapters: list[_InterfaceInfo] | None = None
+        self._adapter_polling = True
+        self._adapter_timer = QTimer(self)
+        self._adapter_timer.setInterval(3000)
+        self._adapter_timer.timeout.connect(self._populate_interfaces)
         self._setup_ui()
+        self._adapter_timer.start()
 
     def _setup_ui(self) -> None:
-        """Build the welcome screen and asynchronous adapter refresh controls."""
+        """Build the compact welcome screen and asynchronous adapter picker."""
         outer = QVBoxLayout(self)
         content = QWidget()
         content.setMaximumWidth(760)
@@ -105,12 +110,7 @@ class WelcomePage(QWidget):
         self.interface_combo = QComboBox()
         self.interface_combo.setMinimumWidth(400)
         self.interface_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        adapter_row = QHBoxLayout()
-        adapter_row.addWidget(self.interface_combo, 1)
-        self.refresh_interfaces_btn = QPushButton("Refresh")
-        self.refresh_interfaces_btn.clicked.connect(self._populate_interfaces)
-        adapter_row.addWidget(self.refresh_interfaces_btn)
-        self.interface_layout.addLayout(adapter_row)
+        self.interface_layout.addWidget(self.interface_combo)
         self._populate_interfaces()
         self.interface_combo.currentIndexChanged.connect(self._on_choices_changed)
         layout.addWidget(self.interface_container)
@@ -141,13 +141,10 @@ class WelcomePage(QWidget):
     @Slot()
     def _populate_interfaces(self) -> None:
         """Refresh bounded native metadata in the existing background-worker lifecycle."""
-        if self._worker is not None:
+        if not self._adapter_polling or self._worker is not None:
             return
-        self._selected_interface = self.interface_combo.currentData() or ""
-        self.interface_combo.clear()
-        self.interface_combo.addItem("Loading network adapters…", "")
-        self.interface_combo.setEnabled(False)
-        self.refresh_interfaces_btn.setEnabled(False)
+        if not self.interface_combo.count():
+            self.interface_combo.addItem("Loading network adapters…", "")
         worker = ConnectWorker(lambda _cancelled: list_interfaces_detailed(), "")
         self._worker = worker
         worker.result_ready.connect(self._on_interfaces_loaded)
@@ -163,30 +160,47 @@ class WelcomePage(QWidget):
             not isinstance(worker, ConnectWorker)
             or worker is not self._worker
             or worker.property("retired_by_main")
+            or worker.cancelled
+            or not self._adapter_polling
         ):
             return
         adapters = cast(list[_InterfaceInfo], result)
+        if adapters == self._adapters or self.interface_combo.view().isVisible():
+            return
+        selected = (
+            self._saved_interface if self._demo_mode else self.interface_combo.currentData() or ""
+        )
+        self._adapters = adapters
         self.interface_combo.clear()
-        self.interface_combo.addItem("-- Select interface --", "")
+        self.interface_combo.addItem(
+            "-- Select interface --" if adapters else "No physical network adapters found", ""
+        )
         for adapter in adapters:
-            self.interface_combo.addItem(
-                adapter.display_text(), adapter.name if adapter.wired else ""
-            )
+            self.interface_combo.addItem(adapter.display_text(), adapter.name)
             self.interface_combo.setItemData(
                 self.interface_combo.count() - 1,
-                f"Interface: {adapter.name}"
-                + ("" if adapter.wired else "\nENET connections require a wired Ethernet adapter."),
+                f"Interface: {adapter.name}",
                 Qt.ItemDataRole.ToolTipRole,
             )
-        index = self.interface_combo.findData(self._selected_interface)
+        index = self.interface_combo.findData(selected)
         if index > 0 and not self._demo_mode:
             self.interface_combo.setCurrentIndex(index)
-        elif index > 0:
-            self._saved_interface_idx = index
+        elif self._demo_mode:
+            self._saved_interface = selected if index > 0 else ""
 
     @Slot(str)
     def _on_interfaces_error(self, _message: str) -> None:
         """Keep an inventory failure explicit without offering guessed interface IDs."""
+        worker = self.sender()
+        if (
+            not isinstance(worker, ConnectWorker)
+            or worker is not self._worker
+            or worker.cancelled
+            or worker.property("retired_by_main")
+            or not self._adapter_polling
+        ):
+            return
+        self._adapters = None
         self.interface_combo.clear()
         self.interface_combo.addItem("Network adapter inventory unavailable", "")
 
@@ -196,23 +210,35 @@ class WelcomePage(QWidget):
         worker = self.sender()
         if worker is self._worker:
             self._worker = None
-            self.interface_combo.setEnabled(True)
-            self.refresh_interfaces_btn.setEnabled(True)
+            if self._adapter_polling and isinstance(worker, ConnectWorker) and worker.cancelled:
+                self._populate_interfaces()
         if isinstance(worker, ConnectWorker) and not worker.property("retired_by_main"):
             worker.deleteLater()
+
+    def set_adapter_polling(self, enabled: bool) -> None:
+        """Poll only while disconnected, ignoring any result from a paused refresh."""
+        if enabled == self._adapter_polling:
+            return
+        self._adapter_polling = enabled
+        if enabled:
+            self._adapter_timer.start()
+            self._populate_interfaces()
+        else:
+            self._adapter_timer.stop()
+            if self._worker is not None:
+                self._worker.stop()
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled
         self.interface_container.setVisible(not enabled)
         if enabled:
             # Remember current selection for restore
-            self._saved_interface_idx = self.interface_combo.currentIndex()
+            self._saved_interface = self.interface_combo.currentData() or ""
             self.interface_combo.setCurrentIndex(0)
         else:
             # Restore previous selection if it was saved
-            saved = getattr(self, "_saved_interface_idx", 0)
-            if saved > 0 and saved < self.interface_combo.count():
-                self.interface_combo.setCurrentIndex(saved)
+            saved = self.interface_combo.findData(self._saved_interface)
+            self.interface_combo.setCurrentIndex(saved if saved > 0 else 0)
         self._on_choices_changed()
 
     def _on_choices_changed(self):

@@ -1,7 +1,7 @@
 """ENET cable detection and car connection (HSFZ + DoIP transport).
 
 Provides:
-  - list_interfaces() — enumerate native Ethernet interface types
+  - list_interfaces() — enumerate physical network adapters
   - discover_zgw() — UDP vehicle discovery
   - start_dhcp_server() / stop_dhcp_server() — DHCP fallback
   - HSFZConnection — HSFZ transport (TCP 6801)
@@ -73,8 +73,8 @@ DOIP_TESTER_LOGICAL_ADDR = 0x0E00
 
 
 def list_interfaces() -> list[str]:
-    """Return native names of Ethernet candidates, without Wi-Fi/virtual fallback."""
-    return sorted(info.name for info in list_interfaces_detailed() if info.wired)
+    """Return native names of physical Ethernet/Wi-Fi candidates."""
+    return sorted(info.name for info in list_interfaces_detailed())
 
 
 # ── Rich interface info for UI ────────────────────────────────────────────
@@ -90,11 +90,9 @@ class _InterfaceInfo:
     connected: bool | None
     description: str
     wired: bool = True
-    device_kind: str = ""
 
     def display_text(self) -> str:
         """Rich one-line label for use in a QComboBox."""
-        kind = self.device_kind or ("Wired" if self.wired else "Wireless")
         state = (
             "connected"
             if self.connected is True
@@ -102,29 +100,24 @@ class _InterfaceInfo:
             if self.connected is False
             else "link status unavailable"
         )
+        kind = "Wired" if self.wired else "Wireless"
         return f"{kind} — {self.description} ({state}) — {self.ip or 'No IPv4 address'}"
 
-    def sort_key(self) -> tuple[bool, bool, bool, str, str]:
-        """Put Ethernet hardware before wireless and identified system-network ports."""
-        system = self.device_kind in ("Internal USB networking", "Thunderbolt networking")
-        return (
-            system,
-            not self.wired,
-            self.connected is not True,
-            self.description.casefold(),
-            self.name,
-        )
+    def sort_key(self) -> tuple[bool, bool, str, str]:
+        """Show wired hardware first, then connected links and friendly names."""
+        return (not self.wired, self.connected is not True, self.description.casefold(), self.name)
 
 
-def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool], dict[str, str]]:
+def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool], set[str] | None]:
     """Read hardware names, carrier and device ancestry without configuring networking.
 
     Run off the GUI thread. Each local command has a two-second limit; failure
-    retains the Qt inventory and leaves unavailable carrier status explicit.
+    leaves unavailable carrier status explicit. Missing driver inventory cannot
+    establish which interfaces are physical Ethernet adapters.
     """
     names: dict[str, str] = {}
     links: dict[str, bool] = {}
-    kinds: dict[str, str] = {}
+    physical: set[str] | None = None
     for command in (
         ["/usr/sbin/networksetup", "-listallhardwareports"],
         ["/sbin/ifconfig", "-a"],
@@ -152,17 +145,19 @@ def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool], dict[s
                 elif name and line.strip() in ("status: active", "status: inactive"):
                     links[name] = line.strip() == "status: active"
         else:
-            kinds = _macos_interface_kinds(output)
-    return names, links, kinds
+            physical = _macos_physical_interfaces(output)
+    return names, links, physical
 
 
-def _macos_interface_kinds(registry: str) -> dict[str, str]:
-    """Classify only interfaces whose native driver ancestry identifies their role.
+def _macos_physical_interfaces(registry: str) -> set[str]:
+    """Identify hardware-backed network ports from native USB/PCI driver ancestry.
 
     A Thunderbolt-to-Ethernet dock is not Thunderbolt IP networking: only the
-    dedicated IP-port driver gets that label. Unknown driver trees stay generic.
+    dedicated IP-port driver and internal USB device-mode endpoints are excluded.
+    Unknown driver trees do not establish a physical adapter. Qt separately
+    distinguishes Ethernet from Wi-Fi for each returned interface.
     """
-    result: dict[str, str] = {}
+    result: set[str] = set()
     ancestors: list[tuple[int, str]] = []
     for line in registry.splitlines():
         match = re.match(r"([ |]*)\+-o (.+?)  <class ([^,>]+)", line)
@@ -175,36 +170,36 @@ def _macos_interface_kinds(registry: str) -> dict[str, str]:
         if re.fullmatch(r"en[0-9]+", match[2]) is None:
             continue
         classes = {kind for _, kind in ancestors}
-        if any(kind.startswith("AppleUSBDeviceNCM") for kind in classes):
-            result[match[2]] = "Internal USB networking"
-        elif "AppleThunderboltIPPort" in classes:
-            result[match[2]] = "Thunderbolt networking"
-        elif "IOUSBHostDevice" in classes:
-            result[match[2]] = "USB Ethernet"
+        if any(kind.startswith("AppleUSBDeviceNCM") for kind in classes) or (
+            "AppleThunderboltIPPort" in classes
+        ):
+            continue
+        if classes & {"IOUSBHostDevice", "IOPCIDevice"}:
+            result.add(match[2])
     return result
 
 
 def list_interfaces_detailed() -> list[_InterfaceInfo]:
-    """List native wired/wireless adapters for display; call off the GUI thread.
+    """List physical Ethernet/Wi-Fi candidates; call off the GUI thread.
 
     Qt reports interface type across platforms. Neither an enX name nor an IP
     address identifies Ethernet. macOS supplies friendly hardware-port names and
-    explicit carrier status separately from IPv4 configuration. Wireless rows
-    are informational; discovery still requires a native Ethernet interface.
+    explicit carrier status separately from IPv4 configuration. Its driver tree
+    must establish a physical adapter before an interface is offered.
     """
     results: list[_InterfaceInfo] = []
     macos = platform.system() == "Darwin"
-    names, links, kinds = _macos_interface_metadata() if macos else ({}, {}, {})
+    names, links, physical = _macos_interface_metadata() if macos else ({}, {}, None)
+    if macos and physical is None:
+        raise ConnectionError("Physical network adapter inventory unavailable")
     for interface in QNetworkInterface.allInterfaces():
-        wired = interface.type() == QNetworkInterface.InterfaceType.Ethernet
-        wireless = interface.type() == QNetworkInterface.InterfaceType.Wifi
-        if not (wired or wireless):
+        if interface.type() not in (
+            QNetworkInterface.InterfaceType.Ethernet,
+            QNetworkInterface.InterfaceType.Wifi,
+        ):
             continue
         name = interface.name()
-        if macos and (
-            name.startswith("anpi")
-            or (wireless and name not in names and not name.startswith("en"))
-        ):
+        if macos and name not in (physical or set()):
             continue
         addresses = []
         for entry in interface.addressEntries():
@@ -235,26 +230,32 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
                     )
                 ),
                 description=description,
-                wired=wired,
-                device_kind=kinds.get(name, "") if wired else "",
+                wired=interface.type() == QNetworkInterface.InterfaceType.Ethernet,
             )
         )
     return sorted(results, key=lambda candidate: candidate.sort_key())
 
 
 def ethernet_ipv4(name: str) -> tuple[str, str]:
-    """Validate one native Ethernet interface and return its sole IPv4/netmask.
+    """Validate a physical Ethernet/Wi-Fi adapter and return its sole IPv4/netmask.
 
     Recheck at discovery time: selection may outlive an adapter or configuration
-    change. A wireless/virtual interface never becomes an ENET candidate by name.
+    change. A virtual interface never becomes a candidate by name or IP alone.
     """
     interface = QNetworkInterface.interfaceFromName(name)
     if (
         not interface.isValid()
-        or interface.type() != QNetworkInterface.InterfaceType.Ethernet
+        or interface.type()
+        not in (QNetworkInterface.InterfaceType.Ethernet, QNetworkInterface.InterfaceType.Wifi)
         or (platform.system() == "Darwin" and name.startswith("anpi"))
     ):
-        raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
+        raise ConnectionError("Select a physical network adapter with one configured IPv4 address")
+    if platform.system() == "Darwin":
+        _, _, physical = _macos_interface_metadata()
+        if physical is None or name not in physical:
+            raise ConnectionError(
+                "Select a physical network adapter with one configured IPv4 address"
+            )
     addresses = []
     for entry in interface.addressEntries():
         try:
@@ -265,11 +266,13 @@ def ethernet_ipv4(name: str) -> tuple[str, str]:
             continue
         mask = entry.netmask().toString()
         if not mask:
-            raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
+            raise ConnectionError(
+                "Select a physical network adapter with one configured IPv4 address"
+            )
         ipaddress.IPv4Interface(f"{address}/{mask}")
         addresses.append((str(address), mask))
     if len(addresses) != 1:
-        raise ConnectionError("Select an Ethernet interface with one configured IPv4 address")
+        raise ConnectionError("Select a physical network adapter with one configured IPv4 address")
     return addresses[0]
 
 
