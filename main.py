@@ -118,7 +118,7 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
 
 
 def log_startup(log: logging.Logger) -> None:
-    """Emit startup diagnostics at INFO level."""
+    """Log environment diagnostics; the welcome worker logs adapter inventory."""
     log.info("=== BMW Self Service starting ===")
     log.info(
         "Python %s on %s %s",
@@ -148,27 +148,6 @@ def log_startup(log: logging.Logger) -> None:
         log.info("PySide6 %s / Qt %s", PySide6.__version__, qVersion())
     except ImportError:
         log.warning("PySide6 version unknown")
-
-    try:
-        import netifaces
-
-        from app.connection import list_interfaces_detailed
-
-        for interface in list_interfaces_detailed():
-            log.info(
-                "Adapter candidate=%s IPv4=%s MAC=%s description=%s",
-                interface.name,
-                interface.ip,
-                interface.mac,
-                interface.description,
-            )
-            log.debug(
-                "Adapter %s IPv4 configuration=%s",
-                interface.name,
-                netifaces.ifaddresses(interface.name).get(netifaces.AF_INET, []),
-            )
-    except Exception as e:
-        log.warning("Interface scan failed: %s", e)
 
 
 def main() -> None:

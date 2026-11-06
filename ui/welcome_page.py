@@ -6,7 +6,11 @@ interface, then clicks Connect.
 Reference: plan.md#connection-and-display and AGENTS.md#implementation-rules.
 """
 
-from PySide6.QtCore import Qt, Signal
+import logging
+from threading import Event
+from typing import cast
+
+from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
     QLabel,
@@ -15,7 +19,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.connection import list_interfaces_detailed
+from app.connection import _InterfaceInfo, list_interfaces_detailed
+from app.worker import ConnectWorker
+
+logger = logging.getLogger(__name__)
 
 
 class WelcomePage(QWidget):
@@ -44,13 +51,29 @@ class WelcomePage(QWidget):
         "Connect the ENET cable BEFORE turning on ignition",
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Create the connection choices and start a bounded adapter inventory."""
         super().__init__(parent)
         self._demo_mode = False
+        self._worker: ConnectWorker | None = None
+        self._saved_interface = ""
+        self._adapters: list[_InterfaceInfo] | None = None
+        self._inventory_logged = False
+        self._inventory_error_pending = False
+        self._adapter_polling = True
+        self._adapter_timer = QTimer(self)
+        self._adapter_timer.setInterval(3000)
+        self._adapter_timer.timeout.connect(self._populate_interfaces)
         self._setup_ui()
+        self._adapter_timer.start()
 
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
+    def _setup_ui(self) -> None:
+        """Build the compact welcome screen and asynchronous adapter picker."""
+        outer = QVBoxLayout(self)
+        content = QWidget()
+        content.setMaximumWidth(760)
+        outer.addWidget(content, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layout = QVBoxLayout(content)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setSpacing(16)
 
@@ -92,9 +115,11 @@ class WelcomePage(QWidget):
 
         self.interface_combo = QComboBox()
         self.interface_combo.setMinimumWidth(400)
+        self.interface_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.interface_combo.view().installEventFilter(self)
+        self.interface_layout.addWidget(self.interface_combo)
         self._populate_interfaces()
         self.interface_combo.currentIndexChanged.connect(self._on_choices_changed)
-        self.interface_layout.addWidget(self.interface_combo)
         layout.addWidget(self.interface_container)
         layout.addSpacing(24)
 
@@ -120,42 +145,154 @@ class WelcomePage(QWidget):
 
         layout.addStretch()
 
-    def _populate_interfaces(self):
-        """Fill the interface dropdown with connected-first adapter info."""
+    @Slot()
+    def _populate_interfaces(self) -> None:
+        """Refresh bounded native metadata in the existing background-worker lifecycle."""
+        if not self._adapter_polling or self._worker is not None:
+            return
+        if not self.interface_combo.count():
+            self.interface_combo.addItem("Loading network adapters…", "")
+        worker = ConnectWorker(self._load_interfaces, "")
+        self._worker = worker
+        worker.result_ready.connect(self._on_interfaces_loaded)
+        worker.error.connect(self._on_interfaces_error)
+        worker.finished.connect(self._on_interfaces_finished)
+        worker.start()
+
+    def _load_interfaces(self, _cancelled: Event) -> list[_InterfaceInfo]:
+        """Collect and log initial adapter metadata in the worker without accessing widgets."""
+        adapters = list_interfaces_detailed()
+        if not self._inventory_logged:
+            self._inventory_logged = True
+            for interface in adapters:
+                logger.info(
+                    "Adapter candidate=%s IPv4=%s MAC=%s description=%s",
+                    interface.name,
+                    interface.ip,
+                    interface.mac,
+                    interface.description,
+                )
+            try:
+                import netifaces
+
+                for interface in adapters:
+                    logger.debug(
+                        "Adapter %s IPv4 configuration=%s",
+                        interface.name,
+                        netifaces.ifaddresses(interface.name).get(netifaces.AF_INET, []),
+                    )
+            except Exception:
+                logger.warning("Interface configuration logging failed", exc_info=True)
+        return adapters
+
+    @Slot(object)
+    def _on_interfaces_loaded(self, result: object) -> None:
+        """Display friendly labels while retaining the wired system ID as item data."""
+        worker = self.sender()
+        if (
+            not isinstance(worker, ConnectWorker)
+            or worker is not self._worker
+            or worker.property("retired_by_main")
+            or worker.cancelled
+            or not self._adapter_polling
+        ):
+            return
+        self._inventory_error_pending = False
+        adapters = cast(list[_InterfaceInfo], result)
+        if adapters == self._adapters or self.interface_combo.view().isVisible():
+            return
+        selected = (
+            self._saved_interface if self._demo_mode else self.interface_combo.currentData() or ""
+        )
+        self._adapters = adapters
         self.interface_combo.clear()
-        self.interface_combo.addItem("-- Select interface --", "")
+        self.interface_combo.addItem(
+            "-- Select interface --" if adapters else "No physical network adapters found", ""
+        )
+        for adapter in adapters:
+            self.interface_combo.addItem(adapter.display_text(), adapter.name)
+            self.interface_combo.setItemData(
+                self.interface_combo.count() - 1,
+                f"Interface: {adapter.name}",
+                Qt.ItemDataRole.ToolTipRole,
+            )
+        index = self.interface_combo.findData(selected)
+        if index > 0 and not self._demo_mode:
+            self.interface_combo.setCurrentIndex(index)
+        elif self._demo_mode:
+            self._saved_interface = selected if index > 0 else ""
 
-        try:
-            adapters = list_interfaces_detailed()
+    @Slot(str)
+    def _on_interfaces_error(self, _message: str) -> None:
+        """Keep an inventory failure explicit without offering guessed interface IDs."""
+        worker = self.sender()
+        if (
+            not isinstance(worker, ConnectWorker)
+            or worker is not self._worker
+            or worker.cancelled
+            or worker.property("retired_by_main")
+            or not self._adapter_polling
+        ):
+            return
+        self._inventory_error_pending = True
+        self._apply_inventory_error()
 
-            # Split into connected / disconnected groups
-            connected = [a for a in adapters if a.connected]
-            disconnected = [a for a in adapters if not a.connected]
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        """Apply a pending inventory failure after the popup has finished closing."""
+        if watched is self.interface_combo.view() and event.type() == QEvent.Type.Hide:
+            QTimer.singleShot(0, self._apply_inventory_error)
+        return super().eventFilter(watched, event)
 
-            for adapter in connected:
-                self.interface_combo.addItem(adapter.display_text(), adapter.name)
+    @Slot()
+    def _apply_inventory_error(self) -> None:
+        """Keep open choices intact; clear them only for a still-current inventory failure."""
+        if (
+            not self._inventory_error_pending
+            or not self._adapter_polling
+            or self.interface_combo.view().isVisible()
+        ):
+            return
+        self._inventory_error_pending = False
+        self._adapters = None
+        self.interface_combo.clear()
+        self.interface_combo.addItem("Network adapter inventory unavailable", "")
 
-            if connected and disconnected:
-                self.interface_combo.insertSeparator(self.interface_combo.count())
+    @Slot()
+    def _on_interfaces_finished(self) -> None:
+        """Retain the worker until completion and cooperate with main-window shutdown."""
+        worker = self.sender()
+        if worker is self._worker:
+            self._worker = None
+            if self._adapter_polling and isinstance(worker, ConnectWorker) and worker.cancelled:
+                self._populate_interfaces()
+        if isinstance(worker, ConnectWorker) and not worker.property("retired_by_main"):
+            worker.deleteLater()
 
-            for adapter in disconnected:
-                self.interface_combo.addItem(adapter.display_text(), adapter.name)
-        except Exception:
-            # A failed native inventory must not offer guessed interface names.
-            self.interface_combo.addItem("Ethernet interface inventory unavailable", "")
+    def set_adapter_polling(self, enabled: bool) -> None:
+        """Poll only while disconnected, ignoring any result from a paused refresh."""
+        if enabled == self._adapter_polling:
+            return
+        self._adapter_polling = enabled
+        if enabled:
+            self._adapter_timer.start()
+            self._populate_interfaces()
+        else:
+            self._adapter_timer.stop()
+            self._inventory_error_pending = False
+            if self._worker is not None:
+                self._worker.stop()
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled
         self.interface_container.setVisible(not enabled)
         if enabled:
             # Remember current selection for restore
-            self._saved_interface_idx = self.interface_combo.currentIndex()
+            self._saved_interface = self.interface_combo.currentData() or ""
             self.interface_combo.setCurrentIndex(0)
         else:
             # Restore previous selection if it was saved
-            saved = getattr(self, "_saved_interface_idx", 0)
-            if saved > 0 and saved < self.interface_combo.count():
-                self.interface_combo.setCurrentIndex(saved)
+            saved = self.interface_combo.findData(self._saved_interface)
+            self.interface_combo.setCurrentIndex(saved if saved > 0 else 0)
         self._on_choices_changed()
 
     def _on_choices_changed(self):

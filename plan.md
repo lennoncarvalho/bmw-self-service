@@ -25,7 +25,8 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 
 ### Connection and display
 
-- ENET cable only; no Bluetooth, Wi-Fi adapters, K+DCAN or E-series scope.
+- Physical Ethernet and Wi-Fi adapters may be selected for IP-based discovery;
+  exclude virtual/internal networking interfaces. No Bluetooth, K+DCAN or E-series scope.
   Discover the transport and exact identities rather than infer them from year
   or chassis. Scope discovery to the selected Ethernet adapter. Refuse multiple
   responding vehicles instead of picking the first one.
