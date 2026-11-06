@@ -212,6 +212,7 @@ class DiagnosticReadWorker(CarWorker):
                 backend.close()
 
     def _scan(self, backend: JobBackend) -> dict:
+        """Collect memory lists and bounded details with explicit per-target coverage."""
         deadline = time.monotonic() + 300.0
         catalog = DiagnosticCatalog()
         dtcs: list[dict] = []

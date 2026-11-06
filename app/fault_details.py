@@ -18,6 +18,7 @@ DETAIL_JOBS = {"Fault": "FS_LESEN_DETAIL", "Information": "IS_LESEN_DETAIL"}
 
 
 def _number(value: Any, maximum: int) -> int | float | None:
+    """Return a finite nonnegative source value within its supported range."""
     if type(value) not in (int, float) or not math.isfinite(value):
         return None
     return value if 0 <= value <= maximum else None
@@ -163,4 +164,5 @@ def decode_fault_details(run: JobRun, code: int) -> dict[str, Any]:
 
 
 def _yes_no(value: Any) -> str | None:
+    """Present source flags 0/1 while retaining other values as unavailable."""
     return {0: "No", 1: "Yes"}.get(value) if isinstance(value, int) else None

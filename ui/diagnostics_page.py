@@ -382,6 +382,7 @@ class DiagnosticsPage(QWidget):
                 data: dict = dtc,
                 target: QVBoxLayout = recorded_layout,
             ) -> None:
+                """Populate this card once, then toggle its settled recorded details."""
                 if not d.property("recorded_details_loaded"):
                     _add_recorded_details(target, data)
                     d.setProperty("recorded_details_loaded", True)
@@ -536,10 +537,22 @@ def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
         "unsupported": "The ECU does not support this recorded-detail read.",
         "rejected": "The ECU rejected this recorded-detail read.",
         "timeout": "The recorded-detail read timed out.",
+        "job-failed": "The ECU definition interpreter could not complete the recorded-detail job.",
+        "failed": "Communication failed while reading recorded details.",
+        "policy-blocked": "The recorded-detail read was blocked by the current session policy.",
+        "cancelled": "The recorded-detail read was cancelled before completion.",
+        "refused-unexpected-request": (
+            "The recorded-detail job attempted an unexpected request; it was blocked."
+        ),
+        "outcome-uncertain": (
+            "The job stopped after sending a vehicle write; its outcome is uncertain. "
+            "Do not repeat the operation automatically."
+        ),
         "invalid": "Recorded details could not be decoded or matched to this fault.",
     }
 
     def add(text: str, heading: bool = False) -> None:
+        """Append a selectable plain-text heading or value to this card."""
         label = QLabel(text)
         label.setObjectName("faultDetailHeading" if heading else "faultDetailValue")
         label.setTextFormat(Qt.TextFormat.PlainText)
