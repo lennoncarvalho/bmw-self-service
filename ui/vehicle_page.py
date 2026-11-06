@@ -1,6 +1,6 @@
 """Settled connection overview, with explicit availability and ECU coverage.
 
-D-56 and docs/evidence/task-b-dashboard-read-findings.md define the contract.
+Overview data contracts: docs.md#identity-configuration-and-diagnostics.
 All live I/O belongs to the owning CarWorker; this widget only displays results.
 """
 

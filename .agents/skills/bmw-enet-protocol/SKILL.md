@@ -5,9 +5,9 @@ description: Review or implement BMW ENET discovery, HSFZ, DoIP and UDS request 
 
 # BMW ENET protocol work
 
-Read `docs/20-protocol-evidence.md`, `docs/10-hsfz-protocol.md` and the
-connection findings in `docs/19-audit-and-readiness.md`. For undocumented BMW
-payloads, use source analysis or REA; a plausible DID is not a mapping.
+Read the protocol/execution and identity sections of `docs.md`, plus `plan.md`.
+For undocumented BMW payloads, use source analysis or REA; a plausible DID is not
+a mapping.
 
 - Diagnose stages separately: physical link, interface/address/route, discovery,
   TCP, DoIP routing activation where applicable, UDS identity, optional reads.
@@ -37,4 +37,4 @@ payloads, use source analysis or REA; a plausible DID is not a mapping.
   resolve the next uncertainty, and use read-only captures first.
 
 Report capture/artifact identity, exact bytes and interpretation separately.
-Mask vehicle identifiers in shared reports without losing local traceability.
+Retain complete diagnostic identifiers, including VIN, in logs/exports as required by the owner.

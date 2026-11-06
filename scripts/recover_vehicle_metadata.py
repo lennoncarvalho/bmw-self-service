@@ -1,7 +1,7 @@
 """Recover the English vehicle-equipment catalogue from the supplied APK.
 
 Development-only; original class/method anchors are recorded in
-``docs/evidence/task-b-vehicle-metadata.md``.
+``docs.md#identity-configuration-and-diagnostics``.
 """
 
 import argparse

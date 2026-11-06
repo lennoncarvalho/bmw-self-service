@@ -2,7 +2,7 @@
 
 Development-only. Input is the cross-checked row list from the odometer/identity
 recovery (each row agrees between the diagnostics APK definition and the PRG
-SG_FUNKTIONEN table); see docs/evidence/task-b-odometer-identity-doip.md (A4).
+SG_FUNKTIONEN table); see docs/evidence/task-b-odometer-identity-doip.json.
 Only definitions already proven to use the reviewed plain STATUS_LESEN job
 (scalar-boolean rows in coding_data/mil_contracts.json) are kept, so every
 value is a single read-only `22 <DID>`. Engine-local mileage counters are not

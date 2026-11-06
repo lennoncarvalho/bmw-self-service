@@ -3,7 +3,7 @@
 Every operation that talks to the car runs on a background thread via
 CarWorker subclasses. This ensures the Qt UI stays responsive.
 
-Reference: docs/17-ui-decisions.md (Decision #4: one reusable CarWorker pattern)
+Reference: AGENTS.md#implementation-rules (one reusable CarWorker pattern).
 """
 
 import logging

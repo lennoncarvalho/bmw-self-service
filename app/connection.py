@@ -10,7 +10,7 @@ Provides:
 Live socket I/O, UDS services and keepalive run on one protocol owner.
 Transport selection uses discovery evidence rather than a chassis heuristic.
 
-Reference: docs/10-hsfz-protocol.md, docs/05-protocol-reference.md
+Reference: docs.md#protocol-and-execution, docs.md#protocol-and-execution
 """
 
 import ipaddress

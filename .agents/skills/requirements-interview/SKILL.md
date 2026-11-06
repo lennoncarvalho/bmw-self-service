@@ -5,10 +5,10 @@ description: Interview the owner about BMW Self Service feature behavior and acc
 
 # Requirements interview
 
-Read `docs/21-product-decisions.md` and known vehicle context before asking.
+Read `plan.md` and known vehicle context before asking.
 Work through a few related questions at a time, using concrete scenarios and
-consequences. Record answers as owner decisions with dates; keep proposals and
-unanswered questions separate. Resolve facts from code/artifacts or primary
+consequences. Update approved behavior in `plan.md`; keep proposals separate.
+Do not create decision histories or interview reports. Resolve facts from code/artifacts or primary
 documentation rather than asking the owner to invent protocol details.
 
 Prioritize: connection/partial identity; supported vs validated vehicles;
@@ -21,7 +21,7 @@ cancel and reconnect. Test requirements against a realistic failure, such as a
 write acknowledged just before Ethernet disconnects. Do not assume an operation
 can safely be repeated. Avoid asking again about an answered choice.
 
-Persist decisions before deriving implementation tasks. Continue independent
+Update `plan.md` before deriving implementation steps in `tasks.md`. Continue independent
 audit/setup work while answers are pending. Do not turn an unanswered question
 or silence into approval, or require another approval for routine work already
 authorized by the user.

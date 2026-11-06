@@ -1,8 +1,8 @@
 {
   "files": {
     "coding_data/cbs_definitions.json": {
-      "bytes": 64295,
-      "sha256": "b91a24ee28ea897906314a501a06d993727e56d9414e9d1c59c98213dfc4668f"
+      "bytes": 65947,
+      "sha256": "38bac9943ac4f99c4a745e449ace658fdaba55b5558651d71c53c7b8150d00ff"
     },
     "coding_data/coding_catalog.db": {
       "bytes": 254234624,
@@ -43,6 +43,10 @@
     "coding_data/version.json": {
       "bytes": 21,
       "sha256": "0749671604d5514a12abe67a611ee42ee7e8d20a35987ae8aff9de4455b5a4c5"
+    },
+    "ista_bundle/ecu/D94BX7A0.prg": {
+      "bytes": 6457109,
+      "sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c"
     },
     "ista_bundle/ecu/aag_02.prg": {
       "bytes": 1235932,
@@ -2165,8 +2169,8 @@
       "sha256": "6b000f4344ed0181e415863870093e066dcf2be7155be17727633b3413ff5d73"
     },
     "ista_bundle/manifest.json": {
-      "bytes": 81349,
-      "sha256": "502ba84b6abd4f47aded11e0a2fb23dbb337fb7f0435cce145414847057bdd31"
+      "bytes": 82995,
+      "sha256": "0aefb009ab83ea28d99279f7d0e8b9d4f045b32be24f2f54cbf8efd197a6548a"
     },
     "ista_bundle/series/F001.json": {
       "bytes": 25758,

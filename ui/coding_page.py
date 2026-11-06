@@ -3,7 +3,7 @@
 Easy: curated category -> option toggles.
 Advanced: SVT ECU tree -> FDL hex editor (stub).
 
-Reference: docs/16-ui-spec.md Screens 7, 8, 9
+Reference: plan.md#coding-and-writes and docs.md#coding-contracts.
 """
 
 import copy

@@ -72,6 +72,8 @@ def build(
         "--out",
         str(output / "ista_bundle"),
         "--all-source-series",
+        "--supplemental-jobs",
+        str(ROOT / "docs/evidence/task-c-supplemental-jobs.json"),
     )
     rheingold = ista / "Rheingold" if (ista / "Rheingold").is_dir() else ista
     if decrypted_definitions is None:

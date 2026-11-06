@@ -1,38 +1,33 @@
 ---
 name: vehicle-write-safety
-description: Specify or review backup, write, readback and recovery flows for coding, service history and diagnostic clearing in BMW Self Service.
+description: Review feature-specific baseline, intent, application completion and recovery for vehicle mutations.
 ---
 
 # Vehicle write integrity
 
-Owner requirements (2026-10-28): coding/history write screens save a backup
-first, retain current/intended state and read the car back to confirm. The owner
-explicitly exempts fault clearing from saving a backup/report. Do not add that
-step. Interrupted writes require reread/compare before user-chosen recovery; no
-automatic replay. Read `docs/21-product-decisions.md` for decisions and limits.
+Read `plan.md` and the relevant contracts in `docs.md`; inspect current code.
+A write needs exact vehicle/ECU/software/definition, confirmed intent, power policy,
+durable required state and exclusive protocol ownership.
 
-Before a coding/history write, identify VIN, transport, ECU address, hardware/software and exact
-data definition/version. Read and validate all affected original data. Save a
-durable, uniquely identified backup containing original bytes, decoded display
-data, schema/app version and integrity hashes. Preserve the baseline; store
-intended state and observed readback separately. A UI option index is neither
-an ECU value nor a restorable backup.
+- Coding: save the complete original baseline/target bytes, immutable intended
+  bytes, source hashes and meaningful observed post-state. Preserve unrelated
+  groups, masks and Custom values. A UI index is not an encoder or baseline.
+- History: existing car history cannot be read/backed up. Save local JSON,
+  reviewed append/replacement intent, exact requests and per-step outcomes with
+  prior car history explicitly null/unavailable. No reader or fake baseline.
+- CBS: exact primary owner/item, fresh software/before-state and journal; retain
+  source-specific routine/result or planned DSC occurrence sequences.
+- Fault clearing: no saved backup/report prerequisite; preserve target coverage
+  and reread results. Cleared faults cannot be restored from a report.
 
-No coding/history mutation proceeds with missing/mismatched coding definitions, guessed DIDs,
-incomplete original reads, failed backup persistence or an unknown encoder.
-Easy and advanced modes share the same verified write engine. Review data-group
-boundaries, masks and preservation of unrelated bits; combine changes against
-one baseline rather than overwriting prior changes with later full-block writes.
+No write Cancel or disruptive app actions. Persistence failure before sending
+blocks the mutation; failure after a step stops later mutations and preserves
+in-memory outcomes. Exact application results and source-required activation/cycle
+semantics determine completion. A transport ACK alone is insufficient; distinguish
+response-confirmed from observed verification. Universal immediate readback is
+not required where the source needs a cycle or provides no meaningful reader.
 
-Validate application responses, then reread and compare affected data before
-reporting success. Account for ECU normalization and expected restart semantics
-only when documented. A transport ACK, successful `sendall()` or positive UDS
-response alone is insufficient. Report partial success and uncertain outcomes.
-
-After timeout or disconnect, do not automatically replay a mutation. Reidentify
-the vehicle/ECU, inspect the observed state and offer only evidenced recovery.
-Restoring is itself a write requiring matching identity and verified readback.
-Never imply a diagnostic report can reinsert cleared DTCs or restore readiness.
-
-Do not operate on a car merely to validate this skill. Establish behavior with
-reviewed artifacts and the owner's agreed vehicle validation procedure.
+No automatic replay, resume or rollback after uncertainty. Reidentify and inspect
+actual state/results before a separately confirmed recovery. Restoration is a new
+write with matching definition/software and its own verification. Do not operate
+on a physical car merely to validate this skill.

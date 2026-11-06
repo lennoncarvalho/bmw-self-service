@@ -27,7 +27,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from app.ista_data import (  # noqa: E402
     BUNDLE_FORMAT,
@@ -107,9 +108,14 @@ def _record_recovery(final: Path, backup: Path) -> Path:
 
 
 def build(
-    ista: Path, out: Path, requested: list[str], *, all_source_series: bool = False
+    ista: Path,
+    out: Path,
+    requested: list[str],
+    *,
+    all_source_series: bool = False,
+    supplemental_jobs: Path | None = None,
 ) -> dict[str, Any]:
-    """Export ECU lists and job files; returns the manifest."""
+    """Export ECU lists/jobs; supplement source paths are absolute or repository-relative."""
     check = validate_ista_folder(ista)
     if not check.ok or check.root is None:
         raise SystemExit(f"Not a usable ISTA folder: {check.message}")
@@ -126,6 +132,23 @@ def build(
         if key in available:
             raise ValueError(f"Ambiguous job stem {key!r} in the data source")
         available[key] = path
+    canonical_names = set(available)
+    supplements: dict[str, dict[str, str]] = {}
+    if supplemental_jobs is not None:
+        contract = json.loads(supplemental_jobs.read_bytes())
+        if contract.get("schema") != 1 or not isinstance(contract.get("jobs"), list):
+            raise ValueError("Unsupported supplemental job contract")
+        for entry in contract["jobs"]:
+            source = Path(entry["source_path"]).expanduser()
+            source = (ROOT / source).resolve(strict=True)
+            key = source.stem.lower()
+            if source.suffix.lower() not in (".prg", ".grp") or key in available:
+                raise ValueError(f"Supplement cannot replace or duplicate a job: {source.name}")
+            digest = sha256(source)
+            if digest != entry["sha256"]:
+                raise ValueError(f"Supplemental job hash mismatch: {source.name}")
+            available[key] = source
+            supplements[key] = {"file": source.name, "sha256": digest}
     series_map = read_series_map(rheingold / "PSdZ" / "mapping" / "brref.xml")
     table_path = available[GROUP_TABLE_FILE]
     assignments = read_group_assignments(table_path)
@@ -184,6 +207,8 @@ def build(
                 elif ref not in selected:
                     selected.add(ref)
                     queue.append(ref)
+        if supplements.keys() - selected:
+            raise ValueError("Supplemental jobs must be reachable from the selected group table")
 
         files: dict[str, Any] = {}
         total = 0
@@ -192,7 +217,8 @@ def build(
             target = out / "ecu" / source.name
             shutil.copyfile(source, target)
             digest = sha256(target)
-            if digest != sha256(source):
+            expected = supplements[name]["sha256"] if name in supplements else sha256(source)
+            if digest != expected:
                 raise SystemExit(f"Copy of {source.name} does not match its source")
             size = target.stat().st_size
             total += size
@@ -205,6 +231,8 @@ def build(
                 "version": check.version,
                 "group_table_sha256": sha256(table_path),
                 "brref_sha256": sha256(rheingold / "PSdZ" / "mapping" / "brref.xml"),
+                "supplemental_jobs": supplements,
+                "canonical_missing_job_files": sorted(wanted - canonical_names),
             },
             "requested": resolved,
             "main_series": main_series,
@@ -246,6 +274,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("ista", type=Path, help="ISTA installation or its Rheingold folder")
     parser.add_argument("--out", type=Path, default=bundle_root())
+    parser.add_argument(
+        "--supplemental-jobs",
+        type=Path,
+        help="Explicit hash-bound supplement contract (development only)",
+    )
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--series", nargs="+", default=DEFAULT_SERIES)
     selection.add_argument(
@@ -254,7 +287,13 @@ def main() -> None:
         help="Include every KIS main-series list available in the supplied source release",
     )
     args = parser.parse_args()
-    manifest = build(args.ista, args.out, args.series, all_source_series=args.all_source_series)
+    manifest = build(
+        args.ista,
+        args.out,
+        args.series,
+        all_source_series=args.all_source_series,
+        supplemental_jobs=args.supplemental_jobs,
+    )
     for series, main in manifest["requested"].items():
         print(f"{series}: {main or 'ABSENT from this ISTA folder'}")
     for main, info in manifest["main_series"].items():

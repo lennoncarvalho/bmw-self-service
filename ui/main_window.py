@@ -1,7 +1,7 @@
 """Main window shell for BMW Self Service.
 
 Single QMainWindow + QStackedWidget architecture.
-Reference: docs/16-ui-spec.md, docs/17-ui-decisions.md
+Reference: plan.md#connection-and-display, AGENTS.md#implementation-rules
 """
 
 import logging
@@ -871,7 +871,7 @@ class MainWindow(QMainWindow):
     def _on_connection_lost(self) -> None:
         """T-12: Handle lost connection with reconnect dialog.
 
-        Reference: docs/16-ui-spec.md error matrix (line 578).
+        Reference: plan.md#connection-and-display.
         """
         self.vehicle_page.invalidate("Connection lost")
         self.vehicle_page.refresh_button.setEnabled(False)

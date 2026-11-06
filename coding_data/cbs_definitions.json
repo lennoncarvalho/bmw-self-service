@@ -1,5 +1,5 @@
 {
-  "current_source_sha256": "229e604d89e7086c0ddda29b9391ac9c008d57be01309add9f9d151b108e9e01",
+  "current_source_sha256": "32e8dfdaad5205c6f974b99dae2a09286304d831e2eb6fd848e538acc2642755",
   "definitions": {
     "BCP_SP21": {
       "address": 16,
@@ -354,13 +354,66 @@
     "D94BX7A0": {
       "address": 18,
       "detail": false,
-      "disposition": "read+reset (CBS 6.3 routine 31 01 1000, standard reset type 0x02)",
+      "disposition": "supplemental native CBS6.3 reader and standard STR/RRR reset; no canonical-release provenance claim",
       "ownership": "primary",
+      "ownership_reason": "Exact canonical G_MOTOR membership plus current service-reset orchestration; hash-bound historical PRG supplement",
       "prg_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "read_job": "CBS_DATEN_LESEN",
       "reset": "routine-6.3",
+      "reset_items": [
+        "01",
+        "02",
+        "03",
+        "05",
+        "06",
+        "07",
+        "08",
+        "0A",
+        "0D",
+        "11",
+        "14",
+        "15",
+        "17",
+        "20",
+        "21",
+        "23",
+        "31",
+        "32",
+        "33",
+        "34",
+        "35",
+        "36",
+        "37",
+        "64"
+      ],
+      "results_delay_ms": 1000,
+      "routine_codes": {
+        "TAB_CBS_RETURN_CODE_ALLGEMEIN": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "01": "ung\u00fcltiger km-Stand",
+          "02": "ung\u00fcltiges Borddatum",
+          "03": "ung\u00fcltige Codierung",
+          "04": "SG nicht initialisiert oder im falschen Zustand",
+          "05": "Fahrzeug im fahrenden Zustand",
+          "06": "Reset bei CBR nicht erlaubt",
+          "07": "Reset bei aktivem Ersatzwert nicht erlaubt",
+          "09": "Servicez\u00e4hler ist nicht zwischen 1 und 250",
+          "0A": "Zieltermin ausserhalb des g\u00fcltigen Wertebereichs",
+          "0B": "Restweg ist ausserhalb des g\u00fcltigen Wertebereichs",
+          "FE": "keine Angabe",
+          "FF": "Wert ung\u00fcltig"
+        },
+        "TAB_CBS_RETURN_CODE_KOMPONENTE": {
+          "00": "Okay, keine Verhinderungsgr\u00fcnde",
+          "FE": "keine Angabe",
+          "FF": "ung\u00fcltig"
+        }
+      },
+      "software_request": "22f101",
       "source_groups": [
         "G_MOTOR"
       ],
+      "source_reset_policy": "routine-6.3",
       "version": "6.3"
     },
     "DME8FF_L": {
