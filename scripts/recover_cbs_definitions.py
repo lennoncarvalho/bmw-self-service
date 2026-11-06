@@ -73,10 +73,29 @@ def build(
         ownership = current.get("ownership")
         if not isinstance(ownership, dict) or current["definitions"].keys() - ownership.keys():
             raise ValueError("Every current CBS definition requires a source ownership entry")
+        selection = current.get("owner_selection")
+        if (
+            not isinstance(selection, dict)
+            or selection.get("primary_groups") != ["G_KOMBI", "G_MOTOR", "G_DSC"]
+            or selection.get("record_selection") != "explicit-owner-and-item"
+        ):
+            raise ValueError("Missing reviewed standard CBS owner selector")
         current_digest = hashlib.sha256(current_raw).hexdigest()
         for name, definition in current["definitions"].items():
             if name not in names:
                 raise ValueError(f"Current CBS definition is not reachable: {name}")
+            groups = ownership[name].get("groups")
+            role = ownership[name].get("role")
+            if (
+                not isinstance(groups, list)
+                or not groups
+                or any(not isinstance(group, str) for group in groups)
+                or definition.get("source_groups") != groups
+                or definition.get("ownership") != role
+                or role
+                != ("primary" if set(groups) <= set(selection["primary_groups"]) else "observation")
+            ):
+                raise ValueError(f"CBS owner is outside the reviewed source selector: {name}")
             policy = definition.get("source_reset_policy", definition.get("reset"))
             if definition.get("read_vectors_checked", 0) < 14:
                 raise ValueError(f"Current CBS read layout has not been checked: {name}")
@@ -115,7 +134,7 @@ def build(
                     raise ValueError(f"Unreviewed default CBS reset: {name}")
             elif not (
                 policy == "unrecovered"
-                and definition.get("ownership") == "owner-not-recovered"
+                and definition.get("ownership") == "observation"
                 and definition.get("reset") == "blocked"
             ):
                 raise ValueError(f"Unreviewed current CBS operation: {name}")

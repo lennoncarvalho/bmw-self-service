@@ -15,7 +15,7 @@
       "prg_sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
       "source_reset_policy": "routine-7.0",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_ZGW"
       ],
@@ -26,7 +26,7 @@
       "read_job_offset": "0x152ad0",
       "reset_job_offset": "0x12c606",
       "detail": false,
-      "disposition": "current-source observation and verified native CBS7 encoder; service-reset ownership is not established",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "start_request": "31011000{item}02ffffff",
       "start_positive": "71011000",
       "results_request": "31031000",
@@ -617,7 +617,7 @@
       "prg_sha256": "c2876a3b3bf3dd9af351d6677007942b5f4f31879e97e67ae6ef9e48f6a88341",
       "source_reset_policy": "default",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_TEL"
       ],
@@ -628,7 +628,7 @@
       "read_job_offset": "0xeb1b7",
       "reset_job_offset": "0xeff72",
       "detail": false,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
       "reset_xsend_count": 1,
       "software_request": "22f101",
@@ -1234,7 +1234,7 @@
       "prg_sha256": "36ad3cad7a0eeb7b002c6c250a59c249257ab0bf56dddbe6883dfbc5e42107e3",
       "source_reset_policy": "default",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_MOTOR2"
       ],
@@ -1245,7 +1245,7 @@
       "read_job_offset": "0x10ade0",
       "reset_job_offset": "0x112b05",
       "detail": true,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
       "reset_xsend_count": 1,
       "software_request": "22f101",
@@ -1744,7 +1744,7 @@
       "prg_sha256": "00904498c1ffd80b2d0761f85f7990192867a0fedc3eee020c7cb0eebd75e842",
       "source_reset_policy": "default",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_EHC"
       ],
@@ -1755,7 +1755,7 @@
       "read_job_offset": "0xfa728",
       "reset_job_offset": "0xff668",
       "detail": false,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
       "reset_xsend_count": 1,
       "software_request": "22f101",
@@ -1782,7 +1782,7 @@
       "prg_sha256": "510e5d46621c8481e5676aca060bb9c6cd65513d1ad8a1ee7d612ffbfdcaa867",
       "source_reset_policy": "default",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_EGS"
       ],
@@ -1793,7 +1793,7 @@
       "read_job_offset": "0xdf933",
       "reset_job_offset": "0xe7658",
       "detail": true,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
       "reset_xsend_count": 1,
       "software_request": "22f101",
@@ -3425,7 +3425,7 @@
       "prg_sha256": "8694a0f83832a78219f7bb66fea7fa3a273f0a8048a60050f7465cc46189df63",
       "source_reset_policy": "default",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_LMV"
       ],
@@ -3436,7 +3436,7 @@
       "read_job_offset": "0x68955",
       "reset_job_offset": "0x6d895",
       "detail": false,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
       "reset_xsend_count": 1,
       "software_request": "22f101",
@@ -3618,7 +3618,7 @@
       "prg_sha256": "a274f22c573e6fbcd84c94258eefa658102d3c8f0b4af71806f5c187a726af98",
       "source_reset_policy": "routine-7.0",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_MMI"
       ],
@@ -3629,7 +3629,7 @@
       "read_job_offset": "0xe6111",
       "reset_job_offset": "0xe317e",
       "detail": false,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "start_request": "31011000{item}02ffffff",
       "start_positive": "71011000",
       "results_request": "31031000",
@@ -4527,7 +4527,7 @@
       "prg_sha256": "6b699f53d33ee49a3be0323e55079eca00369ea57fe56f848ead83deb8570974",
       "source_reset_policy": "default",
       "reset": "blocked",
-      "ownership": "owner-not-recovered",
+      "ownership": "observation",
       "source_groups": [
         "G_MOTOR2"
       ],
@@ -4538,7 +4538,7 @@
       "read_job_offset": "0x6ea59",
       "reset_job_offset": "0x73999",
       "detail": false,
-      "disposition": "current-source observations; primary reset owner remains a source investigation",
+      "disposition": "Observation source only: standard service resets use the primary cluster, engine or brake controller",
       "verified_reset_request": "2e10010101641f80000fff0f3fff00",
       "reset_xsend_count": 1,
       "software_request": "22f101",
@@ -4599,18 +4599,18 @@
   },
   "ownership": {
     "BCP_SP21": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_ZGW"
       ],
-      "basis": "Observation only: group G_ZGW has no established CBS reset route in the current service orchestration"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "CMEDIA": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_TEL"
       ],
-      "basis": "Observation only: group G_TEL has no established CBS reset route in the current service orchestration"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "D70BX7A0": {
       "role": "primary",
@@ -4662,11 +4662,11 @@
       "basis": "Exact canonical G_MOTOR membership plus current service-reset orchestration; hash-bound historical PRG supplement"
     },
     "DME8FF_L": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_MOTOR2"
       ],
-      "basis": "Observation only: current reset orchestration selects DME8FF_R; no left-controller reset route is established"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "DME8FF_R": {
       "role": "primary",
@@ -4739,18 +4739,18 @@
       "basis": "current exact group table plus supplied CBS reset orchestration routes"
     },
     "EHC_01": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_EHC"
       ],
-      "basis": "Observation only: group G_EHC has no established CBS reset route in the current service orchestration"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "GSGE01QW": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_EGS"
       ],
-      "basis": "Observation only: group G_EGS has no established CBS reset route in the current service orchestration"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "IB_G05": {
       "role": "primary",
@@ -4823,11 +4823,11 @@
       "basis": "current exact group table plus supplied CBS reset orchestration routes"
     },
     "LMV_01": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_LMV"
       ],
-      "basis": "Observation only: group G_LMV has no established CBS reset route in the current service orchestration"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "MEVD172": {
       "role": "primary",
@@ -4858,11 +4858,11 @@
       "basis": "current exact group table plus supplied CBS reset orchestration routes"
     },
     "MGU_02_A": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_MMI"
       ],
-      "basis": "Observation only: group G_MMI has no established CBS reset route in the current service orchestration"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "MSD85L6": {
       "role": "primary",
@@ -4921,11 +4921,11 @@
       "basis": "current exact group table plus supplied CBS reset orchestration routes"
     },
     "S63TU_L0": {
-      "role": "owner-not-recovered",
+      "role": "observation",
       "groups": [
         "G_MOTOR2"
       ],
-      "basis": "Observation only: current reset orchestration selects S63TU_R0; no left-controller reset route is established"
+      "basis": "Observation source only: standard service resets use the primary cluster, engine or brake controller"
     },
     "S63TU_R0": {
       "role": "primary",
@@ -5131,5 +5131,62 @@
   "historical_claims_preserved_in": "docs/evidence/task-b-cbs-contract.json",
   "task_c_followup": "docs/evidence/task-c-cbs-reliability.md",
   "task_c_updated": "2026-11-05",
-  "supplemental_reconciliation": "2026-11-05: D94 file exists in supplemental collection with exact historical hash; canonical 4.29 files remain authoritative for all existing names"
+  "supplemental_reconciliation": "2026-11-05: D94 file exists in supplemental collection with exact historical hash; canonical 4.29 files remain authoritative for all existing names",
+  "owner_selection": {
+    "primary_groups": [
+      "G_KOMBI",
+      "G_MOTOR",
+      "G_DSC"
+    ],
+    "record_selection": "explicit-owner-and-item",
+    "managed_artifact_sha256": "c87b8440abb90e8dc9d79f5e32d00598f304b4f8e950d217d8269b475695f2db",
+    "managed_methods": {
+      "SG_Gruppen_NEW": "0x0600000b",
+      "CBS_Daten_Lesen_NEW": "0x0600000a",
+      "CBS_Reset_NEW": "0x06000012"
+    },
+    "caller_artifact_sha256": "dc0a7c72b9d48a1466cc26ae2c21e1ff2b844278c46cc1965c6c64e3da77438a",
+    "caller_method": "Auswahl_CBS",
+    "caller_token": "0x0600000b",
+    "caller_parameter_il": "0x8c2f",
+    "dispatch_group_parameter": "strg_List_SGVAR_CBS_Reset",
+    "diagnostic_artifact_sha256": "da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5",
+    "diagnostic_read_chain": [
+      "j6.v.X",
+      "j6.v.b0.b",
+      "j6.v.b0.a.b",
+      "j6.v.b0.a.C0163a.b"
+    ],
+    "diagnostic_addresses": [
+      18,
+      41,
+      96
+    ],
+    "diagnostic_selection": [
+      "io.sgsoftware.bimmerlink.activities.ServiceActivity.a.b",
+      "u5.p.<init>",
+      "io.sgsoftware.bimmerlink.activities.ServiceActivity.a.C0136a.a",
+      "io.sgsoftware.bimmerlink.activities.ServiceActivity.Y",
+      "io.sgsoftware.bimmerlink.activities.ServiceActivity.b.onClick",
+      "io.sgsoftware.bimmerlink.activities.ServiceActivity.a0",
+      "j6.g0.k0",
+      "j6.g0.i.b"
+    ],
+    "evidence_ids": [
+      "ev_15437f65229d3febafe1063078cb8c7ec2d982bb93a44a7d745a270a8f50864b",
+      "ev_8358759907712105e989d51a50edc3bcde260f60c10be3bd71cf596e7c6e6635",
+      "ev_abe6f8c3a74cdaf63df83a03333fde0a7699cc4947779ddd3e603b03ffee3b57",
+      "ev_eb2d501514de0ae5ec9a829b9489bdd3ca55e36fa723955508ed1c4e7f2aac3c",
+      "ev_1f275ba6cee8d7cdd6a8baf6498b94b7895781899d1bcfe363050e1617a20f7f",
+      "ev_9be13836ee8a4a3533d6c9be9a19fec9539c91ae852bf9596063c037e6bcef31",
+      "ev_828209a52148d9dead447116de8e1e8f15cf6e00be79aa7f0681e2526ead8bb2",
+      "ev_01b3bcd022c6e898c0ac0c5c50ed6e4f7272a224461729aa2590fc923f5f6f1d",
+      "ev_a4b6cb187cf5758dd88883405227d1efce0f37c4d81f92a44c6131ea7620b1b3",
+      "ev_77f048295c8568f917b96be910ad1be1e9478e85050876caaa0dac24ff1df851",
+      "ev_18d280fe786cb3170ce163b5d26ff171cfe5847521216656e70d19e66f6b436d",
+      "ev_d4cca97624c22d01423f9d449c877c06714551afe685641f427e57f3d70ebeb2"
+    ],
+    "evidence_bundle": "/Users/lennon/BMW-Tool/investigations/task-c-routing-20261106/rea-evidence.json",
+    "evidence_bundle_sha256": "d18c6bd311e4745b0290581d21e715293f49d296af1e9b9661a93cb5fd5657b7"
+  }
 }

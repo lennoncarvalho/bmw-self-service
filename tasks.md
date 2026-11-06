@@ -4,30 +4,23 @@ Work in priority order. Update these steps in place when the implementation
 changes; remove completed detail instead of appending session or PR reports.
 Current source contracts and reproduction routes are in [docs.md](docs.md).
 
-## CBS — current priority
+## CBS — source implementation complete
 
 Implemented: manual native reads, strict record accounting, software/identity
 preflight, exclusive foreground reset execution, durable journals, source-specific
 DSC and routine sequences, stale-row reset revocation and uncertain-outcome
 lockout. D94 now has an explicit historical job supplement and native start,
-one-second delay, result query and post-read. Offline/native/Qt verification and
-independent review cover this implementation; physical observations are separate.
-
-- [ ] Resolve primary reset routing for BCP_SP21, CMEDIA, DME8FF_L, EHC_01,
-  GSGE01QW, LMV_01, MGU_02_A and S63TU_L0 through source orchestration, dynamic
-  group selection and diagnostic database service-function rules. The examined
-  transport/delivery callers do not establish those routes; do not repeat those
-  same searches or treat encoder presence as ownership. Integrate any recovered
-  route into the compiler, worker and UI with exact provenance and failure checks.
-  Keep a specific source restriction where the source actually establishes it.
-- [ ] Close any resulting read/reset integration defects before moving priority
-  to diagnostics. Verify actual native jobs, response boundaries, owner ambiguity,
-  storage loss, pending/deadline/connection failures, no replay and Qt lockout.
+one-second delay, result query and post-read. Source selection is reconciled:
+the eight additional readers are outside the standard workflow's primary groups
+and remain observations. Same-item records from different primary ECUs retain
+explicit owner selection; duplicates within one ECU stay blocked. Compiler,
+native-worker, fragmented protocol-owner and Qt checks cover these boundaries.
+No source implementation step remains open for the current CBS milestone.
 - [ ] When a useful owner-car session is needed, compare actual identified CBS
   owners/records with the vehicle display. A service reset requires a suitable
   service and separate authorization; lack of that test does not block source work.
 
-## Diagnostic details and clearing
+## Diagnostic details and clearing — next implementation priority
 
 - [ ] Inspect fields already returned by `FS_`/`IS_` jobs before adding requests:
   `app/ista_jobs.py:fault_records()` currently projects only a subset. Recover

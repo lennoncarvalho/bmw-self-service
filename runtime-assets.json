@@ -1,8 +1,8 @@
 {
   "files": {
     "coding_data/cbs_definitions.json": {
-      "bytes": 65947,
-      "sha256": "38bac9943ac4f99c4a745e449ace658fdaba55b5558651d71c53c7b8150d00ff"
+      "bytes": 66003,
+      "sha256": "2faa77ee3f4950b6b729494581245f1e8e815c71febaa82158cd9293a0522e71"
     },
     "coding_data/coding_catalog.db": {
       "bytes": 254234624,
