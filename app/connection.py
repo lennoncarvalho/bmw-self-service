@@ -17,6 +17,7 @@ import ipaddress
 import logging
 import os
 import platform
+import re
 import subprocess
 from dataclasses import dataclass
 
@@ -89,10 +90,11 @@ class _InterfaceInfo:
     connected: bool | None
     description: str
     wired: bool = True
+    device_kind: str = ""
 
     def display_text(self) -> str:
         """Rich one-line label for use in a QComboBox."""
-        kind = "Wired" if self.wired else "Wireless"
+        kind = self.device_kind or ("Wired" if self.wired else "Wireless")
         state = (
             "connected"
             if self.connected is True
@@ -102,22 +104,31 @@ class _InterfaceInfo:
         )
         return f"{kind} — {self.description} ({state}) — {self.ip or 'No IPv4 address'}"
 
-    def sort_key(self) -> tuple[bool, bool, str, str]:
-        """Show wired adapters first, then connected links and friendly names."""
-        return (not self.wired, self.connected is not True, self.description.casefold(), self.name)
+    def sort_key(self) -> tuple[bool, bool, bool, str, str]:
+        """Put Ethernet hardware before wireless and identified system-network ports."""
+        system = self.device_kind in ("Internal USB networking", "Thunderbolt networking")
+        return (
+            system,
+            not self.wired,
+            self.connected is not True,
+            self.description.casefold(),
+            self.name,
+        )
 
 
-def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool]]:
-    """Read hardware-port names and carrier status without changing host networking.
+def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool], dict[str, str]]:
+    """Read hardware names, carrier and device ancestry without configuring networking.
 
     Run off the GUI thread. Each local command has a two-second limit; failure
     retains the Qt inventory and leaves unavailable carrier status explicit.
     """
     names: dict[str, str] = {}
     links: dict[str, bool] = {}
+    kinds: dict[str, str] = {}
     for command in (
         ["/usr/sbin/networksetup", "-listallhardwareports"],
         ["/sbin/ifconfig", "-a"],
+        ["/usr/sbin/ioreg", "-p", "IOService", "-w", "0"],
     ):
         try:
             output = subprocess.run(
@@ -133,14 +144,44 @@ def _macos_interface_metadata() -> tuple[dict[str, str], dict[str, bool]]:
                     port = line.removeprefix("Hardware Port: ").strip()
                 elif line.startswith("Device: ") and port:
                     names[line.removeprefix("Device: ").strip()] = port
-        else:
+        elif command[0].endswith("ifconfig"):
             name = ""
             for line in output.splitlines():
                 if line and not line[0].isspace():
                     name = line.split(":", 1)[0]
                 elif name and line.strip() in ("status: active", "status: inactive"):
                     links[name] = line.strip() == "status: active"
-    return names, links
+        else:
+            kinds = _macos_interface_kinds(output)
+    return names, links, kinds
+
+
+def _macos_interface_kinds(registry: str) -> dict[str, str]:
+    """Classify only interfaces whose native driver ancestry identifies their role.
+
+    A Thunderbolt-to-Ethernet dock is not Thunderbolt IP networking: only the
+    dedicated IP-port driver gets that label. Unknown driver trees stay generic.
+    """
+    result: dict[str, str] = {}
+    ancestors: list[tuple[int, str]] = []
+    for line in registry.splitlines():
+        match = re.match(r"([ |]*)\+-o (.+?)  <class ([^,>]+)", line)
+        if match is None:
+            continue
+        depth = len(match[1])
+        while ancestors and ancestors[-1][0] >= depth:
+            ancestors.pop()
+        ancestors.append((depth, match[3]))
+        if re.fullmatch(r"en[0-9]+", match[2]) is None:
+            continue
+        classes = {kind for _, kind in ancestors}
+        if any(kind.startswith("AppleUSBDeviceNCM") for kind in classes):
+            result[match[2]] = "Internal USB networking"
+        elif "AppleThunderboltIPPort" in classes:
+            result[match[2]] = "Thunderbolt networking"
+        elif "IOUSBHostDevice" in classes:
+            result[match[2]] = "USB Ethernet"
+    return result
 
 
 def list_interfaces_detailed() -> list[_InterfaceInfo]:
@@ -153,7 +194,7 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
     """
     results: list[_InterfaceInfo] = []
     macos = platform.system() == "Darwin"
-    names, links = _macos_interface_metadata() if macos else ({}, {})
+    names, links, kinds = _macos_interface_metadata() if macos else ({}, {}, {})
     for interface in QNetworkInterface.allInterfaces():
         wired = interface.type() == QNetworkInterface.InterfaceType.Ethernet
         wireless = interface.type() == QNetworkInterface.InterfaceType.Wifi
@@ -195,6 +236,7 @@ def list_interfaces_detailed() -> list[_InterfaceInfo]:
                 ),
                 description=description,
                 wired=wired,
+                device_kind=kinds.get(name, "") if wired else "",
             )
         )
     return sorted(results, key=lambda candidate: candidate.sort_key())
