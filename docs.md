@@ -143,6 +143,20 @@ decode version/five fixed four-character fields and bounded optional tags 8/4/12
 Time criterion is configuration data, not build date. Tags 4/12 have no invented
 semantic names. `app/vehicle_order.py` owns bounds/incomplete-section behavior.
 `coding_data/vehicle_equipment.json` provides sourced equipment descriptions.
+The overview formats a valid time criterion as MM/20YY and labels it vehicle-order
+date; it does not fabricate an independent production-date read.
+
+`scripts/recover_vehicle_models.py <ISTA> coding_data/vehicle_models.json <provenance>`
+compiles `PSdZ/kiswb/*/KIS.{script,data}` vehicle-type descriptions from
+`KIS.FAHRZEUGTYP` (`isisss`, two AVL index nodes per row). Runtime lookup requires
+both the observed type key and model range and one agreeing description. Null or
+conflicting descriptions stay unavailable; CKD entries do not imply marketing trim.
+The full asset builder runs this producer; runtime never opens the source database.
+
+Gateway `100B` contains three eight-byte I-Levels in **current, previous, factory**
+order. Source `models.s0.c.b` fills `w0`, and `a.g0.<init>` labels its getters
+Current/Last/Shipment. Equal values share one labelled overview row; differing
+values retain all three roles. A repeated value alone does not establish update history.
 
 `app/vehicle.py` selects exact odometer and engine-measurement contracts;
 `coding_data/engine_measurements.json` and diagnostic catalogues retain selectors,

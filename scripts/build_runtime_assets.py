@@ -141,6 +141,13 @@ def build(
         "--parser",
         str(job_parser),
     )
+    run(
+        sys.executable,
+        str(ROOT / "scripts/recover_vehicle_models.py"),
+        str(ista),
+        str(data / "vehicle_models.json"),
+        str(output / "build/vehicle-model-provenance.json"),
+    )
     # Existing independently recovered runtime contracts remain assets, never
     # reference-application dependencies. Their own evidence records own provenance.
     for name in (

@@ -265,19 +265,22 @@ def read_kis_ecus(kis_dir: Path, groups: dict[int, list[str]] | None = None) -> 
     return ecus
 
 
-def _kis_row(handle: Any, offset: int, size: int) -> tuple[list[Any], int, int]:
+def _kis_row(
+    handle: Any, offset: int, size: int, *, columns: str = _KIS_COLUMNS, indexes: int = 1
+) -> tuple[list[Any], int, int]:
+    """Read one bounded cached row using its source-declared columns/index count."""
     if offset < 0 or offset + 4 > size:
         raise DataFormatError("KIS row position is outside the data file")
     handle.seek(offset)
     head = handle.read(4)
     length = int.from_bytes(head, "big", signed=True)
-    if not 4 + _KIS_NODE_SIZE < length <= _KIS_MAX_ROW or offset + length > size:
+    if not 4 + _KIS_NODE_SIZE * indexes < length <= _KIS_MAX_ROW or offset + length > size:
         raise DataFormatError("KIS row has an implausible size")
     data = head + handle.read(length - 4)
     _balance, left, right, _parent = struct.unpack_from(">iiii", data, 4)
-    position = 4 + _KIS_NODE_SIZE
+    position = 4 + _KIS_NODE_SIZE * indexes
     values: list[Any] = []
-    for kind in _KIS_COLUMNS:
+    for kind in columns:
         if position >= len(data):
             raise DataFormatError("KIS row is truncated")
         present, position = data[position], position + 1

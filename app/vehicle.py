@@ -142,8 +142,8 @@ def decode_inventory(response: bytes) -> tuple[int, ...]:
     return addresses
 
 
-def decode_ilevel(response: bytes) -> str:
-    """Decode the three eight-byte integration levels returned by gateway 100B."""
+def decode_ilevel(response: bytes) -> dict[str, str]:
+    """Decode current, previous and shipment integration levels from gateway 100B."""
     # The coding source requires at least three blocks and ignores any trailer
     # (FSeriesVehicleInterface s0$c.b); the owner's F48 gateway returns 15 more.
     data = did_data(response, 0x100B)
@@ -158,7 +158,7 @@ def decode_ilevel(response: bytes) -> str:
         levels.append(
             f"{family}-{block[4]:02d}-{block[5]:02d}-{int.from_bytes(block[6:], 'big'):03d}"
         )
-    return " / ".join(levels)
+    return dict(zip(("current", "previous", "factory"), levels, strict=True))
 
 
 def decode_voltage(response: bytes) -> float:
