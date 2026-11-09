@@ -227,6 +227,22 @@ bundle currently contains 531 loadable PRG/GRP files. Reset execution retains
 default-session normalization, exact planned mutations, journal before each send,
 checked result/post-read, persistent uncertainty and no automatic replay.
 
+For older CBS readers, unit text alone does not validate remaining distance:
+`0x8000`/`0x7FFF` are unavailable sentinels even when KOMB25 returns `x 10 km`.
+The supplied diagnostic APK (`da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8ff80666cae00d5`),
+`j6.b.<init>(int,byte,byte[])` and `j6.b.a(Context)`, retains the unsigned field
+and suppresses both values before distance formatting. `app/cbs.py` applies
+this presentation validity rule to native results and fallback records.
+
+Physical observation: the owner's F48 session on 2026-11-06 reset brake fluid
+through KOMB25 at `0x60`, CBS 5. Journal
+`~/BMW-Tool/cbs/operations/677737d7c66048359ce387b158bda7fb.json` passes integrity
+checks and binds the current bundled job hash. Its single `2E1001` reset received
+`6E1001` and `JOB_STATUS OKAY`; the five-second reread changed availability
+98→100 %, count 5→6 and due month October→November 2028. Vehicle-check data
+remained unchanged. This validates that branch; the warning-only session log
+does not establish complete owner coverage or explain later coding timeouts.
+
 ## Coding contracts
 
 `app/coding_db.py`, `coding.py`, `coding_write.py`, `coding_crypto.py` and the
