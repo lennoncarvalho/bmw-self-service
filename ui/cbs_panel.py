@@ -126,6 +126,7 @@ class CbsPanel(QWidget):
 
     @staticmethod
     def _describe(item: dict[str, Any]) -> str:
+        """Show service values; raw records and source descriptions stay in the result data."""
         locale = regional_locale()
         parts = [str(item["label"])]
         remaining, unit = item.get("remaining"), item.get("unit")
@@ -144,19 +145,8 @@ class CbsPanel(QWidget):
         for key, unit in (("forecast_km", "km"), ("forecast_months", "months")):
             if item.get(key) is not None:
                 parts.append(f"forecast interval {locale.toString(item[key])} {unit}")
-        if item.get("status") is not None:
-            parts.append(f"status 0x{item['status']:X}")
         owner = item["owner"]
-        version = (
-            f", CBS {owner['version']}" if owner.get("version") not in (None, "unknown") else ""
-        )
-        lines = [
-            " · ".join(parts),
-            f"Owner: {owner['name']} (0x{owner['address']:02X}{version}) · "
-            f"record {item.get('raw') or 'unavailable'}",
-        ]
-        if item.get("job_text") and item["job_text"] != item["label"]:
-            lines.append(f"ECU job text: {item['job_text']}")
+        lines = [" · ".join(parts)]
         if item.get("status_text"):
             lines.append(f"ECU status: {item['status_text']}")
         if item.get("notes"):
