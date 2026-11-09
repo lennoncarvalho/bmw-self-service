@@ -24,7 +24,7 @@ No implementation or owner-car acceptance step remains open for this milestone.
 
 Implemented: native fault/information detail jobs selected by fault code,
 occurrence/healing counters, recorded mileage/time and source-scaled environment
-values in expandable cards. Preserve every recorded state, source units and raw
+values in always-visible cards. Preserve every recorded state, source units and raw
 results. Time counters have no invented calendar epoch or first/last labels.
 Basic lists settle before bounded details; failed details retain collected codes.
 Native optional-table trap handling supports environment decoding. Offline native,

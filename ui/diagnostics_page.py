@@ -1,7 +1,7 @@
 """Diagnostics page — DTC read/clear from all ECUs.
 
 Displays fault codes with descriptions from DtcDatabase.
-Inline expand/collapse for detail view. Confirmation dialog for clears.
+Always-visible fault details with a separate confirmation dialog for clears.
 
 Reference: plan.md#diagnostics-and-cbs and docs.md#diagnostic-text-database.
 """
@@ -273,6 +273,7 @@ class DiagnosticsPage(QWidget):
                 continue
             child = item.widget()
             if child is not None:
+                child.hide()
                 child.deleteLater()
 
         self.empty_state.setVisible(False)
@@ -305,129 +306,40 @@ class DiagnosticsPage(QWidget):
 
         for dtc in dtcs:
             code = dtc.get("code", "???")
-            desc = dtc.get("description", dtc.get("description", "(no description)"))
-            status = dtc.get("status_byte", 0)
+            description = dtc.get("description") or "Description unavailable"
             ecu = dtc.get("ecu_name", "Unknown")
+            full_name = self._ecu_lookup.get(ecu)
+            ecu_text = f"{full_name} ({ecu})" if full_name and full_name != ecu else ecu
 
-            # Summary row
             card = QFrame()
             card.setObjectName("card")
-            card.setCursor(Qt.CursorShape.PointingHandCursor)
-            card.setStyleSheet(
-                "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
-                "border-radius: 8px; padding: 12px; }"
-                "QFrame#card:hover { border-color: #1C69D4; }"
-            )
-
             card_layout = QVBoxLayout(card)
-            card_layout.setSpacing(4)
-
-            top_row = QHBoxLayout()
-            code_label = QLabel(code)
-            code_label.setStyleSheet(
-                "font-size: 15px; font-weight: bold; color: #1C69D4; background: transparent;"
-            )
-            top_row.addWidget(code_label)
-            top_row.addStretch()
-
-            expand_arrow = QLabel("▶")
-            expand_arrow.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-            top_row.addWidget(expand_arrow)
-            card_layout.addLayout(top_row)
-
-            desc_label = QLabel(desc[:100])
-            desc_label.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
-            desc_label.setWordWrap(True)
-            card_layout.addWidget(desc_label)
+            card_layout.setSpacing(8)
+            header = QHBoxLayout()
+            heading = QLabel(f"{code} — {description}")
+            heading.setObjectName("dtcHeading")
+            heading.setWordWrap(True)
+            heading.setTextFormat(Qt.TextFormat.PlainText)
+            heading.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            header.addWidget(heading, 1)
+            search = QPushButton("Search web")
+            search.setObjectName("dtcSearchButton")
+            search.setToolTip(f"Search the web for {code} BMW")
+            search.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
+            header.addWidget(search, 0, Qt.AlignmentFlag.AlignTop)
+            card_layout.addLayout(header)
 
             meta = QLabel(
-                f"ECU: {ecu}  |  {dtc.get('memory', 'Fault')}  |  {_decode_dtc_status(status)}"
+                f"ECU: {ecu_text} · {dtc.get('memory', 'Fault')} memory · "
+                f"{_decode_dtc_status(dtc.get('status_byte', 0))}"
             )
-            meta.setStyleSheet("font-size: 11px; color: #a0a0a0; background: transparent;")
+            meta.setObjectName("dtcMeta")
+            meta.setWordWrap(True)
+            meta.setTextFormat(Qt.TextFormat.PlainText)
+            meta.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             card_layout.addWidget(meta)
-
-            # Detail section (hidden by default)
-            detail = QWidget()
-            detail.setVisible(False)
-            detail_layout = QVBoxLayout(detail)
-            detail_layout.setContentsMargins(0, 8, 0, 0)
-            detail_layout.setSpacing(6)
-
-            # G-10: Full description
-            full_desc = QLabel(desc)
-            full_desc.setWordWrap(True)
-            full_desc.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
-            detail_layout.addWidget(full_desc)
-
-            # G-10: Status byte decoded
-            status_text = _decode_dtc_status(status)
-            status_lbl = QLabel(f"Status: 0x{status:02X} — {status_text}")
-            status_lbl.setStyleSheet("font-size: 12px; color: #F39C12; background: transparent;")
-            detail_layout.addWidget(status_lbl)
-
-            job_text = dtc.get("job_text", "")
-            if job_text and job_text not in desc:
-                job_lbl = QLabel(f"ECU job text (German): {job_text}")
-                job_lbl.setWordWrap(True)
-                job_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-                detail_layout.addWidget(job_lbl)
-            if dtc.get("source"):
-                source_lbl = QLabel(f"Source: {dtc['source']}")
-                source_lbl.setWordWrap(True)
-                source_lbl.setStyleSheet(
-                    "font-size: 11px; color: #a0a0a0; background: transparent;"
-                )
-                detail_layout.addWidget(source_lbl)
-
-            # G-10: ECU full name if available
-            ecu_full = self._ecu_lookup.get(ecu, ecu)
-            if ecu_full and ecu_full != ecu:
-                ecu_lbl = QLabel(f"ECU: {ecu_full}")
-                ecu_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-                detail_layout.addWidget(ecu_lbl)
-
-            recorded_layout = QVBoxLayout()
-            detail_layout.addLayout(recorded_layout)
-
-            # Buttons row
-            btn_row = QHBoxLayout()
-            btn_row.setSpacing(8)
-
-            search_btn = QPushButton(f'Search Web for "{code} BMW"')
-            search_btn.setStyleSheet(
-                "QPushButton { background: transparent; color: #1C69D4; border: 1px solid #1C69D4; "
-                "border-radius: 6px; padding: 4px 12px; font-size: 11px; }"
-                "QPushButton:hover { background: rgba(28,105,212,0.15); }"
-            )
-            search_btn.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
-            btn_row.addWidget(search_btn)
-
-            btn_row.addStretch()
-            detail_layout.addLayout(btn_row)
-            card_layout.addWidget(detail)
-
-            # Click card to toggle detail
-            def _toggle_on_click(
-                event: object,
-                d: QWidget = detail,
-                a: QLabel = expand_arrow,
-                data: dict = dtc,
-                target: QVBoxLayout = recorded_layout,
-            ) -> None:
-                """Populate this card once, then toggle its settled recorded details."""
-                if not d.property("recorded_details_loaded"):
-                    _add_recorded_details(target, data)
-                    d.setProperty("recorded_details_loaded", True)
-                self._toggle_detail(d, a)
-
-            card.mousePressEvent = _toggle_on_click  # type: ignore[method-assign]
-
+            _add_recorded_details(card_layout, dtc)
             self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, card)
-
-    @staticmethod
-    def _toggle_detail(detail: QWidget, arrow: QLabel) -> None:
-        detail.setVisible(not detail.isVisible())
-        arrow.setText("▼" if detail.isVisible() else "▶")
 
     def _on_dtc_error(self, msg: str) -> None:
         """Report an unavailable scan without leaving stale results or a healthy-car claim."""
@@ -617,7 +529,7 @@ class DiagnosticsPage(QWidget):
 
 
 def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
-    """Lazily render settled results as plain text; expansion never requests data."""
+    """Render every collected state once as plain text without requesting data."""
     details = dtc.get("details", {})
     state = details.get("state", "not-in-scan")
     reasons = {
@@ -653,15 +565,19 @@ def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
         label.setWordWrap(True)
         layout.addWidget(label)
 
-    add("Recorded fault details", True)
     if state != "read":
+        add("Recorded fault details", True)
         add(reasons.get(state, "Recorded details could not be read. See the session log."))
         return
     records = details.get("records", [])
+    if not records:
+        add("Recorded fault details", True)
+        add("No recorded conditions were returned.")
+        return
     locale = regional_locale()
     for index, record in enumerate(records, 1):
-        if len(records) > 1:
-            add(f"Recorded state {index} (ECU emission order)", True)
+        add(f"Recorded fault details {index}", True)
+        lines = []
         for field in record["fields"] + record["environment"]:
             value = field["value"]
             if value is None:
@@ -676,13 +592,8 @@ def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
                 formatted += f" {field['unit']}"
             if field.get("note"):
                 formatted += f" — {field['note']}"
-            add(f"{field['label']}: {formatted}")
-        if record["environment"]:
-            add("Environment labels and units come from the ECU definition.")
-        if not record["fields"] and not record["environment"]:
-            add("No recorded conditions were returned.")
-    if details.get("source"):
-        add(f"Detail source: {details['source']}")
+            lines.append(f"{field['label']}: {formatted}")
+        add("\n".join(lines) or "No recorded conditions were returned.")
 
 
 def _decode_dtc_status(status: int) -> str:

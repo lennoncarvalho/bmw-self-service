@@ -192,7 +192,7 @@ optional composite tables to simple environment decoders. Native examples:
 DSC_I1 DID `2800`, raw `78` → 12 V; KOMB25 `170C`, raw `2EE0` → 12000 mV.
 `app/fault_details.py` normalizes results; `DiagnosticReadWorker` preserves basic
 faults and independent detail failures. Each ECU/memory detail batch shares
-30 seconds within the original five-minute scan. Expansion renders settled
+30 seconds within the original five-minute scan. Cards display all settled
 values without I/O; absent definitions, ambiguity, cancellation and budget/stream
 failures remain explicit. Physical behavior remains unverified.
 
