@@ -322,6 +322,8 @@ class DiagnosticReadWorker(CarWorker):
             and bool(self.ecus)
             and all(coverage_complete(row) for row in coverage)
         )
+        for row in coverage:
+            logger.debug("Diagnostic scan coverage: %s", row)
         return {
             "dtcs": dtcs,
             "coverage": coverage,

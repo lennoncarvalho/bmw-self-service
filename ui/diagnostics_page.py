@@ -33,6 +33,8 @@ class DiagnosticsPage(QWidget):
     """Diagnostics tab — read and clear fault codes from all ECUs."""
 
     mutation_active = Signal(bool)
+    loading_changed = Signal(bool)
+    loading_progress = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize diagnostic state and ownership for the supplied connection or page parent."""
@@ -75,10 +77,8 @@ class DiagnosticsPage(QWidget):
         self.read_btn.clicked.connect(self._on_read_clicked)
         title_row.addWidget(self.read_btn)
         layout.addLayout(title_row)
-        self._operation_progress = QLabel("")
-        self._operation_progress.setWordWrap(True)
-        layout.addWidget(self._operation_progress)
         self._clear_summary = QLabel()
+        self._clear_summary.hide()
         self._clear_summary.setWordWrap(True)
         self._clear_summary.setTextFormat(Qt.TextFormat.PlainText)
         self._clear_summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -156,6 +156,7 @@ class DiagnosticsPage(QWidget):
         self._inventory_revision += 1
         if connection is not self._connection:
             self._clear_summary.clear()
+            self._clear_summary.hide()
             self._clear_blocked = False
         self._clear_refresh_pending = False
         self._connection = connection
@@ -204,10 +205,26 @@ class DiagnosticsPage(QWidget):
         worker.setProperty("inventory_revision", self._inventory_revision)
         self._retired.append(worker)
         worker.result_ready.connect(self._on_dtcs_loaded)
-        worker.progress.connect(self._operation_progress.setText)
+        worker.progress.connect(self._on_loading_progress)
         worker.error.connect(self._on_dtc_error)
         worker.finished.connect(self._on_worker_finished)
+        self.loading_changed.emit(True)
+        self.loading_progress.emit("Reading fault memories...")
         worker.start()
+
+    @Slot(str)
+    def _on_loading_progress(self, message: str) -> None:
+        """Forward progress from the active worker to the foreground loading dialog."""
+        worker = self.sender()
+        if worker is not self._worker or not isinstance(worker, CarWorker):
+            return
+        if worker.connection is not self._connection:
+            return
+        if isinstance(worker, DiagnosticReadWorker) and (
+            worker.property("inventory_revision") != self._inventory_revision
+        ):
+            return
+        self.loading_progress.emit(message)
 
     @Slot()
     def _on_worker_finished(self) -> None:
@@ -220,6 +237,7 @@ class DiagnosticsPage(QWidget):
                 if refresh and worker.connection is self._connection and self._connection.alive_ok:
                     self._read_dtcs()
                 self.mutation_active.emit(False)
+            self.loading_changed.emit(self._worker is not None)
             self._update_actions()
         if isinstance(worker, CarWorker):
             if worker in self._retired:
@@ -244,7 +262,6 @@ class DiagnosticsPage(QWidget):
         else:
             dtcs = result if isinstance(result, list) else []
             complete = True
-        self._operation_progress.setText("Read batch complete")
         self._dtcs = dtcs
         self._loaded = True
         self._update_actions()
@@ -260,28 +277,19 @@ class DiagnosticsPage(QWidget):
 
         self.empty_state.setVisible(False)
         self.list_container.setVisible(True)
-        if self._coverage:
-            lines = [
-                f"{r['name']} / {r['memory']}: {r['state']}"
-                + (f" — {r['source']}" if r.get("source") else "")
-                for r in self._coverage
-            ]
+        if self._coverage or isinstance(result, dict):
             summary = QLabel(
                 ("Scan complete" if complete else "Scan incomplete")
-                + (
-                    " — installed topology unavailable; catalogue candidates only"
-                    if isinstance(result, dict) and not result.get("topology_known", True)
-                    else ""
-                )
-                + "\n"
-                + "\n".join(lines)
+                + f" · {len(dtcs)} {'fault' if len(dtcs) == 1 else 'faults'} found"
             )
-            details_read = sum(dtc.get("details", {}).get("state") == "read" for dtc in dtcs)
-            if dtcs:
+            if not complete:
+                summary.setText(
+                    summary.text() + "\nSome vehicle fault memories could not be checked."
+                )
+            if isinstance(result, dict) and not result.get("topology_known", True):
                 summary.setText(
                     summary.text()
-                    + f"\nRecorded fault details: {details_read} read; "
-                    + f"{len(dtcs) - details_read} unavailable"
+                    + "\nVehicle inventory is unavailable; results cover identified controllers only."
                 )
             summary.setWordWrap(True)
             summary.setTextFormat(Qt.TextFormat.PlainText)
@@ -502,6 +510,7 @@ class DiagnosticsPage(QWidget):
             self._clear_summary.setText(
                 "DEMO clear only. Simulated permanent-memory faults are retained."
             )
+            self._clear_summary.show()
             self._on_dtcs_loaded(connection.data["dtcs"])
             return
         self._clear_refresh_pending = False
@@ -512,9 +521,11 @@ class DiagnosticsPage(QWidget):
         self._worker = worker
         self._retired.append(worker)
         worker.result_ready.connect(self._on_clear_complete)
-        worker.progress.connect(self._operation_progress.setText)
+        worker.progress.connect(self._on_loading_progress)
         worker.error.connect(self._on_clear_error)
         worker.finished.connect(self._on_worker_finished)
+        self.loading_changed.emit(True)
+        self.loading_progress.emit("Clearing fault memories...")
         worker.start()
 
     @Slot(str)
@@ -533,6 +544,7 @@ class DiagnosticsPage(QWidget):
             "Clear All did not finish. Its outcome is unavailable; reconnect and read "
             "fault memories before a new clear. No automatic retry."
         )
+        self._clear_summary.show()
         self._on_dtc_error(message)
 
     @Slot(object)
@@ -564,6 +576,7 @@ class DiagnosticsPage(QWidget):
         elif result.get("stopped"):
             text += "\nBatch stopped. Read fault memories again; previous scan values may be stale."
         self._clear_summary.setText(text)
+        self._clear_summary.show()
         counts = Counter(row["response"] for row in result["outcomes"])
         observed = Counter(row["observed"] for row in result["outcomes"])
         message = "Application outcomes:\n" + "\n".join(
@@ -577,11 +590,6 @@ class DiagnosticsPage(QWidget):
         if result.get("stopped"):
             message += "\nBatch stopped; inspect the unattempted targets and connection status."
         QMessageBox.information(self, "Clear outcomes", message)
-        self._operation_progress.setText(
-            "Clear batch stopped; see individual outcomes"
-            if result.get("stopped")
-            else "Clear batch complete; see individual outcomes"
-        )
 
     @staticmethod
     def _open_search(checked: bool, code: str) -> None:

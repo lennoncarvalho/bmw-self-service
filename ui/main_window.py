@@ -90,6 +90,8 @@ class MainWindow(QMainWindow):
         self._closing = False
         self._mutation_active = False
         self._coding_loading = False
+        self._diagnostics_loading = False
+        self._overview_after_diagnostics = False
         self._overview_ecus: list[dict] = []
         self._cbs_worker: CbsReadWorker | CbsResetWorker | None = None
         self._cbs_reset_blocked = False
@@ -126,6 +128,8 @@ class MainWindow(QMainWindow):
         self.diag_page = DiagnosticsPage()
         self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
         self.diag_page.mutation_active.connect(self._set_mutation_active)
+        self.diag_page.loading_changed.connect(self._set_diagnostics_loading)
+        self.diag_page.loading_progress.connect(self._on_diagnostics_loading_progress)
         self.diag_page.can_mutate = self._can_start_mutation
         self.stack.addWidget(self.diag_page)
 
@@ -283,12 +287,20 @@ class MainWindow(QMainWindow):
     def _show_spinner_cancel(self) -> None:
         """G-13: Show cancel button after 10s."""
         self._cancel_btn.setVisible(
-            not self._mutation_active and not self._coding_loading and self._cbs_worker is None
+            not self._mutation_active
+            and not self._coding_loading
+            and not self._diagnostics_loading
+            and self._cbs_worker is None
         )
 
     def _show_retry_dialog(self) -> None:
         """G-13: Show retry dialog after 30s timeout."""
-        if self._mutation_active or self._coding_loading or self._cbs_worker is not None:
+        if (
+            self._mutation_active
+            or self._coding_loading
+            or self._diagnostics_loading
+            or self._cbs_worker is not None
+        ):
             return
         self.hide_spinner()
         reply = QMessageBox.question(
@@ -335,7 +347,7 @@ class MainWindow(QMainWindow):
         self._spinner_retry_timer.start(30000)
 
     def hide_spinner(self) -> None:
-        if self._coding_loading or self._cbs_worker is not None:
+        if self._coding_loading or self._diagnostics_loading or self._cbs_worker is not None:
             return
         self.loading_backdrop.hide()
         central = self.centralWidget()
@@ -362,6 +374,26 @@ class MainWindow(QMainWindow):
     def _on_coding_loading_progress(self, message: str) -> None:
         """Display progress from the current foreground coding operation."""
         if self._coding_loading:
+            self.spinner_text.setText(message)
+
+    @Slot(bool)
+    def _set_diagnostics_loading(self, active: bool) -> None:
+        """Keep diagnostic progress inside the shared foreground loading backdrop."""
+        self._diagnostics_loading = active
+        if active:
+            self.show_spinner("Reading fault memories...")
+            self._spinner_cancel_timer.stop()
+            self._spinner_retry_timer.stop()
+        else:
+            self.hide_spinner()
+            if self._overview_after_diagnostics:
+                self._overview_after_diagnostics = False
+                QTimer.singleShot(0, self._refresh_overview)
+
+    @Slot(str)
+    def _on_diagnostics_loading_progress(self, message: str) -> None:
+        """Update the modal only while its current diagnostic worker is active."""
+        if self._diagnostics_loading:
             self.spinner_text.setText(message)
 
     # ---- Gear menu ----
@@ -427,7 +459,12 @@ class MainWindow(QMainWindow):
             getattr(self._connection, "trace_id", "demo/disconnected"),
             self._read_only,
         )
-        if not self._mutation_active and not self._coding_loading and self._cbs_worker is None:
+        if (
+            not self._mutation_active
+            and not self._coding_loading
+            and not self._diagnostics_loading
+            and self._cbs_worker is None
+        ):
             if index == 0 and not self._connected:
                 self.stack.setCurrentWidget(self.welcome_page)
             else:
@@ -682,6 +719,7 @@ class MainWindow(QMainWindow):
             or self._closing
             or self._mutation_active
             or self._coding_loading
+            or self._diagnostics_loading
             or self._cbs_worker is not None
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
@@ -1011,6 +1049,8 @@ class MainWindow(QMainWindow):
             return
         self.vehicle_page.reset()
         self._overview_ecus = []
+        self._diagnostics_loading = False
+        self._overview_after_diagnostics = False
         self._cbs_reset_blocked = False
         if self._cbs_worker is not None:
             self._retire_worker(self._cbs_worker)
@@ -1086,6 +1126,7 @@ class MainWindow(QMainWindow):
         return (
             not self._mutation_active
             and not self._coding_loading
+            and not self._diagnostics_loading
             and self._cbs_worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
@@ -1313,7 +1354,10 @@ class MainWindow(QMainWindow):
         if active:
             self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
         elif self._connected and not self._coding_loading and refresh_overview:
-            QTimer.singleShot(0, self._refresh_overview)
+            if self._diagnostics_loading:
+                self._overview_after_diagnostics = True
+            else:
+                QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
             btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3)) and not active)
         self._cancel_btn.setVisible(False)
