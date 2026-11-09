@@ -68,13 +68,20 @@ class VehiclePage(QWidget):
         card = QFrame()
         card.setObjectName("card")
         card_layout = QVBoxLayout(card)
+        card_layout.setSpacing(8)
+        card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.model_label = QLabel()
         self.vin_label = QLabel()
         self.connection_label = QLabel()
         self.mileage_label = QLabel()
         self.prod_date_label = QLabel()
         self.order_label = QLabel()
+        self.time_criterion_label = QLabel()
+        self.paint_label = QLabel()
+        self.upholstery_label = QLabel()
         self.ilevel_label = QLabel()
+        self.previous_ilevel_label = QLabel()
+        self.factory_ilevel_label = QLabel()
         self.battery_label = QLabel()
         self.engine_label = QLabel()
         for label in (
@@ -84,13 +91,20 @@ class VehiclePage(QWidget):
             self.mileage_label,
             self.prod_date_label,
             self.order_label,
+            self.time_criterion_label,
+            self.paint_label,
+            self.upholstery_label,
             self.ilevel_label,
+            self.previous_ilevel_label,
+            self.factory_ilevel_label,
             self.battery_label,
             self.engine_label,
         ):
             label.setWordWrap(True)
             label.setTextFormat(Qt.TextFormat.PlainText)
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            label.setContentsMargins(0, 0, 0, 0)
+            label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
             card_layout.addWidget(label)
         layout.addWidget(card)
 
@@ -136,6 +150,7 @@ class VehiclePage(QWidget):
             return
         sections = order["sections"]
         lines = [
+            f"Time criterion (raw): {order['time_criterion']}",
             "Options:\n"
             + (
                 "\n".join(order.get("option_descriptions", sections.get("8", []))) or "None decoded"
@@ -171,6 +186,9 @@ class VehiclePage(QWidget):
     def invalidate_order(self) -> None:
         """Discard configuration details after a fatal overview read failure."""
         self.order_label.setText("Vehicle order: unavailable")
+        self.time_criterion_label.setText("Vehicle-order date: Unavailable")
+        self.paint_label.hide()
+        self.upholstery_label.hide()
         self._populate_order(None)
 
     def set_loading(self, loading: bool) -> None:
@@ -202,7 +220,12 @@ class VehiclePage(QWidget):
         """Publish one settled batch; missing data never inherits earlier values."""
         self._observed_at = datetime.now(UTC)
         self._observed_clock = monotonic()
-        model = results.get("model") or "BMW — exact model unavailable"
+        order = results.get("vehicle_order")
+        model = (
+            results.get("model")
+            or (order.get("model") if isinstance(order, dict) else None)
+            or "BMW — model designation unavailable"
+        )
         self.model_label.setText(str(model))
         self.vin_label.setText(f"VIN: {vin or results.get('vin') or 'Unavailable'}")
         self.connection_label.setText(
@@ -212,10 +235,10 @@ class VehiclePage(QWidget):
         if isinstance(mileage, dict):
             mileage = f"{regional_locale().toString(int(mileage['km']))} km ({mileage['source']})"
         self.mileage_label.setText(f"Odometer: {mileage or 'Unavailable'}")
-        self.prod_date_label.setText(f"Build date: {results.get('prod_date') or 'Unavailable'}")
-        self.ilevel_label.setText(
-            f"Software integration levels: {results.get('i-level') or 'Unavailable'}"
-        )
+        production = results.get("prod_date")
+        self.prod_date_label.setText(f"Production date: {production or 'Unavailable'}")
+        self.prod_date_label.setVisible(bool(production))
+        self._populate_ilevel(results.get("i-level"))
         self.battery_label.setText(
             f"Supply voltage: {results.get('battery_voltage') or 'Unavailable'}"
         )
@@ -253,17 +276,53 @@ class VehiclePage(QWidget):
             else "ECU inventory: unavailable"
         )
         self._populate_ecus(self._ecus)
-        order = results.get("vehicle_order")
+        self.paint_label.setVisible(isinstance(order, dict))
+        self.upholstery_label.setVisible(isinstance(order, dict))
         if isinstance(order, dict):
             self.order_label.setText(
-                f"Model range: {order['model_range']} · Type key: {order['type_code']}\n"
-                f"Time criterion: {order['time_criterion']} (configuration code)\n"
-                f"Paint: {order['paint_code']} · Upholstery: {order['upholstery_code']}"
+                f"Model range: {order['model_range']} · Type key: {order['type_code']}"
             )
+            code = order["time_criterion"]
+            date = (
+                f"{code[:2]}/20{code[2:]}"
+                if len(code) == 4 and code.isascii() and code.isdigit() and 1 <= int(code[:2]) <= 12
+                else f"Unrecognised ({code})"
+            )
+            self.time_criterion_label.setText(f"Vehicle-order date: {date}")
+            self.time_criterion_label.setToolTip(
+                f"Time criterion {code}: configuration reference month. "
+                "It can match the production month, but is not an independent production-date read."
+            )
+            self.paint_label.setText(f"Paint: {order['paint_code']}")
+            self.upholstery_label.setText(f"Upholstery: {order['upholstery_code']}")
         else:
             self.order_label.setText("Vehicle order: unavailable")
+            self.time_criterion_label.setText("Vehicle-order date: Unavailable")
+            self.time_criterion_label.setToolTip("")
         self._populate_order(order if isinstance(order, dict) else None)
         self._update_age()
+
+    def _populate_ilevel(self, levels: object) -> None:
+        """Label the source's three roles, collapsing equal values without losing their meaning."""
+        self.ilevel_label.setToolTip(
+            "Vehicle-level current, previous and factory records; these are not separate ECUs."
+        )
+        self.previous_ilevel_label.hide()
+        self.factory_ilevel_label.hide()
+        if not isinstance(levels, dict):
+            self.ilevel_label.setText(f"Software I-Level: {levels or 'Unavailable'}")
+            return
+        current, previous, factory = (levels.get(key) for key in ("current", "previous", "factory"))
+        if current and current == previous == factory:
+            self.ilevel_label.setText(
+                f"Software I-Level: {current} (current, previous and factory)"
+            )
+            return
+        self.ilevel_label.setText(f"Current I-Level: {current or 'Unavailable'}")
+        self.previous_ilevel_label.setText(f"Previous I-Level: {previous or 'Unavailable'}")
+        self.factory_ilevel_label.setText(f"Factory I-Level: {factory or 'Unavailable'}")
+        self.previous_ilevel_label.show()
+        self.factory_ilevel_label.show()
 
     @staticmethod
     def _measurement(item: dict[str, Any]) -> str:

@@ -1,14 +1,14 @@
 """Bounded packed vehicle-order decoding for the recovered gateway read.
 
 Wire and field provenance: docs.md#identity-configuration-and-diagnostics.
-No production-date, exact model, transport or coding applicability is inferred.
+No production date, transport or coding applicability is inferred from configuration.
 """
 
 import logging
 from typing import Any
 
 from app.protocol.contracts import TransportKind
-from app.vehicle_metadata import describe_options
+from app.vehicle_metadata import describe_model, describe_options
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,10 @@ def read_vehicle_order(connection: Any) -> dict[str, Any]:
     if getattr(connection, "kind", None) != TransportKind.HSFZ:
         raise ValueError("Vehicle-order logical-address mapping is not yet recovered")
     order = decode_vehicle_order(connection.send_uds(0x10, b"\x22\x3f\x06", timeout=30.0))
+    try:
+        order["model"] = describe_model(order["type_code"], order["model_range"])
+    except (OSError, ValueError):
+        logger.warning("Vehicle model description unavailable", exc_info=True)
     try:
         order["option_descriptions"] = describe_options(order["options"])
     except (OSError, ValueError):

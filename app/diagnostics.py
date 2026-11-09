@@ -28,12 +28,25 @@ logger = logging.getLogger(__name__)
 MEMORIES = {"Fault": b"\x19\x02\x0c", "Information": b"\x22\x20\x00", "Permanent": b"\x19\x15"}
 INFO_CLEAR = b"\x31\x01\x0f\x06"
 FAULT_CLEAR = b"\x14\xff\xff\xff"
-READ_JOBS = {"Fault": "FS_LESEN", "Information": "IS_LESEN"}
+READ_JOBS = {"Fault": "FS_LESEN", "Information": "IS_LESEN", "Permanent": "FS_LESEN_PERMANENT"}
 # Clear job, the only request it may send, and the exact final reply that confirms it.
 CLEAR_JOBS = {
     "Fault": ("FS_LOESCHEN", FAULT_CLEAR, b"\x54"),
     "Information": ("IS_LOESCHEN", INFO_CLEAR, b"\x71\x01\x0f\x06"),
 }
+STREAM_FAILURES = frozenset(
+    {
+        "timeout",
+        "failed",
+        "cancelled",
+        "outcome-uncertain",
+        "connection-closed",
+        "connection-lost",
+        "invalid-response",
+        "unexpected-response",
+        "transport-rejected",
+    }
+)
 
 
 @cache
@@ -125,11 +138,20 @@ def exchange(
 
 
 def memory_applicable(backend: JobBackend, name: str, memory: str, payload: bytes | None) -> bool:
-    """A variant's job file decides Fault/Information; otherwise the recovered request does."""
+    """A variant's job file decides memory support; otherwise use the recovered requests."""
     job = READ_JOBS.get(memory)
     if job is not None and backend.engine(name) is not None:
         return backend.has_job(name, job) or (memory == "Fault" and payload is not None)
     return payload is not None
+
+
+def coverage_complete(row: dict[str, Any]) -> bool:
+    """Whether a memory was read or is explicitly outside the available contract."""
+    return row["state"] in ("read", "not-applicable") or (
+        row["memory"] != "Fault"
+        and row["state"] == "unsupported"
+        and not row.get("prg_decided", False)
+    )
 
 
 def read_memory(
@@ -144,7 +166,8 @@ def read_memory(
     """Read one memory via the variant's job, else the recovered request.
 
     Returns:
-        ``(records, state, source)``; ``records`` is ``None`` unless ``state`` is read.
+        ``(records, state, source)``; partial results retain valid records but
+        never count as complete coverage.
     """
     remaining = deadline - time.monotonic()
     if remaining <= 0:
@@ -163,11 +186,30 @@ def read_memory(
                     run.error,
                 )
                 return None, run.state(), run.source
+            record_error = False
             try:
-                return fault_records(run), "read", run.source
+                records = fault_records(run)
             except ValueError:
                 logger.warning("Invalid job records address=%04X job=%s", address, job)
-                return None, "invalid", run.source
+                records, record_error = [], True
+            try:
+                wire_records = decode_memory(run.response(), memory)
+            except ValueError:
+                logger.warning("Invalid job response address=%04X job=%s", address, job)
+                return records or None, "partial" if records else "invalid", run.source
+            if record_error or Counter((r["code"], r["status"]) for r in records) != Counter(
+                wire_records
+            ):
+                logger.warning("Job record accounting mismatch address=%04X job=%s", address, job)
+                return (
+                    [
+                        {"code": c, "status": st, "text": "", "presence": ""}
+                        for c, st in wire_records
+                    ],
+                    "partial",
+                    f"{APP_SOURCE} (job record accounting mismatch)",
+                )
+            return records, "read", run.source
         # Interpreter-level failure: no vehicle outcome is implied; use the app read.
         source = f"{APP_SOURCE} (job {job} failed: {run.error})"
     if payload is None:
@@ -217,12 +259,13 @@ class DiagnosticReadWorker(CarWorker):
         catalog = DiagnosticCatalog()
         dtcs: list[dict] = []
         coverage: list[dict] = []
+        stopped = False
         for ecu in self.ecus:
             address = int(str(ecu["addr"]), 0)
             name = str(ecu.get("name", f"ECU {address:02X}"))
             supported = bool(ecu.get("identified") and ecu.get("uds"))
             requests, decided = memory_requests(name)
-            # A job file decides Fault/Information; Permanent stays on the app request.
+            # A loaded exact variant also decides permanent-memory applicability.
             job_decided = supported and backend.engine(name) is not None
             for memory, payload in requests.items():
                 row = {
@@ -233,7 +276,7 @@ class DiagnosticReadWorker(CarWorker):
                     "origin": ecu.get("origin", "gateway"),
                     "source": "",
                 }
-                row["prg_decided"] = decided or (job_decided and memory != "Permanent")
+                row["prg_decided"] = decided or job_decided
                 coverage.append(row)
                 if supported and not memory_applicable(backend, name, memory, payload):
                     row["state"] = "not-applicable"
@@ -243,12 +286,17 @@ class DiagnosticReadWorker(CarWorker):
                         "unidentified" if not ecu.get("identified") else "unsupported-protocol"
                     )
                     continue
-                if self.isInterruptionRequested() or not self.connection.alive_ok:
+                if self._cancelled.is_set():
+                    row["state"] = "not-attempted-cancelled"
+                    continue
+                if stopped or not self.connection.alive_ok:
+                    row["state"] = "not-attempted-connection"
                     continue
                 self.progress.emit(f"Reading {name}: {memory.lower()} memory...")
                 records, row["state"], row["source"] = read_memory(
                     self.connection, backend, name, address, memory, payload, deadline
                 )
+                stopped = row["state"] in STREAM_FAILURES
                 for record in records or []:
                     code_text = f"{record['code']:06X}"
                     description = catalog.describe(name, code_text, memory)
@@ -272,18 +320,10 @@ class DiagnosticReadWorker(CarWorker):
         complete = (
             self.coverage_known
             and bool(self.ecus)
-            and all(
-                row["state"] in ("read", "not-applicable")
-                # Without a PRG the memory's existence is unknown; with one, a
-                # rejection means that defined memory was not read.
-                or (
-                    row["memory"] != "Fault"
-                    and row["state"] == "unsupported"
-                    and not row["prg_decided"]
-                )
-                for row in coverage
-            )
+            and all(coverage_complete(row) for row in coverage)
         )
+        for row in coverage:
+            logger.debug("Diagnostic scan coverage: %s", row)
         return {
             "dtcs": dtcs,
             "coverage": coverage,
@@ -301,7 +341,7 @@ class DiagnosticReadWorker(CarWorker):
         jobs, within the scan's original five-minute deadline. Expansion performs
         no I/O. Permanent-memory faults never borrow normal-memory snapshots.
         """
-        stream_failed = False
+        stream_failed = any(row.get("state") in STREAM_FAILURES for row in coverage)
         for row in coverage:
             selected = [
                 dtc
@@ -347,7 +387,7 @@ class DiagnosticReadWorker(CarWorker):
                 )
                 if not run.ok:
                     details["state"] = run.state()
-                    stream_failed = run.state() in ("timeout", "failed", "cancelled")
+                    stream_failed = run.state() in STREAM_FAILURES
                     continue
                 try:
                     dtc["details"] = decode_fault_details(run, code)
@@ -382,9 +422,13 @@ class DiagnosticClearWorker(CarWorker):
         self.ecus = [dict(ecu) for ecu in ecus]
         self.coverage = [dict(row) for row in coverage]
         self.backend = backend
+        self._executed = False
 
     def do_work(self) -> dict:
         """Continue after definite ECU rejections; stop sending on lost transport."""
+        if self._executed:
+            raise PermissionError("A fault-clearing operation cannot be replayed")
+        self._executed = True
         backend = self.backend or JobBackend(self.connection)
         try:
             return self._clear(backend)
@@ -393,41 +437,21 @@ class DiagnosticClearWorker(CarWorker):
                 backend.close()
 
     def _clear(self, backend: JobBackend) -> dict:
+        """Account for every target; never continue mutations after uncertain communication."""
         deadline = time.monotonic() + 300.0
         outcomes = []
+        stopped = ""
         for ecu in self.ecus:
-            if not ecu.get("identified") or not ecu.get("uds"):
-                continue
             address = int(str(ecu["addr"]), 0)
             name = str(ecu["name"])
             reads, _decided = memory_requests(name)
-            has_file = backend.engine(name) is not None
+            supported = bool(ecu.get("identified") and ecu.get("uds"))
+            has_file = supported and backend.engine(name) is not None
             for memory, app_payload in (
                 ("Fault", FAULT_CLEAR),
                 ("Information", info_clear_request(name)),
+                ("Permanent", None),
             ):
-                job, job_payload, expected = CLEAR_JOBS[memory]
-                use_job = backend.has_job(name, job)
-                # With a job file, the file decides whether a clear exists.
-                payload = job_payload if use_job else None if has_file else app_payload
-                if payload is None:
-                    if memory == "Fault":
-                        outcomes.append(
-                            {
-                                "name": name,
-                                "addr": address,
-                                "memory": memory,
-                                "response": "no-clear-job-in-job-file",
-                                "observed": "not-read",
-                                "source": backend.fallback_source(name),
-                            }
-                        )
-                    continue
-                if memory == "Information" and not any(
-                    row["addr"] == address and row["memory"] == memory and row["state"] == "read"
-                    for row in self.coverage
-                ):
-                    continue
                 row = {
                     "name": name,
                     "addr": address,
@@ -437,7 +461,42 @@ class DiagnosticClearWorker(CarWorker):
                     "source": "",
                 }
                 outcomes.append(row)
+                if not supported:
+                    row["response"] = (
+                        "unidentified" if not ecu.get("identified") else "unsupported-protocol"
+                    )
+                    continue
+                if memory == "Permanent":
+                    row["response"] = (
+                        "not-cleared-permanent"
+                        if memory_applicable(backend, name, memory, reads[memory])
+                        else "not-applicable"
+                    )
+                    continue
+                job, job_payload, expected = CLEAR_JOBS[memory]
+                use_job = backend.has_job(name, job)
+                # A failed initial read never removes a source-supported clear target.
+                payload = job_payload if use_job else None if has_file else app_payload
+                if payload is None:
+                    row["response"] = "no-clear-job-in-job-file" if has_file else "not-applicable"
+                    continue
+                if getattr(self.connection, "read_only", False):
+                    row["response"] = "policy-blocked"
+                    continue
+                if stopped:
+                    row["response"] = f"not-attempted-{stopped}"
+                    continue
+                if self._cancelled.is_set():
+                    stopped = "cancelled"
+                    row["response"] = "not-attempted-cancelled"
+                    continue
                 if not self.connection.alive_ok:
+                    stopped = "connection"
+                    row["response"] = "not-attempted-connection"
+                    continue
+                if time.monotonic() >= deadline:
+                    stopped = "budget-exhausted"
+                    row["response"] = "not-attempted-budget-exhausted"
                     continue
                 self.progress.emit(f"Clearing {name}: {memory.lower()} memory...")
                 if use_job:
@@ -454,15 +513,28 @@ class DiagnosticClearWorker(CarWorker):
                         if response is None
                         else "invalid"
                     )
+                if row["response"] in STREAM_FAILURES or row["response"] in (
+                    "invalid",
+                    "inconsistent-job-status",
+                ):
+                    stopped = "connection"
                 if row["response"] != "accepted" or not self.connection.alive_ok:
                     continue
                 records, state, _source = read_memory(
                     self.connection, backend, name, address, memory, reads[memory], deadline
                 )
                 row["observed"] = (
-                    state if records is None else "still-present" if records else "empty"
+                    state if state != "read" else "still-present" if records else "empty"
                 )
-        return {"outcomes": outcomes}
+                row["read_state"] = state
+                row["remaining_count"] = len(records) if records is not None else None
+                if state in STREAM_FAILURES:
+                    stopped = "connection"
+        if stopped == "connection":
+            # A local job failure can leave the socket nominally open after a
+            # sent clear. Close it before the UI can schedule other operations.
+            self.connection.request_close()
+        return {"outcomes": outcomes, "stopped": stopped}
 
     @staticmethod
     def _clear_by_job(
@@ -488,15 +560,17 @@ class DiagnosticClearWorker(CarWorker):
         )
         if run.write_rejected(payload):
             return "rejected", run.source
+        reply = run.reply(payload)
+        if len(reply) == 3 and reply[:2] == bytes((0x7F, payload[0])) and reply[2] != 0x78:
+            return ("unsupported" if reply[2] in (0x11, 0x12, 0x31) else "rejected"), run.source
         if run.error is not None:
             logger.warning("Clear job target=%04X job=%s error=%r", address, job, run.error)
+            if run.sent(payload):
+                return "outcome-uncertain", run.source
             return run.state(), run.source
-        reply = run.reply(payload)
         if not run.sent(payload):
             return "not-sent", run.source
         if reply == expected:
             # A positive reply with a failed job status is not a confirmed clear.
             return ("accepted" if run.status == "OKAY" else "inconsistent-job-status"), run.source
-        if len(reply) == 3 and reply[0] == 0x7F:
-            return run.state(), run.source
-        return "invalid", run.source
+        return "outcome-uncertain", run.source

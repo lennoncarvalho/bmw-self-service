@@ -143,11 +143,29 @@ decode version/five fixed four-character fields and bounded optional tags 8/4/12
 Time criterion is configuration data, not build date. Tags 4/12 have no invented
 semantic names. `app/vehicle_order.py` owns bounds/incomplete-section behavior.
 `coding_data/vehicle_equipment.json` provides sourced equipment descriptions.
+The overview formats a valid time criterion as MM/20YY and labels it vehicle-order
+date; it does not fabricate an independent production-date read.
+
+`scripts/recover_vehicle_models.py <ISTA> coding_data/vehicle_models.json <provenance>`
+compiles `PSdZ/kiswb/*/KIS.{script,data}` vehicle-type descriptions from
+`KIS.FAHRZEUGTYP` (`isisss`, two AVL index nodes per row). Runtime lookup requires
+both the observed type key and model range and one agreeing description. Null or
+conflicting descriptions stay unavailable; CKD entries do not imply marketing trim.
+The full asset builder runs this producer; runtime never opens the source database.
+
+Gateway `100B` contains three eight-byte I-Levels in **current, previous, factory**
+order. Source `models.s0.c.b` fills `w0`, and `a.g0.<init>` labels its getters
+Current/Last/Shipment. Equal values share one labelled overview row; differing
+values retain all three roles. A repeated value alone does not establish update history.
 
 `app/vehicle.py` selects exact odometer and engine-measurement contracts;
 `coding_data/engine_measurements.json` and diagnostic catalogues retain selectors,
 units and source identities. Do not copy generic mileage/battery DIDs across ECUs.
 `app/diagnostics.py` and native `FS_`/`IS_` jobs own memory applicability and clears.
+Loaded variants decide permanent-memory support through `FS_LESEN_PERMANENT`,
+including variants absent from the older request metadata. Native lists are
+reconciled against their complete wire records; recovered partial lists retain
+codes but never count as complete coverage.
 Preserve raw status bytes. The engine indicator uses `19 02 0C` present/confirmed
 faults (bits 0/3), not the old 4A69/F303 lamp-command readers. Those retained
 source records do not authorize restoring the superseded dashboard behavior.
@@ -174,9 +192,17 @@ optional composite tables to simple environment decoders. Native examples:
 DSC_I1 DID `2800`, raw `78` → 12 V; KOMB25 `170C`, raw `2EE0` → 12000 mV.
 `app/fault_details.py` normalizes results; `DiagnosticReadWorker` preserves basic
 faults and independent detail failures. Each ECU/memory detail batch shares
-30 seconds within the original five-minute scan. Expansion renders settled
+30 seconds within the original five-minute scan. Cards display all settled
 values without I/O; absent definitions, ambiguity, cancellation and budget/stream
 failures remain explicit. Physical behavior remains unverified.
+
+Clear All accounts for every ECU/memory, including unidentified/unattempted targets
+and excluded permanent memories. Failed initial reads do not remove supported
+clear targets. Definite local rejections permit continuation; uncertain sends or
+failed streams stop later mutations. Exact application replies and per-memory
+rereads/counts remain separate. The UI retains outcomes across refreshes, waits
+for worker thread exit before unlocking, and requires reconnect after stream
+failure. It never retries or automatically rereads a stopped clear batch.
 
 ### CBS
 

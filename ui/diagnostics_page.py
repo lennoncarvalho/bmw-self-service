@@ -1,12 +1,13 @@
 """Diagnostics page — DTC read/clear from all ECUs.
 
 Displays fault codes with descriptions from DtcDatabase.
-Inline expand/collapse for detail view. Confirmation dialog for clears.
+Always-visible fault details with a separate confirmation dialog for clears.
 
 Reference: plan.md#diagnostics-and-cbs and docs.md#diagnostic-text-database.
 """
 
 import logging
+from collections import Counter
 from collections.abc import Callable
 from typing import Any
 
@@ -21,7 +22,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker
+from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker, coverage_complete
 from app.worker import CarWorker
 from ui.regional import regional_locale
 
@@ -32,6 +33,8 @@ class DiagnosticsPage(QWidget):
     """Diagnostics tab — read and clear fault codes from all ECUs."""
 
     mutation_active = Signal(bool)
+    loading_changed = Signal(bool)
+    loading_progress = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize diagnostic state and ownership for the supplied connection or page parent."""
@@ -46,6 +49,8 @@ class DiagnosticsPage(QWidget):
         self._inventory_revision = 0
         self.can_mutate: Callable[[], bool] = lambda: True
         self._worker: CarWorker | None = None
+        self._clear_refresh_pending = False
+        self._clear_blocked = False
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -72,9 +77,12 @@ class DiagnosticsPage(QWidget):
         self.read_btn.clicked.connect(self._on_read_clicked)
         title_row.addWidget(self.read_btn)
         layout.addLayout(title_row)
-        self._operation_progress = QLabel("")
-        self._operation_progress.setWordWrap(True)
-        layout.addWidget(self._operation_progress)
+        self._clear_summary = QLabel()
+        self._clear_summary.hide()
+        self._clear_summary.setWordWrap(True)
+        self._clear_summary.setTextFormat(Qt.TextFormat.PlainText)
+        self._clear_summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self._clear_summary)
 
         # T-9: MIL (Check Engine) status indicator
         mil_row = QHBoxLayout()
@@ -129,13 +137,28 @@ class DiagnosticsPage(QWidget):
         )
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         self.clear_btn.setVisible(False)
-        list_layout.addWidget(self.clear_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
         layout.addWidget(self.list_container)
+        layout.addWidget(self.clear_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def _update_actions(self) -> None:
+        """Offer Clear All for supported targets independently of scan completeness."""
+        connected = self._connection is not None and getattr(self._connection, "alive_ok", True)
+        busy = self._worker is not None
+        self.read_btn.setEnabled(connected and not busy)
+        writable = connected and not getattr(self._connection, "read_only", False)
+        supported = any(e.get("identified") and e.get("uds") for e in self._ecus)
+        available = writable and (supported or hasattr(self._connection, "data"))
+        self.clear_btn.setVisible(available)
+        self.clear_btn.setEnabled(available and not busy and not self._clear_blocked)
 
     def set_connection(self, connection: Any, ecus: list[dict]) -> None:
         """Replace settled targets and invalidate results from the previous inventory."""
         self._inventory_revision += 1
+        if connection is not self._connection:
+            self._clear_summary.clear()
+            self._clear_summary.hide()
+            self._clear_blocked = False
+        self._clear_refresh_pending = False
         self._connection = connection
         self._ecus = [dict(ecu) for ecu in ecus]
         # Build ECU name lookup map for detail view
@@ -148,6 +171,7 @@ class DiagnosticsPage(QWidget):
         self._empty_text.setText("Open Diagnostics to read vehicle fault memories.")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
+        self._update_actions()
         if hasattr(connection, "data"):
             self.activate()
 
@@ -163,9 +187,10 @@ class DiagnosticsPage(QWidget):
 
     def _read_dtcs(self) -> None:
         """Read DTCs from all ECUs via CarWorker."""
-        if self._connection is None:
+        if self._connection is None or self._worker is not None:
             return
         self.read_btn.setEnabled(False)
+        self.clear_btn.setEnabled(False)
         self._empty_text.setText("Reading confirmed fault codes...")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
@@ -180,17 +205,40 @@ class DiagnosticsPage(QWidget):
         worker.setProperty("inventory_revision", self._inventory_revision)
         self._retired.append(worker)
         worker.result_ready.connect(self._on_dtcs_loaded)
-        worker.progress.connect(self._operation_progress.setText)
+        worker.progress.connect(self._on_loading_progress)
         worker.error.connect(self._on_dtc_error)
         worker.finished.connect(self._on_worker_finished)
+        self.loading_changed.emit(True)
+        self.loading_progress.emit("Reading fault memories...")
         worker.start()
+
+    @Slot(str)
+    def _on_loading_progress(self, message: str) -> None:
+        """Forward progress from the active worker to the foreground loading dialog."""
+        worker = self.sender()
+        if worker is not self._worker or not isinstance(worker, CarWorker):
+            return
+        if worker.connection is not self._connection:
+            return
+        if isinstance(worker, DiagnosticReadWorker) and (
+            worker.property("inventory_revision") != self._inventory_revision
+        ):
+            return
+        self.loading_progress.emit(message)
 
     @Slot()
     def _on_worker_finished(self) -> None:
         worker = self.sender()
         if worker is self._worker:
             self._worker = None
-            self.read_btn.setEnabled(self._connection is not None)
+            if isinstance(worker, DiagnosticClearWorker):
+                refresh = self._clear_refresh_pending
+                self._clear_refresh_pending = False
+                if refresh and worker.connection is self._connection and self._connection.alive_ok:
+                    self._read_dtcs()
+                self.mutation_active.emit(False)
+            self.loading_changed.emit(self._worker is not None)
+            self._update_actions()
         if isinstance(worker, CarWorker):
             if worker in self._retired:
                 self._retired.remove(worker)
@@ -214,11 +262,9 @@ class DiagnosticsPage(QWidget):
         else:
             dtcs = result if isinstance(result, list) else []
             complete = True
-        self._operation_progress.setText("Read batch complete")
         self._dtcs = dtcs
         self._loaded = True
-        self.read_btn.setEnabled(True)
-        self.clear_btn.setEnabled(True)
+        self._update_actions()
 
         # Clean existing cards
         while self.dtc_list_layout.count() > 1:
@@ -227,37 +273,24 @@ class DiagnosticsPage(QWidget):
                 continue
             child = item.widget()
             if child is not None:
+                child.hide()
                 child.deleteLater()
 
         self.empty_state.setVisible(False)
         self.list_container.setVisible(True)
-        self.clear_btn.setVisible(not getattr(self._connection, "read_only", False))
-        self.clear_btn.setEnabled(
-            any(e.get("identified") and e.get("uds") for e in self._ecus)
-            or hasattr(self._connection, "data")
-        )
-        if self._coverage:
-            lines = [
-                f"{r['name']} / {r['memory']}: {r['state']}"
-                + (f" — {r['source']}" if r.get("source") else "")
-                for r in self._coverage
-            ]
+        if self._coverage or isinstance(result, dict):
             summary = QLabel(
                 ("Scan complete" if complete else "Scan incomplete")
-                + (
-                    " — installed topology unavailable; catalogue candidates only"
-                    if isinstance(result, dict) and not result.get("topology_known", True)
-                    else ""
-                )
-                + "\n"
-                + "\n".join(lines)
+                + f" · {len(dtcs)} {'fault' if len(dtcs) == 1 else 'faults'} found"
             )
-            details_read = sum(dtc.get("details", {}).get("state") == "read" for dtc in dtcs)
-            if dtcs:
+            if not complete:
+                summary.setText(
+                    summary.text() + "\nSome vehicle fault memories could not be checked."
+                )
+            if isinstance(result, dict) and not result.get("topology_known", True):
                 summary.setText(
                     summary.text()
-                    + f"\nRecorded fault details: {details_read} read; "
-                    + f"{len(dtcs) - details_read} unavailable"
+                    + "\nVehicle inventory is unavailable; results cover identified controllers only."
                 )
             summary.setWordWrap(True)
             summary.setTextFormat(Qt.TextFormat.PlainText)
@@ -273,129 +306,40 @@ class DiagnosticsPage(QWidget):
 
         for dtc in dtcs:
             code = dtc.get("code", "???")
-            desc = dtc.get("description", dtc.get("description", "(no description)"))
-            status = dtc.get("status_byte", 0)
+            description = dtc.get("description") or "Description unavailable"
             ecu = dtc.get("ecu_name", "Unknown")
+            full_name = self._ecu_lookup.get(ecu)
+            ecu_text = f"{full_name} ({ecu})" if full_name and full_name != ecu else ecu
 
-            # Summary row
             card = QFrame()
             card.setObjectName("card")
-            card.setCursor(Qt.CursorShape.PointingHandCursor)
-            card.setStyleSheet(
-                "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
-                "border-radius: 8px; padding: 12px; }"
-                "QFrame#card:hover { border-color: #1C69D4; }"
-            )
-
             card_layout = QVBoxLayout(card)
-            card_layout.setSpacing(4)
-
-            top_row = QHBoxLayout()
-            code_label = QLabel(code)
-            code_label.setStyleSheet(
-                "font-size: 15px; font-weight: bold; color: #1C69D4; background: transparent;"
-            )
-            top_row.addWidget(code_label)
-            top_row.addStretch()
-
-            expand_arrow = QLabel("▶")
-            expand_arrow.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-            top_row.addWidget(expand_arrow)
-            card_layout.addLayout(top_row)
-
-            desc_label = QLabel(desc[:100])
-            desc_label.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
-            desc_label.setWordWrap(True)
-            card_layout.addWidget(desc_label)
+            card_layout.setSpacing(8)
+            header = QHBoxLayout()
+            heading = QLabel(f"{code} — {description}")
+            heading.setObjectName("dtcHeading")
+            heading.setWordWrap(True)
+            heading.setTextFormat(Qt.TextFormat.PlainText)
+            heading.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            header.addWidget(heading, 1)
+            search = QPushButton("Search web")
+            search.setObjectName("dtcSearchButton")
+            search.setToolTip(f"Search the web for {code} BMW")
+            search.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
+            header.addWidget(search, 0, Qt.AlignmentFlag.AlignTop)
+            card_layout.addLayout(header)
 
             meta = QLabel(
-                f"ECU: {ecu}  |  {dtc.get('memory', 'Fault')}  |  {_decode_dtc_status(status)}"
+                f"ECU: {ecu_text} · {dtc.get('memory', 'Fault')} memory · "
+                f"{_decode_dtc_status(dtc.get('status_byte', 0))}"
             )
-            meta.setStyleSheet("font-size: 11px; color: #a0a0a0; background: transparent;")
+            meta.setObjectName("dtcMeta")
+            meta.setWordWrap(True)
+            meta.setTextFormat(Qt.TextFormat.PlainText)
+            meta.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             card_layout.addWidget(meta)
-
-            # Detail section (hidden by default)
-            detail = QWidget()
-            detail.setVisible(False)
-            detail_layout = QVBoxLayout(detail)
-            detail_layout.setContentsMargins(0, 8, 0, 0)
-            detail_layout.setSpacing(6)
-
-            # G-10: Full description
-            full_desc = QLabel(desc)
-            full_desc.setWordWrap(True)
-            full_desc.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
-            detail_layout.addWidget(full_desc)
-
-            # G-10: Status byte decoded
-            status_text = _decode_dtc_status(status)
-            status_lbl = QLabel(f"Status: 0x{status:02X} — {status_text}")
-            status_lbl.setStyleSheet("font-size: 12px; color: #F39C12; background: transparent;")
-            detail_layout.addWidget(status_lbl)
-
-            job_text = dtc.get("job_text", "")
-            if job_text and job_text not in desc:
-                job_lbl = QLabel(f"ECU job text (German): {job_text}")
-                job_lbl.setWordWrap(True)
-                job_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-                detail_layout.addWidget(job_lbl)
-            if dtc.get("source"):
-                source_lbl = QLabel(f"Source: {dtc['source']}")
-                source_lbl.setWordWrap(True)
-                source_lbl.setStyleSheet(
-                    "font-size: 11px; color: #a0a0a0; background: transparent;"
-                )
-                detail_layout.addWidget(source_lbl)
-
-            # G-10: ECU full name if available
-            ecu_full = self._ecu_lookup.get(ecu, ecu)
-            if ecu_full and ecu_full != ecu:
-                ecu_lbl = QLabel(f"ECU: {ecu_full}")
-                ecu_lbl.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
-                detail_layout.addWidget(ecu_lbl)
-
-            recorded_layout = QVBoxLayout()
-            detail_layout.addLayout(recorded_layout)
-
-            # Buttons row
-            btn_row = QHBoxLayout()
-            btn_row.setSpacing(8)
-
-            search_btn = QPushButton(f'Search Web for "{code} BMW"')
-            search_btn.setStyleSheet(
-                "QPushButton { background: transparent; color: #1C69D4; border: 1px solid #1C69D4; "
-                "border-radius: 6px; padding: 4px 12px; font-size: 11px; }"
-                "QPushButton:hover { background: rgba(28,105,212,0.15); }"
-            )
-            search_btn.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
-            btn_row.addWidget(search_btn)
-
-            btn_row.addStretch()
-            detail_layout.addLayout(btn_row)
-            card_layout.addWidget(detail)
-
-            # Click card to toggle detail
-            def _toggle_on_click(
-                event: object,
-                d: QWidget = detail,
-                a: QLabel = expand_arrow,
-                data: dict = dtc,
-                target: QVBoxLayout = recorded_layout,
-            ) -> None:
-                """Populate this card once, then toggle its settled recorded details."""
-                if not d.property("recorded_details_loaded"):
-                    _add_recorded_details(target, data)
-                    d.setProperty("recorded_details_loaded", True)
-                self._toggle_detail(d, a)
-
-            card.mousePressEvent = _toggle_on_click  # type: ignore[method-assign]
-
+            _add_recorded_details(card_layout, dtc)
             self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, card)
-
-    @staticmethod
-    def _toggle_detail(detail: QWidget, arrow: QLabel) -> None:
-        detail.setVisible(not detail.isVisible())
-        arrow.setText("▼" if detail.isVisible() else "▶")
 
     def _on_dtc_error(self, msg: str) -> None:
         """Report an unavailable scan without leaving stale results or a healthy-car claim."""
@@ -406,7 +350,7 @@ class DiagnosticsPage(QWidget):
             sender.property("inventory_revision") != self._inventory_revision
         ):
             return
-        self.read_btn.setEnabled(True)
+        self._update_actions()
         self._empty_text.setText("DTC scan unavailable. See the session log for details.")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
@@ -418,6 +362,8 @@ class DiagnosticsPage(QWidget):
             self._connection is None
             or self._worker is not None
             or getattr(self._connection, "read_only", False)
+            or not getattr(self._connection, "alive_ok", True)
+            or self._clear_blocked
         ):
             return
         if not self.can_mutate():
@@ -430,13 +376,14 @@ class DiagnosticsPage(QWidget):
         gaps = [
             f"{r['name']} / {r['memory']}: {r['state']}"
             for r in self._coverage
-            if r["state"] not in ("read", "not-applicable")
-            and (r["state"] != "unsupported" or r.get("prg_decided"))
+            if not coverage_complete(r)
         ]
         prompt = (
             "Clear all supported Fault and Information memories? Permanent faults are not cleared by this operation.\n\n"
             "This cannot be undone or cancelled once started. Keep the car and computer powered, ignition on and cable connected.\n"
         )
+        if not self._loaded:
+            prompt += "\nFault memories have not been read in this session.\n"
         if any(ecu.get("origin") == "catalogue" for ecu in self._ecus):
             prompt += (
                 "\nInstalled topology is unavailable. Catalogue candidates are not a complete "
@@ -445,6 +392,7 @@ class DiagnosticsPage(QWidget):
         if gaps:
             prompt += "\nScan gaps:\n" + "\n".join(gaps)
         connection = self._connection
+        revision = self._inventory_revision
         if (
             QMessageBox.question(
                 self,
@@ -456,12 +404,28 @@ class DiagnosticsPage(QWidget):
             != QMessageBox.StandardButton.Yes
         ):
             return
-        if self._connection is not connection or self._worker is not None:
+        if (
+            self._connection is not connection
+            or self._worker is not None
+            or revision != self._inventory_revision
+            or not self.can_mutate()
+            or getattr(connection, "read_only", False)
+            or not getattr(connection, "alive_ok", True)
+        ):
             return
         if hasattr(connection, "data"):
-            connection.data["dtcs"] = []
-            self._on_dtcs_loaded([])
+            connection.data["dtcs"] = [
+                dtc
+                for dtc in connection.data.get("dtcs", [])
+                if dtc.get("memory", "Fault") == "Permanent"
+            ]
+            self._clear_summary.setText(
+                "DEMO clear only. Simulated permanent-memory faults are retained."
+            )
+            self._clear_summary.show()
+            self._on_dtcs_loaded(connection.data["dtcs"])
             return
+        self._clear_refresh_pending = False
         self.mutation_active.emit(True)
         self.read_btn.setEnabled(False)
         self.clear_btn.setEnabled(False)
@@ -469,34 +433,75 @@ class DiagnosticsPage(QWidget):
         self._worker = worker
         self._retired.append(worker)
         worker.result_ready.connect(self._on_clear_complete)
-        worker.progress.connect(self._operation_progress.setText)
+        worker.progress.connect(self._on_loading_progress)
         worker.error.connect(self._on_clear_error)
         worker.finished.connect(self._on_worker_finished)
+        self.loading_changed.emit(True)
+        self.loading_progress.emit("Clearing fault memories...")
         worker.start()
 
     @Slot(str)
     def _on_clear_error(self, message: str) -> None:
+        """Retain a failed clear as unresolved until reconnect; unlock only after thread exit."""
+        sender = self.sender()
+        if (
+            not isinstance(sender, DiagnosticClearWorker)
+            or sender is not self._worker
+            or sender.connection is not self._connection
+        ):
+            return
+        self._clear_blocked = True
+        self._clear_refresh_pending = False
+        self._clear_summary.setText(
+            "Clear All did not finish. Its outcome is unavailable; reconnect and read "
+            "fault memories before a new clear. No automatic retry."
+        )
+        self._clear_summary.show()
         self._on_dtc_error(message)
-        self.mutation_active.emit(False)
 
     @Slot(object)
     def _on_clear_complete(self, result: dict) -> None:
         """Show application replies separately from the post-clear observations."""
         sender = self.sender()
-        if not isinstance(sender, CarWorker) or sender.connection is not self._connection:
+        if (
+            not isinstance(sender, DiagnosticClearWorker)
+            or sender is not self._worker
+            or sender.connection is not self._connection
+        ):
             return
         lines = [
             f"{r['name']} / {r['memory']}: {r['response']}; memory {r['observed']}"
+            + (f" ({r['remaining_count']} faults)" if r.get("remaining_count") is not None else "")
+            + (f"; reread {r['read_state']}" if r.get("read_state") not in (None, "read") else "")
             + (f" ({r['source']})" if r.get("source") else "")
             for r in result["outcomes"]
         ]
-        QMessageBox.information(
-            self, "Clear outcomes", "\n".join(lines) or "No supported clear targets."
+        self._clear_blocked = result.get("stopped") == "connection"
+        self._clear_refresh_pending = not result.get("stopped")
+        text = "Clear All outcomes (application replies and observations are separate):\n"
+        text += "\n".join(lines) or "No supported clear targets."
+        if self._clear_blocked:
+            text += (
+                "\nBatch stopped. Previously displayed scan values may be stale. "
+                "Reconnect and read fault memories before another clear."
+            )
+        elif result.get("stopped"):
+            text += "\nBatch stopped. Read fault memories again; previous scan values may be stale."
+        self._clear_summary.setText(text)
+        self._clear_summary.show()
+        counts = Counter(row["response"] for row in result["outcomes"])
+        observed = Counter(row["observed"] for row in result["outcomes"])
+        message = "Application outcomes:\n" + "\n".join(
+            f"{state}: {count}" for state, count in sorted(counts.items())
         )
-        self._operation_progress.setText("Clear batch complete; see individual outcomes")
-        self.mutation_active.emit(False)
-        if sender.connection is self._connection and self._connection.alive_ok:
-            self._read_dtcs()
+        message += (
+            f"\n\nRereads: {observed['empty']} empty; "
+            f"{observed['still-present']} with faults remaining.\n"
+            "Permanent faults were not cleared. Full per-target results remain on this page."
+        )
+        if result.get("stopped"):
+            message += "\nBatch stopped; inspect the unattempted targets and connection status."
+        QMessageBox.information(self, "Clear outcomes", message)
 
     @staticmethod
     def _open_search(checked: bool, code: str) -> None:
@@ -524,7 +529,7 @@ class DiagnosticsPage(QWidget):
 
 
 def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
-    """Lazily render settled results as plain text; expansion never requests data."""
+    """Render every collected state once as plain text without requesting data."""
     details = dtc.get("details", {})
     state = details.get("state", "not-in-scan")
     reasons = {
@@ -560,15 +565,19 @@ def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
         label.setWordWrap(True)
         layout.addWidget(label)
 
-    add("Recorded fault details", True)
     if state != "read":
+        add("Recorded fault details", True)
         add(reasons.get(state, "Recorded details could not be read. See the session log."))
         return
     records = details.get("records", [])
+    if not records:
+        add("Recorded fault details", True)
+        add("No recorded conditions were returned.")
+        return
     locale = regional_locale()
     for index, record in enumerate(records, 1):
-        if len(records) > 1:
-            add(f"Recorded state {index} (ECU emission order)", True)
+        add(f"Recorded fault details {index}", True)
+        lines = []
         for field in record["fields"] + record["environment"]:
             value = field["value"]
             if value is None:
@@ -583,13 +592,8 @@ def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
                 formatted += f" {field['unit']}"
             if field.get("note"):
                 formatted += f" — {field['note']}"
-            add(f"{field['label']}: {formatted}")
-        if record["environment"]:
-            add("Environment labels and units come from the ECU definition.")
-        if not record["fields"] and not record["environment"]:
-            add("No recorded conditions were returned.")
-    if details.get("source"):
-        add(f"Detail source: {details['source']}")
+            lines.append(f"{field['label']}: {formatted}")
+        add("\n".join(lines) or "No recorded conditions were returned.")
 
 
 def _decode_dtc_status(status: int) -> str:

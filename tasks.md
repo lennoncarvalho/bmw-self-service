@@ -20,25 +20,32 @@ decoding. Other source-supported owners retain offline verification; this is
 not universal vehicle acceptance.
 No implementation or owner-car acceptance step remains open for this milestone.
 
-## Diagnostic details and clearing
+## Diagnostic details and clearing — source implementation complete
 
 Implemented: native fault/information detail jobs selected by fault code,
 occurrence/healing counters, recorded mileage/time and source-scaled environment
-values in expandable cards. Preserve every recorded state, source units and raw
+values in always-visible cards. Preserve every recorded state, source units and raw
 results. Time counters have no invented calendar epoch or first/last labels.
 Basic lists settle before bounded details; failed details retain collected codes.
 Native optional-table trap handling supports environment decoding. Offline native,
 worker/error and Qt checks cover these boundaries; physical behavior is unverified.
 
-- [ ] Reconcile fault/information/permanent memory coverage and Clear All results
-  for every in-scope branch, including local rejection, tainted stream, unattempted
-  targets and faults remaining after reread. Keep untranslated codes visible.
-- [ ] Verify the remaining clearing/coverage changes against native result
-  boundaries, partial scans, descriptions, pending/error paths and Qt flows;
-  review and run full preflight.
+Memory coverage follows the loaded variant's readers, including permanent memory;
+native record accounting retains partial codes without claiming a complete scan.
+Clear All includes every target disposition, continues after definite rejection,
+stops on uncertainty/stream failure, and preserves reread counts and remaining
+faults. UI outcomes survive refreshes, with thread-exit lockout and no automatic
+retry or reread after a stopped batch. Native, fragmented/pending protocol-owner,
+failure and Qt flows are verified offline; no physical clearing is claimed.
 
 ## Easy Coding readiness
 
+- [ ] Resolve the observed coding-page timeouts and subsequent outstanding-request/
+  reconnect errors. Investigate source contracts and offline behavior first. When
+  missing live request/reply or timing evidence blocks a concrete diagnosis, ask
+  the owner promptly for a focused car session with exact reproduction steps and
+  session logs from the app's `logs/` folder. Use that evidence to avoid repeated
+  speculative coding iterations; confirm the fix against the captured failure.
 - [ ] Enforce the owner's deferred/unvalidated safety-coding scope in UI and
   prepare/write/restore paths, including imported plans/backups. Recover actual
   ECU roles/option semantics; unknown classification is not authorization.

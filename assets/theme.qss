@@ -382,6 +382,17 @@ QLabel#milStatus[milState="off"] { color: #66cc88; background: #203328; }
 QLabel#overviewCaption { color: #a0a0a0; font-size: 12px; }
 QLabel#faultDetailHeading { font-size: 12px; font-weight: bold; color: #e0e0e0; }
 QLabel#faultDetailValue { font-size: 12px; color: #a0a0a0; }
+QLabel#dtcHeading { font-size: 15px; font-weight: bold; color: #1C69D4; }
+QLabel#dtcMeta { font-size: 11px; color: #a0a0a0; }
+QPushButton#dtcSearchButton {
+    background: transparent;
+    color: #1C69D4;
+    border: 1px solid #1C69D4;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 11px;
+}
+QPushButton#dtcSearchButton:hover { background: rgba(28,105,212,0.15); }
 
 /* Foreground loading blocks interaction with the underlying pages. */
 QFrame#loadingBackdrop {
