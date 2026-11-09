@@ -48,7 +48,10 @@ back up the existing car history. Replacement irreversibly removes omitted
 entries. No operation is automatically replayed after an uncertain outcome.
 
 Session logs go in `logs/` inside the app root, independently of the launch
-directory. Files always retain DEBUG request/reply details; `--debug` also shows
+directory, with `~/BMW-Tool/logs` as a reported fallback if that location is
+unavailable. If neither location works, startup continues with console logging.
+The log directory and files use owner-only permissions, including rotated segments.
+Files always retain DEBUG request/reply details; `--debug` also shows
 them on the console, and `--no-log` disables file logging. Each session retains
 up to six 10 MiB segments; include rotated segments when sharing a large session.
 Logs contain full vehicle identifiers. Existing `~/BMW-Tool/logs` files are preserved.

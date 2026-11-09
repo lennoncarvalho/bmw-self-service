@@ -19,6 +19,7 @@ import subprocess
 import sys
 import time
 from datetime import UTC, datetime
+from io import TextIOWrapper
 from pathlib import Path
 from types import TracebackType
 
@@ -27,6 +28,27 @@ from PySide6.QtWidgets import QApplication
 
 from app.theme import apply_theme
 from ui.main_window import MainWindow
+
+
+class _PrivateRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """Keep session files private on creation, reopening and rotation."""
+
+    def _open(self) -> TextIOWrapper:
+        """Open with owner-only access without changing the process-wide umask."""
+
+        def private_open(path: str, flags: int) -> int:
+            """Restrict new and existing files before the logging stream can write."""
+            descriptor = os.open(path, flags, 0o600)
+            try:
+                os.fchmod(descriptor, 0o600)
+            except OSError:
+                os.close(descriptor)
+                raise
+            return descriptor
+
+        return open(
+            self.baseFilename, "a", encoding=self.encoding, errors=self.errors, opener=private_open
+        )
 
 
 def parse_args() -> argparse.Namespace:
@@ -59,7 +81,9 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
     Console: always INFO level (DEBUG if --debug).
     File: a unique UTC timestamp/PID session in the app root's logs/ folder,
     10 MiB per segment plus five rotated segments. Always retains DEBUG traffic.
-    Existing session files are preserved. Returns the file path or None.
+    Falls back to ~/BMW-Tool/logs or console-only logging if storage is unavailable.
+    Directories and files have owner-only permissions. Existing sessions are
+    preserved. Returns the file path or None.
     """
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
@@ -77,16 +101,28 @@ def setup_logging(debug: bool = False, no_log: bool = False) -> Path | None:
 
     log_path: Path | None = None
     if not no_log:
-        log_dir = Path(__file__).resolve().parent / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
+        preferred_dir = Path(__file__).resolve().parent / "logs"
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
-        log_path = log_dir / f"session-{stamp}-{os.getpid()}.log"
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_path, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
-        )
-        file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(formatter)
-        root.addHandler(file_handler)
+        for log_dir in (preferred_dir, Path.home() / "BMW-Tool" / "logs"):
+            try:
+                log_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+                log_dir.chmod(0o700)
+                candidate = log_dir / f"session-{stamp}-{os.getpid()}.log"
+                file_handler = _PrivateRotatingFileHandler(
+                    candidate, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+                )
+            except OSError as exc:
+                root.warning("Session log directory unavailable: %s (%s)", log_dir, exc)
+                continue
+            file_handler.setLevel(logging.DEBUG)
+            file_handler.setFormatter(formatter)
+            root.addHandler(file_handler)
+            log_path = candidate
+            if log_dir != preferred_dir:
+                root.warning("Using fallback session log: %s", log_path)
+            break
+        else:
+            root.warning("File logging unavailable; continuing with console logging only")
 
     def log_qt(kind: QtMsgType, context: QMessageLogContext, message: str) -> None:
         """Record Qt diagnostic messages in the active session log without calling back into Qt."""

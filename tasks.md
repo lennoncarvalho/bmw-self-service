@@ -15,10 +15,9 @@ the eight additional readers are outside the standard workflow's primary groups
 and remain observations. Same-item records from different primary ECUs retain
 explicit owner selection; duplicates within one ECU stay blocked. Compiler,
 native-worker, fragmented protocol-owner and Qt checks cover these boundaries.
-The owner's F48 session confirmed KOMB25 reads and a brake-fluid reset with a
-checked application response and changed post-state. Captured distance sentinels
-are suppressed in both native-result and fallback decoding. Other source-supported
-owners retain offline verification; this is not universal vehicle acceptance.
+Captured distance sentinels are suppressed in both native-result and fallback
+decoding. Other source-supported owners retain offline verification; this is
+not universal vehicle acceptance.
 No implementation or owner-car acceptance step remains open for this milestone.
 
 ## Diagnostic details and clearing
