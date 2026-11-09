@@ -148,6 +148,10 @@ semantic names. `app/vehicle_order.py` owns bounds/incomplete-section behavior.
 `coding_data/engine_measurements.json` and diagnostic catalogues retain selectors,
 units and source identities. Do not copy generic mileage/battery DIDs across ECUs.
 `app/diagnostics.py` and native `FS_`/`IS_` jobs own memory applicability and clears.
+Loaded variants decide permanent-memory support through `FS_LESEN_PERMANENT`,
+including variants absent from the older request metadata. Native lists are
+reconciled against their complete wire records; recovered partial lists retain
+codes but never count as complete coverage.
 Preserve raw status bytes. The engine indicator uses `19 02 0C` present/confirmed
 faults (bits 0/3), not the old 4A69/F303 lamp-command readers. Those retained
 source records do not authorize restoring the superseded dashboard behavior.
@@ -177,6 +181,14 @@ faults and independent detail failures. Each ECU/memory detail batch shares
 30 seconds within the original five-minute scan. Expansion renders settled
 values without I/O; absent definitions, ambiguity, cancellation and budget/stream
 failures remain explicit. Physical behavior remains unverified.
+
+Clear All accounts for every ECU/memory, including unidentified/unattempted targets
+and excluded permanent memories. Failed initial reads do not remove supported
+clear targets. Definite local rejections permit continuation; uncertain sends or
+failed streams stop later mutations. Exact application replies and per-memory
+rereads/counts remain separate. The UI retains outcomes across refreshes, waits
+for worker thread exit before unlocking, and requires reconnect after stream
+failure. It never retries or automatically rereads a stopped clear batch.
 
 ### CBS
 
