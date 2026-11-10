@@ -108,14 +108,17 @@ class ProtocolOwner:
     @staticmethod
     def _complete(handle: OperationHandle, failure: FailureKind) -> None:
         context = handle.context
+        cause = failure
         if context.sent and context.mutation:
             failure = FailureKind.UNCERTAIN
         logger.debug(
-            "Operation failure conn=%s operation=%s kind=%s sent=%s",
+            "Operation failure conn=%s operation=%s kind=%s cause=%s sent=%s ecu=%s",
             context.generation,
             context.operation_id,
             failure,
+            cause,
             context.sent,
+            context.ecu.address if context.ecu else None,
         )
         handle.completion.set_result(
             OperationOutcome(

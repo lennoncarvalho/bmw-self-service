@@ -27,6 +27,7 @@ class UdsConnection(BaseConnection):
         self.ecu = ecu
         self.context: OperationContext | None = None
         self.waiting = False
+        self._sent_at = 0.0
         # A timed-out read whose late reply the adapter will consume by source address.
         self.quarantined = False
 
@@ -69,6 +70,7 @@ class UdsConnection(BaseConnection):
         self.context.remaining()
         self.context.request_id = uuid.uuid4().hex
         self.context.ecu = self.ecu
+        self._sent_at = time.monotonic()
         logger.debug(
             "UDS TX conn=%s operation=%s request=%s ecu=0x%04X data=%s",
             self.context.generation,
@@ -90,6 +92,18 @@ class UdsConnection(BaseConnection):
         )
         receive = OperationContext(ctx.generation, deadline, ctx.operation_id, ctx.cancelled)
         receive.request_id = ctx.request_id
+        logger.debug(
+            "UDS wait conn=%s operation=%s request=%s ecu=0x%04X window=%.3f "
+            "remaining=%.3f since_send=%.3f mutation=%s",
+            ctx.generation,
+            ctx.operation_id,
+            ctx.request_id,
+            self.ecu.address,
+            deadline - time.monotonic(),
+            ctx.deadline - time.monotonic(),
+            time.monotonic() - self._sent_at,
+            ctx.mutation,
+        )
         try:
             payload = self.adapter.receive_diagnostic(self.ecu, receive)
             logger.debug(
@@ -102,4 +116,17 @@ class UdsConnection(BaseConnection):
             )
             return payload
         except TimeoutError as exc:
+            logger.warning(
+                "UDS wait expired conn=%s operation=%s request=%s ecu=0x%04X "
+                "window=%s since_send=%.3f remaining=%.3f waiting=%s mutation=%s",
+                ctx.generation,
+                ctx.operation_id,
+                ctx.request_id,
+                self.ecu.address,
+                timeout,
+                time.monotonic() - self._sent_at,
+                ctx.deadline - time.monotonic(),
+                self.waiting,
+                ctx.mutation,
+            )
             raise TimeoutException("Vehicle diagnostic response timed out") from exc

@@ -61,6 +61,10 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 
 ### Coding and writes
 
+- Easy Coding identifies catalogues first. Read current values when an ECU is
+  opened, requesting only groups used by its named options and caching them for
+  that connection. Reopening cached options performs no vehicle I/O. Display
+  reads are not backups; preparation still requires fresh complete baselines.
 - Recover applicable presets and byte layouts from supplied definitions. Keep
   exact reported identity separate from a layout chosen by the source's proven
   compatibility rule. Display unmatched current values as Custom and preserve

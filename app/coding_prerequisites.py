@@ -2,18 +2,29 @@
 
 import hashlib
 import json
+import logging
 import os
 import tempfile
+import time
 from collections.abc import Callable
 from pathlib import Path
 
 from app.coding_db import CodingDatabase
 from app.history_files import valid_vin
 from app.operation_store import OperationStore
+from app.protocol.contracts import (
+    FailureKind,
+    OperationCancelled,
+    OperationContext,
+    ProtocolFailure,
+    TransportKind,
+)
 from app.resources import resource_path
 from app.vehicle import did_data
 
 _MAX_FILE = 4 * 1024 * 1024
+ENET_READER_TIMING = (1.0, 7.0)
+logger = logging.getLogger(__name__)
 
 
 def reader_contract() -> tuple[dict, str]:
@@ -106,6 +117,8 @@ def run_prerequisites(
     read: Callable[[bytes, int | None], bytes],
     read_only: bool,
     expected: dict | None = None,
+    context: OperationContext | None = None,
+    transport: TransportKind | None = None,
 ) -> dict:
     """Retrieve durable source entitlement material, then check headunit safety.
 
@@ -121,6 +134,36 @@ def run_prerequisites(
     required = address == backup["address"] or (
         database.primary_definition(definitions)[:8] == backup["primary_definition"]
     )
+    original_read = read
+
+    def timed_read(payload: bytes, override: int | None = None) -> bytes:
+        """Scope the source ENET response windows to headunit prerequisite requests."""
+        if (
+            context is None
+            or transport != TransportKind.HSFZ
+            or not required
+            or override is not None
+        ):
+            return original_read(payload, override)
+        timing = context.response_timing
+        # Recovered ENET initial/pending response windows, still bounded by the
+        # caller's absolute per-request and overall operation deadlines.
+        context.response_timing = ENET_READER_TIMING
+        logger.debug(
+            "Coding reader request conn=%s operation=%s ecu=0x%04X data=%s "
+            "initial_floor=1.000 pending_floor=7.000 remaining=%.3f",
+            context.generation,
+            context.operation_id,
+            address,
+            payload.hex(" "),
+            context.deadline - time.monotonic(),
+        )
+        try:
+            return original_read(payload, override)
+        finally:
+            context.response_timing = timing
+
+    read = timed_read
     directory = store.root.parent / "coding-entitlements" / vin
     if required:
         if read_only or not valid_vin(vin):
@@ -134,6 +177,7 @@ def run_prerequisites(
                     raise ValueError("Prepared entitlement filename is invalid")
                 if hashlib.sha256(_read_file(directory / name)).hexdigest() != item["sha256"]:
                     raise ValueError("Prepared entitlement backup is missing or changed")
+        stream_usable = True
         try:
             for session in backup["sessions"]:
                 response = read(bytes.fromhex(session), None)
@@ -175,10 +219,21 @@ def run_prerequisites(
                 result["files"].append(
                     {"name": name, "sha256": hashlib.sha256(payload).hexdigest()}
                 )
+        except (ConnectionError, TimeoutError, OperationCancelled):
+            stream_usable = False
+            raise
+        except ProtocolFailure as exc:
+            stream_usable = not exc.reconnect and exc.kind == FailureKind.NEGATIVE
+            raise
         finally:
-            cleanup = read(bytes.fromhex(backup["cleanup"]), None)
-            if not cleanup.startswith(b"\x50\x01"):
-                raise ValueError("Headunit backup session cleanup was not confirmed")
+            if stream_usable:
+                cleanup = read(bytes.fromhex(backup["cleanup"]), None)
+                if not cleanup.startswith(b"\x50\x01"):
+                    raise ValueError("Headunit backup session cleanup was not confirmed")
+            else:
+                logger.warning(
+                    "Headunit reader failed; session cleanup skipped on an unusable stream"
+                )
     guard = contract["nbtevo"]
     if address == guard["address"] and variant == guard["variant"]:
         level = did_data(

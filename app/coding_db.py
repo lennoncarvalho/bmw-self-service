@@ -601,6 +601,40 @@ class CodingDatabase:
         except (ValueError, KeyError, TypeError) as error:
             return False, str(error)
 
+    def preset_read_groups(
+        self, preset: dict, definition: str, *, definitions: list[str]
+    ) -> tuple[int, ...]:
+        """Find only groups needed to decode a complete static or dynamic source option."""
+        cafd_id, variant = definition.split("-", 1)
+        if preset.get("type", 0) == 0:
+            supported, reason = self.preset_mapping_status(
+                preset, cafd_id, variant, definitions=definitions
+            )
+            if not supported:
+                raise ValueError(reason)
+            return tuple(
+                sorted(
+                    {
+                        did
+                        for option in preset["options"]
+                        for did, _, _, _ in self._patches(
+                            preset, option["name"], cafd_id, variant, definitions=definitions
+                        )
+                    }
+                )
+            )
+        if preset.get("type") != 1:
+            raise ValueError("Unknown dynamic coding option type")
+        index = self._combined_index(cafd_id, variant, definitions)
+        names = [f"LM{number:02d}_Name" for number in range(1, 11)]
+        names += ["DRL_Idx", "POLI1_Idx", "POLI2_Idx", "POLI3_Idx"]
+        if any(name not in index for name in names):
+            raise ValueError("Dynamic lighting definition is incomplete")
+        names += [
+            name for name in index if re.fullmatch(r"LmmIdx[0-9]+_Intensity|LM_ID_LT[0-9]{2}", name)
+        ]
+        return tuple(sorted({index[name][0][0] for name in names}))
+
     def resolve_dynamic_preset(
         self,
         preset: dict,

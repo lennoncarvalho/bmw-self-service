@@ -1,12 +1,13 @@
 """Standard service encoding/validation through udsoncan; no transport framing."""
 
+import logging
 import time
 from dataclasses import dataclass
 from typing import Any
 
 from udsoncan import DidCodec, Request, Response
 from udsoncan.BaseService import BaseService
-from udsoncan.client import Client
+from udsoncan.client import Client, SessionTiming
 from udsoncan.exceptions import (
     InvalidResponseException,
     NegativeResponseException,
@@ -25,6 +26,7 @@ from app.protocol.contracts import (
 from app.protocol.udsoncan_connection import UdsConnection
 
 UDS_NEGATIVE_RESPONSE = 0x7F
+logger = logging.getLogger(__name__)
 
 
 class LegacyIdentification(BaseService):
@@ -128,6 +130,53 @@ class UdsServices:
         self._definitions = definitions
 
     def invoke(
+        self,
+        payload: bytes,
+        ctx: OperationContext,
+        *,
+        raw: bool = False,
+        grant: frozenset[int] = frozenset(),
+    ) -> bytes:
+        """Apply an optional source response floor without losing negotiated session timing."""
+        original = self.client.session_timing
+        timing = ctx.response_timing
+        if timing is not None:
+            self.client.session_timing = SessionTiming(
+                max(original.p2_server_max or self.client.config["p2_timeout"], timing[0]),
+                max(
+                    original.p2_star_server_max or self.client.config["p2_star_timeout"], timing[1]
+                ),
+            )
+        effective = self.client.session_timing
+        logger.debug(
+            "UDS timing conn=%s operation=%s ecu=0x%04X data=%s session=0x%02X "
+            "server_p2=%s server_p2_star=%s effective_p2=%s effective_p2_star=%s "
+            "remaining=%.3f source_floor=%s",
+            ctx.generation,
+            ctx.operation_id,
+            self.bridge.ecu.address,
+            payload.hex(" "),
+            self.session,
+            original.p2_server_max,
+            original.p2_star_server_max,
+            effective.p2_server_max or self.client.config["p2_timeout"],
+            effective.p2_star_server_max or self.client.config["p2_star_timeout"],
+            ctx.deadline - time.monotonic(),
+            timing,
+        )
+        completed = False
+        try:
+            result = self._invoke(payload, ctx, raw=raw, grant=grant)
+            completed = True
+            return result
+        finally:
+            if timing is not None:
+                if completed and not raw and payload[:1] == b"\x10":
+                    original.p2_server_max = self.client.session_timing.p2_server_max
+                    original.p2_star_server_max = self.client.session_timing.p2_star_server_max
+                self.client.session_timing = original
+
+    def _invoke(
         self,
         payload: bytes,
         ctx: OperationContext,

@@ -21,7 +21,12 @@ from app.coding_db import CodingDatabase
 from app.coding_guards import CodingGuardBlocked
 from app.coding_guards import contracts as guard_contracts
 from app.coding_guards import observe as observe_guard
-from app.coding_prerequisites import applies, reader_contract, run_prerequisites
+from app.coding_prerequisites import (
+    ENET_READER_TIMING,
+    applies,
+    reader_contract,
+    run_prerequisites,
+)
 from app.history_files import valid_vin
 from app.operation_store import OperationStore, load_record
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
@@ -336,11 +341,15 @@ class CodingPrepareWorker(CarWorker):
                 target: dict = target,
             ) -> bytes:
                 """Read, validate and freeze one complete target under the protocol owner."""
+                headunit_reader = address == reader_contract()[0]["unlock_backup"]["address"]
 
                 def read_uds(payload: bytes, address_override: int | None = None) -> bytes:
                     """Cap each owner request while preserving the overall preparation deadline."""
                     deadline = ctx.deadline
+                    timing = ctx.response_timing
                     ctx.deadline = min(deadline, time.monotonic() + 30.0)
+                    if headunit_reader and address_override is None:
+                        ctx.response_timing = ENET_READER_TIMING
                     try:
                         result = (
                             services.invoke(payload, ctx)
@@ -350,6 +359,7 @@ class CodingPrepareWorker(CarWorker):
                         return bytes(result)
                     finally:
                         ctx.deadline = deadline
+                        ctx.response_timing = timing
 
                 if "vin_observed" not in plan:
                     observed_vin = read_uds(b"\x22\xf1\x90", 0x10)
@@ -368,6 +378,7 @@ class CodingPrepareWorker(CarWorker):
                 definitions = list(decode_cafd_identifiers(software))
                 if not definitions:
                     raise ValueError("ECU reports no exact coding definitions")
+                headunit_reader = applies(address, definitions, db)
                 bootloader = bootloader_identifier(software)
                 authorization = db.authorization(bootloader)
                 guard_observations = []
@@ -401,6 +412,8 @@ class CodingPrepareWorker(CarWorker):
                     store=self.store,
                     read=read_uds,
                     read_only=connection.read_only,
+                    context=ctx,
+                    transport=connection.kind,
                 )
                 baseline = {
                     did: did_data(read_uds(b"\x22" + did.to_bytes(2, "big")), did)
@@ -714,6 +727,11 @@ class CodingWriteWorker(CarWorker):
             raise PermissionError("Coding requires a usable writable identified session")
         db = CodingDatabase()
         data = validate_plan(self.plan, db)
+        timed_readers = {
+            target["address"]
+            for target in data["targets"]
+            if applies(target["address"], target["definitions"], db)
+        }
         if connection.verified_vin != data["vin"]:
             raise PermissionError("Vehicle identity changed before coding")
         if data.get("prior_operations") and not self.recovery_acknowledged:
@@ -757,7 +775,10 @@ class CodingWriteWorker(CarWorker):
             mutation = payload[0] in {0x2E, 0x11, 0x14}
             attempted_mutation |= mutation
             deadline = ctx.deadline
+            timing = ctx.response_timing
             ctx.deadline = min(deadline, time.monotonic() + 30.0)
+            if address in timed_readers and payload[:1] == b"\x22":
+                ctx.response_timing = ENET_READER_TIMING
             try:
                 try:
                     response = connection.send_uds(
@@ -773,6 +794,7 @@ class CodingWriteWorker(CarWorker):
                     response = error.raw
             finally:
                 ctx.deadline = deadline
+                ctx.response_timing = timing
             if response[:1] == b"\x7f":
                 if len(response) != 3 or response[1] != payload[0] or response[2] == 0x78:
                     raise ValueError("Malformed final coding response")
@@ -959,6 +981,8 @@ class CodingWriteWorker(CarWorker):
                     read=read_prerequisite,
                     read_only=connection.read_only,
                     expected=target["reader_prerequisites"],
+                    context=ctx,
+                    transport=connection.kind,
                 )
                 check(ctx, target, target["baseline"])
             self.store.record(

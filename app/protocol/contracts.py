@@ -95,6 +95,7 @@ class OperationContext:
     created_at: float = field(default_factory=time.monotonic)
     request_id: str = field(default_factory=lambda: uuid.uuid4().hex)
     ecu: EcuIdentity | None = None
+    response_timing: tuple[float, float] | None = None
 
     def __post_init__(self) -> None:
         if not self.generation or not math.isfinite(self.deadline):
