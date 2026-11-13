@@ -108,7 +108,6 @@ class CodingCatalogueWorker(CarWorker):
                 "presets": [],
                 "available": False,
                 "loaded": False,
-                "expanded": False,
             }
             rows.append(row)
             if not ecu.get("identified") or not ecu.get("uds"):
@@ -139,6 +138,12 @@ class CodingCatalogueWorker(CarWorker):
                 presets = database.get_presets(primary[:8])
                 row.update(
                     definition_resolution=[database.definition_resolution(primary)],
+                    sections={
+                        preset["section"]: database.strings.get(
+                            preset["section"], preset["section"].replace("_", " ").title()
+                        )
+                        for preset in presets
+                    },
                     preset_count=len(presets),
                     available=bool(presets),
                     state=(
@@ -157,6 +162,11 @@ class CodingCatalogueWorker(CarWorker):
                 )
                 row["state"] = "Coding catalogue unavailable; see session log"
             logger.debug("Coding catalogue result ecu=%s state=%s", ecu.get("addr"), row["state"])
+            logger.debug(
+                "Coding catalogue layouts ecu=%s definitions=%s",
+                ecu.get("addr"),
+                row.get("definition_resolution"),
+            )
         logger.info(
             "Coding catalogue settled targets=%d available=%d",
             len(rows),
@@ -181,7 +191,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
         self._deadline = time.monotonic() + 300.0
         database = CodingDatabase()
         row = self.row
-        row.update(blocks={}, presets=[], loaded=False, expanded=True)
+        row.update(blocks={}, presets=[], loaded=False)
         sensitive = False
         address = int(str(row["addr"]), 0)
         logger.info(
@@ -246,6 +256,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                         raise ValueError("Coding definitions disagree on the group size")
                     bounds[did] = max(minimum, old_minimum), size if size is not None else old_size
             if groups and applies(address, definitions, database):
+                self._stage = "reader-prerequisites"
                 if self.connection.read_only:
                     raise PermissionError("Headunit reader prerequisites require writable access")
                 permission = Event()
@@ -320,6 +331,25 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     preset, primary[:8], primary[9:], blocks, definitions=definitions
                 )
                 mapped = mapped and not reason
+                logger.debug(
+                    "Coding option ecu=0x%04X definition=%s source_index=%s mapped=%s "
+                    "mapping=%s predicates=%s",
+                    address,
+                    primary,
+                    preset["source_index"],
+                    mapped,
+                    reason or mapping_reason,
+                    {
+                        key: preset[key]
+                        for key in (
+                            "series",
+                            "excludedSeries",
+                            "excludeECUVariants",
+                            "supportedForID8",
+                        )
+                        if key in preset
+                    },
+                )
                 current = (
                     database.get_current_option(
                         preset, blocks, primary[:8], primary[9:], definitions=definitions
@@ -336,33 +366,11 @@ class CodingValuesWorker(CodingCatalogueWorker):
                         "label": preset["label"],
                         "section": preset["section"],
                         "current": current,
-                        "current_label": next(
-                            (
-                                option["label"]
-                                for option in preset["options"]
-                                if option["name"] == current
-                            ),
-                            "Custom / no unique option"
-                            if mapped
-                            else "Definition mapping unavailable",
-                        ),
-                        "options": [option["label"] for option in preset["options"]],
                         "choices": [
                             {"name": option["name"], "label": option["label"]}
                             for option in preset["options"]
                         ],
                         "mapping_supported": mapped,
-                        "mapping_reason": reason or mapping_reason,
-                        "predicates": {
-                            key: preset[key]
-                            for key in (
-                                "series",
-                                "excludedSeries",
-                                "excludeECUVariants",
-                                "supportedForID8",
-                            )
-                            if key in preset
-                        },
                     }
                 )
             row.update(
