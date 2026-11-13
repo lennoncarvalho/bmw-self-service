@@ -8,7 +8,7 @@ from typing import Any
 
 from PySide6.QtCore import Signal
 
-from app.coding_db import CodingDatabase
+from app.coding_db import CodingDatabase, _number
 from app.coding_prerequisites import ENET_READER_TIMING, applies, reader_contract, run_prerequisites
 from app.operation_store import OperationStore
 from app.protocol.contracts import TransportKind
@@ -65,6 +65,7 @@ class CodingCatalogueWorker(CarWorker):
             remaining,
         )
         context = self.connection.context(min(30.0, remaining))
+        context.deadline = min(context.deadline, self._deadline)
         if address == self._timed_address:
             context.response_timing = ENET_READER_TIMING
         result: bytes = self.connection.send_uds(address, payload, context=context)
@@ -238,18 +239,19 @@ class CodingValuesWorker(CodingCatalogueWorker):
             for definition in definitions:
                 data = database.get_definition(definition[:8], definition[9:])
                 for group in data["dataGroups"]:
-                    did = int(str(group["address"]), 0)
+                    did = _number(group["address"])
                     if did not in groups:
                         continue
                     minimum = max(
                         (
-                            int(function["storageInfo"]["end"]) + 1
+                            _number(function["storageInfo"]["end"]) + 1
                             for function in group.get("functions", [])
                         ),
                         default=1,
                     )
-                    size = group.get("units")
-                    if size is not None and (type(size) is not int or not 0 < size <= 65536):
+                    units = group.get("units")
+                    size = None if units is None else _number(units)
+                    if size is not None and not 0 < size <= 65536:
                         raise ValueError("Coding group has an invalid source byte count")
                     old_minimum, old_size = bounds.get(did, (1, None))
                     if old_size is not None and size is not None and old_size != size:

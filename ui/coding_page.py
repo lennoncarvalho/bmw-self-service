@@ -814,6 +814,7 @@ class CodingPage(QWidget):
                 if opened and not row.get("loaded"):
                     status = QLabel(row.get("state", "Current values unavailable"))
                     status.setWordWrap(True)
+                    status.setEnabled(False)
                     entries.addWidget(status)
                 presets.extend(
                     (row, preset)
@@ -829,7 +830,7 @@ class CodingPage(QWidget):
                     preset["source_index"],
                 )
                 mapped = preset.get("mapping_supported", False)
-                enabled = bool(can_edit and row.get("loaded") and mapped)
+                enabled = bool(can_edit and row.get("available") and row.get("loaded") and mapped)
                 selected = selections.get(key, preset["current"])
                 choices = preset.get("choices", [])
                 if (
@@ -892,6 +893,7 @@ class CodingPage(QWidget):
         options.addWidget(heading)
         if not preset.get("mapping_supported", False):
             options.addWidget(QLabel("Current value unavailable"))
+            feature.setEnabled(False)
         else:
             current = preset["current"]
             group = QButtonGroup(feature)
@@ -1143,6 +1145,29 @@ class CodingPage(QWidget):
             reason = "Export the retained coding results before preparing another operation."
         elif not self._live_selections and restore_path is None:
             reason = "Select a coding change before preparing an operation."
+        elif restore_path is None:
+            eligible = {
+                (
+                    preset["address"],
+                    preset["definition"],
+                    preset["id"],
+                    preset["source_index"],
+                ): {
+                    option["name"]
+                    for option in preset["choices"]
+                    if option["name"] != preset["current"]
+                }
+                for row in self._source_rows
+                if row.get("available") and row.get("loaded")
+                for preset in row.get("presets", [])
+                if preset.get("mapping_supported")
+            }
+            if any(
+                option not in eligible.get(key, ()) for key, option in self._live_selections.items()
+            ):
+                reason = (
+                    "A selected coding option is unavailable. Review the current options again."
+                )
         if reason:
             self._pending_label.setText(reason)
             return reason

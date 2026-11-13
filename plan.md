@@ -34,7 +34,8 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   verified VIN, provide connection details/logs for limited troubleshooting.
   Failed optional reads preserve a valid connection and show unavailable data.
 - Publish each page's initial batch together. Foreground work shows a loading
-  indicator/backdrop and blocks competing actions; failures remain visible.
+  indicator/backdrop and blocks competing actions; failures remain visible
+  according to each feature's display rules.
   One main window, inline details and a single outer scrollbar per page.
 - English interface. Prefer English diagnostic descriptions, but keep all fault
   codes visible with available source-language text or no description. Conflicting
@@ -65,7 +66,8 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   value selected. Opening a section reads its uncached ECUs on demand, requesting
   only groups used by their named options. Reopening cached options performs no
   vehicle I/O. Display reads are not backups; preparation still requires fresh
-  complete baselines.
+  complete baselines. Unavailable features stay in their sections, disabled and
+  excluded from writes. Catalogue failures without section data go to the log.
 - Recover applicable presets and byte layouts from supplied definitions. Keep
   exact reported identity separate from a layout chosen by the source's proven
   compatibility rule. Display unmatched current values as Custom and preserve
