@@ -40,12 +40,13 @@ failure and Qt flows are verified offline; no physical clearing is claimed.
 
 ## Easy Coding readiness
 
-- [ ] Resolve the observed coding-page timeouts and subsequent outstanding-request/
-  reconnect errors. Investigate source contracts and offline behavior first. When
-  missing live request/reply or timing evidence blocks a concrete diagnosis, ask
-  the owner promptly for a focused car session with exact reproduction steps and
-  session logs from the app's `logs/` folder. Use that evidence to avoid repeated
-  speculative coding iterations; confirm the fix against the captured failure.
+- [ ] Verify the headunit reader on the owner car: open Easy Coding, then explicitly
+  read the headunit's options without selecting or writing changes. The captured
+  `31 01 0F 1F 04` request was acknowledged but timed out at `50 ms`; reader controls
+  now use the recovered ENET response windows. Check routine completion and loading
+  recovery with the app-root DEBUG log and last progress message. Catalogue-only
+  browsing and cached reopening must issue no group/session requests. No automatic
+  replay is permitted after an uncertain result.
 - [ ] Enforce the owner's deferred/unvalidated safety-coding scope in UI and
   prepare/write/restore paths, including imported plans/backups. Recover actual
   ECU roles/option semantics; unknown classification is not authorization.

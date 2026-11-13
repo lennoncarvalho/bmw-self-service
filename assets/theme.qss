@@ -182,6 +182,21 @@ QFrame#card:hover {
     border-color: #1C69D4;
 }
 
+QPushButton#codingSection {
+    background: transparent;
+    text-align: left;
+    padding: 4px 0;
+    font-size: 15px;
+}
+
+QPushButton#codingSection:hover, QPushButton#codingSection:focus {
+    color: #77b5ff;
+}
+
+QWidget#codingFeature {
+    background: transparent;
+}
+
 /* ── Top Bar ──────────────────────────────────────────────────────────── */
 
 QFrame#topBar {

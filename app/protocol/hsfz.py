@@ -53,6 +53,16 @@ class HsfzAdapter:
                 if packet.source == ecu.address and packet.target == self.tester:
                     return raw[8:]
                 self._late(packet, raw)
+            elif control == 2:
+                logger.debug(
+                    "HSFZ ACK conn=%s operation=%s request=%s source=0x%02X target=0x%02X data=%s",
+                    context.generation,
+                    context.operation_id,
+                    context.request_id,
+                    packet.source,
+                    packet.target,
+                    raw[8:].hex(" "),
+                )
             elif control == 0x12:
                 self._alive(raw, context)
             elif control >= 0x40:

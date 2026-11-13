@@ -8,6 +8,7 @@ Reference: plan.md#coding-and-writes and docs.md#coding-contracts.
 
 import copy
 import logging
+from collections import Counter
 from collections.abc import Callable
 from pathlib import Path
 from threading import Event
@@ -17,7 +18,6 @@ from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
-    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.coding import CodingSnapshotWorker
+from app.coding import CodingCatalogueWorker, CodingValuesWorker
 from app.coding_db import CodingDatabase
 from app.worker import CarWorker
 from ui.page_stack import PageStack
@@ -121,6 +121,8 @@ class CodingPage(QWidget):
         self._snapshot_workers: list[CarWorker] = []
         self._live_selections: dict[tuple[int, str, str, int], str] = {}
         self._source_rows: list[dict] = []
+        self._open_sections: set[str] = set()
+        self._section_reads: list[str] = []
         self._pending_plan: Any = None
         self._write_report: dict = {}
         self.can_mutate: Callable[[], bool] = lambda: True
@@ -534,6 +536,8 @@ class CodingPage(QWidget):
         self._connection = connection
         self._live_selections.clear()
         self._source_rows = []
+        self._open_sections.clear()
+        self._section_reads.clear()
         self._pending_plan = None
         is_demo = bool(getattr(connection, "data", None))
         self._live_unavailable = not is_demo
@@ -559,7 +563,7 @@ class CodingPage(QWidget):
             page = QWidget()
             layout = QVBoxLayout(page)
             message = QLabel(
-                "Reading source-selected coding definitions and stored bytes..."
+                "Identifying available Easy Coding options..."
                 if mode == "Easy"
                 else "Advanced editing is deferred. Source-backed values and easy coding are in the Easy tab."
             )
@@ -571,11 +575,12 @@ class CodingPage(QWidget):
         self._snapshot_loaded = False
 
     def activate(self) -> None:
-        """Start an exact-identity read when this live page is first opened."""
+        """Identify catalogues on first visit without reading coding values."""
         connection = self._connection
         if (
             connection is None
             or hasattr(connection, "data")
+            or not getattr(connection, "alive_ok", True)
             or getattr(self, "_snapshot_loaded", False)
             or self._coding_reader is not None
             or self.is_reading()
@@ -584,15 +589,66 @@ class CodingPage(QWidget):
         vin = getattr(connection, "verified_vin", "")
         if not vin:
             return
-        worker = CodingSnapshotWorker(connection, self._snapshot_ecus, vin)
+        worker = CodingCatalogueWorker(connection, self._snapshot_ecus, vin)
+        self._coding_reader = worker
+        self._snapshot_workers.append(worker)
+        worker.result_ready.connect(self._on_snapshot)
+        worker.error.connect(self._on_snapshot_error)
+        worker.finished.connect(self._on_snapshot_finished)
+        self._start_loading(worker, "Identifying available coding options...")
+        worker.start()
+
+    def _toggle_source_section(self, section: str) -> None:
+        """Open a section and queue uncached owners through the existing reader."""
+        connection = self._connection
+        if (
+            connection is None
+            or not getattr(connection, "alive_ok", False)
+            or self._coding_reader is not None
+            or not self.can_mutate()
+        ):
+            return
+        if section in self._open_sections:
+            self._open_sections.remove(section)
+            self._show_source_rows(self._source_rows, preserve_selections=True)
+            return
+        self._open_sections.add(section)
+        self._section_reads = [
+            row["addr"]
+            for row in self._source_rows
+            if section in row.get("sections", {}) and row.get("available") and not row.get("loaded")
+        ]
+        if not self._read_next_section_owner():
+            logger.debug("Opening cached coding section %s", section)
+            self._show_source_rows(self._source_rows, preserve_selections=True)
+
+    def _read_next_section_owner(self) -> bool:
+        """Start one queued owner, leaving the loading backdrop active between reads."""
+        connection = self._connection
+        if (
+            connection is None
+            or not self._section_reads
+            or not getattr(connection, "alive_ok", False)
+        ):
+            self._section_reads.clear()
+            return False
+        address = self._section_reads.pop(0)
+        matches = [row for row in self._source_rows if row.get("addr") == address]
+        if len(matches) != 1 or not matches[0].get("available"):
+            self._section_reads.clear()
+            return False
+        row = matches[0]
+        worker = CodingValuesWorker(connection, row, connection.verified_vin)
+        worker.setProperty("coding_values_addr", address)
         self._coding_reader = worker
         self._snapshot_workers.append(worker)
         worker.sensitive_operation_requested.connect(self._begin_sensitive_read)
         worker.result_ready.connect(self._on_snapshot)
         worker.error.connect(self._on_snapshot_error)
         worker.finished.connect(self._on_snapshot_finished)
-        self._start_loading(worker, "Reading coding values...")
+        self._start_loading(worker, f"Reading coding values: {row['name']}...")
         worker.start()
+        return True
 
     def is_reading(self) -> bool:
         """Whether an owned coding snapshot read is still running."""
@@ -611,6 +667,17 @@ class CodingPage(QWidget):
     @Slot(str)
     def _on_snapshot_error(self, message: str) -> None:
         """Show a settled unavailable result for a failed snapshot worker."""
+        worker = self.sender()
+        if isinstance(worker, CarWorker) and worker.property("coding_values_addr"):
+            address = worker.property("coding_values_addr")
+            self._on_snapshot(
+                [
+                    {**row, "state": message, "loaded": False, "presets": [], "blocks": {}}
+                    for row in self._source_rows
+                    if row.get("addr") == address
+                ]
+            )
+            return
         self._on_snapshot(
             [{"name": "Coding", "state": message, "definitions": [], "blocks": {}, "backup": ""}]
         )
@@ -619,11 +686,24 @@ class CodingPage(QWidget):
     def _on_snapshot_finished(self) -> None:
         """Release the finished snapshot and its sensitive-session lockout."""
         worker = self.sender()
+        current = worker is self._coding_reader
         if worker is self._coding_reader:
             self._coding_reader = None
         if isinstance(worker, CarWorker):
             self._release_source_worker(worker)
+            if (
+                current
+                and worker.connection is self._connection
+                and self._read_next_section_owner()
+            ):
+                return
             self._finish_loading(worker)
+            if current and worker.connection is self._connection:
+                self._write_btn.setEnabled(
+                    bool(self._live_selections)
+                    and getattr(self._connection, "alive_ok", False)
+                    and not self.is_reading()
+                )
 
     def _start_loading(self, worker: CarWorker, message: str) -> None:
         """Block foreground controls before starting a coding read or preparation."""
@@ -675,11 +755,24 @@ class CodingPage(QWidget):
         ):
             return
         self._snapshot_loaded = True
-        self._show_source_rows(rows)
+        address = worker.property("coding_values_addr")
+        if address:
+            matches = [row for row in rows if row.get("addr") == address]
+            if len(matches) == 1:
+                self._show_source_rows(
+                    [
+                        matches[0] if row.get("addr") == address else row
+                        for row in self._source_rows
+                    ],
+                    preserve_selections=True,
+                )
+        else:
+            self._show_source_rows(rows)
 
-    def _show_source_rows(self, rows: list[dict]) -> None:
+    def _show_source_rows(self, rows: list[dict], *, preserve_selections: bool = False) -> None:
         """Render source-backed values and selections without vehicle I/O."""
         self._source_rows = copy.deepcopy(rows)
+        selections = dict(self._live_selections) if preserve_selections else {}
         self._live_selections.clear()
         self._pending = 0
         self._update_pending_label()
@@ -688,90 +781,74 @@ class CodingPage(QWidget):
         self._write_btn.setEnabled(False)
         page = QWidget()
         layout = QVBoxLayout(page)
-        notice = QLabel(
-            "Current values use the source-selected layout for each ECU’s reported software. "
-            "Conditional options retain their applicability restrictions. "
-            "Choose changes, then review the freshly checked plan before writing."
-        )
-        notice.setWordWrap(True)
-        layout.addWidget(notice)
-        content = QWidget()
-        entries = QVBoxLayout(content)
+        layout.setContentsMargins(24, 12, 24, 24)
+        layout.setSpacing(12)
+        title = QLabel("Easy Coding")
+        title.setObjectName("titleLabel")
+        layout.addWidget(title)
+        sections: dict[str, str] = {}
         for row in rows:
-            label = QLabel(
-                f"{row['name']}: {row['state']}\nDefinitions: {', '.join(row['definitions']) or 'Unavailable'}\nGroups read: {len(row['blocks'])}"
+            sections.update(row.get("sections", {}))
+        if not sections:
+            layout.addWidget(QLabel("No Easy Coding sections available. See session log."))
+
+        can_edit = getattr(self._connection, "alive_ok", False) and not getattr(
+            self._connection, "read_only", True
+        )
+        for section, label in sorted(sections.items(), key=lambda entry: entry[1].casefold()):
+            card = QFrame()
+            card.setObjectName("card")
+            entries = QVBoxLayout(card)
+            opened = section in self._open_sections
+            toggle = QPushButton(f"{'▾' if opened else '▸'}  {label}")
+            toggle.setObjectName("codingSection")
+            toggle.setAccessibleName(f"{'Collapse' if opened else 'Expand'} {label}")
+            toggle.clicked.connect(
+                lambda checked=False, key=section: self._toggle_source_section(key)
             )
-            label.setWordWrap(True)
-            entries.addWidget(label)
-            for selection in row.get("definition_resolution", []):
-                if selection["reported"] != selection["selected"]:
-                    selected_layout = QLabel(
-                        f"Compatible layout: {selection['selected']} for reported "
-                        f"{selection['reported']} ({selection['method']})."
-                    )
-                    selected_layout.setWordWrap(True)
-                    entries.addWidget(selected_layout)
-            if row["backup"]:
-                saved = QLabel(f"Snapshot: {row['backup']}")
-                saved.setWordWrap(True)
-                entries.addWidget(saved)
-            if row.get("backup") and not row.get("presets"):
-                unavailable = QLabel(
-                    "A complete snapshot is available, but this definition has no named "
-                    "easy-coding options in the supplied catalogue."
+            entries.addWidget(toggle)
+            presets: list[tuple[dict, dict]] = []
+            for row in rows:
+                if section not in row.get("sections", {}):
+                    continue
+                if opened and not row.get("loaded"):
+                    status = QLabel(row.get("state", "Current values unavailable"))
+                    status.setWordWrap(True)
+                    status.setEnabled(False)
+                    entries.addWidget(status)
+                presets.extend(
+                    (row, preset)
+                    for preset in row.get("presets", [])
+                    if preset["section"] == section
                 )
-                unavailable.setWordWrap(True)
-                entries.addWidget(unavailable)
-            for preset in row.get("presets", []):
-                card = QFrame()
-                card.setFrameShape(QFrame.Shape.StyledPanel)
-                details = QVBoxLayout(card)
-                heading = QLabel(f"{preset['label']}: {preset['current_label']}")
-                heading.setWordWrap(True)
-                details.addWidget(heading)
-                detail = QLabel(
-                    f"{preset['definition']} · {preset['section']}\n"
-                    f"Options: {', '.join(preset['options']) or 'Dynamic source option'}"
-                )
-                detail.setWordWrap(True)
-                details.addWidget(detail)
-                choices = QComboBox()
-                choices.addItem("Keep current value", None)
-                for option in preset.get("choices", []):
-                    choices.addItem(option["label"], option["name"])
-                choices.setEnabled(
-                    bool(row.get("backup"))
-                    and preset.get("mapping_supported", False)
-                    and not getattr(self._connection, "read_only", True)
-                )
+            repeated = Counter(preset["label"] for _, preset in presets)
+            for row, preset in presets:
                 key = (
                     preset["address"],
                     preset["definition"],
                     preset["id"],
                     preset["source_index"],
                 )
-                choices.currentIndexChanged.connect(
-                    lambda index, box=choices, identity=key, current=preset["current"]: (
-                        self._select_source_option(identity, box.currentData(), current)
-                    )
-                )
-                details.addWidget(choices)
-                if not preset.get("mapping_supported", False):
-                    unavailable = QLabel(
-                        preset.get("mapping_reason", "Option mapping is unavailable.")
-                    )
-                    unavailable.setWordWrap(True)
-                    details.addWidget(unavailable)
-                if preset["predicates"]:
-                    restriction = QLabel(
-                        "Applicability requires vehicle context: "
-                        + "; ".join(f"{key}={value}" for key, value in preset["predicates"].items())
-                    )
-                    restriction.setWordWrap(True)
-                    details.addWidget(restriction)
-                entries.addWidget(card)
-        entries.addStretch()
-        layout.addWidget(content)
+                mapped = preset.get("mapping_supported", False)
+                enabled = bool(can_edit and row.get("available") and row.get("loaded") and mapped)
+                selected = selections.get(key, preset["current"])
+                choices = preset.get("choices", [])
+                if (
+                    enabled
+                    and selected != preset["current"]
+                    and any(option["name"] == selected for option in choices)
+                ):
+                    self._live_selections[key] = selected
+                else:
+                    selected = preset["current"]
+                if not opened:
+                    continue
+                feature = preset["label"]
+                if repeated[feature] > 1:
+                    feature = f"{feature} ({row.get('description') or row['name']})"
+                self._add_source_feature(entries, feature, preset, key, selected, enabled)
+            layout.addWidget(card)
+        layout.addStretch()
         old = self._sub_stack.widget(0)
         if old is not None:
             self._sub_stack.removeWidget(old)
@@ -792,6 +869,49 @@ class CodingPage(QWidget):
         self._sub_stack.insertWidget(1, settled)
         self._sub_stack.setCurrentIndex(0)
         self._easy_tab.setChecked(True)
+        self._pending = len(self._live_selections)
+        self._update_pending_label()
+        self._write_btn.setEnabled(bool(self._pending) and not self.is_reading())
+
+    def _add_source_feature(
+        self,
+        layout: QVBoxLayout,
+        label: str,
+        preset: dict,
+        key: tuple[int, str, str, int],
+        selected: str | None,
+        enabled: bool,
+    ) -> None:
+        """Show the observed or staged option and allow restoring the observed value."""
+        feature = QWidget()
+        feature.setObjectName("codingFeature")
+        options = QVBoxLayout(feature)
+        options.setContentsMargins(12, 4, 0, 4)
+        heading = QLabel(label)
+        heading.setTextFormat(Qt.TextFormat.PlainText)
+        heading.setWordWrap(True)
+        options.addWidget(heading)
+        if not preset.get("mapping_supported", False):
+            options.addWidget(QLabel("Current value unavailable"))
+            feature.setEnabled(False)
+        else:
+            current = preset["current"]
+            group = QButtonGroup(feature)
+            choices = [(option["name"], option["label"]) for option in preset["choices"]]
+            if current is None:
+                choices.insert(0, (None, "Custom (current)"))
+            for name, text in choices:
+                button = QRadioButton(text)
+                group.addButton(button)
+                button.setChecked(name == selected)
+                button.setEnabled(enabled)
+                button.clicked.connect(
+                    lambda checked, value=name, identity=key, observed=current: (
+                        self._select_source_option(identity, value, observed) if checked else None
+                    )
+                )
+                options.addWidget(button)
+        layout.addWidget(feature)
 
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
         """Keep the active sub-tab button checked — clicking it again keeps it."""
@@ -1025,6 +1145,29 @@ class CodingPage(QWidget):
             reason = "Export the retained coding results before preparing another operation."
         elif not self._live_selections and restore_path is None:
             reason = "Select a coding change before preparing an operation."
+        elif restore_path is None:
+            eligible = {
+                (
+                    preset["address"],
+                    preset["definition"],
+                    preset["id"],
+                    preset["source_index"],
+                ): {
+                    option["name"]
+                    for option in preset["choices"]
+                    if option["name"] != preset["current"]
+                }
+                for row in self._source_rows
+                if row.get("available") and row.get("loaded")
+                for preset in row.get("presets", [])
+                if preset.get("mapping_supported")
+            }
+            if any(
+                option not in eligible.get(key, ()) for key, option in self._live_selections.items()
+            ):
+                reason = (
+                    "A selected coding option is unavailable. Review the current options again."
+                )
         if reason:
             self._pending_label.setText(reason)
             return reason
@@ -1255,10 +1398,23 @@ class CodingPage(QWidget):
         if worker is not self._coding_writer or worker.connection is not self._connection:
             return
         self._write_report = copy.deepcopy(report)
-        self._pending_label.setText(f"Coding: {report.get('state', 'unknown')}")
         self._snapshot_loaded = False
         self._live_selections.clear()
         self._pending = 0
+        for row in self._source_rows:
+            row.update(
+                loaded=False,
+                blocks={},
+                presets=[],
+                state="Current values need to be read again after the coding operation",
+            )
+        self._show_source_rows(self._source_rows)
+        self._pending_label.setText(f"Coding: {report.get('state', 'unknown')}")
+        logger.info(
+            "Coding values cache invalidated conn=%s outcome=%s",
+            getattr(self._connection, "trace_id", "unknown"),
+            report.get("state", "unknown"),
+        )
         message = f"Outcome: {report.get('state', 'unknown')}\n{report.get('instructions', '')}"
         if report.get("path"):
             message += f"\nRecord: {report['path']}"

@@ -296,6 +296,21 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   primary CAFD `00004224` uses source FSC-backup prerequisites (`1003`, `1042`,
   `31010F1F04` and per-item reads). The exact `63/0F2230` integration-level,
   RAM/HMI predicates live in compiled `reader_contracts.json`; preserve them.
+- `app/coding.py` separates identity-only catalogue discovery from on-demand
+  ECU values. `CodingDatabase.preset_read_groups` follows static option patches
+  and the dynamic lighting resolver's dependencies; it does not read unrelated
+  definition groups. Values stay in the connection's UI cache, not backup files.
+  `CodingPrepareWorker` still reads complete fresh target baselines.
+- The supplied APK's `c.a.m.z` dispatches to `c.a.o.doInBackground`/`d`: response
+  header window `o.b = 1000 ms`, pending window `o.c = 7000 ms` (also explicit in
+  `bimmercode_extracted/smali/de/appomotive/bimmercode/c/a/o.smali`). The headunit
+  capture acknowledges `31 01 0F 1F 04`, then reaches the negotiated `50 ms` P2
+  without a diagnostic reply. Headunit coding reads and prerequisite controls use
+  the recovered ENET windows as scoped minimums, including complete preparation
+  and verification reads, bounded by the original monotonic operation budget;
+  other operations retain negotiated timings. This does not prove vehicle completion
+  within the larger window. DEBUG logs retain stage/group plans, negotiated and
+  effective timing, ACKs, request IDs, elapsed waits and classified failures.
 - The source climate-controller guard at address `78` reads `19 02 0C`; codes
   `801225`/`801224` establish a sticky per-VIN coding block. Persist its separate
   non-restorable evidence, recheck before mutation, and reject corrupt/missing

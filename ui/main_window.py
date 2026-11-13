@@ -88,6 +88,7 @@ class MainWindow(QMainWindow):
         self._keepalive_worker: ProtocolWorker | None = None
         self._retired_workers: list[QThread] = []
         self._closing = False
+        self._connection_loss_dialog = False
         self._mutation_active = False
         self._coding_loading = False
         self._diagnostics_loading = False
@@ -287,10 +288,7 @@ class MainWindow(QMainWindow):
     def _show_spinner_cancel(self) -> None:
         """G-13: Show cancel button after 10s."""
         self._cancel_btn.setVisible(
-            not self._mutation_active
-            and not self._coding_loading
-            and not self._diagnostics_loading
-            and self._cbs_worker is None
+            not self._mutation_active and not self._diagnostics_loading and self._cbs_worker is None
         )
 
     def _show_retry_dialog(self) -> None:
@@ -364,11 +362,15 @@ class MainWindow(QMainWindow):
         self._coding_loading = active
         if active:
             self.show_spinner("Reading coding data...")
-            # These timers cancel/retry connection setup, not coding workers.
-            self._spinner_cancel_timer.stop()
+            # Ordinary reads may disconnect cooperatively; sensitive sessions
+            # acquire the mutation lock before their first control request.
+            if self._mutation_active:
+                self._spinner_cancel_timer.stop()
             self._spinner_retry_timer.stop()
         else:
             self.hide_spinner()
+            if self._connection is not None and not getattr(self._connection, "alive_ok", True):
+                QTimer.singleShot(0, self._on_connection_lost)
 
     @Slot(str)
     def _on_coding_loading_progress(self, message: str) -> None:
@@ -912,30 +914,41 @@ class MainWindow(QMainWindow):
 
         Reference: plan.md#connection-and-display.
         """
+        if (
+            self._connection is None
+            or not self._connected
+            or self._closing
+            or self._connection_loss_dialog
+            or getattr(self._connection, "alive_ok", True)
+        ):
+            return
         self.vehicle_page.invalidate("Connection lost")
         self.vehicle_page.refresh_button.setEnabled(False)
         if self._mutation_active:
             logger.warning("Connection lost during mutation; waiting for explicit outcomes")
             return
+        if self._coding_loading:
+            logger.warning("Connection lost during coding read; waiting for worker completion")
+            return
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Connection lost")
         self._stop_keepalive()
 
-        reply = QMessageBox.warning(
-            self,
-            "Connection Lost",
-            "The connection to the vehicle has been lost.\n\n"
-            "Check the ENET cable and ensure ignition is on.\n\n"
-            "Reconnect?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes,
-        )
-        if reply == QMessageBox.StandardButton.Yes:
+        self._connection_loss_dialog = True
+        try:
+            QMessageBox.warning(
+                self,
+                "Connection Lost",
+                "The connection to the vehicle has been lost.\n\n"
+                "Check the ENET cable and ensure ignition is on.\n\n"
+                "Reconnect?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes,
+            )
+            # Every dismissal disconnects; never leave pages on a broken stream.
             self._on_disconnect()
-        else:
-            # No or closed dialog — still disconnect to prevent pages
-            # from using a broken connection
-            self._on_disconnect()
+        finally:
+            self._connection_loss_dialog = False
 
     def _stop_keepalive(self) -> None:
         """Request worker shutdown and retain it until its thread actually exits."""
@@ -1010,7 +1023,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Keep worker objects alive while cooperative shutdown completes."""
-        if self._mutation_active or self._coding_loading:
+        if self._mutation_active:
             event.ignore()
             return
         if self.coding_page.has_unexported_results():
@@ -1049,6 +1062,8 @@ class MainWindow(QMainWindow):
             return
         self.vehicle_page.reset()
         self._overview_ecus = []
+        self._coding_loading = False
+        self.coding_page._loading_worker = None
         self._diagnostics_loading = False
         self._overview_after_diagnostics = False
         self._cbs_reset_blocked = False
@@ -1363,6 +1378,7 @@ class MainWindow(QMainWindow):
         self._cancel_btn.setVisible(False)
         if (
             not active
+            and not self._coding_loading
             and self._connection is not None
             and not getattr(self._connection, "alive_ok", True)
         ):
