@@ -30,8 +30,15 @@ def contracts() -> tuple[dict[str, Any], str]:
     path = resource_path("coding_data/history_contracts.json")
     with path.open("rb") as stream:
         raw = stream.read(65537)
+    if len(raw) > 65536:
+        raise ValueError("History execution definitions exceed their size limit")
     data = json.loads(raw)
-    if len(raw) > 65536 or data.get("schema_version") != 1:
+    if (
+        not isinstance(data, dict)
+        or data.get("schema_version") != 1
+        or data.get("erase_delay_ms") != 200
+        or data.get("add_delay_ms") != 100
+    ):
         raise ValueError("Invalid history execution definitions")
     return data, hashlib.sha256(raw).hexdigest()
 
@@ -156,7 +163,7 @@ def build_plan(
     )
 
 
-def validate_execution(data: dict) -> None:
+def validate_execution(data: dict) -> dict:
     """Reject altered, incomplete or unsupported byte plans at the send boundary."""
     definition, digest = contracts()
     if data["encoder"] != {"id": definition["id"], "sha256": digest}:
@@ -178,9 +185,13 @@ def validate_execution(data: dict) -> None:
         {"kind": "identity", "request": request, "entry_index": None}
         for request in ("22f190", "22f150", "22f101")
     ]
-    expected.append({"kind": "session", "request": "1001", "entry_index": None})
+    expected.append(
+        {"kind": "session", "request": definition["default_session"], "entry_index": None}
+    )
     if data["mode"] == "replace":
-        expected.append({"kind": "erase", "request": "3101a080", "entry_index": None})
+        if not data["intended"]:
+            raise ValueError("History replacement requires at least one entry")
+        expected.append({"kind": "erase", "request": definition["erase"], "entry_index": None})
     elif data["mode"] != "append" or len(data["intended"]) != 1:
         raise ValueError("Invalid history operation mode")
     expected.extend(
@@ -191,9 +202,10 @@ def validate_execution(data: dict) -> None:
         }
         for i, entry in enumerate(data["intended"])
     )
-    expected.append({"kind": "reset", "request": "1101", "entry_index": None})
+    expected.append({"kind": "reset", "request": definition["reset"], "entry_index": None})
     if expected != data["requests"]:
         raise ValueError("History request sequence differs from its exact contract")
+    return definition
 
 
 class HistoryPrepareWorker(CarWorker):
@@ -294,7 +306,7 @@ class HistoryWriteWorker(CarWorker):
         connection = self.connection
         context = connection.context(300.0)
         data = self.plan.data()
-        validate_execution(data)
+        definition = validate_execution(data)
         if (
             not self.power_acknowledged
             or getattr(connection, "power_sufficient", None) is False
@@ -318,7 +330,16 @@ class HistoryWriteWorker(CarWorker):
         ):
             raise ValueError("This date/draft has a prior accepted or uncertain operation")
         context.remaining()
-        path = self.store.prepare(**data)
+        try:
+            path = self.store.prepare(**data)
+        except (OSError, ValueError):
+            logger.warning("Could not persist history intent before sending", exc_info=True)
+            self.report.update(
+                state="blocked",
+                instructions="The required local journal could not be prepared. No request was "
+                "sent. Check local storage and review the journal before trying again.",
+            )
+            return self.report
         self.report["path"] = str(path)
         requests = data["requests"]
         attempted = -1
@@ -405,9 +426,7 @@ class HistoryWriteWorker(CarWorker):
                     return b""
                 accepted_mutation |= request["kind"] in ("add", "erase", "reset")
                 record("accepted", step, response)
-                delay = (
-                    0.2 if request["kind"] == "erase" else 0.1 if request["kind"] == "add" else 0
-                )
+                delay = definition.get(f"{request['kind']}_delay_ms", 0) / 1000
                 if delay:
                     ctx.remaining()
                     ctx.cancelled.wait(min(delay, ctx.remaining()))

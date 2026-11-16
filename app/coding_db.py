@@ -377,6 +377,15 @@ class CodingDatabase:
         ]
         return result
 
+    def coding_write_authorization(self, bootloader_identifier: str) -> dict:
+        """Require working authorization and signing material for the exact bootloader."""
+        from app.coding_authorization import validate_coding_key
+
+        authorization = self.authorization(bootloader_identifier)
+        validate_coding_key(authorization)
+        validate_coding_key(self.authorization(bootloader_identifier, key_type=1))
+        return authorization
+
     def validate_blocks(self, definitions: list[str], blocks: dict[int, bytes]) -> None:
         """Require source-declared group widths, or the full described storage range."""
         for identifier in definitions:
@@ -616,15 +625,22 @@ class CodingDatabase:
         *,
         definitions: list[str] | None = None,
         category: int | None = None,
+        deduplicate: bool = False,
     ) -> list[dict]:
-        """Return presets, skipping model exclusions when a category is supplied."""
+        """Return presets with stable source indexes and optional display deduplication."""
         result = []
+        seen: set[str] = set()
         for source_index, entry in enumerate(self.root_indexes.get(cafd_id, [])):
             if (
                 category is not None
                 and self._preset_model_applicability(entry, category)[0] is False
             ):
                 continue
+            if deduplicate:
+                key = json.dumps(entry, sort_keys=True)
+                if key in seen:
+                    continue
+                seen.add(key)
             preset = copy.deepcopy(entry)
             preset["source_index"] = source_index
             name = entry.get("name", "")
@@ -734,9 +750,7 @@ class CodingDatabase:
         names += ["DRL_Idx", "POLI1_Idx", "POLI2_Idx", "POLI3_Idx"]
         if any(name not in index for name in names):
             raise ValueError("Dynamic lighting definition is incomplete")
-        names += [
-            name for name in index if re.fullmatch(r"LmmIdx[0-9]+_Intensity|LM_ID_LT[0-9]{2}", name)
-        ]
+        names += [name for name in index if re.fullmatch(r"LmmIdx[0-9]+_Intensity", name)]
         return tuple(sorted({index[name][0][0] for name in names}))
 
     def resolve_dynamic_preset(
@@ -809,9 +823,8 @@ class CodingDatabase:
             for offset in range(1, 11):
                 if scalar(f"LM{offset:02d}_Name") == code:
                     selected = offset
-            if selected < 0:
+            if selected < 0 or f"LM_ID_LT{selected:02d}" not in index:
                 return -1
-            function(f"LM_ID_LT{selected:02d}")
             return selected - 1
 
         def intensity(name: str, offset: int) -> int:
@@ -875,7 +888,7 @@ class CodingDatabase:
         ]
         if len(matches) != 1 or not matches[0].get("functions"):
             raise ValueError("Coding option has no unique concrete function mapping")
-        patches = []
+        patches: dict[tuple[int, int], tuple[int, int]] = {}
         index = self._combined_index(cafd_id, variant, definitions)
         for requested in matches[0]["functions"]:
             functions = index.get(requested.get("name", ""), [])
@@ -912,10 +925,15 @@ class CodingDatabase:
                 number = _number(value.get("value"))
                 if not 0 <= number <= 255 or (number << shift) & ~mask:
                     raise ValueError("Coding value exceeds its mask")
-                patches.append((did, start + position, mask, number << shift))
+                offset = start + position
+                encoded = number << shift
+                previous_mask, previous_value = patches.get((did, offset), (0, 0))
+                if (previous_value ^ encoded) & previous_mask & mask:
+                    raise ValueError("Source option assigns conflicting values to the same bits")
+                patches[did, offset] = (previous_mask | mask, previous_value | encoded)
         if not patches:
             raise ValueError("Coding option has no applicable concrete function values")
-        return patches
+        return [(did, offset, mask, value) for (did, offset), (mask, value) in patches.items()]
 
     def get_current_option(
         self,

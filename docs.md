@@ -271,7 +271,7 @@ does not establish complete owner coverage or explain later coding timeouts.
 
 ## Coding contracts
 
-`app/coding_db.py`, `coding.py`, `coding_write.py`, `coding_crypto.py` and the
+`app/coding_db.py`, `coding.py`, `coding_write.py`, `coding_authorization.py` and the
 prerequisite/guard helpers implement the source-selected layout/shared engine.
 `source-coding-selection-20261104.json` is a build input, not a completion claim.
 
@@ -299,9 +299,11 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   exact `SIGNATURE` group and concatenate the other groups in declared order.
 - Source authorization preimage is `FFFFFFFF` + raw four-byte bootloader ID + seed.
   Use the exact ordered bootloader/key-type entry and recovered digest/RSA/byte
-  ordering in `coding_crypto.py`. The alternate source algorithm labelled DES is
+  ordering in `coding_authorization.py`. The alternate source algorithm labelled DES is
   actually MD5(key || coding bytes || key); do not substitute generic crypto.
-  Unsupported selected empty/EC entries fail, never fall through to another key.
+  Source `e.a.c` returns empty output for a non-RSA key in the RSA branch.
+  The bundled first selections include 81 EC and two empty signing entries.
+  `coding_authorization.py` checks the selected material before enabling writes.
 - Source ENET write order: sessions `1001`, `1003`, `1041`; exact authorization
   where required; complete group/signature writes; CPS stamp; source reset/clear.
   No universal XOR checksum or Bluetooth-only `31 01 0F01` routine belongs here.
@@ -314,7 +316,10 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
 - `app/coding.py` separates identity-only catalogue discovery from on-demand
   ECU values. `CodingDatabase.preset_read_groups` follows static option patches
   and the dynamic lighting resolver's dependencies; it does not read unrelated
-  definition groups. Values stay in the connection's UI cache, not backup files.
+  definition groups. `AngelEyesBrightnessCodingOptionActivity.c0` checks
+  `LM_ID_LTxx` by presence in the definition. It requires no group read for that
+  field. Identical catalogue rows display once at their first source index.
+  Values stay in the connection's UI cache, not backup files.
   `CodingPrepareWorker` still reads complete fresh target baselines.
 - The supplied APK's `c.a.m.z` dispatches to `c.a.o.doInBackground`/`d`: response
   header window `o.b = 1000 ms`, pending window `o.c = 7000 ms` (also explicit in

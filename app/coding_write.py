@@ -15,7 +15,7 @@ from typing import Any, cast
 
 from PySide6.QtCore import Signal
 
-from app.coding import decode_cafd_identifiers
+from app.coding import bootloader_identifier, decode_cafd_identifiers
 from app.coding_authorization import derive_authorization_key
 from app.coding_db import CodingDatabase
 from app.coding_guards import CodingGuardBlocked
@@ -47,18 +47,6 @@ def _canonical(value: Any) -> bytes:
     return json.dumps(
         value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
     ).encode()
-
-
-def bootloader_identifier(response: bytes) -> str:
-    """Select the source F101 role-six bootloader, rejecting ambiguous identities."""
-    decode_cafd_identifiers(response)
-    entries = [
-        response[len(response) - (i + 1) * 8 : len(response) - i * 8] for i in range(response[6])
-    ]
-    identifiers = {entry[1:5].hex().upper() for entry in entries if entry[0] == 6}
-    if len(identifiers) != 1:
-        raise ValueError("Coding authorization requires a unique reported bootloader")
-    return identifiers.pop()
 
 
 def _groups(db: CodingDatabase, definitions: list[str]) -> list[int]:
@@ -155,14 +143,15 @@ def _resolve_changes(
     vehicle_context: dict,
 ) -> dict[int, bytes]:
     """Validate source preset selections and compose nonconflicting masked changes."""
-    intended = dict(baseline)
-    by_definition: dict[str, list[tuple[dict, str]]] = {}
+    primary = db.primary_definition(definitions)
+    identifier, version = primary.split("-", 1)
+    selected: list[tuple[dict, str]] = []
+    available_presets = db.get_presets(identifier)
     seen: set[tuple[str, int]] = set()
     for change in changes:
         definition, name, option = change["definition"], change["preset"], change["option"]
-        if definition != db.primary_definition(definitions):
+        if definition != primary:
             raise ValueError("Coding option definition is absent or selected twice")
-        available_presets = db.get_presets(definition[:8])
         if "preset_index" in change:
             index = change["preset_index"]
             if type(index) is not int or not 0 <= index < len(available_presets):
@@ -198,28 +187,8 @@ def _resolve_changes(
         resolved = db.resolve_dynamic_preset(
             presets[0], baseline, definition[:8], definition[9:], definitions=definitions
         )
-        by_definition.setdefault(definition, []).append((resolved, option))
-    # Use the loader's actual source masks, including bits whose requested value
-    # happens already to equal the baseline, for cross-definition conflict checks.
-    masks: dict[tuple[int, int], tuple[int, int]] = {}
-    for definition, selected in by_definition.items():
-        identifier, version = definition.split("-", 1)
-        for preset, option in selected:
-            for did, offset, mask, value in db._patches(
-                preset, option, identifier, version, definitions=definitions
-            ):
-                prior_mask, prior_value = masks.get((did, offset), (0, 0))
-                if (prior_value ^ value) & prior_mask & mask:
-                    raise ValueError("Coding definitions request conflicting bit changes")
-                masks[(did, offset)] = (prior_mask | mask, (prior_value & ~mask) | value)
-        db.compose_changes(selected, baseline, identifier, version, definitions=definitions)
-    result = {did: bytearray(value) for did, value in baseline.items()}
-    for (did, offset), (mask, value) in masks.items():
-        if did not in result or not 0 <= offset < len(result[did]):
-            raise ValueError("Complete coding baseline is missing")
-        result[did][offset] = (result[did][offset] & ~mask) | value
-    intended = {did: bytes(value) for did, value in result.items()}
-    return intended
+        selected.append((resolved, option))
+    return db.compose_changes(selected, baseline, identifier, version, definitions=definitions)
 
 
 def _finalize(
@@ -386,7 +355,11 @@ class CodingPrepareWorker(CarWorker):
                     raise PermissionError(scope_reason)
                 headunit_reader = applies(address, definitions, db)
                 bootloader = bootloader_identifier(software)
-                authorization = db.authorization(bootloader)
+                try:
+                    authorization = db.coding_write_authorization(bootloader)
+                except ValueError as error:
+                    self.guard_notice = f"{match['name']}: {error}. No coding write was sent."
+                    raise
                 guard_observations = []
                 for guard in guard_contracts(db, address):
                     try:
@@ -530,6 +503,8 @@ class CodingPrepareWorker(CarWorker):
                 fresh = current[old["address"]]
                 if old["variant"] != fresh["variant"] or old["software"] != fresh["software"]:
                     comparison = "identity-changed"
+                elif old["definition_sha256"] != fresh["definition_sha256"]:
+                    comparison = "definition-changed"
                 elif fresh["baseline"] == old["baseline"] == old["intended"]:
                     comparison = "matches-both"
                 elif fresh["baseline"] == old["baseline"]:
@@ -639,7 +614,7 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
                 != hashlib.sha256(_canonical(guard)).hexdigest()
             ):
                 raise ValueError("Coding source guard selection changed")
-        auth = db.authorization(bootloader_identifier(software))
+        auth = db.coding_write_authorization(bootloader_identifier(software))
         if auth["source_sha256"] != target["authorization_sha256"]:
             raise ValueError("Coding authorization definition changed")
         baseline = {int(did, 16): bytes.fromhex(raw) for did, raw in target["baseline"].items()}

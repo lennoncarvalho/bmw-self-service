@@ -1,7 +1,4 @@
-"""Coding page — Easy + Advanced coding with write/clear bar.
-
-Easy: curated category -> option toggles.
-Advanced: SVT ECU tree -> FDL hex editor (stub).
+"""Easy Coding page with source presets and write review.
 
 Reference: plan.md#coding-and-writes and docs.md#coding-contracts.
 """
@@ -33,7 +30,6 @@ from PySide6.QtWidgets import (
 )
 
 from app.coding import CodingCatalogueWorker, CodingValuesWorker
-from app.coding_db import CodingDatabase
 from app.protocol.contracts import TransportKind
 from app.worker import CarWorker
 from ui.page_stack import PageStack
@@ -99,7 +95,7 @@ MOCK_CATEGORIES = [
 
 
 class CodingPage(QWidget):
-    """Coding tab with Easy/Advanced sub-pages and shared pending-changes bar."""
+    """Easy Coding options and the pending-changes bar."""
 
     mutation_active = Signal(bool)
     loading_changed = Signal(bool)
@@ -120,6 +116,10 @@ class CodingPage(QWidget):
         self._is_real = False  # True when categories come from car, not mock
         self._live_unavailable = True
         self._snapshot_workers: list[CarWorker] = []
+        self._snapshot_ecus: list[dict] = []
+        self._snapshot_model_range = ""
+        self._snapshot_type_code = ""
+        self._snapshot_loaded = False
         self._live_selections: dict[tuple[int, str, str, int], str] = {}
         self._source_rows: list[dict] = []
         self._open_sections: set[str] = set()
@@ -139,62 +139,22 @@ class CodingPage(QWidget):
         self._write_btn.setEnabled(False)
 
     def _setup_ui(self) -> None:
-        """Build coding tabs, pending controls and the mutation action bar."""
+        """Build the coding page, pending controls and the mutation action bar."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Sub-tab bar
-        tab_bar = QHBoxLayout()
-        tab_bar.setSpacing(0)
-        tab_bar.setContentsMargins(24, 16, 24, 0)
-
-        self._easy_tab = QPushButton("Easy")
-        self._easy_tab.setCheckable(True)
-        self._easy_tab.setChecked(True)
-        self._easy_tab.setStyleSheet(
-            "QPushButton { background-color: transparent; padding: 8px 24px; "
-            "border: none; border-bottom: 2px solid transparent; "
-            "color: #a0a0a0; font-weight: bold; }"
-            "QPushButton:hover { color: #d0d0d0; }"
-            "QPushButton:checked { color: #1C69D4; "
-            "border-bottom: 2px solid #1C69D4; }"
-        )
-        self._easy_tab.clicked.connect(lambda: self._sub_stack.setCurrentIndex(0))
-        tab_bar.addWidget(self._easy_tab)
-
-        self._adv_tab = QPushButton("Advanced")
-        self._adv_tab.setCheckable(True)
-        self._adv_tab.setStyleSheet(
-            "QPushButton { background-color: transparent; padding: 8px 24px; "
-            "border: none; border-bottom: 2px solid transparent; "
-            "color: #a0a0a0; font-weight: bold; }"
-            "QPushButton:hover { color: #d0d0d0; }"
-            "QPushButton:checked { color: #1C69D4; "
-            "border-bottom: 2px solid #1C69D4; }"
-        )
-        self._adv_tab.clicked.connect(lambda: self._sub_stack.setCurrentIndex(1))
-        tab_bar.addWidget(self._adv_tab)
-        tab_bar.addStretch()
-
-        # Make Easy/Advanced exclusive — clicking the active tab keeps it checked
-        self._tab_group = QButtonGroup(self)
-        self._tab_group.setExclusive(True)
-        self._tab_group.addButton(self._easy_tab, 0)
-        self._tab_group.addButton(self._adv_tab, 1)
-        # Prevent unchecking the active tab
-        self._tab_group.buttonClicked.connect(self._ensure_tab_checked)
-
-        # Pending changes counter
+        pending_bar = QHBoxLayout()
+        pending_bar.setContentsMargins(24, 16, 24, 0)
+        pending_bar.addStretch()
         self._pending_label = QLabel("")
         self._pending_label.setStyleSheet("color: #F39C12; font-size: 13px; font-weight: bold;")
-        tab_bar.addWidget(self._pending_label)
-        layout.addLayout(tab_bar)
+        pending_bar.addWidget(self._pending_label)
+        layout.addLayout(pending_bar)
 
         # Sub-page stack
         self._sub_stack = PageStack(content_height=True)
         self._sub_stack.addWidget(self._build_easy_page())
-        self._sub_stack.addWidget(self._build_advanced_page())
         layout.addWidget(self._sub_stack)
 
         # Bottom bar (visible when pending > 0)
@@ -335,195 +295,6 @@ class CodingPage(QWidget):
         layout.addWidget(container)
         return page
 
-    def _build_advanced_page(self) -> QWidget:
-        """Build the Advanced Coding page — SVT ECU tree with FDL editing.
-
-        G-11: Shows ECU list from SVT. Each ECU expands to function groups
-        with raw hex editing for FDL parameters.
-        """
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(24, 12, 24, 24)
-        layout.setSpacing(12)
-
-        # Warning banner
-        warning = QLabel("\u26a0  Advanced Coding \u2014 use with caution")
-        warning.setStyleSheet(
-            "font-size: 14px; font-weight: bold; color: #F39C12;"
-            "background: rgba(243,156,18,0.1); border: 1px solid #F39C12;"
-            "border-radius: 8px; padding: 8px 12px;"
-        )
-        warning.setWordWrap(True)
-        layout.addWidget(warning)
-
-        sub = QLabel("Incorrect values may cause malfunctions. Always back up first.")
-        sub.setStyleSheet("font-size: 12px; color: #a0a0a0;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-
-        # ECU tree
-        container = QWidget()
-        self._adv_ecu_layout = QVBoxLayout(container)
-        self._adv_ecu_layout.setSpacing(6)
-
-        # Populate ECU list from mock SVT (or empty for real-car)
-        # Use the MOCK_CATEGORIES-friendly list from SVT data
-        self._build_ecu_tree(container)
-
-        self._adv_ecu_layout.addStretch()
-        layout.addWidget(container)
-        return page
-
-    def _build_ecu_tree(self, container: QWidget) -> None:
-        """Populate the Advanced Coding page with ECU cards from SVT data."""
-        # Get ECU list — from mock data or connection
-        ecus = self._get_svt_ecus()
-        # Blocked ECUs (safety-critical)
-        blocked = {
-            "ACSM",
-            "DME",
-            "DSC",
-            "SAS",
-            "ZGW",
-            "AIRBAG",
-            "ABG",
-            "MRS",
-            "SRS",
-        }
-
-        for ecu in ecus:
-            name = ecu.get("name", "???")
-            desc = ecu.get("description", "")
-            is_blocked = any(b in name.upper() for b in blocked)
-
-            card = QFrame()
-            card.setObjectName("card")
-            card.setStyleSheet(
-                "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
-                "border-radius: 8px; padding: 12px; }"
-                + (" border-color: #E30B1F; " if is_blocked else "")
-                + "QFrame#card:hover { border-color: "
-                + ("#E30B1F" if is_blocked else "#1C69D4")
-                + "; }"
-            )
-
-            card_layout = QVBoxLayout(card)
-            card_layout.setSpacing(4)
-
-            top = QHBoxLayout()
-            name_lbl = QLabel(f"\u26a0 {name}" if is_blocked else name)
-            name_lbl.setStyleSheet(
-                f"font-size: 14px; font-weight: bold; "
-                f"color: {'#E30B1F' if is_blocked else '#e0e0e0'}; "
-                "background: transparent;"
-            )
-            top.addWidget(name_lbl)
-            if desc:
-                d_lbl = QLabel(desc)
-                d_lbl.setStyleSheet("font-size: 11px; color: #a0a0a0; background: transparent;")
-                top.addWidget(d_lbl)
-            top.addStretch()
-
-            toggle = QPushButton("\u25bc")
-            toggle.setFlat(True)
-            toggle.setFocusPolicy(Qt.FocusPolicy.TabFocus)
-            toggle.setStyleSheet(
-                "QPushButton { font-size: 12px; color: #a0a0a0; "
-                "background: transparent; border: none; padding: 4px; }"
-                "QPushButton:hover { color: #1C69D4; }"
-            )
-            top.addWidget(toggle)
-            card_layout.addLayout(top)
-
-            # Expandable detail (FDL hex editor)
-            detail = QWidget()
-            detail.setVisible(False)
-            detail_layout = QVBoxLayout(detail)
-            detail_layout.setContentsMargins(0, 8, 0, 0)
-            detail_layout.setSpacing(6)
-
-            if is_blocked:
-                block_warn = QLabel("\u26a0 Safety-critical ECU — coding blocked")
-                block_warn.setStyleSheet("font-size: 12px; color: #E30B1F; font-weight: bold;")
-                detail_layout.addWidget(block_warn)
-            else:
-                # T-5: Real FDL parameters from coding database
-                fdl_funcs: list[dict] = []
-                # DEMO fixtures do not establish a software version. Show only
-                # explicitly supplied exact identities, never a first match.
-                database: CodingDatabase | None = None
-                for definition in ecu.get("definitions", []):
-                    try:
-                        if database is None:
-                            database = CodingDatabase()
-                        cafd_id, variant = definition.split("-", 1)
-                        database.load_ecu(cafd_id, variant)
-                        fdl_funcs.extend(database.get_ecu_fdl_functions(cafd_id, variant))
-                    except (OSError, ValueError, KeyError):
-                        logger.warning("DEMO definition unavailable", exc_info=True)
-
-                if fdl_funcs:
-                    for func in fdl_funcs:
-                        si = func.get("storageInfo", {})
-                        func_type = f"byte {si.get('start', '?')}  mask {si.get('mask', '?')}"
-                        func_card = QFrame()
-                        func_card.setStyleSheet(
-                            "background: #1a1a3e; border: 1px solid #2a2a4a; "
-                            "border-radius: 6px; padding: 8px;"
-                        )
-                        func_layout = QVBoxLayout(func_card)
-                        func_layout.setSpacing(2)
-
-                        fn = QLabel(func["name"])
-                        fn.setStyleSheet(
-                            "font-size: 12px; font-weight: bold; "
-                            "color: #e0e0e0; background: transparent;"
-                        )
-                        func_layout.addWidget(fn)
-
-                        ft_lbl = QLabel(f"DID: 0x{func['did']:04X}  |  {func_type}")
-                        ft_lbl.setStyleSheet(
-                            "font-size: 11px; color: #a0a0a0; background: transparent;"
-                        )
-                        func_layout.addWidget(ft_lbl)
-
-                        detail_layout.addWidget(func_card)
-                else:
-                    no_data = QLabel("No FDL data available for this ECU")
-                    no_data.setStyleSheet("font-size: 11px; color: #a0a0a0; font-style: italic;")
-                    detail_layout.addWidget(no_data)
-
-            card_layout.addWidget(detail)
-
-            # Toggle detail
-            toggle.clicked.connect(
-                lambda checked, d=detail, b=toggle: (
-                    d.setVisible(not d.isVisible()),
-                    b.setText("\u25b2" if d.isVisible() else "\u25bc"),
-                )
-            )
-
-            self._adv_ecu_layout.addWidget(card)
-
-    def _get_svt_ecus(self) -> list[dict]:
-        """Get the SVT ECU list from connection data or return default."""
-        if self._connection and hasattr(self._connection, "data") and self._connection.data:
-            svt: list[dict] = self._connection.data.get("svt_ecus", [])
-            return svt
-        # Fallback demo ECUs
-        return [
-            {"name": "DME", "description": "Digital Motor Electronics"},
-            {"name": "EGS", "description": "Electronic Transmission Control"},
-            {"name": "ZGW", "description": "Central Gateway"},
-            {"name": "FEM_01", "description": "Front Electronic Module"},
-            {"name": "REM_01", "description": "Rear Electronic Module"},
-            {"name": "KOMBI", "description": "Instrument Cluster"},
-            {"name": "HU_NBT", "description": "Headunit NBT"},
-            {"name": "IHKA", "description": "Climate Control"},
-            {"name": "ACSM", "description": "Airbag Control Unit"},
-            {"name": "DSC", "description": "Dynamic Stability Control"},
-        ]
-
     def set_connection(
         self,
         connection: Any,
@@ -543,13 +314,21 @@ class CodingPage(QWidget):
             model_range: Model code from the connected vehicle order, when available.
             type_code: Exact type key from the connected vehicle order, when available.
         """
+        is_demo = bool(getattr(connection, "data", None))
+        if (
+            not is_demo
+            and connection is self._connection
+            and (ecus or []) == self._snapshot_ecus
+            and model_range == self._snapshot_model_range
+            and type_code == self._snapshot_type_code
+        ):
+            return
         self._connection = connection
         self._live_selections.clear()
         self._source_rows = []
         self._open_sections.clear()
         self._section_reads.clear()
         self._pending_plan = None
-        is_demo = bool(getattr(connection, "data", None))
         self._live_unavailable = not is_demo
         self._pending = 0
         self._categories = copy.deepcopy(MOCK_CATEGORIES) if is_demo else []
@@ -566,22 +345,16 @@ class CodingPage(QWidget):
             old_page.deleteLater()
         if is_demo:
             self._sub_stack.addWidget(self._build_easy_page())
-            self._sub_stack.addWidget(self._build_advanced_page())
             return
 
-        for mode in ("Easy", "Advanced"):
-            page = QWidget()
-            layout = QVBoxLayout(page)
-            message = QLabel(
-                "Identifying available Easy Coding options..."
-                if mode == "Easy"
-                else "Advanced editing is deferred. Source-backed values and easy coding are in the Easy tab."
-            )
-            message.setWordWrap(True)
-            layout.addWidget(message)
-            layout.addStretch()
-            self._sub_stack.addWidget(page)
-        self._snapshot_ecus = ecus or []
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        message = QLabel("Identifying available Easy Coding options...")
+        message.setWordWrap(True)
+        layout.addWidget(message)
+        layout.addStretch()
+        self._sub_stack.addWidget(page)
+        self._snapshot_ecus = copy.deepcopy(ecus or [])
         self._snapshot_model_range = model_range
         self._snapshot_type_code = type_code
         self._snapshot_loaded = False
@@ -593,7 +366,7 @@ class CodingPage(QWidget):
             connection is None
             or hasattr(connection, "data")
             or not getattr(connection, "alive_ok", True)
-            or getattr(self, "_snapshot_loaded", False)
+            or self._snapshot_loaded
             or self._coding_reader is not None
             or self.is_reading()
         ):
@@ -831,7 +604,7 @@ class CodingPage(QWidget):
             for row in rows:
                 if section not in row.get("sections", {}):
                     continue
-                if opened and not row.get("loaded"):
+                if opened and (not row.get("loaded") or row.get("partial")):
                     status = QLabel(row.get("state", "Current values unavailable"))
                     status.setWordWrap(True)
                     status.setEnabled(False)
@@ -880,21 +653,7 @@ class CodingPage(QWidget):
             self._sub_stack.removeWidget(old)
             old.deleteLater()
         self._sub_stack.insertWidget(0, page)
-        advanced = self._sub_stack.widget(1)
-        if advanced is not None:
-            self._sub_stack.removeWidget(advanced)
-            advanced.deleteLater()
-        settled = QWidget()
-        settled_layout = QVBoxLayout(settled)
-        settled_notice = QLabel(
-            "Advanced coding is unavailable. See the Easy tab for snapshot results and coverage."
-        )
-        settled_notice.setWordWrap(True)
-        settled_layout.addWidget(settled_notice)
-        settled_layout.addStretch()
-        self._sub_stack.insertWidget(1, settled)
         self._sub_stack.setCurrentIndex(0)
-        self._easy_tab.setChecked(True)
         self._pending = len(self._live_selections)
         self._update_pending_label()
         self._write_btn.setEnabled(bool(self._pending) and not self.is_reading())
@@ -943,11 +702,6 @@ class CodingPage(QWidget):
                 options.addWidget(notice)
         layout.addWidget(feature)
 
-    def _ensure_tab_checked(self, btn: QPushButton) -> None:
-        """Keep the active sub-tab button checked — clicking it again keeps it."""
-        if not btn.isChecked():
-            btn.setChecked(True)
-
     def restore_backup(self, categories: list[dict]) -> bool:
         """Load a local DEMO preview from a backup; return False when unavailable.
 
@@ -973,7 +727,6 @@ class CodingPage(QWidget):
             old_page.deleteLater()
         self._sub_stack.insertWidget(0, self._build_easy_page())
         self._sub_stack.setCurrentIndex(0)
-        self._easy_tab.setChecked(True)
         # Recalculate pending — differences between restored and previous originals
         self._recalc_pending()
         logger.info("Coding restored from backup (%d categories)", len(categories))
@@ -1035,7 +788,6 @@ class CodingPage(QWidget):
             old_page.deleteLater()
         self._sub_stack.insertWidget(0, self._build_easy_page())
         self._sub_stack.setCurrentIndex(0)
-        self._easy_tab.setChecked(True)
         logger.info("Coding changes cleared")
 
     def _on_write(self) -> None:
@@ -1139,7 +891,6 @@ class CodingPage(QWidget):
                 old_page.deleteLater()
             self._sub_stack.insertWidget(0, self._build_easy_page())
             self._sub_stack.setCurrentIndex(0)
-            self._easy_tab.setChecked(True)
             logger.info("Coding data loaded (%d categories)", len(categories))
 
     def _select_source_option(
@@ -1345,6 +1096,7 @@ class CodingPage(QWidget):
                 "matches-intended": "matches saved intended bytes",
                 "differs": "differs from both original and intended bytes",
                 "identity-changed": "ECU identity/software changed",
+                "definition-changed": "Source coding definition changed",
             }
             prior_lines = ["Prior operations require review:"]
             for record in prior:

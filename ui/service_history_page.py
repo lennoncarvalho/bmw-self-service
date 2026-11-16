@@ -219,6 +219,8 @@ class ServiceHistoryPage(QWidget):
 
     busy_changed = Signal(bool)
     mutation_active = Signal(bool)
+    vehicle_loading_changed = Signal(bool)
+    vehicle_loading_progress = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -331,6 +333,9 @@ class ServiceHistoryPage(QWidget):
         worker.progress.connect(self.message.setText)
         worker.finished.connect(self._finished)
         self._set_busy(True)
+        if self.is_using_vehicle():
+            worker.progress.connect(self.vehicle_loading_progress)
+            self.vehicle_loading_changed.emit(True)
         worker.start()
 
     def _set_busy(self, busy: bool) -> None:
@@ -358,10 +363,8 @@ class ServiceHistoryPage(QWidget):
         if self.sender() is not self._worker:
             return
         if isinstance(self._worker, HistoryFileWorker):
-            if self._loading_key is None:
+            if self._loading_key is None or self._loading_key == self._desired_key:
                 self._workspace_ready = False
-            if self._loading_key == self._desired_key:
-                self._desired_key = self._key
             self.message.setText(
                 "Local file operation failed. Publication could not be confirmed; displayed data is retained for inspection. Reload before editing, or explicitly import a replacement. Check format, permissions, free space and the session log."
             )
@@ -377,6 +380,7 @@ class ServiceHistoryPage(QWidget):
         worker = self.sender()
         if worker is not self._worker:
             return
+        loading_key = self._loading_key
         self._worker = None
         self._success = None
         self._loading_key = None
@@ -386,11 +390,14 @@ class ServiceHistoryPage(QWidget):
         self._set_busy(False)
         if was_writing:
             self.mutation_active.emit(False)
+        if not isinstance(worker, HistoryFileWorker):
+            self.vehicle_loading_changed.emit(False)
         if self._shutting_down:
             return
         if self._desired_key != self._key:
             self._pending_confirmation = None
-            self._load_workspace(self._desired_key)
+            if self._desired_key != loading_key:
+                self._load_workspace(self._desired_key)
         elif self._pending_confirmation is not None:
             pending = self._pending_confirmation
             self._pending_confirmation = None
@@ -425,12 +432,24 @@ class ServiceHistoryPage(QWidget):
         self._clear_layout(self.journal_layout)
         self._journal_dirty = True
         self._page = 0
-        self.message.clear()
+        if self.has_unexported_results():
+            self.message.setText("Export the retained history operation evidence before closing.")
+        else:
+            self.message.clear()
         self._render()
 
     def is_busy(self) -> bool:
-        """Whether this page still owns an active local file worker."""
+        """Whether this page still owns an active worker."""
         return self._worker is not None
+
+    def is_using_vehicle(self) -> bool:
+        """Whether history preparation or execution still owns the foreground."""
+        return self._worker is not None and not isinstance(self._worker, HistoryFileWorker)
+
+    def has_unexported_results(self) -> bool:
+        """Whether an interruption report still needs durable publication."""
+        report = self._write_report or {}
+        return bool(report.get("persistence_failed") and not report.get("evidence_exported"))
 
     def shutdown(self) -> None:
         """Finish a current durable publication without starting any more file work."""
@@ -476,7 +495,7 @@ class ServiceHistoryPage(QWidget):
 
     @Slot()
     def _reload(self) -> None:
-        self._load_workspace(self._key)
+        self._load_workspace(self._desired_key)
 
     @Slot()
     def _offline(self) -> None:
@@ -806,17 +825,20 @@ class ServiceHistoryPage(QWidget):
     def _can_offer_write(self) -> bool:
         from app.history_files import valid_vin
         from app.history_write import select_target
+        from app.protocol.contracts import TransportKind
 
         connection = self._connection
         if (
             connection is None
             or hasattr(connection, "data")
             or getattr(connection, "read_only", True)
+            or getattr(connection, "kind", None) != TransportKind.HSFZ
             or not getattr(connection, "alive_ok", False)
             or not valid_vin(getattr(connection, "verified_vin", ""))
             or self.workspace["project"]["vin"] != connection.verified_vin
             or not self._key.startswith("live-")
             or getattr(connection, "power_sufficient", None) is False
+            or self.has_unexported_results()
         ):
             return False
         try:
@@ -1159,11 +1181,19 @@ class ServiceHistoryPage(QWidget):
         if not path or not self._context_current(before, key):
             return
         report = copy.deepcopy(self._write_report)
+
+        def exported(_value: object) -> None:
+            assert self._write_report is not None
+            self._write_report["evidence_exported"] = True
+            self.report_export.hide()
+            self.message.setText(
+                "Interrupted history evidence exported; inspect iDrive before any new action."
+            )
+            self._render()
+
         self._run(
             lambda: export_memory_evidence(Path(path), report),
-            lambda _: self.message.setText(
-                "Interrupted history evidence exported; inspect iDrive before any new action."
-            ),
+            exported,
         )
 
     def _export_journal(self, record: dict) -> None:
