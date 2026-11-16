@@ -234,7 +234,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
         def display_preset(
             preset: dict,
             *,
-            mapped: bool = False,
+            supported_choices: set[str] | None = None,
             current: str | None = None,
             blocked: str = "",
         ) -> dict:
@@ -247,10 +247,14 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 "section": preset["section"],
                 "current": current,
                 "choices": [
-                    {"name": option["name"], "label": option["label"]}
+                    {
+                        "name": option["name"],
+                        "label": option["label"],
+                        "available": option["name"] in (supported_choices or ()),
+                    }
                     for option in preset["options"]
                 ],
-                "mapping_supported": mapped,
+                "mapping_supported": bool(supported_choices),
                 "write_block": blocked,
             }
 
@@ -415,10 +419,17 @@ class CodingValuesWorker(CodingCatalogueWorker):
                         )
                     except (ValueError, KeyError, TypeError) as exc:
                         reason = str(exc)
-                mapped, mapping_reason = database.preset_mapping_status(
-                    preset, primary[:8], primary[9:], blocks, definitions=definitions
-                )
-                mapped = mapped and not reason
+                supported_choices: set[str] = set()
+                if not reason:
+                    try:
+                        supported_choices = set(
+                            database.preset_choice_patches(
+                                preset, primary[:8], primary[9:], blocks, definitions=definitions
+                            )
+                        )
+                    except (ValueError, KeyError, TypeError) as exc:
+                        reason = str(exc)
+                mapped = bool(supported_choices)
                 blocked = scope_reason
                 if mapped and not blocked:
                     applicable, applicability_reason = database.preset_applicability(
@@ -433,7 +444,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     primary,
                     preset["source_index"],
                     mapped,
-                    reason or mapping_reason,
+                    reason or "Source choices mapped",
                     blocked,
                     {
                         key: preset[key]
@@ -454,7 +465,12 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     else None
                 )
                 row["presets"].append(
-                    display_preset(preset, mapped=mapped, current=current, blocked=blocked)
+                    display_preset(
+                        preset,
+                        supported_choices=supported_choices,
+                        current=current,
+                        blocked=blocked,
+                    )
                 )
             mapped_features = {
                 (preset["section"], preset["id"])

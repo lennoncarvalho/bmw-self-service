@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.coding import CodingCatalogueWorker, CodingValuesWorker
+from app.operation_store import OperationStore
 from app.protocol.contracts import TransportKind
 from app.worker import CarWorker
 from ui.page_stack import PageStack
@@ -100,6 +101,7 @@ class CodingPage(QWidget):
     mutation_active = Signal(bool)
     loading_changed = Signal(bool)
     loading_progress = Signal(str)
+    verification_saved = Signal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build coding previews with live writes and backup loading disabled until configured."""
@@ -635,7 +637,10 @@ class CodingPage(QWidget):
                 if (
                     enabled
                     and selected != preset["current"]
-                    and any(option["name"] == selected for option in choices)
+                    and any(
+                        option["name"] == selected and option.get("available", True)
+                        for option in choices
+                    )
                 ):
                     self._live_selections[key] = selected
                 else:
@@ -682,14 +687,19 @@ class CodingPage(QWidget):
         else:
             current = preset["current"]
             group = QButtonGroup(feature)
-            choices = [(option["name"], option["label"]) for option in preset["choices"]]
+            choices = [
+                (option["name"], option["label"], option.get("available", True))
+                for option in preset["choices"]
+            ]
             if current is None:
-                choices.insert(0, (None, "Custom (current)"))
-            for name, text in choices:
+                choices.insert(0, (None, "Custom (current)", True))
+            for name, text, available in choices:
                 button = QRadioButton(text)
                 group.addButton(button)
                 button.setChecked(name == selected)
-                button.setEnabled(enabled)
+                button.setEnabled(enabled and available)
+                if not available:
+                    button.setToolTip("Unavailable with this control unit's coding layout")
                 button.clicked.connect(
                     lambda checked, value=name, identity=key, observed=current: (
                         self._select_source_option(identity, value, observed) if checked else None
@@ -938,7 +948,7 @@ class CodingPage(QWidget):
                 ): {
                     option["name"]
                     for option in preset["choices"]
-                    if option["name"] != preset["current"]
+                    if option["name"] != preset["current"] and option.get("available", True)
                 }
                 for row in self._source_rows
                 if row.get("available") and row.get("loaded")
@@ -1253,6 +1263,88 @@ class CodingPage(QWidget):
     def restore_vehicle_backup(self, path: Path) -> str | None:
         """Prepare an explicit restore or explain its rejection; never write on selection."""
         return self._prepare_source_write(restore_path=path)
+
+    def verify_vehicle_backup(self, path: Path, store: OperationStore) -> str | None:
+        """Confirm completion of any required cycle, then start a coding comparison."""
+        from app.coding_write import CodingVerificationWorker
+
+        connection = self._connection
+        if not getattr(connection, "verified_vin", "") or not getattr(
+            connection, "alive_ok", False
+        ):
+            return "Connect to the vehicle from this backup before verifying."
+        if getattr(connection, "kind", None) != TransportKind.HSFZ:
+            return "Coding verification requires a supported ENET connection."
+        if self.is_reading() or not self.can_mutate():
+            return "Wait for the current vehicle operation to finish."
+        if self.has_unexported_results():
+            return "Export the retained coding results before verifying another operation."
+        reply = QMessageBox.question(
+            self,
+            "Verify coding",
+            "Have you completed any required vehicle cycle for this operation? "
+            "Verification compares current bytes with the backup. A headunit may require a "
+            "temporary reader session. Keep the vehicle powered and the cable connected.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if (
+            reply != QMessageBox.StandardButton.Yes
+            or connection is not self._connection
+            or not getattr(connection, "alive_ok", False)
+            or self.is_reading()
+            or not self.can_mutate()
+        ):
+            return None
+        worker = CodingVerificationWorker(connection, path, store, cycle_acknowledged=True)
+        self._worker = worker
+        self._snapshot_workers.append(worker)
+        worker.sensitive_operation_requested.connect(self._begin_sensitive_read)
+        worker.result_ready.connect(self._verification_ready)
+        worker.error.connect(self._source_error)
+        worker.finished.connect(self._verification_finished)
+        self._start_loading(worker, "Reading saved coding targets...")
+        worker.start()
+        return None
+
+    @Slot(object)
+    def _verification_ready(self, report: dict) -> None:
+        """Retain the comparison from the current worker and preserve unsaved evidence."""
+        worker = self.sender()
+        if report.get("persistence_failed"):
+            self._write_report = report
+            self._evidence_export_btn.setVisible(True)
+        if worker is self._worker and worker.connection is self._connection:
+            worker.setProperty("coding_verification", report)
+
+    @Slot()
+    def _verification_finished(self) -> None:
+        """Present results only after the comparison worker and reader lockout end."""
+        worker = self.sender()
+        if not isinstance(worker, CarWorker):
+            return
+        current = worker is self._worker and worker.connection is self._connection
+        if worker is self._worker:
+            self._worker = None
+        report = worker.property("coding_verification")
+        error = worker.property("preparation_error")
+        self._release_source_worker(worker)
+        self._finish_loading(worker)
+        if not current:
+            return
+        if not isinstance(report, dict):
+            QMessageBox.warning(
+                self, "Coding verification unavailable", error or "Verification stopped."
+            )
+            return
+        if report.get("persistence_failed"):
+            suffix = (
+                "\nThe comparison could not be saved. Export retained results on the Coding page."
+            )
+        else:
+            suffix = ""
+            self.verification_saved.emit()
+        QMessageBox.information(self, "Coding verification", report["instructions"] + suffix)
 
     def _export_coding_report(self) -> None:
         """Publish retained interruption evidence off the GUI thread."""

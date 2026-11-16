@@ -78,6 +78,10 @@ _DEFERRED_CODING_ROLES = frozenset(
 )
 
 
+class _UnavailableChoice(ValueError):
+    """A source choice has no representable patch on this layout."""
+
+
 def _number(value: Any) -> int:
     """Decode a source integer while rejecting booleans and missing values."""
     if isinstance(value, bool):
@@ -681,45 +685,71 @@ class CodingDatabase:
         *,
         definitions: list[str] | None = None,
     ) -> tuple[bool, str]:
-        """Check the entire source option's required functions, not just one choice."""
+        """Check source membership and data coverage for representable choices."""
         try:
-            self.load_ecu(cafd_id, variant)
-            if preset.get("type", 0):
-                if blocks is None:
-                    return False, "Dynamic option requires actual current group bytes"
-                preset = self.resolve_dynamic_preset(
-                    preset, blocks, cafd_id, variant, definitions=definitions
-                )
-            options = preset.get("options")
-            if not isinstance(options, list) or not options:
-                return False, "Source option contains no concrete choices"
-            required = {
-                function.get("name")
-                for option in options
-                if isinstance(option, dict)
-                for function in option.get("functions", [])
-                if isinstance(function, dict) and function.get("optional") is not True
-            }
-            identities = definitions if definitions is not None else [f"{cafd_id}-{variant}"]
-            self._combined_index(cafd_id, variant, identities)
-            if preset.get("source_type", 0) != 1 and not any(
-                all(name in self._function_indexes[identity] for name in required)
-                for identity in identities
-            ):
-                return False, "No exact definition contains all source-required option functions"
-            for option in options:
-                if not isinstance(option, dict) or not isinstance(option.get("functions"), list):
-                    return False, "Source option function list is missing"
-                patches = self._patches(
-                    preset, option.get("name", ""), cafd_id, variant, definitions=definitions
-                )
-                if blocks is not None and any(
-                    did not in blocks or offset >= len(blocks[did]) for did, offset, _, _ in patches
-                ):
-                    return False, "Source option lacks complete current group bytes"
-            return True, "All source choices have applicable concrete function mappings"
+            self.preset_choice_patches(preset, cafd_id, variant, blocks, definitions=definitions)
         except (ValueError, KeyError, TypeError) as error:
             return False, str(error)
+        return True, "Source has representable choices with complete applicable mappings"
+
+    def preset_choice_patches(
+        self,
+        preset: dict,
+        cafd_id: str,
+        variant: str,
+        blocks: dict[int, bytes] | None = None,
+        *,
+        definitions: list[str] | None = None,
+    ) -> dict[str, list[tuple[int, int, int, int]]]:
+        """Preserve source feature eligibility and return only representable choices."""
+        if preset.get("type", 0):
+            if blocks is None:
+                raise ValueError("Dynamic option requires actual current group bytes")
+            preset = self.resolve_dynamic_preset(
+                preset, blocks, cafd_id, variant, definitions=definitions
+            )
+        options = preset.get("options")
+        if not isinstance(options, list) or not options:
+            raise ValueError("Source option contains no concrete choices")
+        if any(
+            not isinstance(option, dict) or not isinstance(option.get("functions"), list)
+            for option in options
+        ):
+            raise ValueError("Source option function list is missing")
+        if any(
+            not isinstance(function, dict) for option in options for function in option["functions"]
+        ):
+            raise ValueError("Source option function is invalid")
+        required = {
+            function.get("name")
+            for option in options
+            for function in option["functions"]
+            if function.get("optional") is not True
+        }
+        identities = definitions if definitions is not None else [f"{cafd_id}-{variant}"]
+        self._combined_index(cafd_id, variant, identities)
+        if preset.get("source_type", 0) != 1 and not any(
+            all(name in self._function_indexes[identity] for name in required)
+            for identity in identities
+        ):
+            raise ValueError("No exact definition contains all source-required option functions")
+        choices = {}
+        unavailable: _UnavailableChoice | None = None
+        for option in options:
+            name = option["name"]
+            try:
+                patches = self._patches(preset, name, cafd_id, variant, definitions=identities)
+            except _UnavailableChoice as error:
+                unavailable = error
+                continue
+            if blocks is not None and any(
+                did not in blocks or offset >= len(blocks[did]) for did, offset, _, _ in patches
+            ):
+                raise ValueError("Source option lacks complete current group bytes")
+            choices[name] = patches
+        if not choices and unavailable is not None:
+            raise unavailable
+        return choices
 
     def preset_read_groups(
         self, preset: dict, definition: str, *, definitions: list[str]
@@ -727,22 +757,8 @@ class CodingDatabase:
         """Find only groups needed to decode a complete static or dynamic source option."""
         cafd_id, variant = definition.split("-", 1)
         if preset.get("type", 0) == 0:
-            supported, reason = self.preset_mapping_status(
-                preset, cafd_id, variant, definitions=definitions
-            )
-            if not supported:
-                raise ValueError(reason)
-            return tuple(
-                sorted(
-                    {
-                        did
-                        for option in preset["options"]
-                        for did, _, _, _ in self._patches(
-                            preset, option["name"], cafd_id, variant, definitions=definitions
-                        )
-                    }
-                )
-            )
+            choices = self.preset_choice_patches(preset, cafd_id, variant, definitions=definitions)
+            return tuple(sorted({did for patches in choices.values() for did, _, _, _ in patches}))
         if preset.get("type") != 1:
             raise ValueError("Unknown dynamic coding option type")
         index = self._combined_index(cafd_id, variant, definitions)
@@ -924,7 +940,7 @@ class CodingDatabase:
                 shift = (mask & -mask).bit_length() - 1
                 number = _number(value.get("value"))
                 if not 0 <= number <= 255 or (number << shift) & ~mask:
-                    raise ValueError("Coding value exceeds its mask")
+                    raise _UnavailableChoice("Coding value exceeds its mask")
                 offset = start + position
                 encoded = number << shift
                 previous_mask, previous_value = patches.get((did, offset), (0, 0))
@@ -932,7 +948,7 @@ class CodingDatabase:
                     raise ValueError("Source option assigns conflicting values to the same bits")
                 patches[did, offset] = (previous_mask | mask, previous_value | encoded)
         if not patches:
-            raise ValueError("Coding option has no applicable concrete function values")
+            raise _UnavailableChoice("Coding option has no applicable concrete function values")
         return [(did, offset, mask, value) for (did, offset), (mask, value) in patches.items()]
 
     def get_current_option(

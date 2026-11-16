@@ -152,6 +152,25 @@ def load_record(path: Path) -> dict[str, Any]:
         raise ValueError("Invalid backup structure") from exc
 
 
+def coding_comparison_basis(record: dict) -> str | None:
+    """Return the saved byte set a completed coding operation can be checked against."""
+    original = record["original"]
+    if original["kind"] != "coding" or original["mode"] != "live":
+        return None
+    for event in reversed(record["events"]):
+        state = event["state"]
+        if state in {"response-confirmed", "cycle-required"}:
+            return "intended"
+        if state == "recovered":
+            return "baseline"
+        if (
+            state not in {"verified", "mismatch"}
+            or event["observed"].get("kind") != "coding-comparison"
+        ):
+            return None
+    return None
+
+
 def _publish(path: Path, record: dict[str, Any]) -> None:
     """Validate and atomically sync the complete operation record."""
     record["sha256"] = _digest({key: value for key, value in record.items() if key != "sha256"})
@@ -265,9 +284,12 @@ class OperationStore:
         observed: dict | None = None,
         responses: list | None = None,
         instructions: str = "",
+        expected_sha256: str | None = None,
     ) -> None:
         """Append state with original/intent integrity preserved; never overwrite baseline."""
         record = load_record(path)
+        if expected_sha256 is not None and record["sha256"] != expected_sha256:
+            raise ValueError("Backup changed before the observation could be saved")
         record["events"].append(
             self._event(len(record["events"]), state, observed or {}, responses or [], instructions)
         )

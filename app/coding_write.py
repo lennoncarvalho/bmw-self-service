@@ -8,6 +8,7 @@ import hashlib
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Event
@@ -28,7 +29,7 @@ from app.coding_prerequisites import (
     run_prerequisites,
 )
 from app.history_files import valid_vin
-from app.operation_store import OperationStore, load_record
+from app.operation_store import OperationStore, coding_comparison_basis, load_record
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
 from app.vehicle import DiagnosticCatalog, did_data
 from app.vehicle_order import decode_vehicle_order
@@ -36,7 +37,8 @@ from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
 _INSTRUCTIONS = (
-    "Wait for ECU restart and any required vehicle cycle, then reconnect and reread coding. "
+    "Wait for ECU restart and any required vehicle cycle, then reconnect. Use Verify coding "
+    "from Backups for a completed operation. "
     "Response-confirmed completion is not an observed post-cycle verification. "
     "Do not replay an interrupted operation; compare current data before a separately confirmed restore."
 )
@@ -78,6 +80,18 @@ def _definition_digest(db: CodingDatabase, definitions: list[str]) -> str:
     return hashlib.sha256(
         "".join(db.source_sha256(item) for item in definitions).encode()
     ).hexdigest()
+
+
+def _read_groups(
+    db: CodingDatabase, definitions: list[str], read: Callable[[bytes], bytes]
+) -> dict[int, bytes]:
+    """Read and validate the complete source group set from one target."""
+    blocks = {
+        did: did_data(read(b"\x22" + did.to_bytes(2, "big")), did)
+        for did in _groups(db, definitions)
+    }
+    db.validate_blocks(definitions, blocks)
+    return blocks
 
 
 def _prior_records(
@@ -167,15 +181,15 @@ def _resolve_changes(
         if source_identity in seen:
             raise ValueError("Coding source preset is selected twice")
         seen.add(source_identity)
-        mapped, mapping_reason = db.preset_mapping_status(
+        choices = db.preset_choice_patches(
             presets[0],
             definition[:8],
             definition[9:],
             baseline,
             definitions=definitions,
         )
-        if not mapped:
-            raise ValueError(mapping_reason)
+        if option not in choices:
+            raise ValueError("Selected coding choice is unavailable with the current layout")
         applicable, reason = db.preset_applicability(
             presets[0],
             category=vehicle_context.get("category"),
@@ -394,13 +408,7 @@ class CodingPrepareWorker(CarWorker):
                     context=ctx,
                     transport=connection.kind,
                 )
-                baseline = {
-                    did: did_data(read_uds(b"\x22" + did.to_bytes(2, "big")), did)
-                    for did in _groups(db, definitions)
-                }
-                if any(not block for block in baseline.values()):
-                    raise ValueError("Complete original coding data is unavailable")
-                db.validate_blocks(definitions, baseline)
+                baseline = _read_groups(db, definitions, read_uds)
                 if read_uds(b"\x22\xf1\x01") != software:
                     raise ValueError("Coding software changed during baseline read")
                 digest = _definition_digest(db, definitions)
@@ -531,6 +539,178 @@ class CodingRestorePrepareWorker(CodingPrepareWorker):
     ) -> None:
         """Defer validated backup loading and fresh comparison to the worker."""
         super().__init__(connection, ecus, [], store, restore_path=backup_path)
+
+
+class CodingVerificationWorker(CarWorker):
+    """Compare complete observed coding groups with a saved completed operation."""
+
+    sensitive_operation_requested = Signal(object)
+
+    def __init__(
+        self, connection: Any, path: Path, store: OperationStore, *, cycle_acknowledged: bool
+    ) -> None:
+        """Retain the explicitly selected record and its local storage owner."""
+        super().__init__(connection)
+        self.path = path
+        self.store = store
+        self.cycle_acknowledged = cycle_acknowledged
+        self.guard_notice = ""
+
+    def do_work(self) -> dict:
+        """Check current identity and bytes after the owner's cycle confirmation."""
+        if not self.cycle_acknowledged:
+            raise PermissionError("Acknowledge any required vehicle cycle before verification")
+        connection = self.connection
+        record = load_record(self.path)
+        basis = coding_comparison_basis(record)
+        original = record["original"]
+        vin = original["vin"]
+        if basis is None:
+            self.guard_notice = "This coding record has no completed operation to verify."
+            raise ValueError(self.guard_notice)
+        if (
+            connection.kind != TransportKind.HSFZ
+            or not connection.alive_ok
+            or not valid_vin(vin)
+            or connection.verified_vin != vin
+        ):
+            self.guard_notice = "Verification requires the same identified vehicle over ENET."
+            raise PermissionError(self.guard_notice)
+        db = CodingDatabase()
+        context = connection.context(300.0)
+        observed: dict[str, Any] = {"kind": "coding-comparison", "basis": basis, "targets": []}
+        sensitive = False
+
+        def read_target(services: Any, ctx: OperationContext, saved: dict) -> bytes:
+            """Read one exact ECU with the normal coding reader controls and timing."""
+            nonlocal sensitive
+            address = saved["address"]
+            headunit_reader = address == reader_contract()[0]["unlock_backup"]["address"]
+
+            def read(payload: bytes, override: int | None = None) -> bytes:
+                deadline = ctx.deadline
+                timing = ctx.response_timing
+                ctx.deadline = min(deadline, time.monotonic() + 30.0)
+                if headunit_reader and override is None:
+                    ctx.response_timing = ENET_READER_TIMING
+                try:
+                    return bytes(
+                        services.invoke(payload, ctx)
+                        if override is None
+                        else connection.send_uds(override, payload, context=ctx)
+                    )
+                finally:
+                    ctx.deadline = deadline
+                    ctx.response_timing = timing
+
+            if did_data(read(b"\x22\xf1\x90", 0x10), 0xF190).decode("ascii") != vin:
+                raise ValueError("The vehicle VIN changed before coding verification")
+            identity = read(b"\x22\xf1\x50")
+            match = DiagnosticCatalog().identify(address, identity)
+            if (
+                not match.get("identified")
+                or not match.get("uds")
+                or match.get("variant") != saved["variant"]
+            ):
+                raise ValueError(f"ECU 0x{address:02X} no longer matches the saved variant")
+            software = read(b"\x22\xf1\x01")
+            if software.hex() != saved["software"]:
+                raise ValueError(f"ECU 0x{address:02X} software differs from the saved operation")
+            definitions = list(decode_cafd_identifiers(software))
+            if not definitions or _definition_digest(db, definitions) != saved["definition_sha256"]:
+                raise ValueError(
+                    f"ECU 0x{address:02X} source layout differs from the saved operation"
+                )
+            expected = saved[basis]
+            if set(expected) != {f"{did:04X}" for did in _groups(db, definitions)}:
+                raise ValueError(f"ECU 0x{address:02X} record lacks the complete coding group set")
+            db.validate_blocks(
+                definitions, {int(did, 16): bytes.fromhex(raw) for did, raw in expected.items()}
+            )
+            headunit_reader = applies(address, definitions, db)
+            if headunit_reader:
+                if connection.read_only or getattr(connection, "power_sufficient", None) is False:
+                    raise PermissionError("This ECU requires an available headunit reader session")
+                acknowledged = Event()
+                self.sensitive_operation_requested.emit(acknowledged)
+                while not acknowledged.wait(0.05):
+                    ctx.remaining()
+                sensitive = True
+            run_prerequisites(
+                address=address,
+                variant=match["variant"],
+                definitions=definitions,
+                database=db,
+                vin=vin,
+                store=self.store,
+                read=read,
+                read_only=connection.read_only,
+                context=ctx,
+                transport=connection.kind,
+            )
+            blocks = {
+                f"{did:04X}": raw.hex() for did, raw in _read_groups(db, definitions, read).items()
+            }
+            if read(b"\x22\xf1\x50") != identity or read(b"\x22\xf1\x01") != software:
+                raise ValueError(f"ECU 0x{address:02X} identity changed during verification")
+            observed["targets"].append(
+                {
+                    "address": address,
+                    "variant": saved["variant"],
+                    "identity": identity.hex(),
+                    "software": software.hex(),
+                    "definition_sha256": saved["definition_sha256"],
+                    "blocks": blocks,
+                    "different_groups": [did for did in blocks if blocks[did] != expected[did]],
+                }
+            )
+            return b""
+
+        try:
+            for target in original["targets"]:
+                address = target["address"]
+                self.progress.emit(f"Verifying coding on ECU 0x{address:02X}...")
+                connection.run_operation(
+                    address,
+                    lambda services, ctx, target=target: read_target(services, ctx, target),
+                    context=context,
+                )
+        except Exception as error:
+            if sensitive:
+                connection.request_close()
+            if isinstance(error, (ValueError, PermissionError)):
+                self.guard_notice = str(error)
+            raise
+        state = (
+            "mismatch"
+            if any(target["different_groups"] for target in observed["targets"])
+            else "verified"
+        )
+        expected_label = "original" if basis == "baseline" else "intended"
+        message = (
+            f"Observed coding matches the saved {expected_label} bytes."
+            if state == "verified"
+            else f"Observed coding differs from the saved {expected_label} bytes."
+        )
+        logger.info("Coding verification backup=%s state=%s", self.path.name, state)
+        report: dict[str, Any] = {
+            "path": str(self.path),
+            "state": state,
+            "observed": observed,
+            "instructions": message,
+        }
+        try:
+            self.store.record(
+                self.path,
+                state=state,
+                observed=observed,
+                instructions=message,
+                expected_sha256=record["sha256"],
+            )
+        except (OSError, ValueError):
+            logger.exception("Could not save the observed coding comparison")
+            report["persistence_failed"] = True
+        return report
 
 
 def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:

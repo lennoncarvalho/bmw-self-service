@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.operation_store import OperationStore, load_record
+from app.operation_store import OperationStore, coding_comparison_basis, load_record
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,7 @@ class BackupsPage(QWidget):
     """Preview/import/export records; restoring needs an exact vehicle contract."""
 
     restore_requested = Signal(object)
+    verification_requested = Signal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the expanding backup record list and local file actions."""
@@ -92,6 +93,14 @@ class BackupsPage(QWidget):
                         lambda checked=False, source=path: self.restore_requested.emit(source)
                     )
                     box.addWidget(restore)
+                    if coding_comparison_basis(record) is not None:
+                        verify = QPushButton("Verify coding after vehicle cycle")
+                        verify.clicked.connect(
+                            lambda checked=False, source=path: self.verification_requested.emit(
+                                source
+                            )
+                        )
+                        box.addWidget(verify)
                 export = QPushButton("Export JSON")
                 export.clicked.connect(lambda checked=False, source=path: self._export(source))
                 box.addWidget(export)

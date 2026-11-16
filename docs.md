@@ -294,6 +294,12 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   patch with the same ID/major/minor. Retain reported and selected identities and
   hashes. No arbitrary nearest/first file, hidden exact-file-only restriction or
   mixing old names with new offsets. Combined definitions retain source ordering.
+- Source `models.q.k` requires the feature's nonoptional functions in one
+  definition. Within an eligible feature, choices that exceed the selected
+  mask or have no concrete applicable bytes stay disabled. Other choices use
+  their exact source masks. The one-bit refresh-rate field in `00004508`
+  versions `002-003-006`, `002-003-014` and `002-003-018` cannot encode either
+  catalogue rate.
 - Source `models.s0.A`, `k.a.i` compose actual complete baseline bytes with source
   group addresses/masks; preserve untouched bytes and Custom values. Exclude the
   exact `SIGNATURE` group and concatenate the other groups in declared order.
@@ -309,6 +315,12 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   No universal XOR checksum or Bluetooth-only `31 01 0F01` routine belongs here.
   Strict application echoes, journals, meaningful reread and explicit recovery
   are enforced by the app; do not copy source automatic write retries.
+- Backups can verify completed coding or restoration after the owner confirms
+  any required cycle. The comparison checks the fresh VIN, ECU variant,
+  complete software identity, source digest and all coding groups. A completed
+  write compares against intended bytes. A response-confirmed recovery
+  compares against original bytes. The journal retains the comparison and
+  the separate application outcome.
 - Ordinary coding group reads do not imply session changes. Address `63` or
   primary CAFD `00004224` uses source FSC-backup prerequisites (`1003`, `1042`,
   `31010F1F04` and per-item reads). The exact `63/0F2230` integration-level,

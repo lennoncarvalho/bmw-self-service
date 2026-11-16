@@ -40,13 +40,14 @@ failure and Qt flows are verified offline; no physical clearing is claimed.
 
 ## Easy Coding readiness
 
-- [ ] Resolve applicable source presets whose selected layouts lack required
-  functions or whose values exceed the declared masks. Keep those choices disabled
-  until the source establishes their mapping. Extend exact G26 type coverage when
-  the missing vehicle data becomes available.
+- [ ] Resolve disabled presets when source definitions establish the missing
+  function mappings or compatible values. Eligible features already expose
+  their representable choices. Extend exact G26 type coverage with a source
+  that identifies the unlabelled type keys.
 - [ ] Verify a live supported coding change and explicit restore after any required
-  cycle. Compare the actual values with the frozen original and intended bytes.
-  Keep response-confirmed outcomes separate from observed verification.
+  cycle. From Backups, run **Verify coding after vehicle cycle** on each completed
+  operation and retain the session log and comparison. Response-confirmed
+  outcomes remain separate from observed verification.
 
 ## History and integrated acceptance
 

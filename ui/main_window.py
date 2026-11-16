@@ -151,6 +151,8 @@ class MainWindow(QMainWindow):
 
         self.backups_page = BackupsPage()
         self.backups_page.restore_requested.connect(self._review_coding_restore)
+        self.backups_page.verification_requested.connect(self._verify_coding_backup)
+        self.coding_page.verification_saved.connect(self.backups_page.refresh)
         self.stack.addWidget(self.backups_page)
 
         self.content_scroll = QScrollArea()
@@ -523,6 +525,15 @@ class MainWindow(QMainWindow):
         if reason:
             QMessageBox.information(self, "Coding restoration unavailable", reason)
             self.coding_page.activate()
+
+    @Slot(object)
+    def _verify_coding_backup(self, path: object) -> None:
+        """Start an explicit comparison from the backup page."""
+        if self._closing or self._mutation_active or not isinstance(path, Path):
+            return
+        reason = self.coding_page.verify_vehicle_backup(path, self.backups_page.store)
+        if reason:
+            QMessageBox.information(self, "Coding verification unavailable", reason)
 
     # ---- Connection flow ----
 
