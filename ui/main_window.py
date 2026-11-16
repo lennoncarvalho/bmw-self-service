@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
 
         self.diag_page = DiagnosticsPage()
         self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
-        self.diag_page.mutation_active.connect(self._set_mutation_active)
+        self.diag_page.mutation_active.connect(self._on_diagnostics_mutation_active)
         self.diag_page.loading_changed.connect(self._set_diagnostics_loading)
         self.diag_page.loading_progress.connect(self._on_diagnostics_loading_progress)
         self.diag_page.can_mutate = self._can_start_mutation
@@ -868,12 +868,15 @@ class MainWindow(QMainWindow):
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
         self.vehicle_page.set_loading(False)
-        ecus: list[dict] = results.get("ecu_list") or results.get("svt") or []
-        if isinstance(ecus, dict):
-            ecus = ecus.get("ecus", [])
+        inventory = overview_ecus or results.get("svt", overview_ecus)
+        if isinstance(inventory, dict):
+            inventory = inventory.get("ecus")
+        ecus: list[dict] = inventory if isinstance(inventory, list) else []
         order = results.get("vehicle_order")
-        model_range = order.get("model_range") if isinstance(order, dict) else None
-        type_code = order.get("type_code") if isinstance(order, dict) else None
+        model_range = order.get("model_range") if isinstance(order, dict) else ""
+        type_code = order.get("type_code") if isinstance(order, dict) else ""
+        model_range = model_range if isinstance(model_range, str) else ""
+        type_code = type_code if isinstance(type_code, str) else ""
         overview_refresh = self._overview_refresh
         self._overview_refresh = False
         if errors and not overview_refresh:
@@ -909,12 +912,12 @@ class MainWindow(QMainWindow):
             self.history_page.set_targets(ecus)
         else:
             self.history_page.set_connection(connection, ecus)
-        self.coding_page.set_connection(
-            connection,
-            ecus,
-            model_range=model_range if isinstance(model_range, str) else "",
-            type_code=type_code if isinstance(type_code, str) else "",
-        )
+        # An incomplete refresh still marks unavailable observations on Vehicle.
+        # Keep settled coding context for display. Preparation reads fresh identities.
+        if not overview_refresh or (isinstance(inventory, list) and model_range and type_code):
+            self.coding_page.set_connection(
+                connection, ecus, model_range=model_range, type_code=type_code
+            )
 
         self.hide_spinner()
 
@@ -1449,6 +1452,11 @@ class MainWindow(QMainWindow):
         if self.sender() is self._cbs_worker:
             self.vehicle_page.cbs_panel.show_error(message)
             QMessageBox.warning(self, "Service Reset Not Started", message)
+
+    @Slot(bool, bool)
+    def _on_diagnostics_mutation_active(self, active: bool, refresh_overview: bool) -> None:
+        """Honor the diagnostic worker's explicit follow-up decision."""
+        self._set_mutation_active(active, refresh_overview=refresh_overview)
 
     @Slot(bool)
     def _set_mutation_active(self, active: bool, refresh_overview: bool = True) -> None:

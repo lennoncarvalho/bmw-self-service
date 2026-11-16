@@ -392,7 +392,7 @@ class CodingPage(QWidget):
         worker.start()
 
     def _toggle_source_section(self, section: str) -> None:
-        """Open a section and queue uncached owners through the existing reader."""
+        """Open a section and queue owners whose current values still need a read."""
         connection = self._connection
         if (
             connection is None
@@ -409,7 +409,9 @@ class CodingPage(QWidget):
         self._section_reads = [
             row["addr"]
             for row in self._source_rows
-            if section in row.get("sections", {}) and row.get("available") and not row.get("loaded")
+            if section in row.get("sections", {})
+            and row.get("available")
+            and (not row.get("loaded") or row.get("partial"))
         ]
         if not self._read_next_section_owner():
             logger.debug("Opening cached coding section %s", section)
