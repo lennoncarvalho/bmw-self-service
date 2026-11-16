@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 
 from app.coding import CodingCatalogueWorker, CodingValuesWorker
 from app.coding_db import CodingDatabase
+from app.protocol.contracts import TransportKind
 from app.worker import CarWorker
 from ui.page_stack import PageStack
 
@@ -523,7 +524,14 @@ class CodingPage(QWidget):
             {"name": "DSC", "description": "Dynamic Stability Control"},
         ]
 
-    def set_connection(self, connection: Any, ecus: list[dict] | None = None) -> None:
+    def set_connection(
+        self,
+        connection: Any,
+        ecus: list[dict] | None = None,
+        *,
+        model_range: str = "",
+        type_code: str = "",
+    ) -> None:
         """Store the active connection for future coding operations.
 
         T-2: If ECU list is provided (from SVT read), load real coding
@@ -532,6 +540,8 @@ class CodingPage(QWidget):
         Args:
             connection: An HSFZConnection, DoIPConnection, or MockConnection.
             ecus: Optional SVT ECU list from vehicle connection.
+            model_range: Model code from the connected vehicle order, when available.
+            type_code: Exact type key from the connected vehicle order, when available.
         """
         self._connection = connection
         self._live_selections.clear()
@@ -572,6 +582,8 @@ class CodingPage(QWidget):
             layout.addStretch()
             self._sub_stack.addWidget(page)
         self._snapshot_ecus = ecus or []
+        self._snapshot_model_range = model_range
+        self._snapshot_type_code = type_code
         self._snapshot_loaded = False
 
     def activate(self) -> None:
@@ -589,7 +601,13 @@ class CodingPage(QWidget):
         vin = getattr(connection, "verified_vin", "")
         if not vin:
             return
-        worker = CodingCatalogueWorker(connection, self._snapshot_ecus, vin)
+        worker = CodingCatalogueWorker(
+            connection,
+            self._snapshot_ecus,
+            vin,
+            model_range=self._snapshot_model_range,
+            type_code=self._snapshot_type_code,
+        )
         self._coding_reader = worker
         self._snapshot_workers.append(worker)
         worker.result_ready.connect(self._on_snapshot)
@@ -792,8 +810,10 @@ class CodingPage(QWidget):
         if not sections:
             layout.addWidget(QLabel("No Easy Coding sections available. See session log."))
 
-        can_edit = getattr(self._connection, "alive_ok", False) and not getattr(
-            self._connection, "read_only", True
+        can_edit = (
+            getattr(self._connection, "alive_ok", False)
+            and not getattr(self._connection, "read_only", True)
+            and getattr(self._connection, "kind", None) == TransportKind.HSFZ
         )
         for section, label in sorted(sections.items(), key=lambda entry: entry[1].casefold()):
             card = QFrame()
@@ -830,7 +850,13 @@ class CodingPage(QWidget):
                     preset["source_index"],
                 )
                 mapped = preset.get("mapping_supported", False)
-                enabled = bool(can_edit and row.get("available") and row.get("loaded") and mapped)
+                enabled = bool(
+                    can_edit
+                    and row.get("available")
+                    and row.get("loaded")
+                    and mapped
+                    and not preset.get("write_block")
+                )
                 selected = selections.get(key, preset["current"])
                 choices = preset.get("choices", [])
                 if (
@@ -911,6 +937,10 @@ class CodingPage(QWidget):
                     )
                 )
                 options.addWidget(button)
+            if blocked := preset.get("write_block"):
+                notice = QLabel(blocked)
+                notice.setWordWrap(True)
+                options.addWidget(notice)
         layout.addWidget(feature)
 
     def _ensure_tab_checked(self, btn: QPushButton) -> None:
@@ -1137,6 +1167,8 @@ class CodingPage(QWidget):
             reason = "DEMO previews cannot prepare live coding or restoration."
         elif getattr(connection, "read_only", True):
             reason = "Coding and restoration are unavailable in a read-only connection."
+        elif getattr(connection, "kind", None) != TransportKind.HSFZ:
+            reason = "Coding and restoration are unavailable over this transport."
         elif self.is_reading():
             reason = "Wait for the current coding read or preparation to finish, then retry."
         elif not self.can_mutate():
@@ -1160,7 +1192,7 @@ class CodingPage(QWidget):
                 for row in self._source_rows
                 if row.get("available") and row.get("loaded")
                 for preset in row.get("presets", [])
-                if preset.get("mapping_supported")
+                if preset.get("mapping_supported") and not preset.get("write_block")
             }
             if any(
                 option not in eligible.get(key, ()) for key, option in self._live_selections.items()

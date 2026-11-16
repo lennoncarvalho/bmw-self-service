@@ -378,6 +378,12 @@ class CodingPrepareWorker(CarWorker):
                 definitions = list(decode_cafd_identifiers(software))
                 if not definitions:
                     raise ValueError("ECU reports no exact coding definitions")
+                scope_reason = db.easy_coding_block_reason(definitions)
+                if scope_reason:
+                    self.guard_notice = (
+                        f"{match['name']}: {scope_reason}. No coding write was sent."
+                    )
+                    raise PermissionError(scope_reason)
                 headunit_reader = applies(address, definitions, db)
                 bootloader = bootloader_identifier(software)
                 authorization = db.authorization(bootloader)
@@ -459,7 +465,9 @@ class CodingPrepareWorker(CarWorker):
                             order_raw = read_uds(b"\x22\x3f\x06", 0x10)
                             plan["vehicle_order"] = order_raw.hex()
                         order = decode_vehicle_order(bytes.fromhex(plan["vehicle_order"]))
-                        category = db.category_for_model_range(order["model_range"])
+                        category = db.category_for_model_range(
+                            order["model_range"], order["type_code"]
+                        )
                         if category is None:
                             raise ValueError(
                                 "The source category is unavailable for this vehicle order"
@@ -566,7 +574,7 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
     derived_category = None
     if "vehicle_order" in data:
         order = decode_vehicle_order(bytes.fromhex(data["vehicle_order"]))
-        derived_category = db.category_for_model_range(order["model_range"])
+        derived_category = db.category_for_model_range(order["model_range"], order["type_code"])
         if derived_category is None:
             raise ValueError("Frozen vehicle order has no exact source category")
     if data.get("vehicle_context", {}).get("category") != derived_category:
@@ -611,6 +619,9 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
             or match["address_index"] != target["address_index"]
         ):
             raise ValueError("Coding variant bytes differ from the exact source identity")
+        scope_reason = db.easy_coding_block_reason(definitions)
+        if scope_reason:
+            raise PermissionError(scope_reason)
         resolutions = [db.definition_resolution(item) for item in definitions]
         if target.get("definition_resolution") != resolutions:
             raise ValueError("Coding source layout selection or reference metadata changed")
@@ -739,12 +750,23 @@ class CodingWriteWorker(CarWorker):
                 "Review prior coding interruption and acknowledge the required cycle/comparison"
             )
         context = connection.context(600.0)
-        path = self.store.prepare(
-            kind="coding",
-            mode="live",
-            vin=data["vin"],
-            targets=[_target_record(t) for t in data["targets"]],
-        )
+        try:
+            path = self.store.prepare(
+                kind="coding",
+                mode="live",
+                vin=data["vin"],
+                targets=[_target_record(t) for t in data["targets"]],
+            )
+        except (OSError, ValueError):
+            logger.exception("Coding original and intent could not be saved")
+            self.report.update(
+                state="blocked",
+                instructions=(
+                    "Could not save the coding backup and intent. No coding write was sent. "
+                    "Check local storage and review a new coding plan before trying again."
+                ),
+            )
+            return self.report
         self.report["path"] = str(path)
         accepted: dict[int, dict[str, str]] = {}
         attempted_mutation = False

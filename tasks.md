@@ -40,27 +40,12 @@ failure and Qt flows are verified offline; no physical clearing is claimed.
 
 ## Easy Coding readiness
 
-- [ ] Verify the headunit reader on the owner car: open Easy Coding, then explicitly
-  read the headunit's options without selecting or writing changes. The captured
-  `31 01 0F 1F 04` request was acknowledged but timed out at `50 ms`; reader controls
-  now use the recovered ENET response windows. Check routine completion and loading
-  recovery with the app-root DEBUG log and last progress message. Catalogue-only
-  browsing and cached reopening must issue no group/session requests. No automatic
-  replay is permitted after an uncertain result.
-- [ ] Enforce the owner's deferred/unvalidated safety-coding scope in UI and
-  prepare/write/restore paths, including imported plans/backups. Recover actual
-  ECU roles/option semantics; unknown classification is not authorization.
-- [ ] Gather applicability context in CarWorkers and evaluate source model,
-  category, exact variant, headunit and exclusion predicates before selection.
-  Explain inapplicable/unknown/deferred choices instead of failing silently later.
 - [ ] Reconcile the complete named source catalogue and actual current values,
-  combined definitions, duplicate names, dynamic matrices, masks, Custom values
-  and conflicts. Retain source primary ordering and proven lower-patch selection.
-- [ ] Recover the `codingArea/sigId/sigLen` layout for CAFDs
-  `000058AA-001-001-001`, `000058AA-001-001-002`, `00005C0A-049-001-020`;
-  finish applicable non-deferred semantic mappings. Trimmed `.` names cannot be
-  recovered by renaming positions. Investigate selected empty/EC authorization
-  entries without choosing another key or guessing credentials.
+  combined definitions, remaining ambiguous duplicates, dynamic matrices, masks,
+  Custom values and conflicts. Retain source primary ordering and proven lower-patch
+  selection. Extend exact vehicle-type coverage for G26 when more model data is available.
+- [ ] Finish applicable non-deferred semantic mappings. Investigate selected empty/EC
+  authorization entries without choosing another key or guessing credentials.
 - [ ] Verify live baseline/current decoding, exact signatures/requests, reader
   prerequisites, critical guards, application completion, required cycles,
   explicit restore and interruption recovery. Review, exercise Qt and run preflight.
