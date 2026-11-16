@@ -496,19 +496,30 @@ class CodingDatabase:
         if not isinstance(model_range, str) or not re.fullmatch(r"[FGUI][0-9]{2,3}", model_range):
             return None
         normalized = model_range[0] + f"{int(model_range[1:]):02d}"
-        if normalized == "G26":
-            # The source category is i4-specific. The shared chassis is insufficient.
+        shared_model = {"G08": "ix3", "G26": "i4"}.get(normalized)
+        if shared_model:
+            # The source categories represent the named electric models on shared chassis.
             try:
-                model = describe_model(type_code, "G026") if type_code else None
+                model = (
+                    describe_model(type_code, f"G{int(normalized[1:]):03d}") if type_code else None
+                )
             except (OSError, ValueError):
-                logger.warning("Exact model catalogue unavailable for G26 coding", exc_info=True)
+                logger.warning(
+                    "Exact model catalogue unavailable for %s coding", normalized, exc_info=True
+                )
                 return None
-            if model is None or not model.upper().startswith("BMW I4 "):
+            if model is None or not model.lower().startswith(f"bmw {shared_model} "):
                 return None
         selection = self.read_document("selection")
         if not isinstance(selection, dict):
             raise ValueError("Coding selection metadata is invalid")
-        categories = selection.get("model_categories", {}).get(normalized, [])
+        # The source's i3/i8 display descriptions omit chassis codes.
+        family = shared_model or {"I01": "i3", "I12": "i8", "I15": "i8"}.get(normalized)
+        categories = (
+            selection.get("series_categories", {}).get(family, [])
+            if family
+            else selection.get("model_categories", {}).get(normalized, [])
+        )
         unique = set(categories)
         if len(unique) != 1:
             return None

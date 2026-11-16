@@ -277,10 +277,14 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
 
 - The five `00003E52` rows tagged `excludedSeries: ["i4"]` apply a negative
   catalogue predicate. The supplied APK's preset parser has no field for it.
-  The recovered `i4` category requires an exact i4 type key on G26, which is
-  shared with the 4 Series Gran Coupé. `recover_vehicle_models.py` joins
-  `KIS.FAHRZEUGTYP.EBR` to `KIS.EBR.ID` for the labelled i4 rows that lack
-  inline model attributes. Unconfirmed G26 types leave model predicates unknown.
+  The recovered `i4` and `ix3` categories require exact model labels on shared
+  G26 and G08 chassis. `recover_vehicle_models.py` joins `KIS.FAHRZEUGTYP.EBR`
+  to `KIS.EBR.ID` for labelled i4 and iX3 rows that lack inline attributes.
+  Unconfirmed types leave model predicates unknown. FAFP `00003002` has
+  numeric criteria for all 58 G26 keys. The criteria names are empty.
+- The i3 and i8 category descriptions omit chassis codes. Source `models.o.L`
+  resolves the `i3` and `i8` tags used in presets. KIS `I001` links the i3 to
+  `I01` and the i8 Coupé and Roadster to `I12` and `I15` respectively.
 - The three CAFD v2 documents use virtual groups and a separate coding-area
   NCD. `CafXmlExtractorBAImpl.readSignatureLength`,
   `NcdLengthCalculatorBAImpl.calculateNcdLength` and
