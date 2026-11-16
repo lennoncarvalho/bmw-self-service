@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class DiagnosticsPage(QWidget):
     """Diagnostics tab — read and clear fault codes from all ECUs."""
 
-    mutation_active = Signal(bool)
+    mutation_active = Signal(bool, bool)
     loading_changed = Signal(bool)
     loading_progress = Signal(str)
 
@@ -83,6 +83,13 @@ class DiagnosticsPage(QWidget):
         self._clear_summary.setTextFormat(Qt.TextFormat.PlainText)
         self._clear_summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(self._clear_summary)
+        self._stale_scan_notice = QLabel(
+            "The displayed scan is stale after a partial clear. "
+            "Read fault memories again when vehicle power permits."
+        )
+        self._stale_scan_notice.setWordWrap(True)
+        self._stale_scan_notice.hide()
+        layout.addWidget(self._stale_scan_notice)
 
         # T-9: MIL (Check Engine) status indicator
         mil_row = QHBoxLayout()
@@ -149,10 +156,18 @@ class DiagnosticsPage(QWidget):
         supported = any(e.get("identified") and e.get("uds") for e in self._ecus)
         available = writable and (supported or hasattr(self._connection, "data"))
         self.clear_btn.setVisible(available)
-        self.clear_btn.setEnabled(available and not busy and not self._clear_blocked)
+        self.clear_btn.setEnabled(
+            available
+            and not busy
+            and not self._clear_blocked
+            and getattr(self._connection, "power_sufficient", None) is not False
+        )
 
     def set_connection(self, connection: Any, ecus: list[dict]) -> None:
         """Replace settled targets and invalidate results from the previous inventory."""
+        if connection is self._connection and ecus == self._ecus:
+            self._update_actions()
+            return
         self._inventory_revision += 1
         if connection is not self._connection:
             self._clear_summary.clear()
@@ -166,6 +181,7 @@ class DiagnosticsPage(QWidget):
         self._loaded = False
         self._coverage = []
         self._dtcs = []
+        self._stale_scan_notice.hide()
         self.read_btn.setEnabled(self._worker is None)
         self.clear_btn.setEnabled(False)
         self._empty_text.setText("Open Diagnostics to read vehicle fault memories.")
@@ -236,7 +252,7 @@ class DiagnosticsPage(QWidget):
                 self._clear_refresh_pending = False
                 if refresh and worker.connection is self._connection and self._connection.alive_ok:
                     self._read_dtcs()
-                self.mutation_active.emit(False)
+                self.mutation_active.emit(False, refresh)
             self.loading_changed.emit(self._worker is not None)
             self._update_actions()
         if isinstance(worker, CarWorker):
@@ -264,6 +280,7 @@ class DiagnosticsPage(QWidget):
             complete = True
         self._dtcs = dtcs
         self._loaded = True
+        self._stale_scan_notice.hide()
         self._update_actions()
 
         # Clean existing cards
@@ -362,6 +379,7 @@ class DiagnosticsPage(QWidget):
             self._connection is None
             or self._worker is not None
             or getattr(self._connection, "read_only", False)
+            or getattr(self._connection, "power_sufficient", None) is False
             or not getattr(self._connection, "alive_ok", True)
             or self._clear_blocked
         ):
@@ -380,7 +398,8 @@ class DiagnosticsPage(QWidget):
         ]
         prompt = (
             "Clear all supported Fault and Information memories? Permanent faults are not cleared by this operation.\n\n"
-            "This cannot be undone or cancelled once started. Keep the car and computer powered, ignition on and cable connected.\n"
+            "This cannot be undone or cancelled once started. Confirm adequate car and "
+            "computer power, with ignition on and cable connected.\n"
         )
         if not self._loaded:
             prompt += "\nFault memories have not been read in this session.\n"
@@ -411,6 +430,7 @@ class DiagnosticsPage(QWidget):
             or not self.can_mutate()
             or getattr(connection, "read_only", False)
             or not getattr(connection, "alive_ok", True)
+            or getattr(connection, "power_sufficient", None) is False
         ):
             return
         if hasattr(connection, "data"):
@@ -426,7 +446,7 @@ class DiagnosticsPage(QWidget):
             self._on_dtcs_loaded(connection.data["dtcs"])
             return
         self._clear_refresh_pending = False
-        self.mutation_active.emit(True)
+        self.mutation_active.emit(True, False)
         self.read_btn.setEnabled(False)
         self.clear_btn.setEnabled(False)
         worker = DiagnosticClearWorker(connection, self._ecus, self._coverage)
@@ -485,6 +505,10 @@ class DiagnosticsPage(QWidget):
                 "\nBatch stopped. Previously displayed scan values may be stale. "
                 "Reconnect and read fault memories before another clear."
             )
+        elif result.get("stopped") == "low-power":
+            text += "\nClear All stopped because vehicle power is insufficient."
+            if any(row["response"] == "accepted" for row in result["outcomes"]):
+                self._stale_scan_notice.show()
         elif result.get("stopped"):
             text += "\nBatch stopped. Read fault memories again; previous scan values may be stale."
         self._clear_summary.setText(text)

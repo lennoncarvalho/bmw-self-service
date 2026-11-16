@@ -13,6 +13,8 @@ def _material(entry: dict) -> bytes:
     material = entry.get("keyString")
     if not isinstance(material, str) or len(material) > 32768:
         raise ValueError("Coding key material is missing or too large")
+    if not material.strip():
+        raise ValueError("The selected coding key is empty")
     encoded = material.replace("-----BEGIN PRIVATE KEY-----", "").replace(
         "-----END PRIVATE KEY-----", ""
     )
@@ -22,19 +24,20 @@ def _material(entry: dict) -> bytes:
         raise ValueError("Coding key encoding is invalid") from error
 
 
-def _rsa_signature(payload: bytes, entry: dict) -> bytes:
-    """Encode the source digest, raw RSA signature and word ordering."""
-    name = entry.get("digest")
-    if not isinstance(name, str):
+def _rsa_parameters(entry: dict) -> tuple[int, int, int]:
+    """Read supported RSA parameters from the selected key without signing."""
+    if not isinstance(entry.get("digest"), str):
         raise ValueError("Coding digest selector is missing")
-    name = name.lower()
-    # The source falls back to MD5 for every other name, including unknown names.
-    if name not in {"sha256", "sha512", "sha1"}:
-        name = "md5"
+    material = _material(entry)
     try:
-        oid, private_der, _ = PKCS8.unwrap(_material(entry))
+        oid, private_der, _ = PKCS8.unwrap(material)
+    except (ValueError, TypeError) as error:
+        raise ValueError("The selected coding key has an invalid structure") from error
+    if oid != "1.2.840.113549.1.1.1":
+        raise ValueError("The selected coding key uses an unsupported key type")
+    try:
         sequence = DerSequence().decode(private_der, strict=True)
-        if oid != "1.2.840.113549.1.1.1" or len(sequence) != 9 or sequence[0] != 0:
+        if len(sequence) != 9 or sequence[0] != 0:
             raise ValueError("Unsupported coding private-key structure")
         modulus, _, private_exponent = sequence[1:4]
         if (
@@ -55,6 +58,27 @@ def _rsa_signature(payload: bytes, entry: dict) -> bytes:
     width = modulus.bit_length() // 8
     if not 64 <= width <= 1024 or width % 4:
         raise ValueError("Coding modulus width is unsupported")
+    return modulus, private_exponent, width
+
+
+def validate_coding_key(entry: dict) -> None:
+    """Check that the exact selected authorization or signing key is usable."""
+    key_type, algorithm = entry.get("keyType"), entry.get("algorithm")
+    if key_type in (0, 1) and algorithm == 0:
+        _rsa_parameters(entry)
+    elif key_type == 1 and algorithm == 1:
+        _material(entry)
+    else:
+        raise ValueError("The selected coding key uses an unsupported algorithm")
+
+
+def _rsa_signature(payload: bytes, entry: dict) -> bytes:
+    """Encode the source digest, raw RSA signature and word ordering."""
+    modulus, private_exponent, width = _rsa_parameters(entry)
+    name = entry["digest"].lower()
+    # The source falls back to MD5 for every other name, including unknown names.
+    if name not in {"sha256", "sha512", "sha1"}:
+        name = "md5"
     digest = hashlib.new(name, payload).digest()
     padded = digest.ljust(width, b"\x00")
     message = int.from_bytes(padded[::-1], "big")

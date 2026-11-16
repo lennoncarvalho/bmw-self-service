@@ -88,10 +88,9 @@ def recover(ista: Path, output: Path, provenance: Path) -> None:
         if not {SCHEMA, SERIES_SCHEMA} <= set(script.splitlines()):
             raise DataFormatError(f"Unexpected vehicle-type schema: {script_path}")
         data_path = script_path.with_name("KIS.data")
-        g26 = {
-            row[0]
+        series_ids = {
+            row[0]: normalize_series(row[1] or "")
             for row in indexed_rows(data_path, script, "EBR", "isis", 3)
-            if normalize_series(row[1] or "") == "G026"
         }
         count = 0
         for row in indexed_rows(data_path, script, "FAHRZEUGTYP", "isisss", 2):
@@ -103,9 +102,11 @@ def recover(ista: Path, output: Path, provenance: Path) -> None:
                 value.split("=", 1) for value in (row[4] or "").split(";") if "=" in value
             )
             series = normalize_series(attributes.get("EBR", ""))
-            if row[2] in g26 and not attributes and label.upper().startswith("I4 "):
-                # These BMW i4 rows name the model but link the series through EBR.
-                series = "G026"
+            linked_series = series_ids.get(row[2], "")
+            electric_label = {"G008": "IX3 ", "G026": "I4 "}.get(linked_series)
+            if not attributes and electric_label and label.upper().startswith(electric_label):
+                # These electric model rows name the model but link the series through EBR.
+                series = linked_series
             elif attributes.get("MARKE") != "BM" or not re.fullmatch(r"[FGUI]\d{3}", series):
                 continue
             if not re.fullmatch(r"[A-Z0-9]{4}", code) or len(label) > 1024:

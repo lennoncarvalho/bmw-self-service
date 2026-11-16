@@ -11,7 +11,7 @@ from PySide6.QtCore import Signal
 from app.coding_db import CodingDatabase, _number
 from app.coding_prerequisites import ENET_READER_TIMING, applies, reader_contract, run_prerequisites
 from app.operation_store import OperationStore
-from app.protocol.contracts import TransportKind
+from app.protocol.contracts import ProtocolFailure, TransportKind
 from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
@@ -35,6 +35,18 @@ def decode_cafd_identifiers(response: bytes) -> tuple[str, ...]:
     if len(identifiers) != len(set(identifiers)):
         raise ValueError("Duplicate coding definition identity")
     return tuple(identifiers)
+
+
+def bootloader_identifier(response: bytes) -> str:
+    """Select the source F101 role-six bootloader, rejecting ambiguous identities."""
+    decode_cafd_identifiers(response)
+    entries = [
+        response[len(response) - (i + 1) * 8 : len(response) - i * 8] for i in range(response[6])
+    ]
+    identifiers = {entry[1:5].hex().upper() for entry in entries if entry[0] == 6}
+    if len(identifiers) != 1:
+        raise ValueError("Coding authorization requires a unique reported bootloader")
+    return identifiers.pop()
 
 
 class CodingCatalogueWorker(CarWorker):
@@ -158,7 +170,7 @@ class CodingCatalogueWorker(CarWorker):
                 # Loading the root names does not require a car baseline or even
                 # reading a secondary layout that has no Easy Coding options.
                 database.load_ecu(primary[:8], primary[9:])
-                presets = database.get_presets(primary[:8], category=category)
+                presets = database.get_presets(primary[:8], category=category, deduplicate=True)
                 row.update(
                     sections={
                         preset["section"]: database.strings.get(
@@ -174,7 +186,7 @@ class CodingCatalogueWorker(CarWorker):
                         else "No named Easy Coding options for this vehicle"
                     ),
                 )
-            except (OSError, ValueError, LookupError, TypeError):
+            except (OSError, ValueError, LookupError, TypeError, ProtocolFailure):
                 logger.warning(
                     "Coding catalogue unavailable conn=%s ecu=%s stage=%s",
                     getattr(self.connection, "trace_id", "unknown"),
@@ -213,9 +225,39 @@ class CodingValuesWorker(CodingCatalogueWorker):
         self._deadline = time.monotonic() + 300.0
         database = CodingDatabase()
         row = self.row
-        row.update(blocks={}, presets=[], loaded=False)
+        row.update(blocks={}, presets=[], loaded=False, partial=False)
         sensitive = False
         address = int(str(row["addr"]), 0)
+        source_presets: list[dict] = []
+        primary = ""
+
+        def display_preset(
+            preset: dict,
+            *,
+            supported_choices: set[str] | None = None,
+            current: str | None = None,
+            blocked: str = "",
+        ) -> dict:
+            return {
+                "address": address,
+                "definition": primary,
+                "id": preset["name"],
+                "source_index": preset["source_index"],
+                "label": preset["label"],
+                "section": preset["section"],
+                "current": current,
+                "choices": [
+                    {
+                        "name": option["name"],
+                        "label": option["label"],
+                        "available": option["name"] in (supported_choices or ()),
+                    }
+                    for option in preset["options"]
+                ],
+                "mapping_supported": bool(supported_choices),
+                "write_block": blocked,
+            }
+
         logger.info(
             "Coding values begin conn=%s ecu=0x%04X variant=%s definitions=%s",
             getattr(self.connection, "trace_id", "unknown"),
@@ -224,6 +266,11 @@ class CodingValuesWorker(CodingCatalogueWorker):
             row["definitions"],
         )
         try:
+            primary = database.primary_definition(row["definitions"])
+            database.load_ecu(primary[:8], primary[9:])
+            source_presets = database.get_presets(
+                primary[:8], category=row.get("category"), deduplicate=True
+            )
             if self.connection.kind == TransportKind.HSFZ and applies(
                 address, row["definitions"], database
             ):
@@ -233,13 +280,15 @@ class CodingValuesWorker(CodingCatalogueWorker):
             if identity.hex() != row["identity"] or software.hex() != row["software"]:
                 row["available"] = False
                 raise ValueError("Coding software changed; reconnect to identify its options again")
-            primary = database.primary_definition(definitions)
-            database.load_ecu(primary[:8], primary[9:])
-            presets = database.get_presets(primary[:8], category=row.get("category"))
             scope_reason = database.easy_coding_block_reason(definitions)
+            if not scope_reason:
+                try:
+                    database.coding_write_authorization(bootloader_identifier(software))
+                except ValueError as error:
+                    scope_reason = str(error)
             groups: set[int] = set()
             reasons: dict[int, str] = {}
-            for index, preset in enumerate(presets):
+            for index, preset in enumerate(source_presets):
                 try:
                     groups.update(
                         database.preset_read_groups(preset, primary, definitions=definitions)
@@ -248,7 +297,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     reasons[index] = str(exc)
             if not scope_reason and any(
                 index not in reasons and preset.get("supportedForID8") is not True
-                for index, preset in enumerate(presets)
+                for index, preset in enumerate(source_presets)
             ):
                 generation_group = database.headunit_generation_group(definitions)
                 if generation_group is not None:
@@ -258,7 +307,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 getattr(self.connection, "trace_id", "unknown"),
                 address,
                 [f"{did:04X}" for did in sorted(groups)],
-                len(presets),
+                len(source_presets),
                 len(reasons),
             )
             row["definition_resolution"] = [
@@ -338,10 +387,21 @@ class CodingValuesWorker(CodingCatalogueWorker):
             for did in sorted(groups):
                 self._stage = f"group-{did:04X}"
                 self.progress.emit(f"Reading {row['name']}: group {did:04X}...")
-                block = did_data(self._read(address, b"\x22" + did.to_bytes(2, "big")), did)
-                minimum, size = bounds[did]
-                if len(block) < minimum or (size is not None and len(block) != size):
-                    raise ValueError("Coding group returned incomplete source-defined bytes")
+                try:
+                    block = did_data(self._read(address, b"\x22" + did.to_bytes(2, "big")), did)
+                    minimum, size = bounds[did]
+                    if len(block) < minimum or (size is not None and len(block) != size):
+                        raise ValueError("Coding group returned incomplete source-defined bytes")
+                except ValueError:
+                    if not self.connection.alive_ok:
+                        raise
+                    logger.warning(
+                        "Coding group unavailable ecu=0x%04X did=%04X",
+                        address,
+                        did,
+                        exc_info=True,
+                    )
+                    continue
                 row["blocks"][f"{did:04X}"] = block.hex()
             self._stage = "final-identity"
             final_identity, final_software, _ = self._identity(row, stage="final-identity")
@@ -350,7 +410,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 raise ValueError("Coding software changed during the value read")
             blocks = {int(did, 16): bytes.fromhex(value) for did, value in row["blocks"].items()}
             id8 = database.id8_context(definitions, blocks) if not scope_reason else None
-            for index, preset in enumerate(presets):
+            for index, preset in enumerate(source_presets):
                 reason = reasons.get(index, "")
                 if not reason and preset.get("type", 0):
                     try:
@@ -359,10 +419,17 @@ class CodingValuesWorker(CodingCatalogueWorker):
                         )
                     except (ValueError, KeyError, TypeError) as exc:
                         reason = str(exc)
-                mapped, mapping_reason = database.preset_mapping_status(
-                    preset, primary[:8], primary[9:], blocks, definitions=definitions
-                )
-                mapped = mapped and not reason
+                supported_choices: set[str] = set()
+                if not reason:
+                    try:
+                        supported_choices = set(
+                            database.preset_choice_patches(
+                                preset, primary[:8], primary[9:], blocks, definitions=definitions
+                            )
+                        )
+                    except (ValueError, KeyError, TypeError) as exc:
+                        reason = str(exc)
+                mapped = bool(supported_choices)
                 blocked = scope_reason
                 if mapped and not blocked:
                     applicable, applicability_reason = database.preset_applicability(
@@ -377,7 +444,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     primary,
                     preset["source_index"],
                     mapped,
-                    reason or mapping_reason,
+                    reason or "Source choices mapped",
                     blocked,
                     {
                         key: preset[key]
@@ -398,21 +465,12 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     else None
                 )
                 row["presets"].append(
-                    {
-                        "address": address,
-                        "definition": primary,
-                        "id": preset["name"],
-                        "source_index": preset["source_index"],
-                        "label": preset["label"],
-                        "section": preset["section"],
-                        "current": current,
-                        "choices": [
-                            {"name": option["name"], "label": option["label"]}
-                            for option in preset["options"]
-                        ],
-                        "mapping_supported": mapped,
-                        "write_block": blocked,
-                    }
+                    display_preset(
+                        preset,
+                        supported_choices=supported_choices,
+                        current=current,
+                        blocked=blocked,
+                    )
                 )
             mapped_features = {
                 (preset["section"], preset["id"])
@@ -425,15 +483,15 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 if preset["mapping_supported"]
                 or (preset["section"], preset["id"]) not in mapped_features
             ]
-            row.update(
-                loaded=True,
-                state=(
-                    f"Current values read from {len(groups)} Easy Coding group(s)"
-                    if groups
-                    else "No option has a readable source mapping"
-                ),
-            )
-        except (OSError, ValueError, KeyError, TypeError) as exc:
+            partial = len(blocks) != len(groups)
+            if partial:
+                row["state"] = "Some current values are unavailable. See session log."
+            elif groups:
+                row["state"] = f"Current values read from {len(groups)} Easy Coding group(s)"
+            else:
+                row["state"] = "No option has a readable source mapping"
+            row.update(loaded=True, partial=partial)
+        except (OSError, ValueError, LookupError, TypeError, ProtocolFailure) as exc:
             logger.warning(
                 "Coding values unavailable conn=%s ecu=0x%04X stage=%s groups_retained=%s alive=%s",
                 getattr(self.connection, "trace_id", "unknown"),
@@ -443,9 +501,9 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 self.connection.alive_ok,
                 exc_info=True,
             )
-            if sensitive and isinstance(exc, (ConnectionError, TimeoutError)):
+            if sensitive and isinstance(exc, (ConnectionError, TimeoutError, ProtocolFailure)):
                 self.connection.request_close()
-            row["presets"] = []
+            row["presets"] = [display_preset(preset) for preset in source_presets]
             if isinstance(exc, PermissionError):
                 row["state"] = (
                     "Current values require reader prerequisites disabled in read-only mode"

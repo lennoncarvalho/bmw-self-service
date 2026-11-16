@@ -40,33 +40,27 @@ failure and Qt flows are verified offline; no physical clearing is claimed.
 
 ## Easy Coding readiness
 
-- [ ] Reconcile the complete named source catalogue and actual current values,
-  combined definitions, remaining ambiguous duplicates, dynamic matrices, masks,
-  Custom values and conflicts. Retain source primary ordering and proven lower-patch
-  selection. Extend exact vehicle-type coverage for G26 when more model data is available.
-- [ ] Finish applicable non-deferred semantic mappings. Investigate selected empty/EC
-  authorization entries without choosing another key or guessing credentials.
-- [ ] Verify live baseline/current decoding, exact signatures/requests, reader
-  prerequisites, critical guards, application completion, required cycles,
-  explicit restore and interruption recovery. Review, exercise Qt and run preflight.
+- [ ] Resolve disabled presets when source definitions establish the missing
+  function mappings or compatible values. Eligible features already expose
+  their representable choices. Extend exact G26 type coverage with a source
+  that identifies the unlabelled type keys.
+- [ ] Verify a live supported coding change and explicit restore after any required
+  cycle. From Backups, run **Verify coding after vehicle cycle** on each completed
+  operation and retain the session log and comparison. Response-confirmed
+  outcomes remain separate from observed verification.
 
 ## History and integrated acceptance
 
 Implemented: local JSON editor/workspaces, sourced service types and multi-item
 cards, separate journals, append/replacement workers and exact headunit contracts.
+Offline checks cover the 12 native job profiles, ordered writes, failure handling,
+JSON and VIN isolation, foreground lockout and retained evidence export.
 
-- [ ] Reconcile current supported headunit selection, encoder widths/business
-  results, pacing and activation against source jobs. No new history reader.
-- [ ] Exercise local create/edit/import/export, VIN binding and DEMO/live/session
-  switching. Preserve conflicts/unknown fields and keep imports non-executable.
-- [ ] Verify ADD-only append and explicit nonempty replacement; inject failures
-  around ERASE, every ADD and activation. Persist intent/results, stop later
-  mutations after uncertainty/persistence loss, export retained evidence, no replay.
-- [ ] Exercise connection/refresh/loading/shutdown across all features under one
-  owner. Fix competing operations, stale state and misleading success/recovery UI.
-- [ ] Review, run full preflight and collect only the owner-car observations that
-  can answer specific remaining questions. Record actual identities and results;
-  do not induce faults or perform destructive writes just to complete a checklist.
+- [ ] During the next intended physical history append, compare the confirmed
+  request and activation with the date and items shown in iDrive. Replacement
+  remains physically unverified and requires an independently intended operation.
+- [ ] Confirm live reconnect after a naturally interrupted read and Clear All
+  results during an intended fault clear. Retain actual identities and outcomes.
 
 Later: full-width DoIP feature addressing/newer releases, Advanced Coding,
 validated deferred coding targets, Windows/Intel Mac and packaged releases.

@@ -271,16 +271,20 @@ does not establish complete owner coverage or explain later coding timeouts.
 
 ## Coding contracts
 
-`app/coding_db.py`, `coding.py`, `coding_write.py`, `coding_crypto.py` and the
+`app/coding_db.py`, `coding.py`, `coding_write.py`, `coding_authorization.py` and the
 prerequisite/guard helpers implement the source-selected layout/shared engine.
 `source-coding-selection-20261104.json` is a build input, not a completion claim.
 
 - The five `00003E52` rows tagged `excludedSeries: ["i4"]` apply a negative
   catalogue predicate. The supplied APK's preset parser has no field for it.
-  The recovered `i4` category requires an exact i4 type key on G26, which is
-  shared with the 4 Series Gran Coupé. `recover_vehicle_models.py` joins
-  `KIS.FAHRZEUGTYP.EBR` to `KIS.EBR.ID` for the labelled i4 rows that lack
-  inline model attributes. Unconfirmed G26 types leave model predicates unknown.
+  The recovered `i4` and `ix3` categories require exact model labels on shared
+  G26 and G08 chassis. `recover_vehicle_models.py` joins `KIS.FAHRZEUGTYP.EBR`
+  to `KIS.EBR.ID` for labelled i4 and iX3 rows that lack inline attributes.
+  Unconfirmed types leave model predicates unknown. FAFP `00003002` has
+  numeric criteria for all 58 G26 keys. The criteria names are empty.
+- The i3 and i8 category descriptions omit chassis codes. Source `models.o.L`
+  resolves the `i3` and `i8` tags used in presets. KIS `I001` links the i3 to
+  `I01` and the i8 Coupé and Roadster to `I12` and `I15` respectively.
 - The three CAFD v2 documents use virtual groups and a separate coding-area
   NCD. `CafXmlExtractorBAImpl.readSignatureLength`,
   `NcdLengthCalculatorBAImpl.calculateNcdLength` and
@@ -294,19 +298,33 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   patch with the same ID/major/minor. Retain reported and selected identities and
   hashes. No arbitrary nearest/first file, hidden exact-file-only restriction or
   mixing old names with new offsets. Combined definitions retain source ordering.
+- Source `models.q.k` requires the feature's nonoptional functions in one
+  definition. Within an eligible feature, choices that exceed the selected
+  mask or have no concrete applicable bytes stay disabled. Other choices use
+  their exact source masks. The one-bit refresh-rate field in `00004508`
+  versions `002-003-006`, `002-003-014` and `002-003-018` cannot encode either
+  catalogue rate.
 - Source `models.s0.A`, `k.a.i` compose actual complete baseline bytes with source
   group addresses/masks; preserve untouched bytes and Custom values. Exclude the
   exact `SIGNATURE` group and concatenate the other groups in declared order.
 - Source authorization preimage is `FFFFFFFF` + raw four-byte bootloader ID + seed.
   Use the exact ordered bootloader/key-type entry and recovered digest/RSA/byte
-  ordering in `coding_crypto.py`. The alternate source algorithm labelled DES is
+  ordering in `coding_authorization.py`. The alternate source algorithm labelled DES is
   actually MD5(key || coding bytes || key); do not substitute generic crypto.
-  Unsupported selected empty/EC entries fail, never fall through to another key.
+  Source `e.a.c` returns empty output for a non-RSA key in the RSA branch.
+  The bundled first selections include 81 EC and two empty signing entries.
+  `coding_authorization.py` checks the selected material before enabling writes.
 - Source ENET write order: sessions `1001`, `1003`, `1041`; exact authorization
   where required; complete group/signature writes; CPS stamp; source reset/clear.
   No universal XOR checksum or Bluetooth-only `31 01 0F01` routine belongs here.
   Strict application echoes, journals, meaningful reread and explicit recovery
   are enforced by the app; do not copy source automatic write retries.
+- Backups can verify completed coding or restoration after the owner confirms
+  any required cycle. The comparison checks the fresh VIN, ECU variant,
+  complete software identity, source digest and all coding groups. A completed
+  write compares against intended bytes. A response-confirmed recovery
+  compares against original bytes. The journal retains the comparison and
+  the separate application outcome.
 - Ordinary coding group reads do not imply session changes. Address `63` or
   primary CAFD `00004224` uses source FSC-backup prerequisites (`1003`, `1042`,
   `31010F1F04` and per-item reads). The exact `63/0F2230` integration-level,
@@ -314,7 +332,10 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
 - `app/coding.py` separates identity-only catalogue discovery from on-demand
   ECU values. `CodingDatabase.preset_read_groups` follows static option patches
   and the dynamic lighting resolver's dependencies; it does not read unrelated
-  definition groups. Values stay in the connection's UI cache, not backup files.
+  definition groups. `AngelEyesBrightnessCodingOptionActivity.c0` checks
+  `LM_ID_LTxx` by presence in the definition. It requires no group read for that
+  field. Identical catalogue rows display once at their first source index.
+  Values stay in the connection's UI cache, not backup files.
   `CodingPrepareWorker` still reads complete fresh target baselines.
 - The supplied APK's `c.a.m.z` dispatches to `c.a.o.doInBackground`/`d`: response
   header window `o.b = 1000 ms`, pending window `o.c = 7000 ms` (also explicit in

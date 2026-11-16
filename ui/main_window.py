@@ -81,6 +81,7 @@ class MainWindow(QMainWindow):
         self._connection: object | None = None
         self._connected = False
         self._worker: ConnectWorker | None = None
+        self._connect_selection: tuple[str, str] | None = None
         self._post_connect_worker: PostConnectWorker | None = None
         self._post_connect_context: tuple[object, str, str] | None = None
         self._overview_refresh = False
@@ -128,7 +129,7 @@ class MainWindow(QMainWindow):
 
         self.diag_page = DiagnosticsPage()
         self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
-        self.diag_page.mutation_active.connect(self._set_mutation_active)
+        self.diag_page.mutation_active.connect(self._on_diagnostics_mutation_active)
         self.diag_page.loading_changed.connect(self._set_diagnostics_loading)
         self.diag_page.loading_progress.connect(self._on_diagnostics_loading_progress)
         self.diag_page.can_mutate = self._can_start_mutation
@@ -144,10 +145,14 @@ class MainWindow(QMainWindow):
         self.history_page = ServiceHistoryPage()
         self.history_page.can_mutate = self._can_start_mutation
         self.history_page.mutation_active.connect(self._set_mutation_active)
+        self.history_page.vehicle_loading_changed.connect(self._set_history_loading)
+        self.history_page.vehicle_loading_progress.connect(self._on_history_loading_progress)
         self.stack.addWidget(self.history_page)
 
         self.backups_page = BackupsPage()
         self.backups_page.restore_requested.connect(self._review_coding_restore)
+        self.backups_page.verification_requested.connect(self._verify_coding_backup)
+        self.coding_page.verification_saved.connect(self.backups_page.refresh)
         self.stack.addWidget(self.backups_page)
 
         self.content_scroll = QScrollArea()
@@ -298,8 +303,10 @@ class MainWindow(QMainWindow):
             or self._coding_loading
             or self._diagnostics_loading
             or self._cbs_worker is not None
+            or self._worker is None
         ):
             return
+        worker = self._worker
         self.hide_spinner()
         reply = QMessageBox.question(
             self,
@@ -308,6 +315,8 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Cancel,
             QMessageBox.StandardButton.Retry,
         )
+        if self._worker is not worker or self._closing:
+            return
         if reply == QMessageBox.StandardButton.Retry:
             self._on_retry_connect()
         else:
@@ -345,7 +354,12 @@ class MainWindow(QMainWindow):
         self._spinner_retry_timer.start(30000)
 
     def hide_spinner(self) -> None:
-        if self._coding_loading or self._diagnostics_loading or self._cbs_worker is not None:
+        if (
+            self._coding_loading
+            or self._diagnostics_loading
+            or self._cbs_worker is not None
+            or self.history_page.is_using_vehicle()
+        ):
             return
         self.loading_backdrop.hide()
         central = self.centralWidget()
@@ -388,6 +402,8 @@ class MainWindow(QMainWindow):
             self._spinner_retry_timer.stop()
         else:
             self.hide_spinner()
+            if self._connection is not None and not getattr(self._connection, "alive_ok", True):
+                QTimer.singleShot(0, self._on_connection_lost)
             if self._overview_after_diagnostics:
                 self._overview_after_diagnostics = False
                 QTimer.singleShot(0, self._refresh_overview)
@@ -396,6 +412,26 @@ class MainWindow(QMainWindow):
     def _on_diagnostics_loading_progress(self, message: str) -> None:
         """Update the modal only while its current diagnostic worker is active."""
         if self._diagnostics_loading:
+            self.spinner_text.setText(message)
+
+    @Slot(bool)
+    def _set_history_loading(self, active: bool) -> None:
+        """Show foreground history activity until its vehicle worker exits."""
+        if active:
+            self.show_spinner(
+                "Writing service history..." if self._mutation_active else "Checking headunit..."
+            )
+            self._spinner_cancel_timer.stop()
+            self._spinner_retry_timer.stop()
+        else:
+            self.hide_spinner()
+            if self._connection is not None and not getattr(self._connection, "alive_ok", True):
+                QTimer.singleShot(0, self._on_connection_lost)
+
+    @Slot(str)
+    def _on_history_loading_progress(self, message: str) -> None:
+        """Publish progress from the foreground history worker."""
+        if self.history_page.is_using_vehicle():
             self.spinner_text.setText(message)
 
     # ---- Gear menu ----
@@ -466,6 +502,7 @@ class MainWindow(QMainWindow):
             and not self._coding_loading
             and not self._diagnostics_loading
             and self._cbs_worker is None
+            and not self.history_page.is_using_vehicle()
         ):
             if index == 0 and not self._connected:
                 self.stack.setCurrentWidget(self.welcome_page)
@@ -489,11 +526,21 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Coding restoration unavailable", reason)
             self.coding_page.activate()
 
+    @Slot(object)
+    def _verify_coding_backup(self, path: object) -> None:
+        """Start an explicit comparison from the backup page."""
+        if self._closing or self._mutation_active or not isinstance(path, Path):
+            return
+        reason = self.coding_page.verify_vehicle_backup(path, self.backups_page.store)
+        if reason:
+            QMessageBox.information(self, "Coding verification unavailable", reason)
+
     # ---- Connection flow ----
 
     def _on_connect_requested(self, series: str, interface: str) -> None:
-        if self._closing:
+        if self._closing or self._mutation_active:
             return
+        self._connect_selection = (series, interface)
         self._on_disconnect()
         if self._demo_mode:
             self._connect_demo(series)
@@ -601,7 +648,10 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _on_connection_progress(self, message: str) -> None:
         if not self._closing and self.sender() in (self._worker, self._post_connect_worker):
-            self.show_spinner(message)
+            if self._overview_refresh:
+                self.spinner_text.setText(message)
+            else:
+                self.show_spinner(message)
 
     @Slot(object)
     def _on_worker_result(self, result: object) -> None:
@@ -676,6 +726,8 @@ class MainWindow(QMainWindow):
 
         if not vin:
             self.vehicle_page.populate({}, series, "Unverified")
+            self.vehicle_page.refresh_button.setEnabled(False)
+            self.vehicle_page.cbs_panel.read_button.setEnabled(False)
             self.hide_spinner()
             for btn in self.nav_group.buttons():
                 btn.setEnabled(self.nav_group.id(btn) == 3)
@@ -723,6 +775,7 @@ class MainWindow(QMainWindow):
             or self._coding_loading
             or self._diagnostics_loading
             or self._cbs_worker is not None
+            or self.history_page.is_using_vehicle()
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
         ):
@@ -731,11 +784,17 @@ class MainWindow(QMainWindow):
             self.vehicle_page.load_data(self._connection)
             return
         vin, series = self._overview_identity
+        if not vin:
+            return
         self._overview_refresh = True
         self.vehicle_page.set_loading(True)
+        self.show_spinner("Refreshing vehicle data...")
+        self._spinner_cancel_timer.stop()
+        self._spinner_retry_timer.stop()
         self._post_connect_context = (self._connection, vin, series)
         worker = PostConnectWorker(self._connection, self._build_post_connect_tasks(vin))
         self._post_connect_worker = worker
+        worker.progress.connect(self._on_connection_progress)
         worker.result_ready.connect(self._on_post_connect_result)
         worker.error.connect(self._on_post_connect_worker_error)
         worker.start()
@@ -786,6 +845,7 @@ class MainWindow(QMainWindow):
             self.vehicle_page.set_loading(False)
             self.vehicle_page.refresh_button.setEnabled(False)
             self._overview_refresh = False
+            self.hide_spinner()
             return
 
         results: dict = result.get("results", {})
@@ -808,17 +868,18 @@ class MainWindow(QMainWindow):
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
         self.vehicle_page.set_loading(False)
-        if self._overview_refresh:
-            self._overview_refresh = False
-            refreshed_ecus: list[dict] = results.get("ecu_list") or results.get("svt") or []
-            if isinstance(refreshed_ecus, dict):
-                refreshed_ecus = refreshed_ecus.get("ecus", [])
-            self.diag_page.set_connection(connection, refreshed_ecus)
-            self.history_page.set_targets(refreshed_ecus)
-            return
-
-        # Report any errors with a single friendly dialog
-        if errors:
+        inventory = overview_ecus or results.get("svt", overview_ecus)
+        if isinstance(inventory, dict):
+            inventory = inventory.get("ecus")
+        ecus: list[dict] = inventory if isinstance(inventory, list) else []
+        order = results.get("vehicle_order")
+        model_range = order.get("model_range") if isinstance(order, dict) else ""
+        type_code = order.get("type_code") if isinstance(order, dict) else ""
+        model_range = model_range if isinstance(model_range, str) else ""
+        type_code = type_code if isinstance(type_code, str) else ""
+        overview_refresh = self._overview_refresh
+        self._overview_refresh = False
+        if errors and not overview_refresh:
             error_lines = []
             for label, msg in sorted(errors.items()):
                 # Make label human-readable
@@ -845,23 +906,18 @@ class MainWindow(QMainWindow):
         ):
             return  # A modal message can deliver disconnect/reconnect events.
 
-        # Now start secondary workers (DTC read, service history, coding).
-        # These run on their own background threads and will queue
-        # naturally on the connection lock.
-        ecus: list[dict] = results.get("ecu_list") or results.get("svt") or []
-        if isinstance(ecus, dict):
-            ecus = ecus.get("ecus", [])
-        self.diag_page.set_connection(self._connection, ecus)
-        self.history_page.set_connection(self._connection, ecus)
-        order = results.get("vehicle_order")
-        model_range = order.get("model_range") if isinstance(order, dict) else None
-        type_code = order.get("type_code") if isinstance(order, dict) else None
-        self.coding_page.set_connection(
-            self._connection,
-            ecus,
-            model_range=model_range if isinstance(model_range, str) else "",
-            type_code=type_code if isinstance(type_code, str) else "",
-        )
+        # Vehicle reads start on demand when their page is opened.
+        self.diag_page.set_connection(connection, ecus)
+        if overview_refresh:
+            self.history_page.set_targets(ecus)
+        else:
+            self.history_page.set_connection(connection, ecus)
+        # An incomplete refresh still marks unavailable observations on Vehicle.
+        # Keep settled coding context for display. Preparation reads fresh identities.
+        if not overview_refresh or (isinstance(inventory, list) and model_range and type_code):
+            self.coding_page.set_connection(
+                connection, ecus, model_range=model_range, type_code=type_code
+            )
 
         self.hide_spinner()
 
@@ -922,12 +978,13 @@ class MainWindow(QMainWindow):
 
         Reference: plan.md#connection-and-display.
         """
+        connection = self._connection
         if (
-            self._connection is None
+            connection is None
             or not self._connected
             or self._closing
             or self._connection_loss_dialog
-            or getattr(self._connection, "alive_ok", True)
+            or getattr(connection, "alive_ok", True)
         ):
             return
         self.vehicle_page.invalidate("Connection lost")
@@ -935,8 +992,13 @@ class MainWindow(QMainWindow):
         if self._mutation_active:
             logger.warning("Connection lost during mutation; waiting for explicit outcomes")
             return
-        if self._coding_loading:
-            logger.warning("Connection lost during coding read; waiting for worker completion")
+        if (
+            self._coding_loading
+            or self._diagnostics_loading
+            or self._cbs_worker is not None
+            or self.history_page.is_using_vehicle()
+        ):
+            logger.warning("Connection lost during a foreground read; waiting for its outcome")
             return
         self.status_dot.setText(RED_DOT)
         self.status_dot.setToolTip("Connection lost")
@@ -944,7 +1006,7 @@ class MainWindow(QMainWindow):
 
         self._connection_loss_dialog = True
         try:
-            QMessageBox.warning(
+            reply = QMessageBox.warning(
                 self,
                 "Connection Lost",
                 "The connection to the vehicle has been lost.\n\n"
@@ -953,8 +1015,12 @@ class MainWindow(QMainWindow):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes,
             )
-            # Every dismissal disconnects; never leave pages on a broken stream.
-            self._on_disconnect()
+            if self._closing or self._connection is not connection:
+                return
+            if reply == QMessageBox.StandardButton.Yes:
+                self._on_retry_connect()
+            else:
+                self._on_disconnect()
         finally:
             self._connection_loss_dialog = False
 
@@ -1026,8 +1092,11 @@ class MainWindow(QMainWindow):
         logger.warning("Connection failed: %s", error_msg)
 
     def _on_retry_connect(self) -> None:
-        """G-13: Re-attempt connection after timeout retry."""
-        self._on_disconnect()
+        """Retry discovery using the selected adapter, through the normal connect path."""
+        if self._connect_selection is not None:
+            self._on_connect_requested(*self._connect_selection)
+        else:
+            self._on_disconnect()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """Keep worker objects alive while cooperative shutdown completes."""
@@ -1042,6 +1111,16 @@ class MainWindow(QMainWindow):
                 "Export coding results",
                 "Some coding results could not be saved. Use Export retained coding results "
                 "before closing so the operation outcome remains available.",
+            )
+            return
+        if self.history_page.has_unexported_results():
+            event.ignore()
+            self.stack.setCurrentWidget(self.history_page)
+            QMessageBox.warning(
+                self,
+                "Export history evidence",
+                "Some history results could not be saved. Export the retained operation "
+                "evidence before closing.",
             )
             return
         if not self._closing:
@@ -1145,16 +1224,16 @@ class MainWindow(QMainWindow):
 
     def _can_start_mutation(self) -> bool:
         """Only commit after background page reads have settled."""
-        worker = self._post_connect_worker
         return (
-            not self._mutation_active
+            not self._closing
+            and not self._mutation_active
             and not self._coding_loading
             and not self._diagnostics_loading
             and self._cbs_worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
             and not self.coding_page.is_reading()
-            and (worker is None or not worker.isRunning())
+            and self._post_connect_worker is None
         )
 
     @Slot()
@@ -1175,6 +1254,9 @@ class MainWindow(QMainWindow):
                 resets_allowed=False,
                 note="DEMO — simulated records; reset is not available",
             )
+            return
+        if not self._overview_identity[0]:
+            panel.show_error("Service status requires a verified vehicle VIN")
             return
         if getattr(connection, "kind", None) != TransportKind.HSFZ:
             panel.show_error(
@@ -1224,21 +1306,28 @@ class MainWindow(QMainWindow):
     @Slot()
     def _on_cbs_finished(self) -> None:
         worker = self.sender()
-        if worker is not self._cbs_worker:
+        if worker is not self._cbs_worker or not isinstance(
+            worker, (CbsReadWorker, CbsResetWorker)
+        ):
             return
         self._cbs_worker = None
-        assert isinstance(worker, QThread)
         self._retire_worker(worker)
         reset = isinstance(worker, CbsResetWorker)
         if reset:
             self._set_mutation_active(False, refresh_overview=False)
         self.vehicle_page.cbs_panel.set_busy(self._mutation_active)
         self.hide_spinner()
+        if (
+            not reset
+            and self._connection is worker.connection
+            and not getattr(worker.connection, "alive_ok", True)
+        ):
+            QTimer.singleShot(0, self._on_connection_lost)
         if isinstance(worker, CbsResetWorker) and self._connection is worker.connection:
             # Always replace the rows the reset was planned from; a closed
             # connection clears them instead of leaving stale reset actions.
             if getattr(worker.connection, "alive_ok", False):
-                QTimer.singleShot(0, self._start_cbs_read)
+                self._start_cbs_read()
             else:
                 self.vehicle_page.cbs_panel.show_error(
                     "Connection closed — reconnect and read service status"
@@ -1364,8 +1453,13 @@ class MainWindow(QMainWindow):
             self.vehicle_page.cbs_panel.show_error(message)
             QMessageBox.warning(self, "Service Reset Not Started", message)
 
+    @Slot(bool, bool)
+    def _on_diagnostics_mutation_active(self, active: bool, refresh_overview: bool) -> None:
+        """Honor the diagnostic worker's explicit follow-up decision."""
+        self._set_mutation_active(active, refresh_overview=refresh_overview)
+
     @Slot(bool)
-    def _set_mutation_active(self, active: bool, *, refresh_overview: bool = True) -> None:
+    def _set_mutation_active(self, active: bool, refresh_overview: bool = True) -> None:
         """Keep the GUI responsive while blocking disruptive app actions."""
         self._mutation_active = active
         self.history_page.setEnabled(not active)

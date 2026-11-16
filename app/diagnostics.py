@@ -494,6 +494,10 @@ class DiagnosticClearWorker(CarWorker):
                     stopped = "connection"
                     row["response"] = "not-attempted-connection"
                     continue
+                if getattr(self.connection, "power_sufficient", None) is False:
+                    stopped = "low-power"
+                    row["response"] = "not-attempted-low-power"
+                    continue
                 if time.monotonic() >= deadline:
                     stopped = "budget-exhausted"
                     row["response"] = "not-attempted-budget-exhausted"
