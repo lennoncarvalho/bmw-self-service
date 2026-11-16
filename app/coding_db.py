@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from app.resources import resource_path
+from app.vehicle_metadata import describe_model
 
 logger = logging.getLogger(__name__)
 MAX_DATABASE = 512 * 1024 * 1024
@@ -28,6 +29,53 @@ MAX_DOCUMENT = 32 * 1024 * 1024
 MAX_MANIFEST = 4 * 1024 * 1024
 _IDENTIFIER = re.compile(r"[0-9A-F]{8}")
 _VARIANT = re.compile(r"[0-9]{3}-[0-9]{3}-[0-9]{3}")
+_EASY_CODING_ROLES = frozenset(
+    {
+        "ACTIVE_SOUND_DESIGN",
+        "AMPLIFIER",
+        "ANTI_THEFT_ALARM",
+        "BODY_BASE_MODULE",
+        "BODY_DOMAIN_CONTROLLER",
+        "BODY_GATEWAY_MODULE",
+        "CAR_ACCESS_SYSTEM",
+        "CLIMATE_CONTROL",
+        "COMBOX",
+        "CONVERTIBLE_TOP_MODULE",
+        "FOOTWELL_MODULE",
+        "FRONT_ELECTRONIC_MODULE",
+        "FRONT_LIGHT_ELECTRONICS",
+        "FRONT_LIGHT_MODULE",
+        "HEADLIGHT_DRIVER_MODULE_LEFT",
+        "HEADLIGHT_DRIVER_MODULE_RIGHT",
+        "HEADUNIT",
+        "HEAD_UP_DISPLAY",
+        "INSTRUMENT_CLUSTER",
+        "JUNCTION_BOX",
+        "LIGHT_MODULE",
+        "PDC",
+        "REAR_ELECTRONIC_MODULE",
+        "REAR_FUNCTIONS_MODULE",
+        "RECEIVER_AUDIO_MODULE",
+        "ROOF_CENTRE_CONTROL_MODULE",
+        "SEAT_MODULE_DRIVER",
+        "SEAT_MODULE_PASSENGER",
+        "SMART_POWER_ELECTRONICS_GATEWAY",
+        "TOP_REAR_SIDE_VIEW_CAMERA",
+    }
+)
+_DEFERRED_CODING_ROLES = frozenset(
+    {
+        "AIRBAG_CONTROL_UNIT",
+        "AIRBAG_ELECTRONIC",
+        "CAMERA_BASED_DRIVER_ASSISTANCE_SYSTEM",
+        "ENGINE_CONTROL_UNIT",
+        "INTEGRATED_CHASSIS_MANAGMENT",
+        "OPTIONAL_EXTRA_SYSTEM",
+        "STEERING_COLUMN_CONTROL_UNIT",
+        "TRANSMISSION_CONTROL_UNIT",
+        "VEHICLE_SOUND_GENERATOR",
+    }
+)
 
 
 def _number(value: Any) -> int:
@@ -170,7 +218,10 @@ class CodingDatabase:
         if reported in self._resolutions:
             return copy.deepcopy(self._resolutions[reported])
         selected = None
-        if reported in self._document_names and self._package_definition(reported):
+        if reported in self._manifest.get("coding_area_definitions", []):
+            selected = reported
+            method = "exact-xml-coding-area"
+        elif reported in self._document_names and self._package_definition(reported):
             selected = reported
             method = "exact-package"
         else:
@@ -285,6 +336,25 @@ class CodingDatabase:
             raise ValueError("Invalid coding ECU metadata")
         return rows
 
+    def easy_coding_block_reason(self, definitions: list[str]) -> str:
+        """Classify each reported CAFD using exact primary and secondary source roles."""
+        if any(item in self._manifest.get("coding_area_definitions", []) for item in definitions):
+            return "Coding-area layouts require a separate coding protocol"
+        metadata = self.ecu_infos()
+        for definition in definitions:
+            identifier = definition[:8]
+            roles = {
+                row.get("name")
+                for row in metadata
+                if identifier == row.get("identifier")
+                or identifier in row.get("secondaryIdentifiers", [])
+            }
+            if roles & _DEFERRED_CODING_ROLES:
+                return "Coding changes are deferred for this control unit"
+            if len(roles) != 1 or not roles <= _EASY_CODING_ROLES:
+                return "Coding write support for this control unit is unconfirmed"
+        return "" if definitions else "This control unit has no coding definition"
+
     def authorization(self, bootloader_identifier: str, key_type: int = 0) -> dict:
         """Select the source AS entry for an exact bootloader ID, without version guessing."""
         if not _IDENTIFIER.fullmatch(bootloader_identifier):
@@ -382,6 +452,8 @@ class CodingDatabase:
         if not self.has_definition(cafd_id, variant):
             raise ValueError("No source-selected coding definition is available")
         resolution = self.definition_resolution(key)
+        if resolution["method"] == "exact-xml-coding-area":
+            raise ValueError("Coding-area definitions use an NCD layout instead of data groups")
         data = self.read_document(resolution["selected"])
         if isinstance(data, dict):
             for group in data.get("dataGroups", []):
@@ -406,11 +478,20 @@ class CodingDatabase:
         self._function_indexes[key] = index
         self._loaded_ecus.add(key)
 
-    def category_for_model_range(self, model_range: str) -> int | None:
+    def category_for_model_range(self, model_range: str, type_code: str = "") -> int | None:
         """Map an exact reported model code through source resource descriptions."""
         if not isinstance(model_range, str) or not re.fullmatch(r"[FGUI][0-9]{2,3}", model_range):
             return None
         normalized = model_range[0] + f"{int(model_range[1:]):02d}"
+        if normalized == "G26":
+            # The source category is i4-specific. The shared chassis is insufficient.
+            try:
+                model = describe_model(type_code, "G026") if type_code else None
+            except (OSError, ValueError):
+                logger.warning("Exact model catalogue unavailable for G26 coding", exc_info=True)
+                return None
+            if model is None or not model.upper().startswith("BMW I4 "):
+                return None
         selection = self.read_document("selection")
         if not isinstance(selection, dict):
             raise ValueError("Coding selection metadata is invalid")
@@ -434,30 +515,34 @@ class CodingDatabase:
                 return identifier
         return definitions[0]
 
-    def id8_context(self, definitions: list[str], blocks: dict[int, bytes]) -> bool:
+    def _headunit_generation_fields(self, definitions: list[str]) -> list[tuple[int, dict]]:
+        """Find the source generation field for the headunit family that uses it."""
+        if self.primary_definition(definitions)[:8] != "00003E52":
+            return []
+        identifier, version = definitions[0].split("-", 1)
+        return self._combined_index(identifier, version, definitions).get("HMI_ID_VERSION", [])
+
+    def headunit_generation_group(self, definitions: list[str]) -> int | None:
+        """Return the one source group needed to evaluate headunit applicability."""
+        fields = self._headunit_generation_fields(definitions)
+        return fields[0][0] if len(fields) == 1 else None
+
+    def id8_context(self, definitions: list[str], blocks: dict[int, bytes]) -> bool | None:
         """Read the source headunit-generation predicate from exact definition/current bytes."""
         if self.primary_definition(definitions)[:8] != "00003E52":
             return False
-        for identifier in definitions:
-            data = self.get_definition(identifier[:8], identifier[9:])
-            for group in data["dataGroups"]:
-                for function in group.get("functions", []):
-                    if function.get("name") != "HMI_ID_VERSION":
-                        continue
-                    storage = function["storageInfo"]
-                    start, end, mask = (_number(storage[key]) for key in ("start", "end", "mask"))
-                    if start != end:
-                        return False
-                    did = _number(group["address"])
-                    if (
-                        did not in blocks
-                        or not 0 <= start < len(blocks[did])
-                        or not 0 < mask <= 255
-                    ):
-                        raise ValueError("Headunit generation baseline is incomplete")
-                    shift = (mask & -mask).bit_length() - 1
-                    return ((blocks[did][start] & mask) >> shift) == 3
-        return False
+        fields = self._headunit_generation_fields(definitions)
+        if len(fields) != 1:
+            return None
+        did, function = fields[0]
+        storage = function["storageInfo"]
+        start, end, mask = (_number(storage[key]) for key in ("start", "end", "mask"))
+        if did not in blocks or start != end or not 0 <= start < len(blocks[did]):
+            return None
+        if not 0 < mask <= 255:
+            return None
+        shift = (mask & -mask).bit_length() - 1
+        return ((blocks[did][start] & mask) >> shift) == 3
 
     def preset_applicability(
         self, preset: dict, *, category: int | None, variant_index: str | None, id8: bool | None
@@ -474,25 +559,38 @@ class CodingDatabase:
                 return None, "ECU variant predicate has no identified variant"
             if variant_index in excluded:
                 return False, "Source excludes this ECU variant"
-        tags = preset.get("series", [])
-        if tags:
-            document = self.read_document("selection")
-            if not isinstance(document, dict):
-                raise ValueError("Coding selection metadata is invalid")
-            mapping = document["series_categories"]
-            supported = {value for tag in tags for value in mapping.get(str(tag).lower(), [])}
-            if not supported:
-                return None, "Source series tags have no recovered category mapping"
-            if category is None:
-                return None, "Source category predicate is not identified"
-            if category != 0 and category not in supported:
-                return False, "Option is excluded by the source category filter"
-        if preset.get("excludedSeries"):
-            return (
-                None,
-                "Excluded-series metadata is retained but its selector is not yet recovered",
-            )
+        model_allowed, reason = self._preset_model_applicability(preset, category)
+        if model_allowed is not True:
+            return model_allowed, reason
         return True, "Source filters allow this identified context"
+
+    def _preset_model_applicability(
+        self, preset: dict, category: int | None
+    ) -> tuple[bool | None, str]:
+        """Evaluate the recovered source series selector."""
+        included = preset.get("series", [])
+        excluded = preset.get("excludedSeries", [])
+        if not included and not excluded:
+            return True, ""
+        if category is None or (category == 0 and excluded):
+            return None, "Source category predicate is not identified"
+        document = self.read_document("selection")
+        if not isinstance(document, dict):
+            raise ValueError("Coding selection metadata is invalid")
+        mapping = document["series_categories"]
+        allowed = [mapping.get(str(tag).lower(), []) for tag in included]
+        blocked = [mapping.get(str(tag).lower(), []) for tag in excluded]
+        if any(category in categories for categories in blocked):
+            return False, "Option is excluded by the source model exclusions"
+        if any(not categories for categories in blocked):
+            return None, "Source model exclusions have no recovered category mapping"
+        if included and category != 0 and not any(category in categories for categories in allowed):
+            if any(not categories for categories in allowed):
+                return None, "Source series tags have no recovered category mapping"
+            return False, "Option is excluded by the source category filter"
+        if included and not any(allowed):
+            return None, "Source series tags have no recovered category mapping"
+        return True, ""
 
     def _combined_index(
         self, cafd_id: str, variant: str, definitions: list[str] | None = None
@@ -517,10 +615,16 @@ class CodingDatabase:
         blocks: dict[int, bytes] | None = None,
         *,
         definitions: list[str] | None = None,
+        category: int | None = None,
     ) -> list[dict]:
-        """Return labels plus all source predicates and static/dynamic option data."""
+        """Return presets, skipping model exclusions when a category is supplied."""
         result = []
         for source_index, entry in enumerate(self.root_indexes.get(cafd_id, [])):
+            if (
+                category is not None
+                and self._preset_model_applicability(entry, category)[0] is False
+            ):
+                continue
             preset = copy.deepcopy(entry)
             preset["source_index"] = source_index
             name = entry.get("name", "")

@@ -18,6 +18,7 @@ from pathlib import Path
 NAMESPACE = "http://bmw.com/2005/psdz.data.caf"
 NS = {"c": NAMESPACE}
 MAX_XML = 64 * 1024 * 1024
+CODING_PROOF_STAMP_BYTES = 8
 
 
 def _values(parent: ET.Element | None) -> list[dict[str, str]]:
@@ -51,6 +52,93 @@ def convert(path: Path) -> tuple[str, dict]:
     return convert_bytes(raw)
 
 
+def _coding_area_layout(root: ET.Element, header: ET.Element, raw: bytes) -> dict:
+    """Preserve the separate NCD envelope and its virtual function groups."""
+    if root.get("version") not in {"02.00.00", "02.00.01"}:
+        raise ValueError("CAFD coding-area version is not supported")
+    area, sig_id, sig_len = (header.get(field, "") for field in ("codingArea", "sigId", "sigLen"))
+    default = header.get("defVal", "")
+    crc_default = header.get("obdCrc32")
+    if (
+        not re.fullmatch(r"[0-9]{1,3}", area)
+        or int(area) > 255
+        or not re.fullmatch(r"[0-9]{2}", sig_id)
+        or not re.fullmatch(r"[0-9]{1,5}", sig_len)
+        or not 0 < int(sig_len) <= 65535
+        or not re.fullmatch(r"[0-9A-Fa-f]{2}", default)
+        or (crc_default is not None and not re.fullmatch(r"[0-9A-Fa-f]{8}", crc_default))
+    ):
+        raise ValueError("Invalid CAFD coding area or signature metadata")
+    groups = {}
+    for group in root.findall("c:metaData/c:groups/c:group", NS):
+        group_id = group.get("id", "")
+        if not re.fullmatch(r"[0-9]{1,10}", group_id) or int(group_id) in groups:
+            raise ValueError("Invalid or duplicated virtual CAFD group")
+        groups[int(group_id)] = group.text or ""
+    functions = []
+    for function in root.findall("c:data/c:function", NS):
+        start, end, mask = (
+            function.findtext(f"c:storageInfo/c:{key}", default="", namespaces=NS)
+            for key in ("start", "end", "mask")
+        )
+        group_id = function.get("groupId", "")
+        if (
+            not re.fullmatch(r"[0-9]{1,5}", start)
+            or not re.fullmatch(r"[0-9]{1,5}", end)
+            or not 0 <= int(start) <= int(end) < 65536
+            or not re.fullmatch(r"[0-9A-Fa-f]{2}", mask)
+            or not re.fullmatch(r"[0-9]{1,10}", group_id)
+            or int(group_id) not in groups
+        ):
+            raise ValueError("Invalid CAFD coding-area function storage")
+        params = []
+        for parameter in function.findall("c:condParam", NS):
+            value = parameter.findtext("c:value", default="", namespaces=NS).strip()
+            if not re.fullmatch(r"[0-9A-Fa-f]+", value) or len(value) != 2 * (
+                int(end) - int(start) + 1
+            ):
+                raise ValueError("CAFD coding-area parameter width differs from its storage")
+            params.append(
+                {
+                    "paramName": parameter.findtext("c:paramName", default="", namespaces=NS),
+                    "value": value,
+                    "conditions": [
+                        {"attributes": dict(e.attrib), "expression": e.text or ""}
+                        for e in parameter.findall("c:bool", NS)
+                    ],
+                }
+            )
+        functions.append(
+            {
+                "name": function.get("name", ""),
+                "virtualGroup": int(group_id),
+                "storageInfo": {"start": int(start), "end": int(end), "mask": mask},
+                "params": params,
+            }
+        )
+    if not functions or min(function["storageInfo"]["start"] for function in functions) != 0:
+        raise ValueError("CAFD coding-area layout must have a zero-based function range")
+    payload_length = 1 + max(function["storageInfo"]["end"] for function in functions)
+    return {
+        "codingAreaLayout": {
+            "codingArea": int(area),
+            "signatureId": sig_id,
+            "payloadLength": payload_length,
+            "proofStampLength": CODING_PROOF_STAMP_BYTES,
+            "signatureLength": int(sig_len),
+            "ncdLength": payload_length + CODING_PROOF_STAMP_BYTES + int(sig_len),
+            "defaultByte": default,
+            "obdCrc32Default": crc_default,
+            "virtualGroups": [{"id": number, "name": name} for number, name in groups.items()],
+            "functions": functions,
+        },
+        "sourceDefinition": {
+            "xml_sha256": hashlib.sha256(raw).hexdigest(),
+            "schemaVersion": root.get("version"),
+        },
+    }
+
+
 def convert_bytes(raw: bytes) -> tuple[str, dict]:
     """Convert bounded XML bytes after the caller checked source provenance."""
     if not 0 < len(raw) <= MAX_XML:
@@ -61,8 +149,8 @@ def convert_bytes(raw: bytes) -> tuple[str, dict]:
     if root.tag != f"{{{NAMESPACE}}}caf" or root.get("isEncrypted") != "false":
         raise ValueError("CAFD is not a plaintext source definition")
     header = root.find("c:sweHeader", NS)
-    if header is None or header.get("memoryLayout") != "BYTE":
-        raise ValueError("CAFD memory layout is not the supported byte layout")
+    if header is None:
+        raise ValueError("CAFD header is missing")
     identity = header.find("c:cafIdent", NS)
     if identity is None:
         raise ValueError("CAFD identity is missing")
@@ -79,6 +167,10 @@ def convert_bytes(raw: bytes) -> tuple[str, dict]:
     identifier = (
         cafd_id.upper() + "-" + "-".join(f"{int(v):03d}" for v in versions if v is not None)
     )
+    if header.get("memoryLayout") != "BYTE":
+        if header.get("memoryLayout") is None and header.get("codingArea") is not None:
+            return identifier, _coding_area_layout(root, header, raw)
+        raise ValueError("CAFD memory layout is unsupported")
     groups = []
     addresses = set()
     for group in root.findall("c:data/c:datagroup", NS):

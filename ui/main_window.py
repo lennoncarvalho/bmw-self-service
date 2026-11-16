@@ -853,7 +853,15 @@ class MainWindow(QMainWindow):
             ecus = ecus.get("ecus", [])
         self.diag_page.set_connection(self._connection, ecus)
         self.history_page.set_connection(self._connection, ecus)
-        self.coding_page.set_connection(self._connection, ecus)
+        order = results.get("vehicle_order")
+        model_range = order.get("model_range") if isinstance(order, dict) else None
+        type_code = order.get("type_code") if isinstance(order, dict) else None
+        self.coding_page.set_connection(
+            self._connection,
+            ecus,
+            model_range=model_range if isinstance(model_range, str) else "",
+            type_code=type_code if isinstance(type_code, str) else "",
+        )
 
         self.hide_spinner()
 

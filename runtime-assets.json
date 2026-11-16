@@ -5,8 +5,8 @@
       "sha256": "2faa77ee3f4950b6b729494581245f1e8e815c71febaa82158cd9293a0522e71"
     },
     "coding_data/coding_catalog.db": {
-      "bytes": 254234624,
-      "sha256": "5e24ba9fd55909be6a05bb6d4961307156b1fdbf2ca11c234e4377f23551736d"
+      "bytes": 254238720,
+      "sha256": "58b0c64082badb343c09a9dc97d7bcfaf12fda547a40a424ae051347e3208233"
     },
     "coding_data/diagnostic_catalog.json.gz": {
       "bytes": 3228186,
@@ -41,8 +41,8 @@
       "sha256": "6f9c5e8ec94a6ffb03c6e9f21d0e972322a9d82de0930b48b275f0b85a1f1567"
     },
     "coding_data/vehicle_models.json": {
-      "bytes": 161762,
-      "sha256": "ebf6a7c9156d8afc7ba2a19f6c4d94fbfe7575e91f4dbd1f7add36ea7384a0ea"
+      "bytes": 162097,
+      "sha256": "5451d0de934d61e9d19fd311bb3ee384dece19a384785ff77df9c154ed22cfd6"
     },
     "coding_data/version.json": {
       "bytes": 21,

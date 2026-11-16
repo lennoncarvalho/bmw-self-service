@@ -95,6 +95,7 @@ def build(
     sources: dict[str, str] = {}
     counts = {"documents": 0, "definitions": 0, "root_entries": 0, "labels": 0}
     dispositions: dict[str, str] = {}
+    coding_area_definitions: list[str] = []
     try:
         with sqlite3.connect(temporary) as db:
             db.execute("PRAGMA journal_mode=DELETE")
@@ -169,6 +170,8 @@ def build(
                     counts["documents"] += 1
                     counts["definitions"] += 1
                     counts["imported_definitions"] += 1
+                    if "codingAreaLayout" in definition:
+                        coding_area_definitions.append(name)
                     if counts["imported_definitions"] % 250 == 0:
                         print(
                             f"Compiled {counts['imported_definitions']} additional exact definitions",
@@ -431,6 +434,7 @@ def build(
                 "counts": counts,
                 "sources": sources,
                 "definition_dispositions": dispositions,
+                "coding_area_definitions": coding_area_definitions,
             }
             db.execute(
                 "INSERT INTO metadata VALUES(?,?)",

@@ -40,11 +40,21 @@ def decode_cafd_identifiers(response: bytes) -> tuple[str, ...]:
 class CodingCatalogueWorker(CarWorker):
     """Read identities only; discovering options never reads coding groups or sessions."""
 
-    def __init__(self, connection: Any, ecus: list[dict], vin: str) -> None:
+    def __init__(
+        self,
+        connection: Any,
+        ecus: list[dict],
+        vin: str,
+        *,
+        model_range: str = "",
+        type_code: str = "",
+    ) -> None:
         """Copy the inventory for a five-minute batch of bounded identity reads."""
         super().__init__(connection)
         self.ecus = copy.deepcopy(ecus)
         self.vin = vin
+        self.model_range = model_range
+        self.type_code = type_code
         self._deadline = 0.0
         self._stage = "catalogue"
         self._timed_address: int | None = None
@@ -92,6 +102,7 @@ class CodingCatalogueWorker(CarWorker):
         """Return named source catalogues with explicit unavailable/untouched coverage."""
         self._deadline = time.monotonic() + 300.0
         database = CodingDatabase()
+        category = database.category_for_model_range(self.model_range, self.type_code)
         if self.connection.kind == TransportKind.HSFZ:
             self._timed_address = reader_contract()[0]["unlock_backup"]["address"]
         rows: list[dict] = []
@@ -109,6 +120,7 @@ class CodingCatalogueWorker(CarWorker):
                 "presets": [],
                 "available": False,
                 "loaded": False,
+                "category": category,
             }
             rows.append(row)
             if not ecu.get("identified") or not ecu.get("uds"):
@@ -133,12 +145,21 @@ class CodingCatalogueWorker(CarWorker):
                     row["state"] = "No coding definition reported"
                     continue
                 primary = database.primary_definition(definitions)
+                resolution = database.definition_resolution(primary)
+                row["definition_resolution"] = [resolution]
+                if resolution["method"] == "exact-xml-coding-area":
+                    row["state"] = "Coding-area layout has no supported Easy Coding options"
+                    logger.debug(
+                        "Coding catalogue ecu=%s coding-area layout=%s",
+                        ecu.get("addr"),
+                        resolution,
+                    )
+                    continue
                 # Loading the root names does not require a car baseline or even
                 # reading a secondary layout that has no Easy Coding options.
                 database.load_ecu(primary[:8], primary[9:])
-                presets = database.get_presets(primary[:8])
+                presets = database.get_presets(primary[:8], category=category)
                 row.update(
-                    definition_resolution=[database.definition_resolution(primary)],
                     sections={
                         preset["section"]: database.strings.get(
                             preset["section"], preset["section"].replace("_", " ").title()
@@ -150,10 +171,10 @@ class CodingCatalogueWorker(CarWorker):
                     state=(
                         f"{len(presets)} source options; current values not read"
                         if presets
-                        else "No named Easy Coding options in the supplied catalogue"
+                        else "No named Easy Coding options for this vehicle"
                     ),
                 )
-            except (OSError, ValueError, KeyError, TypeError):
+            except (OSError, ValueError, LookupError, TypeError):
                 logger.warning(
                     "Coding catalogue unavailable conn=%s ecu=%s stage=%s",
                     getattr(self.connection, "trace_id", "unknown"),
@@ -214,7 +235,8 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 raise ValueError("Coding software changed; reconnect to identify its options again")
             primary = database.primary_definition(definitions)
             database.load_ecu(primary[:8], primary[9:])
-            presets = database.get_presets(primary[:8])
+            presets = database.get_presets(primary[:8], category=row.get("category"))
+            scope_reason = database.easy_coding_block_reason(definitions)
             groups: set[int] = set()
             reasons: dict[int, str] = {}
             for index, preset in enumerate(presets):
@@ -224,6 +246,13 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     )
                 except (ValueError, KeyError, TypeError) as exc:
                     reasons[index] = str(exc)
+            if not scope_reason and any(
+                index not in reasons and preset.get("supportedForID8") is not True
+                for index, preset in enumerate(presets)
+            ):
+                generation_group = database.headunit_generation_group(definitions)
+                if generation_group is not None:
+                    groups.add(generation_group)
             logger.info(
                 "Coding group plan conn=%s ecu=0x%04X groups=%s options=%d unmapped=%d",
                 getattr(self.connection, "trace_id", "unknown"),
@@ -320,6 +349,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 row["available"] = False
                 raise ValueError("Coding software changed during the value read")
             blocks = {int(did, 16): bytes.fromhex(value) for did, value in row["blocks"].items()}
+            id8 = database.id8_context(definitions, blocks) if not scope_reason else None
             for index, preset in enumerate(presets):
                 reason = reasons.get(index, "")
                 if not reason and preset.get("type", 0):
@@ -333,14 +363,22 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     preset, primary[:8], primary[9:], blocks, definitions=definitions
                 )
                 mapped = mapped and not reason
+                blocked = scope_reason
+                if mapped and not blocked:
+                    applicable, applicability_reason = database.preset_applicability(
+                        preset, category=row.get("category"), variant_index=row["variant"], id8=id8
+                    )
+                    if applicable is not True:
+                        blocked = applicability_reason
                 logger.debug(
                     "Coding option ecu=0x%04X definition=%s source_index=%s mapped=%s "
-                    "mapping=%s predicates=%s",
+                    "mapping=%s write_block=%s predicates=%s",
                     address,
                     primary,
                     preset["source_index"],
                     mapped,
                     reason or mapping_reason,
+                    blocked,
                     {
                         key: preset[key]
                         for key in (
@@ -373,8 +411,20 @@ class CodingValuesWorker(CodingCatalogueWorker):
                             for option in preset["options"]
                         ],
                         "mapping_supported": mapped,
+                        "write_block": blocked,
                     }
                 )
+            mapped_features = {
+                (preset["section"], preset["id"])
+                for preset in row["presets"]
+                if preset["mapping_supported"]
+            }
+            row["presets"] = [
+                preset
+                for preset in row["presets"]
+                if preset["mapping_supported"]
+                or (preset["section"], preset["id"]) not in mapped_features
+            ]
             row.update(
                 loaded=True,
                 state=(

@@ -64,7 +64,8 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 
 - Easy Coding shows named sections, features, and options with the observed
   value selected. Opening a section reads its uncached ECUs on demand, requesting
-  only groups used by their named options. Reopening cached options performs no
+  only groups used by their named options. Presets excluded by the source for
+  the identified model are hidden and skipped. Reopening cached options performs no
   vehicle I/O. Display reads are not backups; preparation still requires fresh
   complete baselines. Unavailable features stay in their sections, disabled and
   excluded from writes. Catalogue failures without section data go to the log.

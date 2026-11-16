@@ -275,6 +275,21 @@ does not establish complete owner coverage or explain later coding timeouts.
 prerequisite/guard helpers implement the source-selected layout/shared engine.
 `source-coding-selection-20261104.json` is a build input, not a completion claim.
 
+- The five `00003E52` rows tagged `excludedSeries: ["i4"]` apply a negative
+  catalogue predicate. The supplied APK's preset parser has no field for it.
+  The recovered `i4` category requires an exact i4 type key on G26, which is
+  shared with the 4 Series Gran Coupé. `recover_vehicle_models.py` joins
+  `KIS.FAHRZEUGTYP.EBR` to `KIS.EBR.ID` for the labelled i4 rows that lack
+  inline model attributes. Unconfirmed G26 types leave model predicates unknown.
+- The three CAFD v2 documents use virtual groups and a separate coding-area
+  NCD. `CafXmlExtractorBAImpl.readSignatureLength`,
+  `NcdLengthCalculatorBAImpl.calculateNcdLength` and
+  `CodingBAImpl.createNcdFromEcuResponse` bind the zero-based data extent,
+  eight-byte proof stamp and decimal signature length. `READ_NCD_FROM_ECU_2`
+  uses a coding-area routine. Both `000058AA` versions have 93-byte NCDs and
+  `00005C0A-049-001-020` has a 117-byte NCD. The bundle retains the exact XML
+  hashes, virtual groups and function fields. Stripped names provide no Easy
+  Coding mapping. The existing data-group reader and writer exclude this format.
 - Source `k.q.b(k.v)` selects the exact packaged CAFD or the immediately lower
   patch with the same ID/major/minor. Retain reported and selected identities and
   hashes. No arbitrary nearest/first file, hidden exact-file-only restriction or
