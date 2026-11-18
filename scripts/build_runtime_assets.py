@@ -164,6 +164,7 @@ def build(
     library = ROOT / "native/build" / ("libedx.dylib" if sys.platform == "darwin" else "libedx.so")
     if output != ROOT:
         shutil.copy2(library, output / library.name)
+    run(sys.executable, str(ROOT / "scripts/build_demo_profile.py"), "--asset-root", str(output))
     publish_manifest(output)
 
 
@@ -177,6 +178,7 @@ def publish_manifest(output: Path) -> None:
     ]
     files += [path for path in (output / "ista_bundle").rglob("*") if path.is_file()]
     files.append(library if output == ROOT else output / library.name)
+    files.append(output / "assets/demo_vehicle.json")
     manifest = {
         "schema_version": 1,
         "files": {

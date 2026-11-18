@@ -155,7 +155,7 @@ def load_record(path: Path) -> dict[str, Any]:
 def coding_comparison_basis(record: dict) -> str | None:
     """Return the saved byte set a completed coding operation can be checked against."""
     original = record["original"]
-    if original["kind"] != "coding" or original["mode"] != "live":
+    if original["kind"] != "coding" or original["mode"] not in ("live", "demo"):
         return None
     for event in reversed(record["events"]):
         state = event["state"]
@@ -237,11 +237,16 @@ def export_interruption_evidence(path: Path, report: dict) -> None:
 class OperationStore:
     """Retain every original and outcome until the owner explicitly deletes it."""
 
-    def __init__(self, root: Path | None = None) -> None:
+    def __init__(self, root: Path | None = None, *, mode: str = "live") -> None:
+        if mode not in ("live", "demo"):
+            raise ValueError("Invalid backup store environment")
+        self.mode = mode
         self.root = root or Path.home() / "BMW-Tool" / "backups" / "operations"
 
     def prepare(self, *, kind: str, mode: str, vin: str, targets: list[dict[str, Any]]) -> Path:
         """Publish and sync complete baseline/intent before any vehicle send."""
+        if mode != self.mode:
+            raise PermissionError("Backup environment does not match this store")
         identity = uuid.uuid4().hex
         original = {
             "id": identity,
@@ -298,6 +303,8 @@ class OperationStore:
     def import_record(self, source: Path) -> Path:
         """Validate and copy a portable backup; importing never restores a vehicle."""
         record = load_record(source)
+        if record["original"]["mode"] != self.mode:
+            raise ValueError("Backup belongs to another environment")
         destination = self.root / f"{record['original']['id']}.json"
         if destination.exists():
             # Both complete revision digests have already been validated,

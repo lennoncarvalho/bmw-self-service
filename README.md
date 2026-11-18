@@ -41,8 +41,11 @@ ECU identities determine support; year/chassis alone do not. Optional read
 failures remain visible without discarding a valid connection. Service status
 requires the explicit **Read service status** action.
 
-DEMO mode in the gear menu explores the UI with local fixtures and does not
-validate car behavior. Writes require the feature's exact source-backed gates,
+DEMO mode in the gear menu connects a local virtual HSFZ vehicle through the
+normal readers and write workflows. Simulated changes survive reconnects;
+restarting the app or **Reset DEMO vehicle** restores the initial vehicle state.
+DEMO records remain isolated under `~/BMW-Tool/demo/` and are retained after reset.
+Simulation does not validate car behavior. Writes require the exact source-backed gates,
 confirmation and durable state. History shows local records; it cannot read or
 back up the existing car history. Replacement irreversibly removes omitted
 entries. No operation is automatically replayed after an uncertain outcome.

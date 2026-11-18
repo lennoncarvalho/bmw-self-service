@@ -29,6 +29,7 @@ from app.history_files import valid_vin
 from app.ista_jobs import APP_SOURCE, JobBackend, JobRun
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
 from app.resources import resource_path
+from app.session import LIVE, SessionEnvironment, check_binding, check_store
 from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
@@ -681,26 +682,6 @@ class CbsReadWorker(CarWorker):
         return read_cbs(self.connection, self.ecus, self.backend)
 
 
-def demo_cbs(data: dict[str, Any]) -> dict[str, Any]:
-    """Decode DEMO snapshot records with the live decoder; never resettable or live."""
-    labels: dict[str, str] = cbs_definitions()["items"]
-    owners, items = [], []
-    for row in data.get("cbs", []):
-        owner = {
-            "name": row["name"],
-            "address": int(row["address"], 16),
-            "version": row["version"],
-            "index": "DEMO",
-            "reset": "demo",
-        }
-        owners.append({**owner, "state": "DEMO"})
-        for record in decode_cbs_response(bytes.fromhex(row["response"]), row["version"]):
-            key = f"{record['item']:02X}"
-            label = labels.get(key, f"CBS item 0x{key}")
-            items.append({**record, "label": label, "owner": owner, "resettable": False})
-    return {"owners": owners, "items": items, "observed_clock": time.monotonic()}
-
-
 # ── Durable intent/results journal ─────────────────────────────────────────
 
 
@@ -833,6 +814,7 @@ class CbsResetPlan:
     item: int
     label: str
     before_raw: str
+    environment: SessionEnvironment = LIVE
 
     def intent(self, execution: dict[str, Any] | None = None) -> dict[str, Any]:
         """Return the durable intent stored before any send.
@@ -845,7 +827,7 @@ class CbsResetPlan:
             "execution": execution or {"path": "app-request"},
             "id": uuid.uuid4().hex,
             "created": datetime.now(UTC).isoformat(),
-            "environment": "live",
+            "environment": self.environment.mode,
             "vin": self.vin,
             "owner": dict(self.owner),
             "item": {"id": f"{self.item:02X}", "label": self.label},
@@ -887,7 +869,9 @@ def _primary_reset_owner(owner: dict[str, Any]) -> bool:
     )
 
 
-def plan_reset(vin: str, item: dict[str, Any]) -> CbsResetPlan:
+def plan_reset(
+    vin: str, item: dict[str, Any], *, environment: SessionEnvironment = LIVE
+) -> CbsResetPlan:
     """Freeze a reset only for a resettable item read from its owner in this session."""
     if not valid_vin(vin):
         raise PermissionError("A verified vehicle identity is required before a CBS reset")
@@ -926,7 +910,9 @@ def plan_reset(vin: str, item: dict[str, Any]) -> CbsResetPlan:
         cbs_definitions()["definitions"].get(owner["name"], {}).get("record_index", {})
     ):
         raise PermissionError("This DSC software defines a reset only for brake pads")
-    return CbsResetPlan(vin, dict(owner), int(item["item"]), str(item["label"]), str(item["raw"]))
+    return CbsResetPlan(
+        vin, dict(owner), int(item["item"]), str(item["label"]), str(item["raw"]), environment
+    )
 
 
 class CbsResetWorker(CarWorker):
@@ -945,7 +931,12 @@ class CbsResetWorker(CarWorker):
         """Retain the frozen reset plan, storage and explicit power acknowledgement."""
         super().__init__(connection)
         self.plan = CbsResetPlan(
-            plan.vin, json.loads(_encoded(plan.owner)), plan.item, plan.label, plan.before_raw
+            plan.vin,
+            json.loads(_encoded(plan.owner)),
+            plan.item,
+            plan.label,
+            plan.before_raw,
+            plan.environment,
         )
         self.store = store
         self.power_acknowledged = power_acknowledged
@@ -1034,6 +1025,8 @@ class CbsResetWorker(CarWorker):
             raise PermissionError("A CBS reset cannot be replayed")
         self._executed = True
         connection, plan = self.connection, self.plan
+        check_store(connection, self.store)
+        check_binding(connection, plan.environment.binding())
         if not _primary_reset_owner(plan.owner):
             raise PermissionError("The source primary reset owner changed or is not recovered")
         plan_reset(
@@ -1066,6 +1059,8 @@ class CbsResetWorker(CarWorker):
     def _reset(self, backend: JobBackend) -> dict[str, Any]:
         """Persist intent and execute the exact reset policy with observed outcomes."""
         connection, plan = self.connection, self.plan
+        check_store(connection, self.store)
+        check_binding(connection, plan.environment.binding())
         owner = plan.owner
         policy = owner["reset"]
         request = reset_request(plan.item, policy)

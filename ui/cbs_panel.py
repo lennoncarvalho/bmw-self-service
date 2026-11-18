@@ -150,15 +150,12 @@ class CbsPanel(QWidget):
         for key, unit in (("forecast_km", "km"), ("forecast_months", "months")):
             if item.get(key) is not None:
                 parts.append(f"forecast interval {locale.toString(item[key])} {unit}")
-        owner = item["owner"]
         lines = [" · ".join(parts)]
         if item.get("status_text"):
             lines.append(f"ECU status: {item['status_text']}")
         if item.get("notes"):
             lines.append("; ".join(item["notes"]))
-        if owner.get("reset") == "demo":
-            lines.append("DEMO record — reset is not simulated")
-        elif not item.get("resettable"):
+        if not item.get("resettable"):
             lines.append("Reset not available for this item/ECU in the recovered sources")
         return "\n".join(lines)
 

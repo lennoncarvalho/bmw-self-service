@@ -50,7 +50,7 @@ class CarWorker(QThread):
         """Create a CarWorker bound to a connection.
 
         Args:
-            connection: An HSFZConnection, DoIPConnection, or MockConnection.
+            connection: An identified diagnostic connection.
         """
         super().__init__()
         self.connection = connection
@@ -173,7 +173,7 @@ class PostConnectWorker(CarWorker):
         """Create a post-connect worker.
 
         Args:
-            connection: An HSFZConnection, DoIPConnection, or MockConnection.
+            connection: An identified diagnostic connection.
             tasks: List of (label, fn) tuples.
         """
         super().__init__(connection)

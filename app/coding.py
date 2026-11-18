@@ -10,8 +10,8 @@ from PySide6.QtCore import Signal
 
 from app.coding_db import CodingDatabase, _number
 from app.coding_prerequisites import ENET_READER_TIMING, applies, reader_contract, run_prerequisites
-from app.operation_store import OperationStore
 from app.protocol.contracts import ProtocolFailure, TransportKind
+from app.session import operation_store
 from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
@@ -371,7 +371,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                         definitions=definitions,
                         database=database,
                         vin=self.vin,
-                        store=OperationStore(),
+                        store=operation_store(self.connection),
                         read=read,
                         read_only=self.connection.read_only,
                         context=context,

@@ -1,5 +1,9 @@
 {
   "files": {
+    "assets/demo_vehicle.json": {
+      "bytes": 21195,
+      "sha256": "4d9eb2439882d3b902106c1cba07316399b15a91b1dd07aa27e9836a15e48d89"
+    },
     "coding_data/cbs_definitions.json": {
       "bytes": 66003,
       "sha256": "2faa77ee3f4950b6b729494581245f1e8e815c71febaa82158cd9293a0522e71"

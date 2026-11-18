@@ -134,24 +134,32 @@ bytes/occurrence sequence. Repeated source retries do not authorize replay.
 - Check exact SID/DID/subfunction and application/job results. Transport success
   is not ECU application completion. Log full request/reply bytes at DEBUG.
 
-### DEMO migration boundary
+### Stateful DEMO
 
-The approved behavior is in [plan.md](plan.md#stateful-demo). Current DEMO is not
-an end-to-end simulator: `MainWindow._on_connect_success()` and
-`DiagnosticsPage._read_dtcs()` read `MockConnection.data`, `demo_cbs()` decodes
-canned records, coding saves previews and history vehicle writes are blocked.
-`MockConnection.send_uds()` lacks the facade's context/raw/grant contract.
+`app/demo_vehicle.py` models one virtual F048/NBT HSFZ vehicle through a private
+socket pair. The app endpoint uses `BoundedStream`, `HsfzAdapter`, the normal UDS
+client, native jobs and CarWorkers. DEMO performs no physical discovery/network
+connection and has no separate page-data or preview-write path. The virtual peer
+owns only the other endpoint; it is not another app protocol owner.
 
-The replacement seam is stream creation in `DiagnosticConnection.connect()`:
-`BoundedStream(sock, generation)` can wrap the app end of a local socket pair,
-retaining `HsfzAdapter`, UDS validation, native jobs and the single owner. A
-background virtual peer owns the other end; it never opens physical networking.
-This is a planned integration point, not an implemented simulator.
+`scripts/build_demo_profile.py --asset-root <runtime-root>` generates
+`assets/demo_vehicle.json` from that root's bundled jobs, coding catalogue and
+measurement contracts. The full asset builder runs it and manifests its output.
+The fixed synthetic VIN, faults, service values and source-sized/signed coding
+blocks cover ZGW_01, DME_BX8, BDC, KOMB25 and NBT. Per-ECU job hashes and exact
+coding definitions remain in the fixture. These are simulated values, not an
+owner-car capture or physical validation. Unsupported requests receive explicit
+negative responses; supported writes update state and source restarts finish
+simulated activation without adding a history reader or cycle control.
 
-Environment isolation must cover `CodingWriteWorker`'s hardcoded `mode="live"`,
-CBS intent's `environment="live"`, history journal defaults, recovery inventory,
-comparison/restore eligibility and the Backups page. Existing record schemas
-already distinguish live/DEMO; directory isolation alone is not authorization.
+`app/session.py` separates immutable live/DEMO context and virtual-instance
+identity from each connection generation. Plans, records and stores check that
+context before writes, restoration or verification. DEMO stores live under
+`~/BMW-Tool/demo/<instance>/`; imports must match the environment and enter the
+active instance's store. Reconnect retains virtual ECU state. App restart or
+Reset DEMO creates a fresh instance, including a separate local history draft;
+saved evidence remains on disk and old workspace callbacks cannot populate the
+new instance. Legacy metadata previews remain non-restorable files.
 
 ### Identity, configuration and diagnostics
 
