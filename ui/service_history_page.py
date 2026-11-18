@@ -944,6 +944,7 @@ class ServiceHistoryPage(QWidget):
         key, before = self._key, self.workspace
         vin = before["project"]["vin"]
         environment = "demo" if key.startswith("demo-") else "live"
+        session = self._environment.binding()
         memory = copy.deepcopy(self._write_report)
 
         def operation() -> object:
@@ -994,6 +995,7 @@ class ServiceHistoryPage(QWidget):
                 memory
                 and memory.get("workspace_key") == key
                 and memory.get("intent", {}).get("vin") == vin
+                and memory.get("intent", {}).get("session") == session
             ):
                 latest = {
                     event["step"]: event["state"]
