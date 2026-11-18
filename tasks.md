@@ -8,8 +8,9 @@ Current source contracts and reproduction routes are in [docs.md](docs.md).
 
 - [ ] Resolve disabled presets when source definitions establish the missing
   function mappings or compatible values. Eligible features already expose
-  their representable choices. Extend exact G26 type coverage with a source
-  that identifies the unlabelled type keys.
+  their representable choices. Identify the remaining 39 unlabelled G26 type
+  keys and any positive source category predicates still unavailable for
+  combustion G26 models; exact labels alone do not establish those categories.
 - [ ] Verify a live supported coding change and explicit restore after any required
   cycle. From Backups, run **Verify coding after vehicle cycle** on each completed
   operation and retain the session log and comparison. Response-confirmed

@@ -569,7 +569,14 @@ class CodingDatabase:
         return ((blocks[did][start] & mask) >> shift) == 3
 
     def preset_applicability(
-        self, preset: dict, *, category: int | None, variant_index: str | None, id8: bool | None
+        self,
+        preset: dict,
+        *,
+        category: int | None,
+        variant_index: str | None,
+        id8: bool | None,
+        model_range: str = "",
+        type_code: str = "",
     ) -> tuple[bool | None, str]:
         """Evaluate recovered source filters; unknown context remains explicitly unknown."""
         if preset.get("supportedForID8") is not True:
@@ -583,17 +590,36 @@ class CodingDatabase:
                 return None, "ECU variant predicate has no identified variant"
             if variant_index in excluded:
                 return False, "Source excludes this ECU variant"
-        model_allowed, reason = self._preset_model_applicability(preset, category)
+        model_allowed, reason = self._preset_model_applicability(
+            preset, category, model_range=model_range, type_code=type_code
+        )
         if model_allowed is not True:
             return model_allowed, reason
         return True, "Source filters allow this identified context"
 
     def _preset_model_applicability(
-        self, preset: dict, category: int | None
+        self,
+        preset: dict,
+        category: int | None,
+        *,
+        model_range: str = "",
+        type_code: str = "",
     ) -> tuple[bool | None, str]:
         """Evaluate the recovered source series selector."""
         included = preset.get("series", [])
         excluded = preset.get("excludedSeries", [])
+        if "i4" in excluded and model_range in {"G26", "G026"} and type_code:
+            # Exact source model labels can settle this negative predicate without
+            # assigning combustion G26 types to an unrecovered source category.
+            try:
+                model = describe_model(type_code, "G026")
+            except (OSError, ValueError):
+                logger.warning("Exact model exclusion context unavailable", exc_info=True)
+                model = None
+            if model is not None:
+                if model.lower().startswith("bmw i4 "):
+                    return False, "Option is excluded by the source model exclusions"
+                excluded = [tag for tag in excluded if tag != "i4"]
         if not included and not excluded:
             return True, ""
         if category is None or (category == 0 and excluded):
@@ -641,14 +667,18 @@ class CodingDatabase:
         definitions: list[str] | None = None,
         category: int | None = None,
         deduplicate: bool = False,
+        model_range: str = "",
+        type_code: str = "",
     ) -> list[dict]:
         """Return presets with stable source indexes and optional display deduplication."""
         result = []
         seen: set[str] = set()
         for source_index, entry in enumerate(self.root_indexes.get(cafd_id, [])):
             if (
-                category is not None
-                and self._preset_model_applicability(entry, category)[0] is False
+                self._preset_model_applicability(
+                    entry, category, model_range=model_range, type_code=type_code
+                )[0]
+                is False
             ):
                 continue
             if deduplicate:

@@ -147,6 +147,10 @@ def build(
         str(ista),
         str(data / "vehicle_models.json"),
         str(output / "build/vehicle-model-provenance.json"),
+        "--type-database",
+        str(rheingold / "SQLiteDBs/DiagDocDb.sqlite"),
+        "--reader",
+        str(reader),
     )
     run(
         sys.executable,
