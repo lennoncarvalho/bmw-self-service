@@ -341,6 +341,7 @@ class CodingPage(QWidget):
             old_page.deleteLater()
         if is_demo:
             self._sub_stack.addWidget(self._build_easy_page())
+            self.search.apply()
             return
 
         page = QWidget()
@@ -812,8 +813,6 @@ class CodingPage(QWidget):
         )
         if reply != QMessageBox.StandardButton.Yes:
             return
-        self._pending = 0
-        self._update_pending_label()
         # Restore original option values by deep-copying into self._categories
         self._categories.clear()
         self._categories.extend(copy.deepcopy(self._originals))
@@ -824,6 +823,8 @@ class CodingPage(QWidget):
             old_page.deleteLater()
         self._sub_stack.insertWidget(0, self._build_easy_page())
         self._sub_stack.setCurrentIndex(0)
+        self._pending = 0
+        self._update_pending_label()
         logger.info("Coding changes cleared")
 
     def _on_write(self) -> None:
@@ -855,9 +856,9 @@ class CodingPage(QWidget):
 
         # Mock path
         if hasattr(self._connection, "data") and self._connection.data:
+            self._originals = copy.deepcopy(self._categories)
             self._pending = 0
             self._update_pending_label()
-            self._originals = copy.deepcopy(self._categories)
             logger.info("DEMO coding preview saved")
             return
 
@@ -918,7 +919,6 @@ class CodingPage(QWidget):
             self._categories.extend(categories)
             self._originals = copy.deepcopy(self._categories)
             self._pending = 0
-            self._update_pending_label()
             self._is_real = True
             # Rebuild easy page
             old_page = self._sub_stack.widget(0)
@@ -927,6 +927,7 @@ class CodingPage(QWidget):
                 old_page.deleteLater()
             self._sub_stack.insertWidget(0, self._build_easy_page())
             self._sub_stack.setCurrentIndex(0)
+            self._update_pending_label()
             logger.info("Coding data loaded (%d categories)", len(categories))
 
     def _select_source_option(

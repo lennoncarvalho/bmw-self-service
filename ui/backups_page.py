@@ -126,6 +126,13 @@ class BackupsPage(QWidget):
                 identity.setWordWrap(True)
                 identity.setTextFormat(Qt.TextFormat.PlainText)
                 box.addWidget(identity)
+                card.setProperty(
+                    "searchText",
+                    " ".join(
+                        f"{target['variant']} 0x{target['address']:02X} {target['software']}"
+                        for target in original["targets"]
+                    ),
+                )
                 self._add_comparison(box, path, record["original_sha256"])
                 if status["instructions"]:
                     instructions = QLabel(status["instructions"])

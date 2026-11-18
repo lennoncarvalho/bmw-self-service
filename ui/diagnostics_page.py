@@ -292,7 +292,11 @@ class DiagnosticsPage(QWidget):
             + (
                 "\nVehicle inventory unavailable; identified controllers only."
                 if isinstance(result, dict) and not result.get("topology_known", True)
-                else "\nOpen coverage details below for each memory."
+                else (
+                    "\nMemory coverage: "
+                    f"{sum(coverage_complete(row) for row in self._coverage)}"
+                    f"/{len(self._coverage)} accounted for."
+                )
                 if self._coverage
                 else "\nPer-memory coverage unavailable."
             )
@@ -392,6 +396,7 @@ class DiagnosticsPage(QWidget):
         self._update_actions()
         self.scan_summary.setText("Scan unavailable")
         self.coverage_summary.setText("The latest read failed. Previous coverage is stale.")
+        self.system_summary.setText("Recorded fault counts unavailable after the failed read.")
         self._empty_text.setText("DTC scan unavailable. See the session log for details.")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)

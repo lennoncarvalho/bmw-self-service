@@ -323,7 +323,7 @@ class MainWindow(QMainWindow):
             if coverage
             else "Scan coverage · Unavailable"
         )
-        if self._connected and self.diag_page._stale_scan_notice.isVisible():
+        if self._connected and not self.diag_page._stale_scan_notice.isHidden():
             coverage_text += " · Previous scan is stale"
         self.vehicle_page.coverage_label.setText(coverage_text)
         panel = self.vehicle_page.cbs_panel
@@ -1373,7 +1373,7 @@ class MainWindow(QMainWindow):
             if coverage
             else "Scan coverage · Unavailable"
         )
-        if self._connected and self.diag_page._stale_scan_notice.isVisible():
+        if self._connected and not self.diag_page._stale_scan_notice.isHidden():
             coverage_text += " · Previous scan is stale"
         self.vehicle_page.coverage_label.setText(coverage_text)
         panel = self.vehicle_page.cbs_panel
