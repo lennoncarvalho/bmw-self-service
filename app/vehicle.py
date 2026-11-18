@@ -15,6 +15,7 @@ from typing import Any, cast
 from app.diagnostic_texts import diagnostic_texts
 from app.ista_data import DataFormatError
 from app.ista_jobs import JobBackend, data_source, fault_records
+from app.power_readings import read_power_status
 from app.protocol.contracts import TransportKind
 from app.resources import resource_path
 from app.uds import decode_dtc_records
@@ -457,6 +458,7 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
             "Engine data",
             lambda conn: supported(conn, lambda active: read_engine_data(active, ecus)),
         ),
+        ("Power status", lambda conn: read_power_status(conn, ecus)),
         ("Vehicle order", read_vehicle_order),
         (
             "I-Level",
