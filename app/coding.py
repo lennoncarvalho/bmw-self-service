@@ -133,6 +133,8 @@ class CodingCatalogueWorker(CarWorker):
                 "available": False,
                 "loaded": False,
                 "category": category,
+                "model_range": self.model_range,
+                "type_code": self.type_code,
             }
             rows.append(row)
             if not ecu.get("identified") or not ecu.get("uds"):
@@ -170,7 +172,13 @@ class CodingCatalogueWorker(CarWorker):
                 # Loading the root names does not require a car baseline or even
                 # reading a secondary layout that has no Easy Coding options.
                 database.load_ecu(primary[:8], primary[9:])
-                presets = database.get_presets(primary[:8], category=category, deduplicate=True)
+                presets = database.get_presets(
+                    primary[:8],
+                    category=category,
+                    deduplicate=True,
+                    model_range=self.model_range,
+                    type_code=self.type_code,
+                )
                 row.update(
                     sections={
                         preset["section"]: database.strings.get(
@@ -269,7 +277,11 @@ class CodingValuesWorker(CodingCatalogueWorker):
             primary = database.primary_definition(row["definitions"])
             database.load_ecu(primary[:8], primary[9:])
             source_presets = database.get_presets(
-                primary[:8], category=row.get("category"), deduplicate=True
+                primary[:8],
+                category=row.get("category"),
+                deduplicate=True,
+                model_range=row.get("model_range", ""),
+                type_code=row.get("type_code", ""),
             )
             if self.connection.kind == TransportKind.HSFZ and applies(
                 address, row["definitions"], database
@@ -433,7 +445,12 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 blocked = scope_reason
                 if mapped and not blocked:
                     applicable, applicability_reason = database.preset_applicability(
-                        preset, category=row.get("category"), variant_index=row["variant"], id8=id8
+                        preset,
+                        category=row.get("category"),
+                        variant_index=row["variant"],
+                        id8=id8,
+                        model_range=row.get("model_range", ""),
+                        type_code=row.get("type_code", ""),
                     )
                     if applicable is not True:
                         blocked = applicability_reason

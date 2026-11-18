@@ -196,6 +196,8 @@ def _resolve_changes(
             category=vehicle_context.get("category"),
             variant_index=variant_index,
             id8=vehicle_context.get("id8"),
+            model_range=vehicle_context.get("model_range", ""),
+            type_code=vehicle_context.get("type_code", ""),
         )
         if applicable is not True:
             raise ValueError(reason)
@@ -455,12 +457,11 @@ class CodingPrepareWorker(CarWorker):
                         category = db.category_for_model_range(
                             order["model_range"], order["type_code"]
                         )
-                        if category is None:
-                            raise ValueError(
-                                "The source category is unavailable for this vehicle order"
-                            )
                         plan["vehicle_context"]["category"] = category
                         selection_context["category"] = category
+                        selection_context.update(
+                            model_range=order["model_range"], type_code=order["type_code"]
+                        )
                     intended = _resolve_changes(
                         db,
                         selected,
@@ -735,11 +736,10 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
     if not data.get("targets") or data.get("composition") != "baseline-i":
         raise ValueError("Coding plan has no complete source-based target")
     derived_category = None
+    order: dict[str, Any] = {}
     if "vehicle_order" in data:
         order = decode_vehicle_order(bytes.fromhex(data["vehicle_order"]))
         derived_category = db.category_for_model_range(order["model_range"], order["type_code"])
-        if derived_category is None:
-            raise ValueError("Frozen vehicle order has no exact source category")
     if data.get("vehicle_context", {}).get("category") != derived_category:
         raise ValueError("Coding selection category is not bound to its source vehicle order")
     restore_targets: dict[int, dict] = {}
@@ -832,6 +832,8 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
                     vehicle_context={
                         **data.get("vehicle_context", {}),
                         "id8": db.id8_context(definitions, baseline),
+                        "model_range": order.get("model_range", ""),
+                        "type_code": order.get("type_code", ""),
                     },
                 ),
                 definitions,

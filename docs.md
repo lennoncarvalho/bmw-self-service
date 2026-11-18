@@ -353,8 +353,20 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   The recovered `i4` and `ix3` categories require exact model labels on shared
   G26 and G08 chassis. `recover_vehicle_models.py` joins `KIS.FAHRZEUGTYP.EBR`
   to `KIS.EBR.ID` for labelled i4 and iX3 rows that lack inline attributes.
-  Unconfirmed types leave model predicates unknown. FAFP `00003002` has
-  numeric criteria for all 58 G26 keys. The criteria names are empty.
+  With `--type-database <DiagDocDb.sqlite> --reader <sqlite3mc>`, it fills missing
+  exact KIS types from release 4.29.14's `XEP_CHARACTERISTICS` type keys through
+  `XEP_VEHICLES` to agreeing brand, development-code and sales-designation rows.
+  The full builder uses its existing cipher reader. Runtime loads only generated
+  `vehicle_models.json`; source hashes and row IDs remain build provenance.
+  This recovers 13 combustion G26 labels and two G08 iX3 labels. G26 has 19 of
+  58 exact types labelled; the remaining 39 stay unknown. FAFP `00003002` has
+  numeric criteria for all 58 G26 keys, but their names are empty.
+  An exact non-i4 G26 label settles only the negative `excludedSeries: ["i4"]`
+  predicate. It does not assign an unproven category or satisfy a positive
+  `gasoline` selector. Catalogue/value reads use that exact context; preparation
+  and frozen-plan validation derive it again from fresh/saved FA bytes. Execution
+  still checks the unchanged FA before mutation. Four otherwise mapped presets
+  can therefore pass their model filter on these newly identified G26 types.
 - The i3 and i8 category descriptions omit chassis codes. Source `models.o.L`
   resolves the `i3` and `i8` tags used in presets. KIS `I001` links the i3 to
   `I01` and the i8 Coupé and Roadster to `I12` and `I15` respectively.
@@ -376,7 +388,8 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   mask or have no concrete applicable bytes stay disabled. Other choices use
   their exact source masks. The one-bit refresh-rate field in `00004508`
   versions `002-003-006`, `002-003-014` and `002-003-018` cannot encode either
-  catalogue rate.
+  catalogue rate. `00000819`'s `BUZZER_FREQUENCY` row supplies no choices; its
+  label and a named period field alone do not establish selectable values.
 - Source `models.s0.A`, `k.a.i` compose actual complete baseline bytes with source
   group addresses/masks; preserve untouched bytes and Custom values. Exclude the
   exact `SIGNATURE` group and concatenate the other groups in declared order.
