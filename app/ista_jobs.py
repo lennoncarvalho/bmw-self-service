@@ -17,6 +17,7 @@ when no interpreter, data source or job file is available, and label the source.
 
 import hashlib
 import logging
+import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -191,6 +192,7 @@ class _JobConnection:
         sequence: tuple[bytes, ...] | None = None,
         on_send: Callable[[bytes], None] | None = None,
         on_reply: Callable[[bytes, bytes], None] | None = None,
+        deadline: float | None = None,
     ) -> None:
         """Bind one job run to its exact ECU and permitted telegram sequence."""
         self.connection = connection
@@ -201,13 +203,17 @@ class _JobConnection:
         self.sequence = sequence
         self.sequence_position = 0
         self.on_send, self.on_reply = on_send, on_reply
+        self.deadline = deadline
 
     @property
     def trace_id(self) -> str:
         return str(getattr(self.connection, "trace_id", ""))
 
     def context(self, timeout: float = 30.0, cancelled: Event | None = None) -> Any:
-        return self.connection.context(timeout, cancelled)
+        context = self.connection.context(timeout, cancelled)
+        if self.deadline is not None:
+            context.deadline = min(context.deadline, self.deadline)
+        return context
 
     def send_uds(
         self,
@@ -364,6 +370,7 @@ class JobBackend:
         args: str = "",
         *,
         timeout: float = 30.0,
+        deadline: float | None = None,
         cancelled: Event | None = None,
         grant: frozenset[int] = frozenset(),
         expected: frozenset[bytes] = frozenset(),
@@ -379,6 +386,7 @@ class JobBackend:
             job: Job name.
             args: Semicolon-separated job arguments.
             timeout: Overall job budget in seconds.
+            deadline: Optional absolute monotonic deadline, including native setup time.
             cancelled: Cancellation token.
             grant: Non-read services the job may send.
             expected: Exact requests allowed for the granted services.
@@ -392,6 +400,8 @@ class JobBackend:
         Raises:
             JobError: No job file is loaded for ``name``.
         """
+        if deadline is not None and not math.isfinite(deadline):
+            raise ValueError("Job deadline must be finite")
         if sequence is not None and (
             not sequence
             or frozenset(sequence) != expected
@@ -403,7 +413,7 @@ class JobBackend:
             raise JobError(f"No job file is available for {name}")
         run = JobRun(engine.sgbd, job.upper())
         engine.connection = _JobConnection(
-            self.connection, address, expected, run, sequence, on_send, on_reply
+            self.connection, address, expected, run, sequence, on_send, on_reply, deadline
         )
         try:
             run.result = engine.run_job(

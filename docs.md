@@ -240,7 +240,7 @@ failure. It never retries or automatically rereads a stopped clear batch.
 
 `app/power_readings.py` uses `coding_data/power_readers.json`: 30 exact variants,
 70 address/index identities, SOC/SOH on 26 variants and terminal state on six.
-`scripts/recover_power_readers.py --parser BimmerDaten/decoderPrg.py --evidence <path>`
+`python3 scripts/recover_power_readers.py --parser BimmerDaten/decoderPrg.py --evidence <path>`
 rebuilds it from bundled PRGs, checks native signed/percentage boundaries and every
 source terminal state, and retains job offsets/listing hashes/table provenance.
 The full runtime builder runs this producer. No runtime source-folder access.

@@ -20,7 +20,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app.ediabas import JobEngine  # noqa: E402
+from app.ediabas import JobEngine, JobResult  # noqa: E402
 from app.ista_data import DataFormatError, IstaDataSource, read_job_table  # noqa: E402
 from app.protocol.contracts import OperationContext  # noqa: E402
 
@@ -92,14 +92,26 @@ class _Peer:
         return self.response
 
 
-def _run(engine: JobEngine, peer: _Peer, reader: dict, data: bytes) -> dict:
+def _run(engine: JobEngine, peer: _Peer, reader: dict, data: bytes) -> JobResult:
     peer.request = bytes.fromhex(reader["request"])
     peer.response = b"\x62" + peer.request[1:] + data
     peer.sent = []
     result = engine.run_job(reader["job"], reader["args"], timeout=2.0)
     if result.status != "OKAY" or peer.sent != [peer.request]:
         raise ValueError(f"Native reader failed: {engine.sgbd}/{reader['args']}: {result.status}")
-    return {key: value for row in result.sets for key, value in row.items()}
+    return result
+
+
+def _result_values(result: JobResult, field: dict, *, percentage: bool = True) -> dict:
+    matches = [row for row in result.sets if field["result"] in row]
+    if len(matches) != 1:
+        raise ValueError("Native reader returned missing or ambiguous values")
+    values = matches[0]
+    if percentage:
+        unit = field["result"].removesuffix("_WERT") + "_EINH"
+        if values.get(unit) != "%":
+            raise ValueError("Native percentage unit is not in its value's result set")
+    return values
 
 
 def _table(path: Path, name: str) -> list[dict[str, str]]:
@@ -138,8 +150,11 @@ def _verify(engine: JobEngine, peer: _Peer, reader: dict) -> None:
     size = reader["response_size"] - 3
     if "kl15" in reader["values"]:
         for value in sorted({int(code) for code in reader["source_states"]} | {254, 255}):
-            values = _run(engine, peer, reader, bytes((value,)))
-            field = reader["values"]["kl15"]["result"]
+            spec = reader["values"]["kl15"]
+            values = _result_values(
+                _run(engine, peer, reader, bytes((value,))), spec, percentage=False
+            )
+            field = spec["result"]
             expected = reader["source_states"].get(str(value))
             if expected is not None and values.get(field) != expected:
                 raise ValueError("Native terminal enumeration differs from its source table")
@@ -148,19 +163,16 @@ def _verify(engine: JobEngine, peer: _Peer, reader: dict) -> None:
         for raw in (0, 1, 50, 100, 101, 127, 128, 228, 254, 255):
             data = bytearray(size)
             data[reader["fixture_offsets"][metric]] = raw
-            values = _run(engine, peer, reader, bytes(data))
+            values = _result_values(_run(engine, peer, reader, bytes(data)), spec)
             expected = raw - 128 if metric == "soh" and not spec.get("quality") else raw
             if spec.get("quality") and raw >= 128:
                 expected = raw - 256
             if values.get(spec["result"]) != expected:
                 raise ValueError(f"Changed native {metric} scaling: {engine.sgbd}")
-            unit = spec["result"].removesuffix("_WERT") + "_EINH"
-            if values.get(unit) != "%":
-                raise ValueError("Native percentage unit differs from source")
             if quality := spec.get("quality"):
                 data = bytearray(size)
                 data[reader["fixture_offsets"]["quality"]] = raw
-                values = _run(engine, peer, reader, bytes(data))
+                values = _result_values(_run(engine, peer, reader, bytes(data)), spec)
                 if values.get(quality) != (raw if raw < 128 else raw - 256):
                     raise ValueError("Changed native quality scaling")
 
@@ -182,6 +194,8 @@ def build(bundle: Path, parser_path: Path, output: Path, evidence: Path) -> None
             continue
         path, directory = located
         raw = path.read_bytes()
+        # PRG body strings use XOR 0xF7; this is only a candidate scan,
+        # followed by structured table parsing and native job verification.
         decoded = raw.translate(bytes(value ^ 0xF7 for value in range(256)))
         if not any(
             token in decoded
@@ -250,8 +264,8 @@ def build(bundle: Path, parser_path: Path, output: Path, evidence: Path) -> None
                 continue
             if len(addresses) != 1:
                 raise ValueError(f"Reader has multiple source addresses: {name}")
-            parsed = parser.PrgParser(str(path))
-            job_map = {job.name: job for job in parsed._parse_jobs(parsed._parse_description())}
+            parsed = parser.PrgParser(str(path)).parse()
+            job_map = {job.name: job for job in parsed.jobs}
             anchors = {}
             for reader in readers:
                 _verify(engine, peer, reader)

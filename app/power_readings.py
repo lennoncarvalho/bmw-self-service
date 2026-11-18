@@ -13,6 +13,10 @@ from app.resources import resource_path
 
 logger = logging.getLogger(__name__)
 METRICS = ("soc", "soh", "kl15")
+# Source TAB_CAS_KLEMMENSTATUS/TAB_KLEMMEN_ZUSTAND codes, gated by each
+# reader's recovered state table. Initialization and invalid states stay unavailable.
+STABLE_TERMINAL_STATES = frozenset({2, 4, 6, 8, 10, 13})
+TRANSITION_TERMINAL_STATES = frozenset({3, 5, 7, 9, 11, 12})
 
 
 def reader_profiles() -> dict[str, Any]:
@@ -63,6 +67,8 @@ def reader_profiles() -> dict[str, Any]:
                         for key, value in reader["states"].items()
                     ):
                         raise ValueError("Invalid terminal state definitions")
+                elif not field["result"].endswith("_WERT"):
+                    raise ValueError("Invalid percentage result naming")
                 elif field.get("quality") is not None and not isinstance(field["quality"], str):
                     raise ValueError("Invalid power quality definition")
     return profiles
@@ -105,14 +111,15 @@ def decode_reading(run: JobRun, reader: dict[str, Any]) -> dict[str, dict[str, A
             "quality": None,
         }
         if metric == "kl15":
+            # JSON object keys are strings, including the recovered numeric state codes.
             state = reader["states"].get(str(reply[3]))
             observation["raw_value"] = reply[3]
             if isinstance(raw, str) and state is not None:
                 status = (
                     "read"
-                    if reply[3] in (2, 4, 6, 8, 10, 13)
+                    if reply[3] in STABLE_TERMINAL_STATES
                     else "transition"
-                    if reply[3] in (3, 5, 7, 9, 11, 12)
+                    if reply[3] in TRANSITION_TERMINAL_STATES
                     else "unavailable"
                 )
                 observation.update(
@@ -160,8 +167,8 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
     if getattr(connection, "kind", None) != TransportKind.HSFZ:
         report["detail"] = "Power readers need a recovered logical-address mapping"
         return report
-    profiles = reader_profiles()
     deadline = time.monotonic() + 30.0
+    profiles = reader_profiles()
     stopped = False
     backend = JobBackend(connection)
     try:
@@ -176,7 +183,11 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
             # and generated native decoder identity bound to each observation.
             if ecu.get("address_index") not in profile["selectors"]:
                 continue
-            address = int(ecu["addr"], 16)
+            try:
+                address = int(ecu["addr"], 16)
+            except (KeyError, TypeError, ValueError):
+                logger.warning("Invalid power reader ECU address %r", ecu.get("addr"))
+                continue
             if ecu["address_index"] != f"{address:02X} {ecu.get('variant')}":
                 continue
             try:
@@ -194,7 +205,12 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
                 elif matching:
                     try:
                         run = backend.run(
-                            name, address, reader["job"], reader["args"], timeout=remaining
+                            name,
+                            address,
+                            reader["job"],
+                            reader["args"],
+                            timeout=remaining,
+                            deadline=deadline,
                         )
                         if run.error is not None:
                             logger.warning(
