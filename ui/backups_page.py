@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.operation_store import OperationStore, coding_comparison_basis, load_record
+from app.session import LIVE, SessionEnvironment, environment
 from ui.cockpit import CardSearch, CockpitCard, PageHeader, caption
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ class BackupsPage(QWidget):
         """Build the expanding backup record list and local file actions."""
         super().__init__(parent)
         self.store = OperationStore()
+        self._environment = LIVE
         self.setObjectName("backupsPage")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -60,6 +62,7 @@ class BackupsPage(QWidget):
         self.record_count = caption("", "eyebrow")
         layout.addWidget(self.record_count)
         location = caption(f"Backup location: {self.store.root}")
+        self._location = location
         location.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         layout.addWidget(location)
         container = QWidget()
@@ -74,6 +77,16 @@ class BackupsPage(QWidget):
 
     def set_connection(self, connection: Any) -> None:
         """Refresh local files; importing and viewing never send vehicle requests."""
+        if connection is not None:
+            self.set_environment(environment(connection))
+        else:
+            self.refresh()
+
+    def set_environment(self, current: SessionEnvironment) -> None:
+        """Browse only records from the explicitly selected session environment."""
+        self._environment = current
+        self.store = OperationStore(current.root / "backups" / "operations", mode=current.mode)
+        self._location.setText(f"Backup location: {self.store.root}")
         self.refresh()
 
     def refresh(self) -> None:
@@ -143,7 +156,7 @@ class BackupsPage(QWidget):
                         "Restoration requires a supported operation and matching vehicle/software identity."
                     )
                 )
-                if original["kind"] == "coding" and original["mode"] == "live":
+                if original["kind"] == "coding" and original["mode"] == self._environment.mode:
                     restore = QPushButton("Review coding restoration")
                     restore.clicked.connect(
                         lambda checked=False, source=path: self.restore_requested.emit(source)

@@ -14,6 +14,7 @@ from app.history_journal import HistoryJournalStore
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
 from app.resources import resource_path
 from app.service_history import decode_nbt_add_result, encode_nbt_add
+from app.session import LIVE, check_binding, check_store, environment
 from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
@@ -90,6 +91,7 @@ def build_plan(
     vin: str,
     known_dates: set[date],
     consumed: set[str],
+    session: dict[str, str] | None = None,
 ) -> HistoryPlan:
     """Freeze append or replacement against local data, never an invented car baseline."""
     data, digest = contracts()
@@ -149,6 +151,7 @@ def build_plan(
     )
     requests.append({"kind": "reset", "request": data["reset"], "entry_index": None})
     plan = {
+        "session": session or LIVE.binding(),
         "vin": vin,
         "mode": mode,
         "target": target,
@@ -228,6 +231,7 @@ class HistoryPrepareWorker(CarWorker):
     def do_work(self) -> HistoryPlan:
         """Prepare on the owner with a whole30second read budget, no mutations."""
         connection = self.connection
+        check_store(connection, self.store)
         if connection.read_only or connection.kind != TransportKind.HSFZ:
             raise PermissionError("History writes require a supported writable session")
         row = select_target(self.ecus)
@@ -235,8 +239,8 @@ class HistoryPrepareWorker(CarWorker):
         if not valid_vin(vin):
             raise ValueError("Verified vehicle identity is required")
         context = connection.context(30.0)
-        known_dates = self.store.known_dates(vin)
-        consumed = self.store.consumed_draft_ids(vin)
+        known_dates = self.store.known_dates(vin, environment(connection).mode)
+        consumed = self.store.consumed_draft_ids(vin, environment(connection).mode)
         context.remaining()
 
         def prepare(services: Any, ctx: OperationContext) -> bytes:
@@ -270,6 +274,7 @@ class HistoryPrepareWorker(CarWorker):
             vin=vin,
             known_dates=known_dates,
             consumed=consumed,
+            session=environment(connection).binding(),
         )
 
 
@@ -304,8 +309,10 @@ class HistoryWriteWorker(CarWorker):
             raise PermissionError("A history operation cannot be replayed")
         self._executed = True
         connection = self.connection
+        check_store(connection, self.store)
         context = connection.context(300.0)
         data = self.plan.data()
+        check_binding(connection, data.get("session"))
         definition = validate_execution(data)
         if (
             not self.power_acknowledged
@@ -324,14 +331,16 @@ class HistoryWriteWorker(CarWorker):
             raise PermissionError("Vehicle identity/session changed before history write")
         # Recheck known local operation effects after confirmation, before any send.
         if data["mode"] == "append" and (
-            data["draft_ids"][0] in self.store.consumed_draft_ids(data["vin"])
+            data["draft_ids"][0]
+            in self.store.consumed_draft_ids(data["vin"], environment(connection).mode)
             or date.fromisoformat(data["intended"][0]["date"])
-            in self.store.known_dates(data["vin"])
+            in self.store.known_dates(data["vin"], environment(connection).mode)
         ):
             raise ValueError("This date/draft has a prior accepted or uncertain operation")
         context.remaining()
         try:
-            path = self.store.prepare(**data)
+            journal = {key: value for key, value in data.items() if key != "session"}
+            path = self.store.prepare(**journal, environment=environment(connection).mode)
         except (OSError, ValueError):
             logger.warning("Could not persist history intent before sending", exc_info=True)
             self.report.update(

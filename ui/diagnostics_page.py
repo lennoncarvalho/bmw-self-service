@@ -154,7 +154,7 @@ class DiagnosticsPage(QWidget):
         self.read_btn.setEnabled(connected and not busy)
         writable = connected and not getattr(self._connection, "read_only", False)
         supported = any(e.get("identified") and e.get("uds") for e in self._ecus)
-        available = writable and (supported or hasattr(self._connection, "data"))
+        available = writable and supported
         self.clear_btn.setVisible(available)
         self.clear_btn.setEnabled(
             available
@@ -191,8 +191,6 @@ class DiagnosticsPage(QWidget):
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
         self._update_actions()
-        if hasattr(connection, "data"):
-            self.activate()
 
     def activate(self) -> None:
         """Load this page once, publishing the full initial batch together."""
@@ -213,11 +211,6 @@ class DiagnosticsPage(QWidget):
         self._empty_text.setText("Reading confirmed fault codes...")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
-
-        if hasattr(self._connection, "data") and self._connection.data:
-            # Mock path — read directly from canned data
-            self._on_dtcs_loaded(self._connection.data.get("dtcs", []))
-            return
 
         worker = DiagnosticReadWorker(self._connection, self._ecus, coverage_known=bool(self._ecus))
         self._worker = worker
@@ -461,18 +454,6 @@ class DiagnosticsPage(QWidget):
             or not getattr(connection, "alive_ok", True)
             or getattr(connection, "power_sufficient", None) is False
         ):
-            return
-        if hasattr(connection, "data"):
-            connection.data["dtcs"] = [
-                dtc
-                for dtc in connection.data.get("dtcs", [])
-                if dtc.get("memory", "Fault") == "Permanent"
-            ]
-            self._clear_summary.setText(
-                "DEMO clear only. Simulated permanent-memory faults are retained."
-            )
-            self._clear_summary.show()
-            self._on_dtcs_loaded(connection.data["dtcs"])
             return
         self._clear_refresh_pending = False
         self.mutation_active.emit(True, False)

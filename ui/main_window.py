@@ -32,12 +32,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
+from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
+from app.demo_vehicle import DemoVehicle
 from app.diagnostics import coverage_complete
 from app.ista_jobs import refresh_bundled_data
-from app.mock_connection import MockConnection
 from app.protocol.contracts import TransportKind
+from app.session import LIVE, environment
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
 from ui.cockpit import caption, cockpit_icon
@@ -81,6 +82,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("BMW Self Service" + (" — READ ONLY" if read_only else ""))
         self.setMinimumSize(1024, 700)
         self._demo_mode = False
+        self._demo_vehicle: DemoVehicle | None = None
         self._connection: object | None = None
         self._connected = False
         self._worker: ConnectWorker | None = None
@@ -195,6 +197,7 @@ class MainWindow(QMainWindow):
         identity.setSpacing(2)
         self.car_label = caption("Not connected", "identity")
         self.vin_label = caption("")
+        self.vin_label.setWordWrap(False)
         identity.addWidget(self.car_label)
         metadata = QHBoxLayout()
         metadata.setSpacing(12)
@@ -559,9 +562,13 @@ class MainWindow(QMainWindow):
         self._demo_action.setCheckable(True)
         self._demo_action.setChecked(self._demo_mode)
         self._demo_action.triggered.connect(self._on_demo_toggled)
-        if self._connected:
+        if self._connected or not self._can_reset_demo():
             self._demo_action.setEnabled(False)
         menu.addAction(self._demo_action)
+        if self._demo_mode:
+            reset_demo = menu.addAction("Reset DEMO vehicle")
+            reset_demo.setEnabled(self._can_reset_demo())
+            reset_demo.triggered.connect(self._reset_demo)
 
         menu.addSeparator()
 
@@ -597,9 +604,64 @@ class MainWindow(QMainWindow):
             menu.exec(self.mapToGlobal(self.rect().center()))
 
     def _on_demo_toggled(self, checked: bool) -> None:
+        if self._connected or not self._can_reset_demo():
+            return
+        if checked and self._demo_vehicle is None:
+            self._demo_vehicle = self._load_demo_vehicle()
+            if self._demo_vehicle is None:
+                if hasattr(self, "_demo_action"):
+                    self._demo_action.setChecked(False)
+                return
         self._demo_mode = checked
+        current = self._demo_vehicle.environment if checked and self._demo_vehicle else LIVE
+        self.history_page.set_environment(current)
+        self.backups_page.set_environment(current)
         self.welcome_page.set_demo_mode(checked)
         logger.info("DEMO mode %s", "enabled" if checked else "disabled")
+
+    def _load_demo_vehicle(self) -> DemoVehicle | None:
+        """Report missing or invalid bundled data without granting a live fallback."""
+        try:
+            return DemoVehicle()
+        except (OSError, ValueError, KeyError, TypeError):
+            logger.warning("DEMO vehicle data is unavailable", exc_info=True)
+            QMessageBox.warning(
+                self,
+                "DEMO unavailable",
+                "The bundled DEMO vehicle data is missing or invalid. "
+                "Regenerate the runtime assets before trying again.",
+            )
+            return None
+
+    def _can_reset_demo(self) -> bool:
+        """Allow environment changes only after all foreground work has settled."""
+        return (
+            not self._closing
+            and self._worker is None
+            and self._post_connect_worker is None
+            and not self._mutation_active
+            and not self._coding_loading
+            and not self._diagnostics_loading
+            and self._cbs_worker is None
+            and not self.history_page.is_busy()
+        )
+
+    @Slot()
+    def _reset_demo(self) -> None:
+        """Retire the old connection and start a fresh isolated virtual vehicle."""
+        if not self._demo_mode or not self._can_reset_demo():
+            return
+        vehicle = self._load_demo_vehicle()
+        if vehicle is None:
+            return
+        was_connected = self._connected
+        series = self._overview_identity[1] or "F"
+        self._on_disconnect()
+        self._demo_vehicle = vehicle
+        self.history_page.set_environment(self._demo_vehicle.environment)
+        self.backups_page.set_environment(self._demo_vehicle.environment)
+        if was_connected:
+            self._connect_demo(series)
 
     # ---- Navigation ----
 
@@ -673,15 +735,37 @@ class MainWindow(QMainWindow):
             self._connect_real(series, interface)
 
     def _connect_demo(self, series: str) -> None:
-        self.show_spinner("Starting DEMO mode...")
+        """Connect the local virtual vehicle through normal VIN and protocol handling."""
+        self.show_spinner("Connecting DEMO vehicle...")
+        if self._demo_vehicle is None:
+            self._demo_vehicle = self._load_demo_vehicle()
+            if self._demo_vehicle is None:
+                self.hide_spinner()
+                return
+        vehicle = self._demo_vehicle
+        read_only = self._read_only
 
-        def do_connect(cancelled: Event) -> tuple[MockConnection, str]:
-            """Establish the selected connection with cancellation checks between bounded operations."""
-            if cancelled.is_set():
-                raise ConnectionError("Connection cancelled")
-            conn = MockConnection()
-            conn.connect()
-            return (conn, "")
+        def do_connect(cancelled: Event) -> tuple[HSFZConnection, str]:
+            vehicle.prepare_workspace()
+            conn = HSFZConnection(
+                "127.0.0.1",
+                local_ip="127.0.0.1",
+                read_only=read_only,
+                environment=vehicle.environment,
+                stream_factory=vehicle.connect_stream,
+            )
+            context = conn.context(30.0, cancelled)
+            try:
+                conn.connect(conn.context(min(5.0, context.remaining()), cancelled))
+                outcome = conn.request(0x10, b"\x22\xf1\x90", context=context)
+                if outcome.failure is not None or outcome.payload is None:
+                    raise ConnectionError("DEMO vehicle identity could not be verified")
+                vin = outcome.payload[3:].decode("ascii")
+                conn.verified_vin = vin
+                return conn, vin
+            except BaseException:
+                conn.disconnect()
+                raise
 
         self._async_connect(do_connect, series)
 
@@ -803,23 +887,14 @@ class MainWindow(QMainWindow):
         self._overview_identity = (vin, series)
         self._overview_refresh = False
         self.vehicle_page.reset()
-        if not getattr(connection, "data", None):
-            # Clear DEMO/default page state before navigation can expose it.
-            # These live setters only display unavailable capabilities; no I/O.
-            self.history_page.set_connection(connection)
-            self.coding_page.set_connection(connection, [])
+        self.history_page.set_connection(connection)
+        self.coding_page.set_connection(connection, [])
+        self.backups_page.set_connection(connection)
+        self._cbs_journal = CbsJournalStore(environment(connection).root / "cbs" / "operations")
 
         model = ""
         if vin:
             logger.debug("VIN from worker: %s", vin)
-
-        # For mock connections: pull from stored data
-        if hasattr(connection, "data") and connection.data:
-            vehicle = connection.data.get("vehicle", {})
-            if not model:
-                model = vehicle.get("model", "")
-            if not vin:
-                vin = vehicle.get("vin", "")
 
         prefix = "[DEMO] " if self._demo_mode else ("[READ ONLY] " if self._read_only else "")
         self.status_dot.setText(ORANGE_DOT if self._demo_mode else GREEN_DOT)
@@ -833,21 +908,8 @@ class MainWindow(QMainWindow):
         self.nav_group.button(0).setChecked(True)
         self.stack.setCurrentIndex(1)
 
-        # Start the keepalive worker for real connections
-        if not self._demo_mode:
-            self._start_keepalive()
-
-        # Mock mode: load data directly from MockConnection (no UDS needed)
-        if hasattr(connection, "data") and connection.data:
-            self.vehicle_page.load_data(connection, series)
-            self.vehicle_page.set_loading(False)
-            ecus = connection.data.get("svt_ecus", [])
-            self.diag_page.set_connection(connection, ecus)
-            self.history_page.set_connection(connection, ecus)
-            self.coding_page.set_connection(connection, ecus)
-            self.hide_spinner()
-            logger.info("Connected successfully (demo=%s)", self._demo_mode)
-            return
+        # Every environment uses the same owner for keepalive and connection loss.
+        self._start_keepalive()
 
         if not vin:
             self.vehicle_page.populate({}, series, "Unverified")
@@ -904,9 +966,6 @@ class MainWindow(QMainWindow):
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
         ):
-            return
-        if self._demo_mode:
-            self.vehicle_page.load_data(self._connection)
             return
         vin, series = self._overview_identity
         if not vin:
@@ -992,6 +1051,12 @@ class MainWindow(QMainWindow):
 
         # Populate vehicle page with all results
         self.vehicle_page.populate(results, series, vin)
+        prefix = (
+            "[DEMO] "
+            if environment(connection).mode == "demo"
+            else ("[READ ONLY] " if self._read_only else "")
+        )
+        self.car_label.setText(prefix + self.vehicle_page.model_label.text())
         self.vehicle_page.set_loading(False)
         inventory = overview_ecus or results.get("svt", overview_ecus)
         if isinstance(inventory, dict):
@@ -1391,14 +1456,6 @@ class MainWindow(QMainWindow):
         if not self._can_start_mutation():
             panel.show_error("Service status unavailable — wait for the current vehicle operation")
             return
-        if self._demo_mode:
-            data = getattr(connection, "data", {}) or {}
-            panel.show_result(
-                demo_cbs(data),
-                resets_allowed=False,
-                note="DEMO — simulated records; reset is not available",
-            )
-            return
         if not self._overview_identity[0]:
             panel.show_error("Service status requires a verified vehicle VIN")
             return
@@ -1483,7 +1540,6 @@ class MainWindow(QMainWindow):
         connection = self._connection
         if (
             connection is None
-            or self._demo_mode
             or self._read_only
             or getattr(connection, "read_only", False)
             or not getattr(connection, "alive_ok", False)
@@ -1493,8 +1549,6 @@ class MainWindow(QMainWindow):
             reason = (
                 "Reconnect and read service status to resolve the previous reset outcome."
                 if self._cbs_reset_blocked
-                else "DEMO cannot reset a vehicle."
-                if self._demo_mode
                 else "This session is read-only; resets are disabled."
                 if self._read_only or getattr(connection, "read_only", False)
                 else "Reconnect and read service status before resetting."
@@ -1504,7 +1558,9 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Reset Unavailable", reason)
             return
         try:
-            plan = plan_reset(getattr(connection, "verified_vin", ""), item)
+            plan = plan_reset(
+                getattr(connection, "verified_vin", ""), item, environment=environment(connection)
+            )
         except PermissionError as exc:
             QMessageBox.information(self, "Reset Unavailable", str(exc))
             return

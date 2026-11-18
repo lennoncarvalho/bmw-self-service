@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.service_history import SERVICE_TYPES
+from app.session import LIVE, SessionEnvironment, environment
 from app.worker import CarWorker
 from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, StatusLabel, caption
 from ui.regional import regional_locale
@@ -228,6 +229,7 @@ class ServiceHistoryPage(QWidget):
         super().__init__(parent)
         from app.history_workspace import HistoryWorkspaceStore, new_workspace
 
+        self._environment = LIVE
         self.store = HistoryWorkspaceStore()
         self.workspace = new_workspace()
         self._connection: Any = None
@@ -361,6 +363,7 @@ class ServiceHistoryPage(QWidget):
     def _start_worker(self, worker: CarWorker, success: Callable[[object], None]) -> None:
         self._success = success
         self._worker = worker
+        worker.setProperty("environmentContext", self._environment.binding())
         worker.result_ready.connect(self._result)
         worker.error.connect(self._error)
         worker.progress.connect(self.message.setText)
@@ -388,12 +391,19 @@ class ServiceHistoryPage(QWidget):
 
     @Slot(object)
     def _result(self, value: object) -> None:
-        if self.sender() is self._worker and self._success is not None:
+        if (
+            self.sender() is self._worker
+            and self._success is not None
+            and self._worker.property("environmentContext") == self._environment.binding()
+        ):
             self._success(value)
 
     @Slot(str)
     def _error(self, message: str) -> None:
-        if self.sender() is not self._worker:
+        if (
+            self.sender() is not self._worker
+            or self._worker.property("environmentContext") != self._environment.binding()
+        ):
             return
         if isinstance(self._worker, HistoryFileWorker):
             if self._loading_key is None or self._loading_key == self._desired_key:
@@ -427,6 +437,10 @@ class ServiceHistoryPage(QWidget):
             self.vehicle_loading_changed.emit(False)
         if self._shutting_down:
             return
+        if worker.property("environmentContext") != self._environment.binding():
+            self._pending_confirmation = None
+            self._load_workspace(self._desired_key)
+            return
         if self._desired_key != self._key:
             self._pending_confirmation = None
             if self._desired_key != loading_key:
@@ -451,7 +465,8 @@ class ServiceHistoryPage(QWidget):
             self._key = key
             self._loaded(value)
 
-        self._run(lambda: self.store.load_workspace(key), loaded)
+        store = self.store
+        self._run(lambda: store.load_workspace(key), loaded)
 
     def _loaded(self, value: object) -> None:
         assert isinstance(value, dict)
@@ -502,6 +517,19 @@ class ServiceHistoryPage(QWidget):
             return False
         return True
 
+    def set_environment(self, current: SessionEnvironment) -> None:
+        """Switch isolated editor and journal roots without vehicle requests."""
+        if self._environment == current:
+            return
+        from app.history_journal import HistoryJournalStore
+        from app.history_workspace import HistoryWorkspaceStore
+
+        self._environment = current
+        self._workspace_ready = False
+        self.store = HistoryWorkspaceStore(current.root / "history" / "projects")
+        self.journals = HistoryJournalStore(current.root / "history" / "operations")
+        self._load_workspace("demo-unbound" if current.mode == "demo" else "offline")
+
     def set_connection(self, connection: Any, ecus: list[dict] | None = None) -> None:
         """Switch isolated local workspace; do not query the vehicle."""
         if self._connection is not connection:
@@ -510,14 +538,11 @@ class ServiceHistoryPage(QWidget):
         if ecus is not None:
             self.set_targets(ecus)
         if connection is None:
-            self._load_workspace("offline")
+            self._load_workspace("demo-unbound" if self._environment.mode == "demo" else "offline")
             return
-        demo = hasattr(connection, "data")
-        vin = (
-            connection.data.get("vehicle", {}).get("vin", "")
-            if demo
-            else getattr(connection, "verified_vin", "")
-        )
+        self.set_environment(environment(connection))
+        demo = self._environment.mode == "demo"
+        vin = getattr(connection, "verified_vin", "")
         from app.history_files import valid_vin
 
         self._load_workspace(
@@ -822,12 +847,8 @@ class ServiceHistoryPage(QWidget):
         from app.history_files import valid_vin
 
         before, previous_key, connection = self.workspace, self._key, self._connection
-        demo = hasattr(connection, "data")
-        vin = (
-            connection.data.get("vehicle", {}).get("vin", "")
-            if demo
-            else getattr(connection, "verified_vin", "")
-        )
+        demo = self._environment.mode == "demo"
+        vin = getattr(connection, "verified_vin", "")
         if not valid_vin(vin):
             return
         if (
@@ -881,13 +902,12 @@ class ServiceHistoryPage(QWidget):
         connection = self._connection
         if (
             connection is None
-            or hasattr(connection, "data")
             or getattr(connection, "read_only", True)
             or getattr(connection, "kind", None) != TransportKind.HSFZ
             or not getattr(connection, "alive_ok", False)
             or not valid_vin(getattr(connection, "verified_vin", ""))
             or self.workspace["project"]["vin"] != connection.verified_vin
-            or not self._key.startswith("live-")
+            or not self._key.startswith(self._environment.mode + "-")
             or getattr(connection, "power_sufficient", None) is False
             or self.has_unexported_results()
         ):
@@ -924,6 +944,7 @@ class ServiceHistoryPage(QWidget):
         key, before = self._key, self.workspace
         vin = before["project"]["vin"]
         environment = "demo" if key.startswith("demo-") else "live"
+        session = self._environment.binding()
         memory = copy.deepcopy(self._write_report)
 
         def operation() -> object:
@@ -974,6 +995,7 @@ class ServiceHistoryPage(QWidget):
                 memory
                 and memory.get("workspace_key") == key
                 and memory.get("intent", {}).get("vin") == vin
+                and memory.get("intent", {}).get("session") == session
             ):
                 latest = {
                     event["step"]: event["state"]

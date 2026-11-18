@@ -23,6 +23,7 @@ from app.protocol.hsfz import HsfzAdapter
 from app.protocol.owner import OperationHandle, ProtocolOwner
 from app.protocol.stream import BoundedStream
 from app.protocol.udsoncan_connection import UdsConnection
+from app.session import LIVE, SessionEnvironment
 from app.uds import UdsServices
 
 logger = logging.getLogger(__name__)
@@ -52,7 +53,13 @@ class DiagnosticConnection:
         read_only: bool = False,
         local_ip: str,
         entity: int = 0x10,
+        environment: SessionEnvironment = LIVE,
+        stream_factory: Callable[[OperationContext], BoundedStream] | None = None,
     ) -> None:
+        if (environment.mode == "demo") != (stream_factory is not None):
+            raise ValueError("DEMO requires a local stream factory; live sessions use TCP")
+        self._environment = environment
+        self._stream_factory = stream_factory
         self.host = host
         self.port = port or self.default_port
         self.config = ConnectionConfig(self.kind, host, local_ip, self.port, entity)
@@ -81,6 +88,11 @@ class DiagnosticConnection:
         with _live_lock:
             _live.add(self)
         self.worker.start()
+
+    @property
+    def environment(self) -> SessionEnvironment:
+        """Expose immutable environment authority for this connection generation."""
+        return self._environment
 
     def _finished(self) -> None:
         self._closed.set()
@@ -171,7 +183,11 @@ class DiagnosticConnection:
 
         def open_transport(active: OperationContext) -> bytes:
             self._executor = get_ident()
-            stream = BoundedStream.connect(self.host, self.port, self.local_ip, active)
+            stream = (
+                self._stream_factory(active)
+                if self._stream_factory is not None
+                else BoundedStream.connect(self.host, self.port, self.local_ip, active)
+            )
             self.adapter = (
                 HsfzAdapter(stream, self.read_only)
                 if self.kind == TransportKind.HSFZ

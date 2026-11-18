@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QFrame,
-    QHBoxLayout,
     QLabel,
     QMessageBox,
     QPlainTextEdit,
@@ -38,63 +37,6 @@ from ui.page_stack import PageStack
 
 logger = logging.getLogger(__name__)
 
-MOCK_CATEGORIES = [
-    {
-        "name": "Lighting",
-        "icon": "L",
-        "description": "Angel eyes brightness, welcome lights, DRL behavior",
-        "options": [
-            {
-                "name": "Angel Eyes Brightness",
-                "values": ["4%", "8%", "12%", "16%", "20%"],
-                "current": 1,
-            },
-            {
-                "name": "Welcome Lights Duration",
-                "values": ["10s", "20s", "30s", "40s"],
-                "current": 2,
-            },
-            {"name": "DRL Rear Lights", "values": ["Off", "On"], "current": 0},
-        ],
-    },
-    {
-        "name": "Comfort",
-        "icon": "C",
-        "description": "Fold mirrors, window control, seat heating memory",
-        "options": [
-            {
-                "name": "Fold Mirrors on Lock",
-                "values": ["Off", "On (hold)", "On (instant)"],
-                "current": 1,
-            },
-            {
-                "name": "Window Control after Ignition Off",
-                "values": ["Disabled", "30s", "60s", "Unlimited"],
-                "current": 2,
-            },
-        ],
-    },
-    {
-        "name": "Instrument Cluster",
-        "icon": "I",
-        "description": "Digital speed, M Performance logo, startup animation",
-        "options": [
-            {"name": "Digital Speed in BC", "values": ["Off", "On"], "current": 1},
-            {"name": "M Performance Logo", "values": ["Off", "On"], "current": 0},
-            {"name": "Startup Animation", "values": ["Standard", "M", "Alpina"], "current": 0},
-        ],
-    },
-    {
-        "name": "Audio / iDrive",
-        "icon": "A",
-        "description": "Disclaimer timeout, video in motion, sound settings",
-        "options": [
-            {"name": "Disclaimer Timeout", "values": ["10s", "5s", "2s", "Off"], "current": 2},
-            {"name": "Video in Motion", "values": ["Off", "On (US)", "On (EU)"], "current": 0},
-        ],
-    },
-]
-
 
 class CodingPage(QWidget):
     """Easy Coding options and the pending-changes bar."""
@@ -109,14 +51,11 @@ class CodingPage(QWidget):
         super().__init__(parent)
         self._connection: Any = None
         self._pending: int = 0
-        self._categories: list[dict] = copy.deepcopy(MOCK_CATEGORIES)
-        self._originals = copy.deepcopy(self._categories)
         self._worker: CarWorker | None = None
         self._coding_reader: CarWorker | None = None
         self._coding_writer: CarWorker | None = None
         self._sensitive_worker: CarWorker | None = None
         self._loading_worker: CarWorker | None = None
-        self._is_real = False  # True when categories come from car, not mock
         self._live_unavailable = True
         self._snapshot_workers: list[CarWorker] = []
         self._snapshot_ecus: list[dict] = []
@@ -162,7 +101,7 @@ class CodingPage(QWidget):
         body = QVBoxLayout(content)
         body.setContentsMargins(0, 0, 0, 0)
         body.addWidget(self.search)
-        self._sub_stack.addWidget(self._build_easy_page())
+        self._sub_stack.addWidget(caption("Connect to read supported coding options."))
         body.addWidget(self._sub_stack)
 
         review = CockpitCard("Changes to apply")
@@ -204,93 +143,6 @@ class CodingPage(QWidget):
         review.box.addWidget(self._bottom_bar)
         layout.addWidget(ResponsiveColumns(content, review))
 
-    def _build_easy_page(self) -> QWidget:
-        """Build expandable DEMO categories from the current preview values."""
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
-
-        container = QWidget()
-        cat_layout = QVBoxLayout(container)
-        cat_layout.setSpacing(8)
-
-        for cat in self._categories:
-            card = QFrame()
-            card.setObjectName("recordCard")
-            card.setCursor(Qt.CursorShape.PointingHandCursor)
-            card_layout = QVBoxLayout(card)
-            card_layout.setSpacing(4)
-
-            top = QHBoxLayout()
-            name_label = caption(cat["name"], "sectionTitle")
-            top.addWidget(name_label)
-            top.addStretch()
-            card_layout.addLayout(top)
-
-            desc = caption(cat["description"])
-            card_layout.addWidget(desc)
-
-            # Options expandable section
-            opts_widget = QWidget()
-            opts_widget.setVisible(False)
-            opts_layout = QVBoxLayout(opts_widget)
-            opts_layout.setContentsMargins(0, 8, 0, 0)
-
-            for opt in cat["options"]:
-                current_val = opt["values"][opt["current"]]
-                opt_lbl = caption(f"{opt['name']}: {current_val}", "featureTitle")
-                opt_lbl.setWordWrap(True)
-                opts_layout.addWidget(opt_lbl)
-
-                # QButtonGroup ensures exclusivity within this option only
-                opt_group = QButtonGroup(self)
-
-                for v_i, v_name in enumerate(opt["values"]):
-                    rb = QRadioButton(f"  {v_name}")
-                    opt_group.addButton(rb, v_i)
-                    # Set checked state before connecting signal so init
-                    # does not fire toggled and increment _pending
-                    rb.setChecked(v_i == opt["current"])
-                    rb.toggled.connect(
-                        lambda checked, lbl=opt_lbl, o=opt, vi=v_i: (
-                            self._apply_option(o, vi, lbl, checked) if checked else None
-                        )
-                    )
-                    opts_layout.addWidget(rb)
-
-            card_layout.addWidget(opts_widget)
-
-            # Toggle button for accessibility
-            toggle_btn = QPushButton("\u25bc Expand")
-            toggle_btn.setFlat(True)
-            toggle_btn.setProperty("class", "disclosure")
-            toggle_btn.clicked.connect(
-                lambda checked, ow=opts_widget, b=None: (
-                    ow.setVisible(not ow.isVisible()),
-                    # Update via closure: set b reference on first click
-                )
-            )
-
-            # Use a single-shot approach — rebuild the connection to capture btn
-            def _make_toggle(ow: QWidget, btn: QPushButton):
-                def _toggle():
-                    visible = not ow.isVisible()
-                    ow.setVisible(visible)
-                    btn.setText("\u25b2 Collapse" if visible else "\u25bc Expand")
-
-                return _toggle
-
-            toggle_btn.clicked.disconnect()
-            toggle_btn.clicked.connect(_make_toggle(opts_widget, toggle_btn))
-            card_layout.addWidget(toggle_btn)
-
-            cat_layout.addWidget(card)
-
-        cat_layout.addStretch()
-        layout.addWidget(container)
-        return page
-
     def set_connection(
         self,
         connection: Any,
@@ -301,19 +153,14 @@ class CodingPage(QWidget):
     ) -> None:
         """Store the active connection for future coding operations.
 
-        T-2: If ECU list is provided (from SVT read), load real coding
-        presets from the coding database, replacing MOCK_CATEGORIES.
-
         Args:
-            connection: An HSFZConnection, DoIPConnection, or MockConnection.
+            connection: An identified diagnostic connection.
             ecus: Optional SVT ECU list from vehicle connection.
             model_range: Model code from the connected vehicle order, when available.
             type_code: Exact type key from the connected vehicle order, when available.
         """
-        is_demo = bool(getattr(connection, "data", None))
         if (
-            not is_demo
-            and connection is self._connection
+            connection is self._connection
             and (ecus or []) == self._snapshot_ecus
             and model_range == self._snapshot_model_range
             and type_code == self._snapshot_type_code
@@ -325,24 +172,17 @@ class CodingPage(QWidget):
         self._open_sections.clear()
         self._section_reads.clear()
         self._pending_plan = None
-        self._live_unavailable = not is_demo
+        self._live_unavailable = True
         self._pending = 0
-        self._categories = copy.deepcopy(MOCK_CATEGORIES) if is_demo else []
-        self._originals = copy.deepcopy(self._categories)
-        self._is_real = False
         self._update_pending_label()
-        self._write_btn.setEnabled(is_demo)
-        self._write_btn.setText("Save DEMO preview" if is_demo else "Review coding changes")
+        self._write_btn.setEnabled(False)
+        self._write_btn.setText("Review coding changes")
         while self._sub_stack.count():
             old_page = self._sub_stack.widget(0)
             if old_page is None:
                 break
             self._sub_stack.removeWidget(old_page)
             old_page.deleteLater()
-        if is_demo:
-            self._sub_stack.addWidget(self._build_easy_page())
-            self.search.apply()
-            return
 
         page = QWidget()
         layout = QVBoxLayout(page)
@@ -361,7 +201,6 @@ class CodingPage(QWidget):
         connection = self._connection
         if (
             connection is None
-            or hasattr(connection, "data")
             or not getattr(connection, "alive_ok", True)
             or self._snapshot_loaded
             or self._coding_reader is not None
@@ -710,225 +549,43 @@ class CodingPage(QWidget):
                 options.addWidget(notice)
         layout.addWidget(feature)
 
-    def restore_backup(self, categories: list[dict]) -> bool:
-        """Load a local DEMO preview from a backup; return False when unavailable.
-
-        The restored values become the active state, and any differences
-        from the previous originals are counted as pending changes so
-        the user can write them to the car.
-
-        Args:
-            categories: List of category dicts from a backup manifest.json.
-        """
-        if not getattr(self._connection, "data", None):
-            logger.warning("Metadata previews cannot restore live coding")
-            return False
-        # Save pre-restore originals to count differences
-        prev_originals = self._originals
-        self._categories.clear()
-        self._categories.extend(copy.deepcopy(categories))
-        self._originals = prev_originals  # keep old originals so diff is correct
-        # Rebuild easy page
-        old_page = self._sub_stack.widget(0)
-        if old_page is not None:
-            self._sub_stack.removeWidget(old_page)
-            old_page.deleteLater()
-        self._sub_stack.insertWidget(0, self._build_easy_page())
-        self._sub_stack.setCurrentIndex(0)
-        # Recalculate pending — differences between restored and previous originals
-        self._recalc_pending()
-        logger.info("Coding restored from backup (%d categories)", len(categories))
-        return True
-
-    def _apply_option(self, opt: dict, idx: int, label: QLabel, checked: bool) -> None:
-        if not checked:
-            return
-        opt["current"] = idx
-        val = opt["values"][idx]
-        label.setText(f"{opt['name']}: {val}")
-        # Recalculate pending count by comparing against originals
-        self._recalc_pending()
-
-    def _recalc_pending(self) -> None:
-        """Count how many options differ from the saved originals."""
-        pending = 0
-        for cat_idx, cat in enumerate(self._categories):
-            orig_cat = self._originals[cat_idx]
-            for opt_idx, opt in enumerate(cat["options"]):
-                orig_opt = orig_cat["options"][opt_idx]
-                if opt["current"] != orig_opt["current"]:
-                    pending += 1
-        self._pending = pending
-        self._update_pending_label()
-
     def _update_pending_label(self) -> None:
-        """Show staged choices while preserving the existing review controls."""
+        """Show staged source options while preserving the existing review controls."""
         selected = []
-        if getattr(self._connection, "data", None):
-            for category, original in zip(self._categories, self._originals, strict=False):
-                for option, before in zip(category["options"], original["options"], strict=False):
-                    if option["current"] != before["current"]:
-                        selected.append(f"{option['name']} · {option['values'][option['current']]}")
-        else:
-            for row in self._source_rows:
-                for preset in row.get("presets", []):
-                    key = (
-                        preset["address"],
-                        preset["definition"],
-                        preset["id"],
-                        preset["source_index"],
+        for row in self._source_rows:
+            for preset in row.get("presets", []):
+                key = (
+                    preset["address"],
+                    preset["definition"],
+                    preset["id"],
+                    preset["source_index"],
+                )
+                if key in self._live_selections:
+                    value = self._live_selections[key]
+                    label = next(
+                        (
+                            option["label"]
+                            for option in preset["choices"]
+                            if option["name"] == value
+                        ),
+                        value,
                     )
-                    if key in self._live_selections:
-                        value = self._live_selections[key]
-                        label = next(
-                            (
-                                option["label"]
-                                for option in preset["choices"]
-                                if option["name"] == value
-                            ),
-                            value,
-                        )
-                        selected.append(f"{preset['label']} · {label}")
+                    selected.append(f"{preset['label']} · {label}")
         self._selection_summary.setText("\n\n".join(selected))
         self.search.apply()
-        if self._pending > 0:
-            self._pending_label.setText(f"[{self._pending} changes pending]")
-            self._bottom_bar.setVisible(True)
-        else:
-            self._pending_label.setText("No changes selected")
-            self._bottom_bar.setVisible(False)
+        self._pending_label.setText(
+            f"{self._pending} changes pending" if self._pending else "No changes selected"
+        )
+        self._bottom_bar.setVisible(self._pending > 0)
 
     def _on_clear(self) -> None:
-        """Discard pending live selections or confirm resetting DEMO preview choices."""
-        if not getattr(self._connection, "data", None):
-            if not self.is_reading():
-                self._show_source_rows(self._source_rows)
-            return
-        reply = QMessageBox.question(
-            self,
-            "Clear Changes",
-            "Discard all pending coding changes?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-        # Restore original option values by deep-copying into self._categories
-        self._categories.clear()
-        self._categories.extend(copy.deepcopy(self._originals))
-        # Rebuild the easy page to reflect restored values
-        old_page = self._sub_stack.widget(0)
-        if old_page is not None:
-            self._sub_stack.removeWidget(old_page)
-            old_page.deleteLater()
-        self._sub_stack.insertWidget(0, self._build_easy_page())
-        self._sub_stack.setCurrentIndex(0)
-        self._pending = 0
-        self._update_pending_label()
-        logger.info("Coding changes cleared")
+        """Discard pending selections without changing observed vehicle values."""
+        if not self.is_reading():
+            self._show_source_rows(self._source_rows)
 
     def _on_write(self) -> None:
-        """Apply pending changes only when the active connection permits coding writes."""
-        if not getattr(self._connection, "data", None):
-            self._prepare_source_write()
-            return
-        if self._live_unavailable:
-            return
-        reply = QMessageBox.question(
-            self,
-            "Save DEMO preview",
-            f"Save {self._pending} DEMO coding changes as a local preview?\n\n"
-            "No vehicle backup or write is performed.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
-        if reply != QMessageBox.StandardButton.Yes:
-            return
-
-        # DEMO metadata is deliberately separate from vehicle backups.
-        if not self._save_demo_preview():
-            QMessageBox.warning(
-                self,
-                "Write Aborted",
-                "Cannot save the DEMO preview. Check storage space and permissions.",
-            )
-            return
-
-        # Mock path
-        if hasattr(self._connection, "data") and self._connection.data:
-            self._originals = copy.deepcopy(self._categories)
-            self._pending = 0
-            self._update_pending_label()
-            logger.info("DEMO coding preview saved")
-            return
-
-    def _save_demo_preview(self) -> bool:
-        """Save a non-restorable DEMO preview, never a live ECU backup.
-
-        Live coding uses OperationStore with complete source-bound ECU bytes,
-        independently of this display-only preview.
-        """
-        if not getattr(self._connection, "data", None):
-            return False
-        import json
-        import os
-        from datetime import datetime
-
-        backup_dir = os.path.join(
-            os.path.expanduser("~"),
-            "BMW-Tool",
-            "demo-previews",
-            datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f"),
-        )
-        try:
-            os.makedirs(backup_dir, exist_ok=True)
-        except OSError:
-            QMessageBox.warning(
-                self,
-                "Backup Failed",
-                "Cannot save backup — disk is full.\nFree up space and try again.",
-            )
-            return False
-
-        # Display metadata only; never accepted by the live backup importer.
-        manifest = {
-            "mode": "demo",
-            "restorable": False,
-            "timestamp": datetime.now().isoformat(),
-            "changes": self._pending,
-            "categories": self._categories,
-        }
-        try:
-            with open(os.path.join(backup_dir, "manifest.json"), "w") as f:
-                json.dump(manifest, f, indent=2, ensure_ascii=False)
-        except OSError:
-            QMessageBox.warning(
-                self,
-                "Backup Failed",
-                "Cannot save backup — disk is full.\nFree up space and try again.",
-            )
-            return False
-
-        logger.info("Backup saved to %s", backup_dir)
-        return True
-
-    def _on_coding_read(self, categories: list[dict]) -> None:
-        """Populate a DEMO preview; live values use the source snapshot path."""
-        if categories and getattr(self._connection, "data", None):
-            self._categories.clear()
-            self._categories.extend(categories)
-            self._originals = copy.deepcopy(self._categories)
-            self._pending = 0
-            self._is_real = True
-            # Rebuild easy page
-            old_page = self._sub_stack.widget(0)
-            if old_page is not None:
-                self._sub_stack.removeWidget(old_page)
-                old_page.deleteLater()
-            self._sub_stack.insertWidget(0, self._build_easy_page())
-            self._sub_stack.setCurrentIndex(0)
-            self._update_pending_label()
-            logger.info("Coding data loaded (%d categories)", len(categories))
+        """Prepare selected changes through the shared guarded coding workflow."""
+        self._prepare_source_write()
 
     def _select_source_option(
         self, identity: tuple[int, str, str, int], selected: Any, current: Any
@@ -950,8 +607,6 @@ class CodingPage(QWidget):
         reason = ""
         if connection is None or not getattr(connection, "alive_ok", False):
             reason = "Connect to the vehicle before preparing coding or restoration."
-        elif hasattr(connection, "data"):
-            reason = "DEMO previews cannot prepare live coding or restoration."
         elif getattr(connection, "read_only", True):
             reason = "Coding and restoration are unavailable in a read-only connection."
         elif getattr(connection, "kind", None) != TransportKind.HSFZ:

@@ -31,6 +31,7 @@ from app.coding_prerequisites import (
 from app.history_files import valid_vin
 from app.operation_store import OperationStore, coding_comparison_basis, load_record
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
+from app.session import check_binding, check_record, check_store, environment, operation_store
 from app.vehicle import DiagnosticCatalog, did_data
 from app.vehicle_order import decode_vehicle_order
 from app.worker import CarWorker
@@ -117,7 +118,7 @@ def _prior_records(
             raise ValueError("Coding recovery inventory exceeds its byte bound")
         record = load_record(path)
         original = record["original"]
-        if original["kind"] != "coding" or original["mode"] != "live" or original["vin"] != vin:
+        if original["kind"] != "coding" or original["mode"] != store.mode or original["vin"] != vin:
             continue
         state = record["events"][-1]["state"]
         if state not in {"writing", "partial", "uncertain", "mismatch"}:
@@ -256,12 +257,13 @@ class CodingPrepareWorker(CarWorker):
             raise ValueError("Invalid source category context")
         self.ecus = json.loads(json.dumps(ecus))
         self.changes = json.loads(json.dumps(changes))
-        self.store = store or OperationStore()
+        self.store = store or operation_store(connection)
         self.restore_record: dict | None = None
 
     def do_work(self) -> CodingPlan:
         """Freeze exact source selection after read-only owner operations."""
         connection = self.connection
+        check_store(connection, self.store)
         if (
             connection.read_only
             or connection.kind != TransportKind.HSFZ
@@ -273,10 +275,13 @@ class CodingPrepareWorker(CarWorker):
             original = record["original"]
             if (
                 original["kind"] != "coding"
-                or original["mode"] != "live"
+                or original["mode"] != environment(connection).mode
                 or original["vin"] != connection.verified_vin
             ):
-                raise ValueError("Restore requires complete live originals for this vehicle")
+                raise ValueError(
+                    "Restore requires complete originals from this vehicle and environment"
+                )
+            check_record(connection, original["mode"], self.restore_path)
             self.restore_record = record
             self.changes = [{"address": target["address"]} for target in original["targets"]]
         db = CodingDatabase()
@@ -286,6 +291,7 @@ class CodingPrepareWorker(CarWorker):
             raise ValueError("Select source-supported coding changes")
         plan: dict[str, Any] = {
             "schema_version": 1,
+            "environment": environment(connection).binding(),
             "mode": "restore" if self.restore_record else "coding",
             "vin": connection.verified_vin,
             "changes": self.changes,
@@ -561,7 +567,9 @@ class CodingVerificationWorker(CarWorker):
         if not self.cycle_acknowledged:
             raise PermissionError("Acknowledge any required vehicle cycle before verification")
         connection = self.connection
+        check_store(connection, self.store)
         record = load_record(self.path)
+        check_record(connection, record["original"]["mode"], self.path)
         basis = coding_comparison_basis(record)
         original = record["original"]
         vin = original["vin"]
@@ -741,7 +749,7 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
         if (
             hashlib.sha256(_canonical(original)).hexdigest() != origin.get("original_sha256")
             or original.get("kind") != "coding"
-            or original.get("mode") != "live"
+            or original.get("mode") != data.get("environment", {"mode": "live"})["mode"]
             or original.get("vin") != data["vin"]
             or not original.get("id")
         ):
@@ -869,7 +877,7 @@ class CodingWriteWorker(CarWorker):
         """Retain the frozen plan and explicit power/recovery acknowledgements."""
         super().__init__(connection)
         self.plan = plan
-        self.store = store or OperationStore()
+        self.store = store or operation_store(connection)
         self.power_acknowledged = power_acknowledged
         self.recovery_acknowledged = recovery_acknowledged
         self._executed = False
@@ -887,11 +895,13 @@ class CodingWriteWorker(CarWorker):
             raise PermissionError("A coding operation cannot be replayed")
         self._executed = True
         connection = self.connection
+        check_store(connection, self.store)
         if not self.power_acknowledged or getattr(connection, "power_sufficient", None) is False:
             raise PermissionError("Adequate vehicle/device power must be acknowledged")
         if connection.read_only or connection.kind != TransportKind.HSFZ or not connection.alive_ok:
             raise PermissionError("Coding requires a usable writable identified session")
         db = CodingDatabase()
+        check_binding(connection, self.plan.data().get("environment"))
         data = validate_plan(self.plan, db)
         timed_readers = {
             target["address"]
@@ -908,7 +918,7 @@ class CodingWriteWorker(CarWorker):
         try:
             path = self.store.prepare(
                 kind="coding",
-                mode="live",
+                mode=environment(connection).mode,
                 vin=data["vin"],
                 targets=[_target_record(t) for t in data["targets"]],
             )

@@ -290,26 +290,6 @@ class VehiclePage(QWidget):
         self.refresh_button.setEnabled(not loading)
         self.refresh_button.setText("Reading overview…" if loading else "Refresh overview")
 
-    def load_data(self, connection: Any, series: str = "") -> None:
-        """Display a labelled demonstration snapshot without synchronous car I/O."""
-        data = getattr(connection, "data", {}) or {}
-        vehicle = data.get("vehicle", {})
-        self.populate(
-            {
-                "model": vehicle.get("model"),
-                "mileage": f"{vehicle['mileage_km']:,} km" if "mileage_km" in vehicle else None,
-                "prod_date": vehicle.get("production_date"),
-                "battery_voltage": (
-                    f"{vehicle['battery_voltage']:.2f} V" if "battery_voltage" in vehicle else None
-                ),
-                "ecu_list": data.get("svt_ecus", []),
-                "connection_info": "DEMO — simulated vehicle",
-                "mil": {"on": False, "detail": "DEMO — simulated engine fault memory"},
-            },
-            series,
-            vehicle.get("vin", "Unavailable"),
-        )
-
     def populate(self, results: dict[str, object], series: str = "", vin: str = "") -> None:
         """Publish one settled batch; missing data never inherits earlier values."""
         self._observed_at = datetime.now(UTC)

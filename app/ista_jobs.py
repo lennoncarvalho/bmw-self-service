@@ -270,7 +270,7 @@ class JobBackend:
         Args:
             connection: Live ``DiagnosticConnection`` (HSFZ only).
             source: Job file data source; defaults to the bundle plus saved folder.
-            reason: Non-empty to disable job use, e.g. for DEMO data.
+            reason: Non-empty to disable unavailable job execution.
         """
         self.connection = connection
         self.reason = reason
