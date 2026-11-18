@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
-    QHBoxLayout,
+    QGridLayout,
     QLabel,
     QMessageBox,
     QPushButton,
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.operation_store import OperationStore, coding_comparison_basis, load_record
+from ui.cockpit import CardSearch, CockpitCard, PageHeader, caption
 
 logger = logging.getLogger(__name__)
 
@@ -31,22 +32,45 @@ class BackupsPage(QWidget):
         """Build the expanding backup record list and local file actions."""
         super().__init__(parent)
         self.store = OperationStore()
+        self.setObjectName("backupsPage")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
-        layout.addWidget(QLabel("Vehicle Backups"))
-        location = QLabel(f"Backup location: {self.store.root}")
-        location.setWordWrap(True)
-        layout.addWidget(location)
-        container = QWidget()
-        self.list_layout = QVBoxLayout(container)
-        self.list_layout.addStretch()
-        layout.addWidget(container)
-        actions = QHBoxLayout()
+        layout.setSpacing(16)
+        header = PageHeader(
+            "Coding backups & restoration",
+            "Inspect saved original data and review a supported restoration.",
+        )
         for label, handler in (("Import JSON backup", self._import), ("Refresh", self.refresh)):
             button = QPushButton(label)
+            button.setProperty("class", "secondary")
             button.clicked.connect(handler)
-            actions.addWidget(button)
-        layout.addLayout(actions)
+            header.action_layout.addWidget(button)
+        layout.addWidget(header)
+        note = CockpitCard("Saved originals & operation outcomes")
+        note.box.addWidget(
+            caption(
+                "Records contain complete original and intended data with integrity checks. "
+                "A restoration requires fresh vehicle, software and definition checks."
+            )
+        )
+        note.box.addWidget(
+            caption("Portable unencrypted JSON · Retained until you delete it", "eyebrow")
+        )
+        layout.addWidget(note)
+        self.record_count = caption("", "eyebrow")
+        layout.addWidget(self.record_count)
+        location = caption(f"Backup location: {self.store.root}")
+        location.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(location)
+        container = QWidget()
+        container.setProperty("class", "transparent")
+        self.list_layout = QVBoxLayout(container)
+        self.list_layout.setContentsMargins(0, 0, 0, 0)
+        self.list_layout.setSpacing(16)
+        self.list_layout.addStretch()
+        self.search = CardSearch(container, "Search VIN, control unit or operation state")
+        layout.addWidget(self.search)
+        layout.addWidget(container)
 
     def set_connection(self, connection: Any) -> None:
         """Refresh local files; importing and viewing never send vehicle requests."""
@@ -57,33 +81,58 @@ class BackupsPage(QWidget):
         while self.list_layout.count() > 1:
             item = self.list_layout.takeAt(0)
             if item is not None and (widget := item.widget()) is not None:
+                widget.hide()
                 widget.deleteLater()
         paths = sorted(self.store.root.glob("*.json"), key=lambda path: path.name)
+        self.record_count.setText(f"{len(paths)} LOCAL RECORD FILES")
         if not paths:
-            self.list_layout.insertWidget(0, QLabel("No vehicle backup records found."))
+            empty = CockpitCard("No saved vehicle backups")
+            empty.box.addWidget(
+                caption(
+                    "Original data and operation outcomes appear here after coding preparation. "
+                    "You can also import a portable JSON record."
+                )
+            )
+            self.list_layout.insertWidget(0, empty)
         for path in paths:
             card = QFrame()
+            card.setObjectName("recordCard")
             box = QVBoxLayout(card)
+            box.setSpacing(12)
             try:
                 record = load_record(path)
                 original = record["original"]
                 status = record["events"][-1]
-                title = QLabel(
-                    f"{original['created']} — {original['kind']} — {original['mode'].upper()}"
-                )
+                title = QLabel(f"{original['kind'].title()} backup · {original['mode'].upper()}")
                 title.setWordWrap(True)
+                title.setProperty("role", "sectionTitle")
+                title.setTextFormat(Qt.TextFormat.PlainText)
                 box.addWidget(title)
+                box.addWidget(caption(f"Saved original · {original['created']}"))
+                state_text = {
+                    "response-confirmed": "Response confirmed · Verification pending",
+                    "cycle-required": "Vehicle cycle required · Verification pending",
+                    "verified": "Observed verification recorded",
+                    "uncertain": "Outcome uncertain · Inspect operation",
+                    "mismatch": "Verification mismatch",
+                }.get(status["state"], status["state"].capitalize())
+                state = caption(state_text, "badge")
+                state.setProperty("state", status["state"])
+                box.addWidget(state)
                 identity = QLabel(
                     f"VIN: {original['vin']}\n{len(original['targets'])} ECU target(s)\nState: {status['state']}"
                 )
                 identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                identity.setWordWrap(True)
+                identity.setTextFormat(Qt.TextFormat.PlainText)
                 box.addWidget(identity)
+                self._add_comparison(box, path, record["original_sha256"])
                 if status["instructions"]:
                     instructions = QLabel(status["instructions"])
                     instructions.setWordWrap(True)
                     box.addWidget(instructions)
                 box.addWidget(
-                    QLabel(
+                    caption(
                         "Restoration requires a supported operation and matching vehicle/software identity."
                     )
                 )
@@ -102,16 +151,18 @@ class BackupsPage(QWidget):
                         )
                         box.addWidget(verify)
                 export = QPushButton("Export JSON")
+                export.setProperty("class", "secondary")
                 export.clicked.connect(lambda checked=False, source=path: self._export(source))
                 box.addWidget(export)
             except (OSError, ValueError):
                 logger.warning("Backup cannot be validated: %s", path, exc_info=True)
                 box.addWidget(
-                    QLabel(
+                    caption(
                         f"Unreadable or corrupt backup: {path.name}\nKept on disk; recovery eligibility unavailable."
                     )
                 )
             delete = QPushButton("Delete backup")
+            delete.setProperty("class", "dangerOutline")
             delete.clicked.connect(lambda checked=False, source=path: self._delete(source))
             box.addWidget(delete)
             self.list_layout.insertWidget(self.list_layout.count() - 1, card)
@@ -122,6 +173,79 @@ class BackupsPage(QWidget):
             )
             notice.setWordWrap(True)
             self.list_layout.insertWidget(self.list_layout.count() - 1, notice)
+        self.search.apply()
+
+    @staticmethod
+    def _add_comparison(layout: QVBoxLayout, source: Path, original_hash: str) -> None:
+        """Load bounded comparison widgets only when the saved record is expanded."""
+        detail = QWidget()
+        detail.setProperty("class", "comparison")
+        box = QVBoxLayout(detail)
+        box.setContentsMargins(12, 12, 12, 12)
+        detail.hide()
+
+        def reveal(visible: bool) -> None:
+            """Revalidate the local original before displaying its byte preview."""
+            if visible and box.count() == 0:
+                try:
+                    record = load_record(source)
+                    if record["original_sha256"] != original_hash:
+                        raise ValueError("Saved original changed")
+                except (OSError, ValueError):
+                    box.addWidget(
+                        caption("Comparison unavailable. Refresh to check the saved record again.")
+                    )
+                else:
+                    BackupsPage._populate_comparison(box, record["original"])
+            detail.setVisible(visible)
+
+        toggle = QPushButton("Show original / intended block comparison")
+        toggle.setProperty("class", "disclosure")
+        toggle.setCheckable(True)
+        toggle.toggled.connect(reveal)
+        layout.addWidget(toggle)
+        layout.addWidget(detail)
+
+    @staticmethod
+    def _populate_comparison(box: QVBoxLayout, original: dict) -> None:
+        """Show bounded original/intended previews with complete JSON export available."""
+        for target in original["targets"][:25]:
+            title = caption(
+                f"{target['variant']} · 0x{target['address']:02X} · {target['software']}",
+                "featureTitle",
+            )
+            box.addWidget(title)
+            grid = QGridLayout()
+            grid.setColumnStretch(1, 1)
+            grid.setColumnStretch(2, 1)
+            for column, text in enumerate(("BLOCK", "ORIGINAL BYTES", "INTENDED BYTES")):
+                grid.addWidget(caption(text, "eyebrow"), 0, column)
+            blocks = list(target["baseline"])
+            for row, block in enumerate(blocks[:25], 1):
+                grid.addWidget(caption(block), row, 0)
+                for column, field in ((1, "baseline"), (2, "intended")):
+                    value = target[field][block]
+                    preview = " ".join(
+                        value[index : index + 8] for index in range(0, min(64, len(value)), 8)
+                    )
+                    preview += "…" if len(value) > 64 else ""
+                    label = caption(f"{preview}  ({len(value) // 2} bytes)")
+                    label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                    grid.addWidget(label, row, column)
+            box.addLayout(grid)
+            box.addWidget(
+                caption(
+                    "Preview shows up to 25 blocks and 32 bytes per value. "
+                    "Export JSON for complete original and intended data."
+                )
+            )
+            definition = caption("Definition SHA-256 · " + target["definition_sha256"])
+            definition.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            box.addWidget(definition)
+        if len(original["targets"]) > 25:
+            box.addWidget(
+                caption("Showing the first 25 targets. Export JSON for the complete saved record.")
+            )
 
     def _import(self) -> None:
         source, _ = QFileDialog.getOpenFileName(self, "Import backup", "", "JSON files (*.json)")

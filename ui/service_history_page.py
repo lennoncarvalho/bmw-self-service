@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from app.service_history import SERVICE_TYPES
 from app.worker import CarWorker
+from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, StatusLabel, caption
 from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class AddServiceDialog(QDialog):
     def __init__(self, parent: QWidget | None = None, entry: dict | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Local service entry")
+        self.setObjectName("cockpitDialog")
         self.setMinimumWidth(440)
         self.original = copy.deepcopy(entry or {})
         layout = QVBoxLayout(self)
@@ -263,17 +265,25 @@ class ServiceHistoryPage(QWidget):
 
     def _setup_ui(self) -> None:
         """Build local history cards, journal expansion and explicit write controls."""
+        self.setObjectName("historyPage")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
-        title = _label("Local service records")
-        title.setObjectName("titleLabel")
-        layout.addWidget(title)
-        layout.addWidget(
+        layout.setSpacing(16)
+        notice = CockpitCard("Offline local service logbook")
+        notice.box.addWidget(
             _label(
-                "Existing vehicle history cannot be read. These records come from this app or an imported JSON file. Editing a local record never changes the car."
+                "Existing vehicle history cannot be read. These records come from this app "
+                "or an imported JSON file. Editing a local record never changes the car."
             )
         )
-        self.context_label = _label("")
+        layout.addWidget(notice)
+        header = PageHeader(
+            "Service history", "Manage local records and review each vehicle append separately."
+        )
+        self.add_btn = self._button("+ Add local record", self._on_add_clicked)
+        header.action_layout.addWidget(self.add_btn)
+        layout.addWidget(header)
+        self.context_label = caption("", "eyebrow")
         layout.addWidget(self.context_label)
         row = QHBoxLayout()
         for text, slot in (
@@ -281,30 +291,58 @@ class ServiceHistoryPage(QWidget):
             ("Export JSON…", self._export),
             ("Reload local project", self._reload),
         ):
-            row.addWidget(self._button(text, slot))
+            button = self._button(text, slot)
+            button.setProperty("class", "secondary")
+            row.addWidget(button)
+        row.addStretch()
         layout.addLayout(row)
         contexts = QHBoxLayout()
         for text, slot in (
             ("Offline project", self._offline),
             ("Associate with connected VIN…", self._associate),
         ):
-            contexts.addWidget(self._button(text, slot))
+            button = self._button(text, slot)
+            button.setProperty("class", "secondary")
+            contexts.addWidget(button)
+        contexts.addStretch()
         layout.addLayout(contexts)
-        self.message = _label("")
+        self.message = StatusLabel()
+        self.message.setProperty("role", "notice")
         layout.addWidget(self.message)
         self.entry_container = QWidget()
+        self.entry_container.setProperty("class", "transparent")
         self.entry_layout = QVBoxLayout(self.entry_container)
+        self.entry_layout.setContentsMargins(0, 0, 0, 0)
+        self.entry_layout.setSpacing(14)
+        self.search = CardSearch(self.entry_container, "Search local date, mileage or service item")
+        layout.addWidget(self.search)
         layout.addWidget(self.entry_container)
-        self.add_btn = self._button("+ Add local entry", self._on_add_clicked)
-        layout.addWidget(self.add_btn)
-        self.replace_btn = self._button(
-            "Erase and replace with this local list…", self._replace_history
+
+        append_card = CockpitCard("Append one local record")
+        append_card.box.addWidget(
+            _label(
+                "Use Append this entry on an eligible record to review and send one local draft. "
+                "Existing vehicle entries are preserved. Unknown car dates cannot be checked."
+            )
         )
-        layout.addWidget(self.replace_btn)
+        replacement = CockpitCard("Erase & replace vehicle history")
+        replacement.setProperty("tone", "danger")
+        replacement.box.addWidget(
+            _label(
+                "Existing car entries absent from your reviewed list are permanently erased. "
+                "Prior vehicle history is unavailable for backup."
+            )
+        )
+        self.replace_btn = self._button("Review full replacement list…", self._replace_history)
+        self.replace_btn.setProperty("class", "dangerOutline")
+        replacement.box.addWidget(self.replace_btn)
+        layout.addWidget(ResponsiveColumns(append_card, replacement, ratio=(1, 1)))
         self.journal_button = QPushButton("Show history operation journals")
+        self.journal_button.setProperty("class", "disclosure")
         self.journal_button.setCheckable(True)
         layout.addWidget(self.journal_button)
         self.journal_container = QWidget()
+        self.journal_container.setProperty("class", "transparent")
         self.journal_layout = QVBoxLayout(self.journal_container)
         self.journal_container.hide()
         self.journal_button.toggled.connect(self.journal_container.setVisible)
@@ -314,11 +352,6 @@ class ServiceHistoryPage(QWidget):
         )
         self.report_export.hide()
         layout.addWidget(self.report_export)
-        layout.addWidget(
-            _label(
-                "Append sends one local draft without erasing. Erase-and-replace deletes all existing car entries absent from your reviewed list. Unknown car dates cannot be checked."
-            )
-        )
 
     def _run(self, operation: Callable[[], object], success: Callable[[object], None]) -> None:
         if self._worker is not None or self._shutting_down:
@@ -532,16 +565,30 @@ class ServiceHistoryPage(QWidget):
         for index in range(self._page * 25, min(len(entries), (self._page + 1) * 25)):
             entry = entries[index]
             card = QFrame()
-            card.setObjectName("card")
+            card.setObjectName("recordCard")
             box = QVBoxLayout(card)
             meta = self.workspace["records"][index]
             day = QDate.fromString(entry["date"], "yyyy-MM-dd")
             locale = regional_locale()
-            box.addWidget(
-                _label(
-                    f"{locale.toString(day, QLocale.FormatType.ShortFormat)} · {locale.toString(entry['mileage_km'])} km · {entry['dealer']}"
-                )
+            entry_header = QHBoxLayout()
+            date_tile = QFrame()
+            date_tile.setProperty("class", "dateTile")
+            date_tile.setFixedWidth(66)
+            date_box = QVBoxLayout(date_tile)
+            date_box.setContentsMargins(8, 6, 8, 6)
+            date_box.setSpacing(2)
+            date_box.addWidget(caption(locale.toString(day, "MMM").upper(), "eyebrow"))
+            date_box.addWidget(caption(locale.toString(day, "d"), "serviceValue"))
+            entry_header.addWidget(date_tile)
+            entry_header.addWidget(
+                caption(
+                    f"{locale.toString(day, QLocale.FormatType.ShortFormat)} · "
+                    f"{locale.toString(entry['mileage_km'])} km · {entry['dealer']}",
+                    "sectionTitle",
+                ),
+                1,
             )
+            box.addLayout(entry_header)
             box.addWidget(
                 _label(
                     f"{meta['origin'].capitalize()} · {self._record_state(index)} · Record status {entry['status']} · {len(entry['items'])} items"
@@ -565,6 +612,7 @@ class ServiceHistoryPage(QWidget):
                 )
             toggle = QPushButton("Show all item details")
             toggle.setCheckable(True)
+            toggle.setProperty("class", "disclosure")
             box.addWidget(toggle)
             detail = _label(
                 "\n".join(
@@ -577,8 +625,10 @@ class ServiceHistoryPage(QWidget):
             box.addWidget(detail)
             row = QHBoxLayout()
             edit = QPushButton("Edit local draft")
+            edit.setProperty("class", "secondary")
             edit.clicked.connect(lambda _checked=False, i=index: self._edit(i))
             remove = QPushButton("Remove local draft")
+            remove.setProperty("class", "secondary")
             remove.clicked.connect(lambda _checked=False, i=index: self._remove(i))
             edit.setEnabled(not self._consumed(index))
             remove.setEnabled(not self._consumed(index))
@@ -611,6 +661,7 @@ class ServiceHistoryPage(QWidget):
             )
             self.entry_layout.addLayout(row)
         self.entry_layout.addStretch()
+        self.search.apply()
 
     @staticmethod
     def _clear_layout(layout: QVBoxLayout | QHBoxLayout) -> None:
@@ -971,6 +1022,7 @@ class ServiceHistoryPage(QWidget):
             if record["events"][-1]["step"] is not None or state == "prepared":
                 state = "Interrupted / outcome uncertain — inspect iDrive"
             box = QFrame()
+            box.setObjectName("recordCard")
             layout = QVBoxLayout(box)
             layout.addWidget(
                 _label(

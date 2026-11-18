@@ -10,8 +10,8 @@ from pathlib import Path
 from threading import Event
 from typing import Any
 
-from PySide6.QtCore import QSize, Qt, QThread, QTimer, Slot
-from PySide6.QtGui import QAction, QCloseEvent, QIcon
+from PySide6.QtCore import QSize, Qt, QThread, QTimer, QUrl, Slot
+from PySide6.QtGui import QAction, QCloseEvent, QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -27,19 +27,20 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QPushButton,
     QScrollArea,
-    QSizePolicy,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
 from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, demo_cbs, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
+from app.diagnostics import coverage_complete
 from app.ista_jobs import refresh_bundled_data
 from app.mock_connection import MockConnection
 from app.protocol.contracts import TransportKind
-from app.resources import resource_path
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
+from ui.cockpit import caption, cockpit_icon
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
 from ui.ista_settings_dialog import IstaSettingsDialog
@@ -69,6 +70,8 @@ class MainWindow(QMainWindow):
         ("Diagnostics", SEARCH_ICON),
         ("Coding", WRENCH_ICON),
         ("History", CLIPBOARD_ICON),
+        ("CBS", ""),
+        ("Backups", ""),
     ]
 
     def __init__(self, *, read_only: bool = False) -> None:
@@ -76,7 +79,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self._read_only = read_only
         self.setWindowTitle("BMW Self Service" + (" — READ ONLY" if read_only else ""))
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1024, 700)
         self._demo_mode = False
         self._connection: object | None = None
         self._connected = False
@@ -104,6 +107,9 @@ class MainWindow(QMainWindow):
         self._worker_reap_timer.timeout.connect(self._reap_workers)
         self._setup_ui()
         self._apply_theme()
+        self._chrome_timer = QTimer(self)
+        self._chrome_timer.timeout.connect(self._sync_overview_chrome)
+        self._chrome_timer.start(1000)
 
     def _setup_ui(self) -> None:
         """Build fixed chrome around the shared scrolling page stack."""
@@ -123,6 +129,7 @@ class MainWindow(QMainWindow):
 
         self.vehicle_page = VehiclePage()
         self.vehicle_page.refresh_requested.connect(self._refresh_overview)
+        self.vehicle_page.navigation_requested.connect(self._navigate_from_overview)
         self.vehicle_page.cbs_panel.read_requested.connect(self._start_cbs_read)
         self.vehicle_page.cbs_panel.reset_requested.connect(self._start_cbs_reset)
         self.stack.addWidget(self.vehicle_page)
@@ -154,82 +161,189 @@ class MainWindow(QMainWindow):
         self.backups_page.verification_requested.connect(self._verify_coding_backup)
         self.coding_page.verification_saved.connect(self.backups_page.refresh)
         self.stack.addWidget(self.backups_page)
+        self.cbs_page = QWidget()
+        cbs_layout = QVBoxLayout(self.cbs_page)
+        cbs_layout.setContentsMargins(24, 24, 24, 24)
+        cbs_layout.addWidget(self.vehicle_page.cbs_panel)
+        self.vehicle_page.cbs_panel.show()
+        cbs_layout.addStretch()
+        self.stack.addWidget(self.cbs_page)
 
         self.content_scroll = QScrollArea()
         self.content_scroll.setObjectName("pageScrollArea")
         self.content_scroll.setWidgetResizable(True)
         self.content_scroll.setWidget(self.stack)
-        main_layout.addWidget(self.content_scroll, stretch=1)
+        workspace = QHBoxLayout()
+        workspace.setContentsMargins(0, 0, 0, 0)
+        workspace.setSpacing(0)
+        workspace.addWidget(self._build_bottom_nav())
+        workspace.addWidget(self.content_scroll, stretch=1)
+        main_layout.addLayout(workspace, stretch=1)
 
         self.spinner_overlay = self._build_spinner()
 
-        main_layout.addWidget(self._build_bottom_nav())
-
     def _build_top_bar(self) -> QFrame:
+        """Build persistent branding, vehicle identity and connection controls."""
         bar = QFrame()
-        bar.setObjectName("topBar")
-        bar.setFixedHeight(48)
+        bar.setObjectName("cockpitTopBar")
+        bar.setFixedHeight(64)
         layout = QHBoxLayout(bar)
-        layout.setContentsMargins(12, 4, 12, 4)
-
+        layout.setContentsMargins(16, 8, 16, 8)
+        layout.setSpacing(16)
+        layout.addWidget(caption("BMW SELF SERVICE", "brand"))
+        identity = QVBoxLayout()
+        identity.setSpacing(2)
+        self.car_label = caption("Not connected", "identity")
+        self.vin_label = caption("")
+        identity.addWidget(self.car_label)
+        metadata = QHBoxLayout()
+        metadata.setSpacing(12)
+        metadata.addWidget(self.vin_label)
+        self.observation_age = caption("")
+        self.observation_age.setAccessibleName("Overview observation time")
+        metadata.addWidget(self.observation_age, 1)
+        identity.addLayout(metadata)
+        layout.addLayout(identity, 1)
         self.status_dot = QLabel(RED_DOT)
-        self.status_dot.setObjectName("statusDot")
-        self.status_dot.setStyleSheet("font-size: 12px;")
         self.status_dot.setToolTip("Disconnected")
         layout.addWidget(self.status_dot)
-
-        self.car_label = QLabel("Not connected")
-        self.car_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #e0e0e0;")
-        layout.addWidget(self.car_label)
-        layout.addSpacing(8)
-
-        self.vin_label = QLabel("")
-        self.vin_label.setStyleSheet("font-size: 11px; color: #a0a0a0;")
-        layout.addWidget(self.vin_label)
-
-        layout.addStretch()
-
+        self.link_label = caption("Disconnected", "badge")
+        layout.addWidget(self.link_label)
+        self.power_status = caption("Voltage unavailable")
+        layout.addWidget(self.power_status)
         gear_btn = QPushButton()
-        gear_btn.setIcon(QIcon(str(resource_path("assets/gear.svg"))))
-        gear_btn.setIconSize(QSize(20, 20))
+        gear_btn.setIcon(cockpit_icon("settings"))
+        gear_btn.setIconSize(QSize(22, 22))
         gear_btn.setFixedSize(36, 36)
-        gear_btn.setStyleSheet(
-            "QPushButton {"
-            "  background: rgba(255,255,255,0.10);"
-            "  border: none;"
-            "  border-radius: 18px;"
-            "}"
-            "QPushButton:hover {"
-            "  background: rgba(255,255,255,0.20);"
-            "}"
-        )
+        gear_btn.setProperty("class", "iconButton")
+        gear_btn.setToolTip("Settings and connection actions")
+        gear_btn.setAccessibleName("Settings and connection actions")
         gear_btn.clicked.connect(self._show_gear_menu)
         layout.addWidget(gear_btn)
-
         return bar
 
     def _build_bottom_nav(self) -> QFrame:
+        """Build the fixed QuickSelect rail with the established navigation IDs."""
         bar = QFrame()
-        bar.setObjectName("bottomNav")
-        bar.setFixedHeight(68)
-        layout = QHBoxLayout(bar)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
+        bar.setObjectName("cockpitRail")
+        bar.setFixedWidth(80)
+        layout = QVBoxLayout(bar)
+        layout.setContentsMargins(4, 10, 4, 12)
+        layout.setSpacing(6)
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
-
-        for i, (label, icon) in enumerate(self.NAV_ITEMS):
-            btn = QPushButton(f"{icon}\n{label}")
-            btn.setObjectName("navButton")
-            btn.setCheckable(True)
-            btn.setEnabled(label in ("Vehicle", "History"))
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-            self.nav_group.addButton(btn, i)
-            layout.addWidget(btn)
-
+        icons = ("overview", "faults", "coding", "history", "service", "backups")
+        labels = ("Overview", "Faults", "Coding", "History", "CBS", "Backups")
+        for index in (0, 1, 4, 2, 3, 5):
+            nav_button = QToolButton()
+            nav_button.setText(labels[index])
+            nav_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+            nav_button.setFixedWidth(72)
+            nav_button.setObjectName("railButton")
+            nav_button.setCheckable(True)
+            nav_button.setIcon(cockpit_icon(icons[index]))
+            nav_button.setIconSize(QSize(22, 22))
+            nav_button.setFixedHeight(62)
+            nav_button.setAccessibleName(labels[index])
+            nav_button.setToolTip(labels[index])
+            self.nav_group.addButton(nav_button, index)
+            nav_button.setEnabled(index in (0, 3, 5))
+            layout.addWidget(nav_button)
+        self.nav_group.button(0).setChecked(True)
+        layout.addStretch()
+        flags = QHBoxLayout()
+        flags.setContentsMargins(0, 0, 0, 0)
+        flags.setSpacing(2)
+        for flag, country in (("🇺🇸", "English"), ("🇧🇷", "Portuguese")):
+            language = QToolButton()
+            language.setText(flag)
+            language.setProperty("class", "languagePlaceholder")
+            language.setFixedSize(35, 36)
+            language.setToolTip(country + " — language selection planned")
+            language.setAccessibleName(country + " — language selection planned")
+            language.setEnabled(False)
+            flags.addWidget(language)
+        layout.addLayout(flags)
+        for name, label in (("github", "GitHub"), ("coffee", "Coffee")):
+            button = QToolButton()
+            button.setIcon(cockpit_icon(name))
+            button.setIconSize(QSize(28, 28))
+            button.setFixedSize(72, 44)
+            button.setProperty("class", "railUtility")
+            button.setToolTip(label if name == "github" else label + " — planned")
+            button.setAccessibleName(label)
+            if name == "github":
+                button.clicked.connect(self._open_repository)
+            else:
+                button.setEnabled(False)
+            layout.addWidget(button)
         self.nav_group.idClicked.connect(self._on_nav_clicked)
         return bar
+
+    @Slot()
+    def _open_repository(self) -> None:
+        """Open this project's public source repository in the default browser."""
+        QDesktopServices.openUrl(QUrl("https://github.com/lennoncarvalho/bmw-self-service"))
+
+    @Slot(int)
+    def _navigate_from_overview(self, index: int) -> None:
+        """Route overview shortcuts through the guarded navigation entry point."""
+        button = self.nav_group.button(index)
+        if button is not None and button.isEnabled():
+            self._on_nav_clicked(index)
+
+    @Slot()
+    def _sync_overview_chrome(self) -> None:
+        """Reflect already settled UI state without scheduling vehicle work."""
+        self.link_label.setText(
+            "DEMO · Connected"
+            if self._connected and self._demo_mode
+            else "Connected"
+            if self._connected
+            else "Disconnected"
+        )
+        self.observation_age.setText(
+            self.vehicle_page.observed_label.text() if self._connected else ""
+        )
+        self.power_status.setText(
+            self.vehicle_page.battery_label.text().replace("Supply voltage: ", "")
+            if self._connected
+            else "Voltage unavailable"
+        )
+        self.vehicle_page.scan_button.setEnabled(self._connected and not self._mutation_active)
+        self.vehicle_page.health_value.setText(
+            f"{len(self.diag_page._dtcs)} recorded faults"
+            if self._connected and self.diag_page._loaded
+            else "Not scanned"
+        )
+        coverage = self.diag_page._coverage if self._connected else []
+        complete = sum(coverage_complete(row) for row in coverage)
+        coverage_text = (
+            f"Memory coverage: {complete}/{len(coverage)} accounted for · See Faults for inventory"
+            if coverage
+            else "Scan coverage · Unavailable"
+        )
+        if self._connected and self.diag_page._stale_scan_notice.isVisible():
+            coverage_text += " · Previous scan is stale"
+        self.vehicle_page.coverage_label.setText(coverage_text)
+        panel = self.vehicle_page.cbs_panel
+        self.vehicle_page.service_note.setText(
+            panel.message_label.text()
+            or (
+                "Last service read · Open CBS for source coverage and due values"
+                if self._connected and panel._has_result
+                else "Service status not read in this session"
+            )
+        )
+        self.vehicle_page.health_value.setToolTip(
+            "Open Faults for scan coverage and any stale-result warnings."
+        )
+        self.vehicle_page.service_value.setToolTip(panel.message_label.text())
+        self.vehicle_page.service_value.setText(
+            f"{len(panel._items)} service items"
+            if self._connected and panel._has_result
+            else "Not read"
+        )
 
     @staticmethod
     def _make_placeholder(title_text: str) -> QWidget:
@@ -507,7 +621,18 @@ class MainWindow(QMainWindow):
             if index == 0 and not self._connected:
                 self.stack.setCurrentWidget(self.welcome_page)
             else:
-                self.stack.setCurrentIndex(index + 1)
+                pages = (
+                    self.vehicle_page,
+                    self.diag_page,
+                    self.coding_page,
+                    self.history_page,
+                    self.cbs_page,
+                    self.backups_page,
+                )
+                self.stack.setCurrentWidget(pages[index])
+                if index == 5:
+                    self.backups_page.set_connection(self._connection)
+            self.nav_group.button(index).setChecked(True)
             self.content_scroll.verticalScrollBar().setValue(0)
             page = self.stack.currentWidget()
             if page in (self.diag_page, self.coding_page):
@@ -1193,7 +1318,7 @@ class MainWindow(QMainWindow):
 
         for btn in self.nav_group.buttons():
             btn.setChecked(False)
-            btn.setEnabled(self.nav_group.id(btn) in (0, 3))
+            btn.setEnabled(self.nav_group.id(btn) in (0, 3, 5))
 
         self.stack.setCurrentIndex(0)
         self.hide_spinner()
@@ -1202,6 +1327,7 @@ class MainWindow(QMainWindow):
     # ---- Menu actions ----
 
     def _on_backups(self) -> None:
+        self.nav_group.button(5).setChecked(True)
         self.backups_page.set_connection(self._connection)
         idx = self.stack.indexOf(self.backups_page)
         if idx >= 0:
@@ -1240,7 +1366,25 @@ class MainWindow(QMainWindow):
     def _start_cbs_read(self) -> None:
         """Read CBS from identified owners; DEMO decodes its simulated snapshot."""
         connection = self._connection
+        coverage = self.diag_page._coverage if self._connected else []
+        complete = sum(coverage_complete(row) for row in coverage)
+        coverage_text = (
+            f"Memory coverage: {complete}/{len(coverage)} accounted for · See Faults for inventory"
+            if coverage
+            else "Scan coverage · Unavailable"
+        )
+        if self._connected and self.diag_page._stale_scan_notice.isVisible():
+            coverage_text += " · Previous scan is stale"
+        self.vehicle_page.coverage_label.setText(coverage_text)
         panel = self.vehicle_page.cbs_panel
+        self.vehicle_page.service_note.setText(
+            panel.message_label.text()
+            or (
+                "Last service read · Open CBS for source coverage and due values"
+                if self._connected and panel._has_result
+                else "Service status not read in this session"
+            )
+        )
         if connection is None:
             panel.show_error("Connect to the vehicle before reading service status")
             return
@@ -1476,7 +1620,7 @@ class MainWindow(QMainWindow):
             else:
                 QTimer.singleShot(0, self._refresh_overview)
         for btn in self.nav_group.buttons():
-            btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3)) and not active)
+            btn.setEnabled((self._connected or self.nav_group.id(btn) in (0, 3, 5)) and not active)
         self._cancel_btn.setVisible(False)
         if (
             not active

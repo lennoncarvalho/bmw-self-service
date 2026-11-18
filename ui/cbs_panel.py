@@ -9,14 +9,14 @@ from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QFrame,
-    QHBoxLayout,
     QLabel,
+    QProgressBar,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
+from ui.cockpit import CardGrid, CockpitCard, PageHeader, StatusLabel, caption
 from ui.regional import regional_locale
 
 
@@ -29,6 +29,7 @@ class CbsPanel(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the service-status toggle and expanding record container."""
         super().__init__(parent)
+        self.setObjectName("cbsPage")
         self._resets_allowed = False
         self._busy = False
         self._selection = 0
@@ -36,20 +37,26 @@ class CbsPanel(QWidget):
         self._items: list[dict[str, Any]] = []
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        header = QHBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.setSpacing(14)
+        header = PageHeader(
+            "Service & maintenance",
+            "Read supported service intervals and review each item before resetting.",
+        )
         self.toggle_button = QPushButton("Show service status (CBS)")
+        self.toggle_button.setProperty("class", "secondary")
         self.toggle_button.setCheckable(True)
         self.toggle_button.toggled.connect(self._toggle)
-        header.addWidget(self.toggle_button, 1)
+        header.action_layout.addWidget(self.toggle_button)
         self.read_button = QPushButton("Read service status")
         self.read_button.clicked.connect(self.read_requested)
-        header.addWidget(self.read_button)
-        layout.addLayout(header)
-        self.message_label = QLabel()
+        header.action_layout.addWidget(self.read_button)
+        layout.addWidget(header)
+        self.message_label = StatusLabel()
         self.message_label.setWordWrap(True)
         self.message_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.message_label)
-        self.outcome_label = QLabel()
+        self.outcome_label = StatusLabel()
         self.outcome_label.setWordWrap(True)
         self.outcome_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.outcome_label)
@@ -58,7 +65,11 @@ class CbsPanel(QWidget):
         self.status_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.status_label)
         self.container = QWidget()
-        self.rows = QVBoxLayout(self.container)
+        body = QVBoxLayout(self.container)
+        body.setContentsMargins(0, 0, 0, 0)
+        self.service_grid = CardGrid()
+        self.rows = self.service_grid.box
+        body.addWidget(self.service_grid)
         layout.addWidget(self.container)
         self.clear("Service status not read in this session")
         self._toggle(False)
@@ -113,16 +124,10 @@ class CbsPanel(QWidget):
         self.message_label.clear()
         self.outcome_label.clear()
         self.status_label.setText(text)
-        self.rows.addStretch()
         self.set_busy(False)
 
     def _clear_rows(self) -> None:
-        while self.rows.count():
-            item = self.rows.takeAt(0)
-            child = item.widget() if item is not None else None
-            if child is not None:
-                child.hide()
-                child.deleteLater()
+        self.service_grid.clear()
 
     @staticmethod
     def _describe(item: dict[str, Any]) -> str:
@@ -204,14 +209,38 @@ class CbsPanel(QWidget):
                 "Any retained values are stale; their resets are disabled."
             )
         for item in items:
-            frame = QFrame()
-            frame.setObjectName("card")
-            row = QHBoxLayout(frame)
+            frame = CockpitCard(str(item["label"]))
+            row = frame.box
+            remaining = item.get("remaining")
+            distance = (
+                regional_locale().toString(remaining) + " " + str(item.get("unit") or "")
+                if isinstance(remaining, int)
+                else "Unavailable"
+            )
+            row.addWidget(caption(distance, "serviceValue"))
+            row.addWidget(caption("Remaining interval"))
+            if item.get("due_month") and item.get("due_year"):
+                row.addWidget(
+                    caption(
+                        f"Due date · {item['due_month']:02d}/{item['due_year']}", "sectionTitle"
+                    )
+                )
+            availability = item.get("availability")
+            if isinstance(availability, (int, float)) and 0 <= availability <= 100:
+                row.addWidget(caption(f"Availability · {availability}%"))
+                progress = QProgressBar()
+                progress.setRange(0, 100)
+                progress.setValue(int(availability))
+                progress.setTextVisible(False)
+                progress.setFixedHeight(6)
+                progress.setAccessibleName(f"Source availability {availability}%")
+                row.addWidget(progress)
             label = QLabel(self._describe(item))
             label.setWordWrap(True)
             label.setTextFormat(Qt.TextFormat.PlainText)
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            row.addWidget(label, 1)
+            row.addWidget(label)
+            row.addStretch()
             if item.get("resettable"):
                 button = QPushButton("Reset…")
                 button.setEnabled(resets_allowed and not self._busy)
@@ -223,11 +252,10 @@ class CbsPanel(QWidget):
                     )
                 )
                 row.addWidget(button, 0, Qt.AlignmentFlag.AlignTop)
-            self.rows.addWidget(frame)
+            self.service_grid.add_card(frame)
         if not items:
             empty = QLabel("No CBS records were returned")
-            self.rows.addWidget(empty)
-        self.rows.addStretch()
+            self.service_grid.add_card(empty)
         self.toggle_button.setChecked(True)
 
     def _request_reset(self, item: dict[str, Any], selection: int) -> None:

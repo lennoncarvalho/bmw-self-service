@@ -33,6 +33,7 @@ from app.coding import CodingCatalogueWorker, CodingValuesWorker
 from app.operation_store import OperationStore
 from app.protocol.contracts import TransportKind
 from app.worker import CarWorker
+from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, caption
 from ui.page_stack import PageStack
 
 logger = logging.getLogger(__name__)
@@ -142,62 +143,73 @@ class CodingPage(QWidget):
 
     def _setup_ui(self) -> None:
         """Build the coding page, pending controls and the mutation action bar."""
+        self.setObjectName("codingPage")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        pending_bar = QHBoxLayout()
-        pending_bar.setContentsMargins(24, 16, 24, 0)
-        pending_bar.addStretch()
-        self._pending_label = QLabel("")
-        self._pending_label.setStyleSheet("color: #F39C12; font-size: 13px; font-weight: bold;")
-        pending_bar.addWidget(self._pending_label)
-        layout.addLayout(pending_bar)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
+        layout.addWidget(
+            PageHeader(
+                "Car customization",
+                "Review observed values and select supported changes for your vehicle.",
+            )
+        )
 
         # Sub-page stack
         self._sub_stack = PageStack(content_height=True)
+        self.search = CardSearch(self._sub_stack, "Search sections or loaded features")
+        content = QWidget()
+        content.setProperty("class", "transparent")
+        body = QVBoxLayout(content)
+        body.setContentsMargins(0, 0, 0, 0)
+        body.addWidget(self.search)
         self._sub_stack.addWidget(self._build_easy_page())
-        layout.addWidget(self._sub_stack)
+        body.addWidget(self._sub_stack)
+
+        review = CockpitCard("Changes to apply")
+        self._pending_label = caption("No changes selected", "sectionTitle")
+        review.box.addWidget(self._pending_label)
+        review.box.addWidget(
+            caption(
+                "Choose options in a section. Current values stay selected until you change them."
+            )
+        )
+        self._selection_summary = caption("")
+        review.box.addWidget(self._selection_summary)
+        review.box.addWidget(caption("PREPARATION CHECKS", "eyebrow"))
+        review.box.addWidget(
+            caption(
+                "Vehicle identity, current software, original data and power "
+                "are checked during the guarded review."
+            )
+        )
+        review.box.addWidget(
+            caption(
+                "Original data is saved before a live write. Restoration requires a new review."
+            )
+        )
 
         # Bottom bar (visible when pending > 0)
         self._bottom_bar = QFrame()
-        self._bottom_bar.setObjectName("bottomNav")
-        self._bottom_bar.setFixedHeight(52)
+        self._bottom_bar.setProperty("class", "reviewActions")
         self._bottom_bar.setVisible(False)
-        bar_layout = QHBoxLayout(self._bottom_bar)
-        bar_layout.setContentsMargins(24, 8, 24, 8)
-
-        clear_btn = QPushButton("Clear All")
-        clear_btn.setStyleSheet(
-            "QPushButton { background: #3a3a5a; color: #a0a0a0; "
-            "border-radius: 8px; padding: 8px 24px; font-weight: bold; }"
-            "QPushButton:hover { background: #5a5a7a; color: white; }"
-        )
+        bar_layout = QVBoxLayout(self._bottom_bar)
+        bar_layout.setContentsMargins(0, 8, 0, 0)
+        clear_btn = QPushButton("Discard selected changes")
+        clear_btn.setProperty("class", "secondary")
         clear_btn.clicked.connect(self._on_clear)
         bar_layout.addWidget(clear_btn)
-        bar_layout.addStretch()
-
-        self._write_btn = QPushButton("Write to Car")
-        self._write_btn.setStyleSheet(
-            "QPushButton { background: #2ECC71; color: white; "
-            "border-radius: 8px; padding: 8px 24px; font-weight: bold; }"
-            "QPushButton:hover { background: #27AE60; }"
-        )
+        self._write_btn = QPushButton("Review coding changes")
         self._write_btn.clicked.connect(self._on_write)
         bar_layout.addWidget(self._write_btn)
-        layout.addWidget(self._bottom_bar)
+        review.box.addWidget(self._bottom_bar)
+        layout.addWidget(ResponsiveColumns(content, review))
 
     def _build_easy_page(self) -> QWidget:
         """Build expandable DEMO categories from the current preview values."""
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setContentsMargins(24, 12, 24, 24)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
-
-        title = QLabel("Easy Coding")
-        title.setObjectName("titleLabel")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #ffffff;")
-        layout.addWidget(title)
 
         container = QWidget()
         cat_layout = QVBoxLayout(container)
@@ -205,27 +217,18 @@ class CodingPage(QWidget):
 
         for cat in self._categories:
             card = QFrame()
-            card.setObjectName("card")
+            card.setObjectName("recordCard")
             card.setCursor(Qt.CursorShape.PointingHandCursor)
-            card.setStyleSheet(
-                "QFrame#card { background: #16213e; border: 1px solid #2a2a4a; "
-                "border-radius: 8px; padding: 12px; }"
-                "QFrame#card:hover { border-color: #1C69D4; }"
-            )
             card_layout = QVBoxLayout(card)
             card_layout.setSpacing(4)
 
             top = QHBoxLayout()
-            name_label = QLabel(cat["name"])
-            name_label.setStyleSheet(
-                "font-size: 15px; font-weight: bold; color: #e0e0e0; background: transparent;"
-            )
+            name_label = caption(cat["name"], "sectionTitle")
             top.addWidget(name_label)
             top.addStretch()
             card_layout.addLayout(top)
 
-            desc = QLabel(cat["description"])
-            desc.setStyleSheet("font-size: 12px; color: #a0a0a0; background: transparent;")
+            desc = caption(cat["description"])
             card_layout.addWidget(desc)
 
             # Options expandable section
@@ -236,8 +239,7 @@ class CodingPage(QWidget):
 
             for opt in cat["options"]:
                 current_val = opt["values"][opt["current"]]
-                opt_lbl = QLabel(f"{opt['name']}: {current_val}")
-                opt_lbl.setStyleSheet("font-size: 13px; color: #e0e0e0; background: transparent;")
+                opt_lbl = caption(f"{opt['name']}: {current_val}", "featureTitle")
                 opt_lbl.setWordWrap(True)
                 opts_layout.addWidget(opt_lbl)
 
@@ -246,10 +248,6 @@ class CodingPage(QWidget):
 
                 for v_i, v_name in enumerate(opt["values"]):
                     rb = QRadioButton(f"  {v_name}")
-                    rb.setStyleSheet(
-                        "QRadioButton { color: #a0a0a0; spacing: 8px; }"
-                        "QRadioButton::indicator { width: 14px; height: 14px; }"
-                    )
                     opt_group.addButton(rb, v_i)
                     # Set checked state before connecting signal so init
                     # does not fire toggled and increment _pending
@@ -266,11 +264,7 @@ class CodingPage(QWidget):
             # Toggle button for accessibility
             toggle_btn = QPushButton("\u25bc Expand")
             toggle_btn.setFlat(True)
-            toggle_btn.setStyleSheet(
-                "QPushButton { color: #1C69D4; font-size: 11px; "
-                "background: transparent; border: none; padding: 4px 0; }"
-                "QPushButton:hover { color: #4A90E2; }"
-            )
+            toggle_btn.setProperty("class", "disclosure")
             toggle_btn.clicked.connect(
                 lambda checked, ow=opts_widget, b=None: (
                     ow.setVisible(not ow.isVisible()),
@@ -576,11 +570,8 @@ class CodingPage(QWidget):
         self._write_btn.setEnabled(False)
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setContentsMargins(24, 12, 24, 24)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
-        title = QLabel("Easy Coding")
-        title.setObjectName("titleLabel")
-        layout.addWidget(title)
         sections: dict[str, str] = {}
         for row in rows:
             sections.update(row.get("sections", {}))
@@ -594,7 +585,7 @@ class CodingPage(QWidget):
         )
         for section, label in sorted(sections.items(), key=lambda entry: entry[1].casefold()):
             card = QFrame()
-            card.setObjectName("card")
+            card.setObjectName("recordCard")
             entries = QVBoxLayout(card)
             opened = section in self._open_sections
             toggle = QPushButton(f"{'▾' if opened else '▸'}  {label}")
@@ -618,6 +609,9 @@ class CodingPage(QWidget):
                     for preset in row.get("presets", [])
                     if preset["section"] == section
                 )
+            card.setProperty(
+                "searchText", label + " " + " ".join(preset["label"] for _, preset in presets)
+            )
             repeated = Counter(preset["label"] for _, preset in presets)
             for row, preset in presets:
                 key = (
@@ -661,6 +655,7 @@ class CodingPage(QWidget):
             old.deleteLater()
         self._sub_stack.insertWidget(0, page)
         self._sub_stack.setCurrentIndex(0)
+        self.search.apply()
         self._pending = len(self._live_selections)
         self._update_pending_label()
         self._write_btn.setEnabled(bool(self._pending) and not self.is_reading())
@@ -679,7 +674,7 @@ class CodingPage(QWidget):
         feature.setObjectName("codingFeature")
         options = QVBoxLayout(feature)
         options.setContentsMargins(12, 4, 0, 4)
-        heading = QLabel(label)
+        heading = caption(label, "featureTitle")
         heading.setTextFormat(Qt.TextFormat.PlainText)
         heading.setWordWrap(True)
         options.addWidget(heading)
@@ -766,11 +761,40 @@ class CodingPage(QWidget):
         self._update_pending_label()
 
     def _update_pending_label(self) -> None:
+        """Show staged choices while preserving the existing review controls."""
+        selected = []
+        if getattr(self._connection, "data", None):
+            for category, original in zip(self._categories, self._originals, strict=False):
+                for option, before in zip(category["options"], original["options"], strict=False):
+                    if option["current"] != before["current"]:
+                        selected.append(f"{option['name']} · {option['values'][option['current']]}")
+        else:
+            for row in self._source_rows:
+                for preset in row.get("presets", []):
+                    key = (
+                        preset["address"],
+                        preset["definition"],
+                        preset["id"],
+                        preset["source_index"],
+                    )
+                    if key in self._live_selections:
+                        value = self._live_selections[key]
+                        label = next(
+                            (
+                                option["label"]
+                                for option in preset["choices"]
+                                if option["name"] == value
+                            ),
+                            value,
+                        )
+                        selected.append(f"{preset['label']} · {label}")
+        self._selection_summary.setText("\n\n".join(selected))
+        self.search.apply()
         if self._pending > 0:
             self._pending_label.setText(f"[{self._pending} changes pending]")
             self._bottom_bar.setVisible(True)
         else:
-            self._pending_label.setText("")
+            self._pending_label.setText("No changes selected")
             self._bottom_bar.setVisible(False)
 
     def _on_clear(self) -> None:
@@ -914,8 +938,7 @@ class CodingPage(QWidget):
         else:
             self._live_selections[identity] = str(selected)
         self._pending = len(self._live_selections)
-        self._pending_label.setText(f"{self._pending} pending coding change(s)")
-        self._bottom_bar.setVisible(self._pending > 0)
+        self._update_pending_label()
         self._write_btn.setEnabled(bool(self._pending) and not self.is_reading())
 
     def _prepare_source_write(self, restore_path: Path | None = None) -> str | None:
