@@ -236,22 +236,40 @@ rereads/counts remain separate. The UI retains outcomes across refreshes, waits
 for worker thread exit before unlocking, and requires reconnect after stream
 failure. It never retries or automatically rereads a stopped clear batch.
 
-#### Additional display-reader leads
+#### Additional display readers
 
-These are source leads, not validated wire contracts. Canonical PRG tables are
-readable with `app.ista_data.read_job_table()`:
+`app/power_readings.py` uses `coding_data/power_readers.json`: 30 exact variants,
+70 address/index identities, SOC/SOH on 26 variants and terminal state on six.
+`python3 scripts/recover_power_readers.py --parser BimmerDaten/decoderPrg.py --evidence <path>`
+rebuilds it from bundled PRGs, checks native signed/percentage boundaries and every
+source terminal state, and retains job offsets/listing hashes/table provenance.
+The full runtime builder runs this producer. No runtime source-folder access.
 
-- `dme_bx8.prg`: `STATUS_BZEDIAG` exposes `STAT_LADEZUSTAND_AKTUELL_WERT`
-  and quality; `STATUS_SYSTEMCHECK_AEP_INFO_2` references `STAT_SOH_WERT`.
-- `bdc_g05.prg`: `SG_FUNKTIONEN` maps `BZEDIAG_SOC` to DID `4055` and
-  `BZEDIAG_SOH` to `482A`, with result and quality tables.
-- `bdc.prg`, `fem_20.prg`, `bdc_g11.prg`: `STATUS_KLEMMEN` maps to DID `DC56`;
-  `TAB_CAS_KLEMMENSTATUS` distinguishes KL15, transitions and invalid states.
+- Older engines use `STATUS_SYSTEMCHECK_AEP_INFO_2`, `22 4023`, a 32-byte positive
+  reply: SOH at PDU byte 4 is unsigned byte minus 128; current SOC is byte 20.
+  The supplied diagnostic APK's `j6.v.a.C0160a.C0161a.b` independently checks the
+  length/current-SOC offset. `DME_BX8` job offset `0x186330` supplies the named
+  percentage results. `STATUS_BZEDIAG`/`403B` instead reports charge in Ah; its
+  similarly named field is not a current SOC percentage.
+- Structured `STATUS_LESEN` readers use exact `SG_FUNKTIONEN`/result tables:
+  BDC_G05 `4055`/`482A`, BCP_SP21 `AC39`/`AC42`, and the matching engine variants'
+  `40AD`/`40B5`. Current percentages and their quality fields are signed bytes.
+  Table-derived reply lengths remain variant-specific, including SOC's optional
+  plausibility byte. That raw code is retained without inventing its meaning.
+- `STATUS_KLEMMEN`/`DC56` uses `TAB_CAS_KLEMMENSTATUS` or `TAB_KLEMMEN_ZUSTAND`.
+  Stable KL15, accessory/off, transitions, KL50 cranking, initialization and invalid
+  states remain distinct; no unknown state becomes ignition-off or engine-running.
 
-Validate exact ECU applicability, native execution, scaling and invalid/quality
-values before generating standalone reader assets. Supply voltage cannot stand
-in for SOC, SOH or ignition state. Overview omits those fields until implemented;
-installed I-Levels do not establish available software upgrades.
+Overview reads share one 30-second operation budget and publish in the normal
+settled batch. Exact observed address/index, variant and bundled job hash must
+match. Multiple sources stay separately labelled; failures preserve independent
+results. Percentages outside 0–100 are unavailable. Reported quality 0 is retained;
+invalid/missing required qualifiers disable that value. No quality acceptance
+threshold is established, and AEP readers explicitly report absent quality.
+The fixed DEMO uses SOC 82%, SOH 90% and KL15 on through the normal HSFZ/native path.
+Native/error and source-free Qt/DEMO checks passed; physical reads remain unverified.
+These fields do not grant power-readiness or write authority. Supply voltage is
+separate, and installed I-Levels do not establish available software upgrades.
 
 ### CBS
 

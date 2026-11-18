@@ -148,6 +148,18 @@ def build(
         str(data / "vehicle_models.json"),
         str(output / "build/vehicle-model-provenance.json"),
     )
+    run(
+        sys.executable,
+        str(ROOT / "scripts/recover_power_readers.py"),
+        "--bundle",
+        str(output / "ista_bundle"),
+        "--parser",
+        str(job_parser),
+        "--output",
+        str(data / "power_readers.json"),
+        "--evidence",
+        str(output / "build/power-reader-provenance.json"),
+    )
     # Existing independently recovered runtime contracts remain assets, never
     # reference-application dependencies. Their own evidence records own provenance.
     for name in (

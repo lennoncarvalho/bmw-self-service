@@ -1,0 +1,911 @@
+{
+  "profiles": {
+    "BCP_SP21": {
+      "job_sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
+      "readers": [
+        {
+          "args": "ARG;BZEDIAG_SOC",
+          "job": "STATUS_LESEN",
+          "request": "22ac39",
+          "response_size": 30,
+          "values": {
+            "soc": {
+              "quality": "STAT_Q_LADEZUSTAND_AKTUELL_WERT",
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;BZEDIAG_SOH",
+          "job": "STATUS_LESEN",
+          "request": "22ac42",
+          "response_size": 25,
+          "values": {
+            "soh": {
+              "quality": "STAT_Q_SOH_BATTERIE_WERT",
+              "result": "STAT_SOH_BATTERIE_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;STATUS_KLEMMEN",
+          "job": "STATUS_LESEN",
+          "request": "22dc56",
+          "response_size": 4,
+          "states": {
+            "0": "Initializing",
+            "10": "On (KL15)",
+            "13": "Cranking (KL50)",
+            "14": "Unavailable \u2014 terminal error",
+            "15": "Unavailable \u2014 invalid signal",
+            "2": "Off (KL30)",
+            "255": "Unavailable \u2014 invalid value",
+            "4": "Off (KL30F)",
+            "6": "Off (KL30B)",
+            "9": "Transition"
+          },
+          "values": {
+            "kl15": {
+              "result": "STAT_KLEMMENSTATUSO"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "10 0F28B0"
+      ]
+    },
+    "BDC": {
+      "job_sha256": "68d093538e262a3ee431e62812d3871335446db00c99af5334e3f1887bb94666",
+      "readers": [
+        {
+          "args": "ARG;STATUS_KLEMMEN",
+          "job": "STATUS_LESEN",
+          "request": "22dc56",
+          "response_size": 4,
+          "states": {
+            "0": "Initializing",
+            "1": "Reserved",
+            "10": "On (KL15)",
+            "11": "Transition",
+            "12": "Transition",
+            "13": "Cranking (KL50)",
+            "14": "Unavailable \u2014 terminal error",
+            "15": "Unavailable \u2014 invalid signal",
+            "2": "Off (KL30)",
+            "3": "Transition",
+            "4": "Off (KL30F)",
+            "5": "Transition",
+            "6": "Off (KL30B)",
+            "7": "Transition",
+            "8": "Off (accessory/KLR)",
+            "9": "Transition"
+          },
+          "values": {
+            "kl15": {
+              "result": "STAT_KLEMMENSTATUSO"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "40 0F19C0"
+      ]
+    },
+    "BDC_G05": {
+      "job_sha256": "03eda3f6ad72455cf5943f1df77f8cda30bb14eeb313c44a9e52a57c75794056",
+      "readers": [
+        {
+          "args": "ARG;BZEDIAG_SOC",
+          "job": "STATUS_LESEN",
+          "request": "224055",
+          "response_size": 30,
+          "values": {
+            "soc": {
+              "quality": "STAT_Q_LADEZUSTAND_AKTUELL_WERT",
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;BZEDIAG_SOH",
+          "job": "STATUS_LESEN",
+          "request": "22482a",
+          "response_size": 25,
+          "values": {
+            "soh": {
+              "quality": "STAT_Q_SOH_BATTERIE_WERT",
+              "result": "STAT_SOH_BATTERIE_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;STATUS_KLEMMEN",
+          "job": "STATUS_LESEN",
+          "request": "22dc56",
+          "response_size": 4,
+          "states": {
+            "0": "Initializing",
+            "10": "On (KL15)",
+            "13": "Cranking (KL50)",
+            "14": "Unavailable \u2014 terminal error",
+            "15": "Unavailable \u2014 invalid signal",
+            "2": "Off (KL30)",
+            "255": "Unavailable \u2014 invalid value",
+            "4": "Off (KL30F)",
+            "6": "Off (KL30B)",
+            "9": "Transition"
+          },
+          "values": {
+            "kl15": {
+              "result": "STAT_KLEMMENSTATUSO"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "40 0F2680"
+      ]
+    },
+    "BDC_G11": {
+      "job_sha256": "8733bab7214a25b5804952ca7d1e40839e152c9fdfedd903684daf1ea2a4ba54",
+      "readers": [
+        {
+          "args": "ARG;STATUS_KLEMMEN",
+          "job": "STATUS_LESEN",
+          "request": "22dc56",
+          "response_size": 4,
+          "states": {
+            "0": "Initializing",
+            "1": "Reserved",
+            "10": "On (KL15)",
+            "11": "Transition",
+            "12": "Transition",
+            "13": "Cranking (KL50)",
+            "14": "Unavailable \u2014 terminal error",
+            "15": "Unavailable \u2014 invalid signal",
+            "2": "Off (KL30)",
+            "3": "Transition",
+            "4": "Off (KL30F)",
+            "5": "Transition",
+            "6": "Off (KL30B)",
+            "7": "Transition",
+            "8": "Off (accessory/KLR)",
+            "9": "Transition"
+          },
+          "values": {
+            "kl15": {
+              "result": "STAT_KLEMMENSTATUSO"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "40 0F2050"
+      ]
+    },
+    "CAS4_2": {
+      "job_sha256": "0e879128e11639e20518e75fec87854c38c34a9ba2d25d6921f4cc3c310bb0b4",
+      "readers": [
+        {
+          "args": "ARG;STATUS_KLEMMEN",
+          "job": "STATUS_LESEN",
+          "request": "22dc56",
+          "response_size": 4,
+          "states": {
+            "0": "Initializing",
+            "1": "Reserved",
+            "10": "On (KL15)",
+            "11": "Transition",
+            "12": "Transition",
+            "13": "Cranking (KL50)",
+            "14": "Unavailable \u2014 terminal error",
+            "15": "Unavailable \u2014 invalid signal",
+            "2": "Off (KL30)",
+            "3": "Transition",
+            "4": "Off (KL30F)",
+            "5": "Transition",
+            "6": "Off (KL30B)",
+            "7": "Transition",
+            "8": "Off (accessory/KLR)",
+            "9": "Transition"
+          },
+          "values": {
+            "kl15": {
+              "result": "STAT_KLEMMENSTATUSO"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "40 0F1001"
+      ]
+    },
+    "D70BX7A0": {
+      "job_sha256": "4609b1ec33c0f6040da9e84d9aa80cfd56a5796b03e41d74d65475f7311150f6",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1F90",
+        "12 0F1FA0"
+      ]
+    },
+    "D72N47A0": {
+      "job_sha256": "262b626f1c25ca7d46fb04e5f71d15a45ecbcc1bf6e77e1a2d96f07a59305736",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1740",
+        "12 0F18A0",
+        "12 0F1920"
+      ]
+    },
+    "D73N57A0": {
+      "job_sha256": "48a1a09162489db5a97b04674debf12ba3ce6c857da4b0027b97dc323134fa8b",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F10A0"
+      ]
+    },
+    "D73N57E0": {
+      "job_sha256": "32c59035cf458430944f8a58b42b3a48c9855688bbfb5d66d7c4d8c4b44b179a",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F17B0",
+        "12 0F17B4",
+        "12 0F17B8",
+        "12 0F17BC",
+        "12 0F1EF0"
+      ]
+    },
+    "D75BX7A0": {
+      "job_sha256": "7e6678d772c668dd7077fc541c47458417d43c4916a419d84ea19bfb925ae10e",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1F70",
+        "12 0F1F80"
+      ]
+    },
+    "D83BX7C0": {
+      "job_sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648",
+      "readers": [
+        {
+          "args": "ARG;BZEDIAG_SOC",
+          "job": "STATUS_LESEN",
+          "request": "2240ad",
+          "response_size": 29,
+          "values": {
+            "soc": {
+              "quality": "STAT_Q_LADEZUSTAND_AKTUELL_WERT",
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;BZEDIAG_SOH",
+          "job": "STATUS_LESEN",
+          "request": "2240b5",
+          "response_size": 25,
+          "values": {
+            "soh": {
+              "quality": "STAT_Q_SOH_BATTERIE_WERT",
+              "result": "STAT_SOH_BATTERIE_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1FE8",
+        "12 0F1FF0",
+        "12 0F1FF4",
+        "12 0F1FF8",
+        "12 0F2670",
+        "12 0F2674",
+        "12 0F2678",
+        "12 0F267C"
+      ]
+    },
+    "D94BX7A0": {
+      "job_sha256": "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c",
+      "readers": [
+        {
+          "args": "ARG;BZEDIAG_SOC",
+          "job": "STATUS_LESEN",
+          "request": "2240ad",
+          "response_size": 29,
+          "values": {
+            "soc": {
+              "quality": "STAT_Q_LADEZUSTAND_AKTUELL_WERT",
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;BZEDIAG_SOH",
+          "job": "STATUS_LESEN",
+          "request": "2240b5",
+          "response_size": 25,
+          "values": {
+            "soh": {
+              "quality": "STAT_Q_SOH_BATTERIE_WERT",
+              "result": "STAT_SOH_BATTERIE_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F2C80"
+      ]
+    },
+    "DME8FF_L": {
+      "job_sha256": "36ad3cad7a0eeb7b002c6c250a59c249257ab0bf56dddbe6883dfbc5e42107e3",
+      "readers": [
+        {
+          "args": "ARG;BZEDIAG_SOC",
+          "job": "STATUS_LESEN",
+          "request": "2240ad",
+          "response_size": 29,
+          "values": {
+            "soc": {
+              "quality": "STAT_Q_LADEZUSTAND_AKTUELL_WERT",
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;BZEDIAG_SOH",
+          "job": "STATUS_LESEN",
+          "request": "2240b5",
+          "response_size": 25,
+          "values": {
+            "soh": {
+              "quality": "STAT_Q_SOH_BATTERIE_WERT",
+              "result": "STAT_SOH_BATTERIE_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "13 0F242C",
+        "13 0F242E",
+        "13 0F2460",
+        "13 0F26B8",
+        "13 0F26BC"
+      ]
+    },
+    "DME8FF_R": {
+      "job_sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf",
+      "readers": [
+        {
+          "args": "ARG;BZEDIAG_SOC",
+          "job": "STATUS_LESEN",
+          "request": "2240ad",
+          "response_size": 29,
+          "values": {
+            "soc": {
+              "quality": "STAT_Q_LADEZUSTAND_AKTUELL_WERT",
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            }
+          }
+        },
+        {
+          "args": "ARG;BZEDIAG_SOH",
+          "job": "STATUS_LESEN",
+          "request": "2240b5",
+          "response_size": 25,
+          "values": {
+            "soh": {
+              "quality": "STAT_Q_SOH_BATTERIE_WERT",
+              "result": "STAT_SOH_BATTERIE_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F2422",
+        "12 0F2424",
+        "12 0F2426",
+        "12 0F2427",
+        "12 0F2428",
+        "12 0F2429",
+        "12 0F242A",
+        "12 0F242C",
+        "12 0F242E",
+        "12 0F2460",
+        "12 0F25A0",
+        "12 0F25A2",
+        "12 0F26B4",
+        "12 0F26B8",
+        "12 0F26BC",
+        "12 0F26E0",
+        "12 0F26E4",
+        "12 0F26E8",
+        "12 0F2930"
+      ]
+    },
+    "DME_BX8": {
+      "job_sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1D20",
+        "12 0F1D22",
+        "12 0F1D24",
+        "12 0F1D26"
+      ]
+    },
+    "EDMEI1": {
+      "job_sha256": "f5564d839090f25dec1dad1b505061d0cfe81e5fad23bcf8295d8f73c1e531c5",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F19E0"
+      ]
+    },
+    "FEM_20": {
+      "job_sha256": "b00015f5021e068eafdea0109df2bf87023ae59132a8b97222e4dc72b013f67b",
+      "readers": [
+        {
+          "args": "ARG;STATUS_KLEMMEN",
+          "job": "STATUS_LESEN",
+          "request": "22dc56",
+          "response_size": 4,
+          "states": {
+            "0": "Initializing",
+            "1": "Reserved",
+            "10": "On (KL15)",
+            "11": "Transition",
+            "12": "Transition",
+            "13": "Cranking (KL50)",
+            "14": "Unavailable \u2014 terminal error",
+            "15": "Unavailable \u2014 invalid signal",
+            "2": "Off (KL30)",
+            "3": "Transition",
+            "4": "Off (KL30F)",
+            "5": "Transition",
+            "6": "Off (KL30B)",
+            "7": "Transition",
+            "8": "Off (accessory/KLR)",
+            "9": "Transition"
+          },
+          "values": {
+            "kl15": {
+              "result": "STAT_KLEMMENSTATUSO"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "40 0F16B0"
+      ]
+    },
+    "MEVD172": {
+      "job_sha256": "c0ba4f472218f79cd18954eb6b6763aa8782b9f0b259afa1d23bfc8613468c97",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F13F0"
+      ]
+    },
+    "MEVD1724": {
+      "job_sha256": "747aca7ddb7ea1334092a96656202470247d97e3402faf54037dbdd8909265f9",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1810"
+      ]
+    },
+    "MEVD1725": {
+      "job_sha256": "e5d4866a9b8cdeb51c638a29ba508ca4cb52ba5bb9670236e4ec6d13648f45dd",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F17F0"
+      ]
+    },
+    "MEVD172Y": {
+      "job_sha256": "849576ee032504f53012ba3ef20d67c1844f157b6df7de470f5ca71e59e6b3b6",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1910"
+      ]
+    },
+    "MSD85L6": {
+      "job_sha256": "401ca51619d02bbf830e35acee913ee39b8d57875d3727e0d4311291e53ca861",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1090"
+      ]
+    },
+    "MSD85YL6": {
+      "job_sha256": "98faa598d14e5d0c2acb9444bd315b9871023243cef1a9f1acd1b1d2bf7c1867",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1780"
+      ]
+    },
+    "MSD87": {
+      "job_sha256": "cdece330c327972eaeab55238ed9e0a82b0d569703949ca600d30bc3615a96e3",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1370"
+      ]
+    },
+    "MSD87_R0": {
+      "job_sha256": "0055e880abd9151f5f031fb2087e9949ff6d84e94ccec3219e82ffb6e60aa2ad",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1380"
+      ]
+    },
+    "MSV90": {
+      "job_sha256": "3a3cfd3196882c62ee80f60e92f6e1e3abcf7fe4d437d1a47aad6e6e8e4c6b85",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F13E0"
+      ]
+    },
+    "N55_ALP": {
+      "job_sha256": "163343ecda50f358c589979138862eb9917e49d48badb1fd064051116800e540",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F2220"
+      ]
+    },
+    "N63TU_R0": {
+      "job_sha256": "578706e69882f1931e7d20a550e72aff5dba8163415bb59b473f857d10fcda8a",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1A20"
+      ]
+    },
+    "S55": {
+      "job_sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1EA0"
+      ]
+    },
+    "S63TU_R0": {
+      "job_sha256": "8bb10bd4aa2cc6c2075d242585801c0f8c80e508ea718d378f89260485651165",
+      "readers": [
+        {
+          "args": "",
+          "job": "STATUS_SYSTEMCHECK_AEP_INFO_2",
+          "request": "224023",
+          "response_size": 32,
+          "values": {
+            "soc": {
+              "quality": null,
+              "result": "STAT_LADUNGSZUSTAND_AKTUELL_WERT"
+            },
+            "soh": {
+              "quality": null,
+              "result": "STAT_SOH_WERT"
+            }
+          }
+        }
+      ],
+      "selectors": [
+        "12 0F1A10"
+      ]
+    }
+  },
+  "schema": 1
+}

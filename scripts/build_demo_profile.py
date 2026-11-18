@@ -76,6 +76,12 @@ def build(asset_root: Path = ROOT) -> dict:
     voltage = bytearray(28)
     voltage[2:4] = int((13.2 - 6) / 0.00025).to_bytes(2, "big")
     ecus["12"]["reads"]["402B"] = voltage.hex()
+    # AEP INFO 2 uses the exact 32-byte positive reply checked by the power
+    # reader compiler: SOH is unsigned byte minus 128; current SOC is byte 20.
+    power = bytearray(29)
+    power[1], power[17] = 90 + 128, 82
+    ecus["12"]["reads"]["4023"] = power.hex()
+    ecus["40"]["reads"]["DC56"] = "0a"
     values = {"Coolant": 90, "Engine speed": 0, "Speed": 0, "Ambient": 24, "Oil": 90}
     measurements = json.loads(
         (asset_root / "coding_data/engine_measurements.json").read_text(encoding="utf-8")

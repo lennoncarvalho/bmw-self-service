@@ -94,6 +94,15 @@ class VehiclePage(QWidget):
         self.power_card.box.addWidget(self.voltage_value)
         self.power_card.box.addWidget(caption("Observed supply voltage"))
         self.power_card.box.addSpacing(12)
+        self.power_labels: dict[str, QLabel] = {}
+        for metric in ("soc", "soh", "kl15"):
+            label = caption("")
+            self.power_labels[metric] = label
+            self.power_card.box.addWidget(label)
+        self.power_card.box.addWidget(
+            caption("Charge and health are low-voltage battery estimates.", "caption")
+        )
+        self.power_card.box.addSpacing(12)
         self.power_card.box.addWidget(
             caption("Power readiness is checked when preparing a vehicle write.", "caption")
         )
@@ -276,6 +285,7 @@ class VehiclePage(QWidget):
         """Immediately remove a current MIL color after a disruptive event."""
         self._mil_on = None
         self._set_mil(None, reason)
+        self._populate_power_status(None)
 
     def invalidate_order(self) -> None:
         """Discard configuration details after a fatal overview read failure."""
@@ -376,7 +386,43 @@ class VehiclePage(QWidget):
         self._populate_order(order if isinstance(order, dict) else None)
         self.mileage_value.setText(str(mileage or "Unavailable"))
         self.voltage_value.setText(str(results.get("battery_voltage") or "Unavailable"))
+        self._populate_power_status(results.get("power_status"))
         self._update_age()
+
+    def _populate_power_status(self, report: object) -> None:
+        """Display independent observations with reported quality and explicit availability."""
+        titles = {"soc": "Charge (SOC)", "soh": "Health (SOH)", "kl15": "Ignition (KL15)"}
+        for metric, label in self.power_labels.items():
+            readings = report.get(metric) if isinstance(report, dict) else None
+            lines, details = [], []
+            if isinstance(readings, list):
+                for reading in readings:
+                    value = reading.get("value")
+                    text = "Unavailable"
+                    if metric == "kl15" and isinstance(value, str):
+                        text = value
+                    elif isinstance(value, (int, float)):
+                        text = regional_locale().toString(float(value), "f", 0) + " %"
+                    quality = reading.get("quality")
+                    if isinstance(quality, (int, float)):
+                        text += (
+                            " · reported quality "
+                            + regional_locale().toString(float(quality), "f", 0)
+                            + " %"
+                        )
+                    if len(readings) > 1:
+                        text += f" ({reading['source']})"
+                    lines.append(text)
+                    details.append(f"{reading['source']}: {reading['detail']}")
+            label.setText(f"{titles[metric]}: " + ("\n".join(lines) or "Unavailable"))
+            label.setToolTip(
+                "\n".join(details)
+                or str(
+                    report.get("detail", "Read unavailable")
+                    if isinstance(report, dict)
+                    else "Read unavailable"
+                )
+            )
 
     def _populate_ilevel(self, levels: object) -> None:
         """Label the source's three roles, collapsing equal values without losing their meaning."""
