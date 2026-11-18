@@ -10,7 +10,7 @@ from typing import Any
 
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
-    QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from ui.cbs_panel import CbsPanel
+from ui.cockpit import CockpitCard, caption
 from ui.regional import regional_locale
 
 
@@ -27,6 +28,7 @@ class VehiclePage(QWidget):
 
     refresh_requested = Signal()
     mil_changed = Signal(object, str)
+    navigation_requested = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -42,89 +44,166 @@ class VehiclePage(QWidget):
         self.reset()
 
     def _setup_ui(self) -> None:
-        """Build overview facts and fully expanding equipment, CBS and ECU sections."""
+        """Compose the approved overview from settled observations and shortcuts."""
+        self.setObjectName("vehicleOverview")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(12)
-        header = QHBoxLayout()
-        title = QLabel("Vehicle Information")
-        title.setObjectName("titleLabel")
-        header.addWidget(title)
-        header.addStretch()
+        layout.setContentsMargins(20, 20, 20, 24)
+        layout.setSpacing(20)
+        self.hero_grid = QGridLayout()
+        self.hero_grid.setSpacing(14)
+        self.hero = CockpitCard("Vehicle systems overview")
+        self.model_label = caption("", "display")
+        self.hero.box.addWidget(self.model_label)
+        self.connection_label = caption("")
+        self.hero.box.addWidget(self.connection_label)
+        self.ilevel_label = caption("")
+        self.hero.box.addWidget(self.ilevel_label)
+        self.hero.box.addSpacing(24)
+        metrics = QHBoxLayout()
+        self.health_value = caption("Not scanned", "metric")
+        self.mileage_value = caption("Unavailable", "metric")
+        self.service_value = caption("Not read", "metric")
+        for title, value in (
+            ("HEALTH SCAN", self.health_value),
+            ("SERVICE STATUS", self.service_value),
+            ("ODOMETER", self.mileage_value),
+        ):
+            card = CockpitCard(title)
+            card.setProperty("class", "metricCard")
+            card.box.addWidget(value)
+            metrics.addWidget(card, 1)
+        self.hero.box.addLayout(metrics)
+        self.coverage_label = caption("Scan coverage · Not read")
+        self.hero.box.addWidget(self.coverage_label)
+        self.service_note = caption("Service status not read in this session")
+        self.hero.box.addWidget(self.service_note)
+        self.hero.box.addSpacing(18)
+        actions = QHBoxLayout()
+        self.scan_button = QPushButton("Read fault codes")
+        self.scan_button.clicked.connect(lambda: self.navigation_requested.emit(1))
         self.refresh_button = QPushButton("Refresh overview")
+        self.refresh_button.setProperty("class", "secondary")
         self.refresh_button.clicked.connect(self.refresh_requested)
-        header.addWidget(self.refresh_button)
-        layout.addLayout(header)
+        actions.addWidget(self.scan_button)
+        actions.addWidget(self.refresh_button)
+        actions.addStretch()
+        self.hero.box.addLayout(actions)
 
-        self.mil_label = QLabel()
+        self.power_card = CockpitCard("Battery & power")
+        self.voltage_value = caption("Unavailable", "display")
+        self.power_card.box.addWidget(self.voltage_value)
+        self.power_card.box.addWidget(caption("Observed supply voltage"))
+        self.power_card.box.addSpacing(12)
+        self.power_card.box.addWidget(
+            caption("Power readiness is checked when preparing a vehicle write.", "caption")
+        )
+        self.side_column = QWidget()
+        self.side_column.setProperty("class", "transparent")
+        side = QVBoxLayout(self.side_column)
+        side.setContentsMargins(0, 0, 0, 0)
+        side.setSpacing(14)
+        side.addWidget(self.power_card)
+        quick = CockpitCard("Quick actions")
+        for text, target in (("Scan vehicle  ›", 1), ("Service status  ›", 4)):
+            button = QPushButton(text)
+            button.clicked.connect(
+                lambda checked=False, index=target: self.navigation_requested.emit(index)
+            )
+            if target == 4:
+                button.setProperty("class", "secondary")
+            quick.box.addWidget(button)
+        side.addStretch()
+        side.addWidget(quick)
+        self.hero_grid.addWidget(self.hero, 0, 0)
+        self.hero_grid.addWidget(self.side_column, 0, 1)
+        self.hero_grid.setColumnStretch(0, 3)
+        self.hero_grid.setColumnStretch(1, 2)
+        layout.addLayout(self.hero_grid)
+
+        self.mil_label = caption("")
         self.mil_label.setObjectName("milStatus")
-        self.mil_label.setWordWrap(True)
-        self.mil_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.mil_label)
-        self.observed_label = QLabel()
-        self.observed_label.setObjectName("overviewCaption")
-        layout.addWidget(self.observed_label)
+        self.observed_label = caption("")
+        self.observed_label.setParent(self)
+        self.observed_label.hide()
+        layout.addWidget(caption("VEHICLE SUBSYSTEMS", "eyebrow"))
+        self.subsystem_grid = QGridLayout()
+        self.subsystem_grid.setSpacing(12)
+        self.subsystem_cards: list[CockpitCard] = []
+        for title, body, action, destination in (
+            ("Diagnostics", "Read fault memories and inspect scan coverage.", "View faults", 1),
+            (
+                "Maintenance & service",
+                "Read supported service items and their due values.",
+                "View service status",
+                4,
+            ),
+            (
+                "Feature customization",
+                "Load supported options and their observed values.",
+                "Open Easy Coding",
+                2,
+            ),
+            ("Vehicle backups", "Review saved records and operation outcomes.", "View backups", 5),
+        ):
+            card = CockpitCard(title)
+            card.box.addWidget(caption(body))
+            card.box.addStretch()
+            button = QPushButton(action + "  ›")
+            button.setProperty("class", "cardAction")
+            button.clicked.connect(
+                lambda checked=False, target=destination: self.navigation_requested.emit(target)
+            )
+            card.box.addWidget(button)
+            self.subsystem_cards.append(card)
+        layout.addLayout(self.subsystem_grid)
 
-        card = QFrame()
-        card.setObjectName("card")
-        card_layout = QVBoxLayout(card)
-        card_layout.setSpacing(8)
-        card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.model_label = QLabel()
-        self.vin_label = QLabel()
-        self.connection_label = QLabel()
-        self.mileage_label = QLabel()
-        self.prod_date_label = QLabel()
-        self.order_label = QLabel()
-        self.time_criterion_label = QLabel()
-        self.paint_label = QLabel()
-        self.upholstery_label = QLabel()
-        self.ilevel_label = QLabel()
-        self.previous_ilevel_label = QLabel()
-        self.factory_ilevel_label = QLabel()
-        self.battery_label = QLabel()
-        self.engine_label = QLabel()
+        self.order_button = QPushButton("Show vehicle configuration")
+        self.order_button.setProperty("class", "secondary")
+        self.order_button.setCheckable(True)
+        self.order_button.toggled.connect(self._toggle_order)
+        layout.addWidget(self.order_button)
+        self.facts_card = CockpitCard("Vehicle details")
+        facts = self.facts_card.box
+        self.vin_label = caption("")
+        self.mileage_label = caption("")
+        self.prod_date_label = caption("")
+        self.order_label = caption("")
+        self.time_criterion_label = caption("")
+        self.paint_label = caption("")
+        self.upholstery_label = caption("")
+        self.previous_ilevel_label = caption("")
+        self.factory_ilevel_label = caption("")
+        self.battery_label = caption("")
+        self.engine_label = caption("")
         for label in (
-            self.model_label,
             self.vin_label,
-            self.connection_label,
             self.mileage_label,
             self.prod_date_label,
             self.order_label,
             self.time_criterion_label,
             self.paint_label,
             self.upholstery_label,
-            self.ilevel_label,
             self.previous_ilevel_label,
             self.factory_ilevel_label,
             self.battery_label,
             self.engine_label,
         ):
-            label.setWordWrap(True)
-            label.setTextFormat(Qt.TextFormat.PlainText)
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            label.setContentsMargins(0, 0, 0, 0)
-            label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-            card_layout.addWidget(label)
-        layout.addWidget(card)
+            facts.addWidget(label)
+        self.order_details = caption("")
+        facts.addWidget(self.order_details)
+        self.facts_card.hide()
+        layout.addWidget(self.facts_card)
 
-        self.order_button = QPushButton("Show vehicle configuration")
-        self.order_button.setCheckable(True)
-        self.order_button.toggled.connect(self._toggle_order)
-        layout.addWidget(self.order_button)
-        self.order_details = QLabel()
-        self.order_details.setWordWrap(True)
-        self.order_details.setTextFormat(Qt.TextFormat.PlainText)
-        self.order_details.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.order_details.hide()
-        layout.addWidget(self.order_details)
-
-        self.cbs_panel = CbsPanel()
-        layout.addWidget(self.cbs_panel)
-
-        self.ecu_count_label = QLabel()
+        # Keep one CBS instance and its established signal/worker ownership.
+        # The main window mounts this panel on its own navigation page.
+        self.cbs_panel = CbsPanel(self)
+        self.cbs_panel.hide()
+        self.ecu_count_label = caption("")
         layout.addWidget(self.ecu_count_label)
         self.details_button = QPushButton("Show ECU details")
+        self.details_button.setProperty("class", "secondary")
         self.details_button.setCheckable(True)
         self.details_button.toggled.connect(self._toggle_details)
         layout.addWidget(self.details_button)
@@ -133,17 +212,32 @@ class VehiclePage(QWidget):
         self.ecu_container.hide()
         layout.addWidget(self.ecu_container)
         layout.addStretch()
+        self._reflow()
+
+    def _reflow(self) -> None:
+        """Reflow surfaces at laptop widths while retaining one outer scrollbar."""
+        columns = 4 if self.width() >= 1250 else 2
+        for i, card in enumerate(self.subsystem_cards):
+            self.subsystem_grid.addWidget(card, i // columns, i % columns)
+        wide = self.width() >= 1150
+        self.hero_grid.addWidget(self.side_column, 0 if wide else 1, 1 if wide else 0)
+        self.hero_grid.setColumnStretch(1, 2 if wide else 0)
+
+    def resizeEvent(self, event) -> None:
+        """Apply the compact composition when the viewport changes width."""
+        super().resizeEvent(event)
+        self._reflow()
 
     def _toggle_order(self, visible: bool) -> None:
         """Expand configuration details without a nested viewport."""
-        self.order_details.setVisible(visible)
+        self.facts_card.setVisible(visible)
         self.order_button.setText(
             "Hide vehicle configuration" if visible else "Show vehicle configuration"
         )
 
     def _populate_order(self, order: dict[str, Any] | None) -> None:
         """Display decoded equipment or clear unavailable configuration details."""
-        self.order_button.setEnabled(order is not None)
+        self.order_button.setEnabled(True)
         if order is None:
             self.order_button.setChecked(False)
             self.order_details.clear()
@@ -300,6 +394,8 @@ class VehiclePage(QWidget):
             self.time_criterion_label.setText("Vehicle-order date: Unavailable")
             self.time_criterion_label.setToolTip("")
         self._populate_order(order if isinstance(order, dict) else None)
+        self.mileage_value.setText(str(mileage or "Unavailable"))
+        self.voltage_value.setText(str(results.get("battery_voltage") or "Unavailable"))
         self._update_age()
 
     def _populate_ilevel(self, levels: object) -> None:

@@ -13,14 +13,16 @@ from typing import cast
 from PySide6.QtCore import QEvent, QObject, Qt, QTimer, Signal, Slot
 from PySide6.QtWidgets import (
     QComboBox,
-    QLabel,
+    QGridLayout,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
 from app.connection import _InterfaceInfo, list_interfaces_detailed
 from app.worker import ConnectWorker
+from ui.cockpit import CockpitCard, caption
 
 logger = logging.getLogger(__name__)
 
@@ -68,82 +70,90 @@ class WelcomePage(QWidget):
         self._adapter_timer.start()
 
     def _setup_ui(self) -> None:
-        """Build the compact welcome screen and asynchronous adapter picker."""
+        """Present the existing connection choices inside the shared cockpit shell."""
+        self.setObjectName("connectionPage")
         outer = QVBoxLayout(self)
-        content = QWidget()
-        content.setMaximumWidth(760)
-        outer.addWidget(content, alignment=Qt.AlignmentFlag.AlignHCenter)
-        layout = QVBoxLayout(content)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setSpacing(16)
+        outer.setContentsMargins(24, 24, 24, 28)
+        outer.setSpacing(18)
+        self.mode_label = caption("ENET CONNECTION", "eyebrow")
+        outer.addWidget(self.mode_label)
+        outer.addWidget(caption("Connect to your BMW", "connectionTitle"))
+        outer.addWidget(
+            caption("Select your vehicle series and network adapter to start a diagnostic session.")
+        )
 
-        # BMW logo
-        logo = QLabel("\U0001f697")
-        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo.setStyleSheet("font-size: 80px; color: #1C69D4; background: transparent;")
-        layout.addWidget(logo)
-        layout.addSpacing(8)
-
-        # Title
-        title = QLabel("BMW Self Service")
-        title.setObjectName("titleLabel")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
-        layout.addSpacing(20)
+        grid = QGridLayout()
+        grid.setSpacing(20)
+        setup = CockpitCard("Connection setup")
+        setup.box.setSpacing(14)
 
         # Series picker
-        series_label = QLabel("Vehicle Series:")
-        series_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #a0a0a0;")
-        layout.addWidget(series_label)
-
+        series_label = caption("VEHICLE SERIES", "eyebrow")
+        setup.box.addWidget(series_label)
         self.series_combo = QComboBox()
-        self.series_combo.setMinimumWidth(400)
+        self.series_combo.setAccessibleName("Vehicle series")
+        self.series_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.series_combo.setMinimumContentsLength(24)
+        self.series_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         for value, label in self.SERIES_OPTIONS:
             self.series_combo.addItem(label, value)
+        series_label.setBuddy(self.series_combo)
         self.series_combo.currentIndexChanged.connect(self._on_choices_changed)
-        layout.addWidget(self.series_combo)
-        layout.addSpacing(12)
+        setup.box.addWidget(self.series_combo)
+        setup.box.addSpacing(8)
 
         # Interface picker (hidden in DEMO mode)
         self.interface_container = QWidget()
+        self.interface_container.setProperty("class", "transparent")
         self.interface_layout = QVBoxLayout(self.interface_container)
         self.interface_layout.setContentsMargins(0, 0, 0, 0)
-
-        iface_label = QLabel("Network Interface:")
-        iface_label.setStyleSheet("font-size: 13px; font-weight: bold; color: #a0a0a0;")
+        self.interface_layout.setSpacing(12)
+        iface_label = caption("NETWORK ADAPTER", "eyebrow")
         self.interface_layout.addWidget(iface_label)
-
         self.interface_combo = QComboBox()
-        self.interface_combo.setMinimumWidth(400)
-        self.interface_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        self.interface_combo.view().installEventFilter(self)
+        self.interface_combo.setAccessibleName("Network adapter")
+        self.interface_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.interface_combo.setMinimumContentsLength(24)
+        self.interface_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        iface_label.setBuddy(self.interface_combo)
+        self._interface_view = self.interface_combo.view()
+        self._interface_view.installEventFilter(self)
         self.interface_layout.addWidget(self.interface_combo)
+        self.interface_layout.addWidget(
+            caption("Choose the physical Ethernet or Wi-Fi adapter connected to your ENET device.")
+        )
         self._populate_interfaces()
         self.interface_combo.currentIndexChanged.connect(self._on_choices_changed)
-        layout.addWidget(self.interface_container)
-        layout.addSpacing(24)
+        setup.box.addWidget(self.interface_container)
+        setup.box.addSpacing(12)
 
         # Connect button
         self.connect_btn = QPushButton("Connect to your BMW")
-        self.connect_btn.setObjectName("connectButton")
-        self.connect_btn.setMinimumWidth(320)
+        self.connect_btn.setObjectName("connectionAction")
         self.connect_btn.setEnabled(False)
         self.connect_btn.clicked.connect(self._on_connect_clicked)
-        layout.addWidget(self.connect_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addSpacing(32)
+        setup.box.addWidget(self.connect_btn)
+        setup.box.addWidget(
+            caption("Connection details and available vehicle observations appear after discovery.")
+        )
+        setup.box.addStretch()
+        grid.addWidget(setup, 0, 0)
 
         # Instructions
-        instr_title = QLabel("To ensure a stable connection:")
-        instr_title.setStyleSheet("font-size: 13px; font-weight: bold; color: #a0a0a0;")
-        layout.addWidget(instr_title)
-
+        preparation = CockpitCard("Prepare your vehicle")
+        preparation.box.setSpacing(14)
         for point in self.INSTRUCTIONS:
-            bullet = QLabel(f"  \u2022 {point}")
-            bullet.setStyleSheet("font-size: 12px; color: #a0a0a0; padding: 2px 0;")
-            bullet.setWordWrap(True)
-            layout.addWidget(bullet)
-
-        layout.addStretch()
+            preparation.box.addWidget(caption("•  " + point))
+        preparation.box.addStretch()
+        grid.addWidget(preparation, 0, 1)
+        grid.setColumnStretch(0, 3)
+        grid.setColumnStretch(1, 2)
+        outer.addLayout(grid)
+        outer.addStretch()
 
     @Slot()
     def _populate_interfaces(self) -> None:
@@ -239,7 +249,7 @@ class WelcomePage(QWidget):
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         """Apply a pending inventory failure after the popup has finished closing."""
-        if watched is self.interface_combo.view() and event.type() == QEvent.Type.Hide:
+        if watched is self._interface_view and event.type() == QEvent.Type.Hide:
             QTimer.singleShot(0, self._apply_inventory_error)
         return super().eventFilter(watched, event)
 
@@ -284,6 +294,8 @@ class WelcomePage(QWidget):
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled
+        self.mode_label.setText("DEMO MODE · SIMULATED VEHICLE" if enabled else "ENET CONNECTION")
+        self.connect_btn.setText("Connect DEMO vehicle" if enabled else "Connect to your BMW")
         self.interface_container.setVisible(not enabled)
         if enabled:
             # Remember current selection for restore

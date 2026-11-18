@@ -9,6 +9,8 @@ Reference: AGENTS.md#implementation-rules (one QSS file).
 import os
 from pathlib import Path
 
+from PySide6.QtCore import QDir
+from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import QApplication
 
 # BMW M colour palette — use these for programmatic styling only
@@ -76,5 +78,11 @@ def apply_theme(app: QApplication) -> None:
     Args:
         app: QApplication instance.
     """
+    if not app.property("cockpitFontsLoaded"):
+        QDir.addSearchPath("cockpit", str(_find_theme_qss().parent))
+        for font in sorted((_find_theme_qss().parent / "fonts").glob("*.ttf")):
+            QFontDatabase.addApplicationFont(str(font))
+        app.setProperty("cockpitFontsLoaded", True)
+    app.setFont(QFont("BMWGroupTN Pro TT", 11))
     stylesheet = load_theme()
     app.setStyleSheet(stylesheet)

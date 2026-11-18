@@ -44,6 +44,45 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 - DEMO is explicit and never grants live write authority. Diagnostic logs retain
   full identifiers, including VIN, and DEBUG request/reply bytes.
 
+### Stateful DEMO
+
+- First milestone: one coherent source-backed HSFZ vehicle profile covering
+  Overview, diagnostic reads/clearing, CBS reads/resets, Easy Coding, backups,
+  restoration/verification and history append/replacement. Additional profiles
+  and DoIP simulation come later; existing unsupported features stay unavailable.
+- Ship a fixed starting set of representative faults, service items and coding
+  values. Successful supported actions produce visible results through normal
+  workflows. Do not randomize each connection or expose failure-injection UI.
+- Keep virtual vehicle changes across disconnect/reconnect within the app run.
+  Restarting the app or explicit Reset DEMO restores the bundled vehicle state.
+  Saved DEMO backups/journals remain separate from this volatile vehicle state
+  and are not deleted by reset. Fresh instances must not inherit stale caches,
+  consumed-draft markers or recovery locks from earlier DEMO instances.
+- Simulate the vehicle at the communication boundary. Use the same connection
+  facade, protocol owner, transport parsers, UDS services, native jobs, readers,
+  write preparation and execution as live sessions. Pages consume normal worker
+  results; remove direct fixture access and separate preview-only workflows.
+- Simulated writes change virtual ECU state and subsequent reads observe it.
+  Exercise fault clearing, CBS resets, coding/restoration and history
+  append/replacement with their existing confirmations, power policy, durable
+  intent, application-response checks and uncertainty rules.
+- Complete simulated activation/cycles automatically after the normal source
+  restart sequence; add no cycle control. Verification still performs fresh
+  reads and records observed simulated state separately from response completion.
+- History uses normal application results and journals. Prior headunit history
+  remains unavailable; add no virtual iDrive view or history-read capability.
+- Keep the DEMO label and explicit environment metadata for session composition,
+  logging and persistence. Isolate simulated workspaces, backups and journals;
+  never allow a DEMO record to authorize a live operation or the reverse.
+- DEMO must work without a car or source folders. Bind its connection to a local
+  virtual peer with no physical discovery or fallback to a real vehicle. Select
+  the environment before connecting; do not replace an active session in place.
+  Reset is explicit and unavailable during vehicle work; retire the old connection
+  before replacing state and invalidate its queued results and page caches.
+- Match simulated identities, software and payload layouts to bundled source
+  definitions. Unsupported requests remain explicit; simulated success is not
+  physical validation or evidence of broader source support.
+
 ### Diagnostics and CBS
 
 - Read all identified supported ECUs/memories with explicit failed/unattempted

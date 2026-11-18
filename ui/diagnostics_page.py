@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 
 from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker, coverage_complete
 from app.worker import CarWorker
+from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, caption
 from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
@@ -55,28 +56,29 @@ class DiagnosticsPage(QWidget):
 
     def _setup_ui(self) -> None:
         """Build diagnostic result, unknown-state and operation controls in the page."""
+        self.setObjectName("diagnosticsPage")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
         # Title bar with read button
-        title_row = QHBoxLayout()
-        title = QLabel("Fault Codes")
-        title.setObjectName("titleLabel")
-        title.setStyleSheet("font-size: 19px; font-weight: bold; color: #ffffff;")
-        title_row.addWidget(title)
-        title_row.addStretch()
-
-        self.read_btn = QPushButton("Read DTCs")
-        self.read_btn.setStyleSheet(
-            "QPushButton { background: #1C69D4; color: white; border-radius: 8px; "
-            "padding: 8px 20px; font-size: 14px; font-weight: bold; }"
-            "QPushButton:hover { background: #0653B6; }"
-            "QPushButton:disabled { background: #3a3a5a; color: #888888; }"
+        header = PageHeader(
+            "Vehicle health scan",
+            "Read fault memories, review recorded conditions and inspect scan coverage.",
         )
+        self.read_btn = QPushButton("Run full scan")
         self.read_btn.clicked.connect(self._on_read_clicked)
-        title_row.addWidget(self.read_btn)
-        layout.addLayout(title_row)
+        header.action_layout.addWidget(self.read_btn)
+        layout.addWidget(header)
+        self.summary_card = CockpitCard("Scan coverage")
+        self.scan_summary = caption("No scan results yet", "sectionTitle")
+        self.summary_card.box.addWidget(self.scan_summary)
+        self.coverage_summary = caption("Coverage unavailable until a scan completes.")
+        self.summary_card.box.addWidget(self.coverage_summary)
+        self.summary_card.box.addWidget(caption("RECORDED FAULTS BY ECU", "eyebrow"))
+        self.system_summary = caption("No recorded faults to summarize.")
+        self.summary_card.box.addWidget(self.system_summary)
+        self.summary_card.box.addStretch()
         self._clear_summary = QLabel()
         self._clear_summary.hide()
         self._clear_summary.setWordWrap(True)
@@ -94,32 +96,32 @@ class DiagnosticsPage(QWidget):
         # T-9: MIL (Check Engine) status indicator
         mil_row = QHBoxLayout()
         self._mil_indicator = QLabel("")
-        self._mil_indicator.setStyleSheet("font-size: 32px; background: transparent;")
         mil_row.addWidget(self._mil_indicator)
-        self._mil_label = QLabel("MIL status unavailable until the vehicle endpoint is verified")
-        self._mil_label.setStyleSheet("font-size: 13px; color: #a0a0a0; background: transparent;")
+        self._mil_label = caption("MIL status unavailable until the vehicle endpoint is verified")
         mil_row.addWidget(self._mil_label)
         mil_row.addStretch()
-        layout.addLayout(mil_row)
+        self.summary_card.box.addLayout(mil_row)
 
         # Stack: empty state vs DTC list
         self.stack = QVBoxLayout()
-        layout.addLayout(self.stack)
+        results = QWidget()
+        results.setProperty("class", "transparent")
+        results_box = QVBoxLayout(results)
+        results_box.setContentsMargins(0, 0, 0, 0)
+        results_box.addLayout(self.stack)
 
         # Empty state
         self.empty_state = QWidget()
         empty_layout = QVBoxLayout(self.empty_state)
         empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_icon = QLabel(chr(0x1F50D))
+        empty_icon = caption("FAULT MEMORY", "eyebrow")
         empty_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_icon.setStyleSheet("font-size: 48px; background: transparent;")
         empty_layout.addWidget(empty_icon)
         empty_text = QLabel("No DTC scan results yet.")
         self._empty_text = empty_text
         empty_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        empty_text.setStyleSheet("font-size: 16px; color: #a0a0a0;")
         empty_layout.addWidget(empty_text)
-        layout.addWidget(self.empty_state)
+        results_box.addWidget(self.empty_state)
 
         # DTC list container
         self.list_container = QWidget()
@@ -136,16 +138,14 @@ class DiagnosticsPage(QWidget):
         # Clear button
         self.clear_btn = QPushButton("Clear All DTCs")
         self.clear_btn.setObjectName("dangerButton")
-        self.clear_btn.setStyleSheet(
-            "QPushButton { background: #E30B1F; color: white; border-radius: 8px; "
-            "padding: 10px 24px; font-size: 14px; font-weight: bold; }"
-            "QPushButton:hover { background: #C40A1A; }"
-            "QPushButton:disabled { background: #3a3a5a; color: #888888; }"
-        )
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         self.clear_btn.setVisible(False)
-        layout.addWidget(self.list_container)
-        layout.addWidget(self.clear_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.search = CardSearch(self.list_container, "Search fault code, ECU or description")
+        results_box.insertWidget(0, self.search)
+        results_box.addWidget(self.list_container)
+        layout.addWidget(ResponsiveColumns(self.summary_card, results, ratio=(1, 2)))
+        header.action_layout.addWidget(self.clear_btn)
+        layout.addStretch()
 
     def _update_actions(self) -> None:
         """Offer Clear All for supported targets independently of scan completeness."""
@@ -179,6 +179,9 @@ class DiagnosticsPage(QWidget):
         # Build ECU name lookup map for detail view
         self._ecu_lookup = {e.get("name", ""): e.get("description", "") for e in ecus}
         self._loaded = False
+        self.scan_summary.setText("No scan results yet")
+        self.system_summary.setText("No recorded faults to summarize.")
+        self.coverage_summary.setText("Coverage unavailable until a scan completes.")
         self._coverage = []
         self._dtcs = []
         self._stale_scan_notice.hide()
@@ -283,6 +286,28 @@ class DiagnosticsPage(QWidget):
         self._stale_scan_notice.hide()
         self._update_actions()
 
+        self.scan_summary.setText(f"{len(dtcs)} recorded faults")
+        self.coverage_summary.setText(
+            ("Scan complete" if complete else "Scan incomplete")
+            + (
+                "\nVehicle inventory unavailable; identified controllers only."
+                if isinstance(result, dict) and not result.get("topology_known", True)
+                else (
+                    "\nMemory coverage: "
+                    f"{sum(coverage_complete(row) for row in self._coverage)}"
+                    f"/{len(self._coverage)} accounted for."
+                )
+                if self._coverage
+                else "\nPer-memory coverage unavailable."
+            )
+        )
+
+        by_ecu = Counter(str(dtc.get("ecu_name") or "Unknown ECU") for dtc in dtcs)
+        self.system_summary.setText(
+            "\n\n".join(f"{name} · {count} recorded faults" for name, count in by_ecu.items())
+            or "No faults returned by the memories read."
+        )
+
         # Clean existing cards
         while self.dtc_list_layout.count() > 1:
             item = self.dtc_list_layout.takeAt(0)
@@ -329,7 +354,7 @@ class DiagnosticsPage(QWidget):
             ecu_text = f"{full_name} ({ecu})" if full_name and full_name != ecu else ecu
 
             card = QFrame()
-            card.setObjectName("card")
+            card.setObjectName("recordCard")
             card_layout = QVBoxLayout(card)
             card_layout.setSpacing(8)
             header = QHBoxLayout()
@@ -357,6 +382,7 @@ class DiagnosticsPage(QWidget):
             card_layout.addWidget(meta)
             _add_recorded_details(card_layout, dtc)
             self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, card)
+        self.search.apply()
 
     def _on_dtc_error(self, msg: str) -> None:
         """Report an unavailable scan without leaving stale results or a healthy-car claim."""
@@ -368,6 +394,9 @@ class DiagnosticsPage(QWidget):
         ):
             return
         self._update_actions()
+        self.scan_summary.setText("Scan unavailable")
+        self.coverage_summary.setText("The latest read failed. Previous coverage is stale.")
+        self.system_summary.setText("Recorded fault counts unavailable after the failed read.")
         self._empty_text.setText("DTC scan unavailable. See the session log for details.")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
@@ -540,7 +569,6 @@ class DiagnosticsPage(QWidget):
         text = "ON" if on is True else "OFF" if on is False else "Unavailable"
         self._mil_indicator.setText("")
         self._mil_label.setObjectName("milStatus")
-        self._mil_label.setStyleSheet("")
         self._mil_label.setText(f"Check engine (MIL): {text} · {detail}")
         self._mil_label.setWordWrap(True)
         self._mil_label.setTextFormat(Qt.TextFormat.PlainText)

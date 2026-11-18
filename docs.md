@@ -64,6 +64,11 @@ After a focused producer changes assets, call
 `scripts.build_runtime_assets.publish_manifest(ROOT)` or finish the full builder.
 Never change manifest hashes to hide missing or mismatched data.
 
+The five BMW Group TN Pro / TN Condensed Pro fonts come from the BMW Group
+website's `grpw-base/resources/fonts/` directory. Development conversion expands
+WOFF to TrueType and removes the invalidated DSIG table. Qt loads only bundled
+`assets/fonts/*.ttf`; runtime makes no font network requests.
+
 ### Diagnostic text database
 
 `scripts/recover_ista_texts.py <DiagDocDb.sqlite> --reader <sqlite3mc>` generates
@@ -128,6 +133,25 @@ bytes/occurrence sequence. Repeated source retries do not authorize replay.
   late replies/tainted streams before any subsequent request. Writes are not retried.
 - Check exact SID/DID/subfunction and application/job results. Transport success
   is not ECU application completion. Log full request/reply bytes at DEBUG.
+
+### DEMO migration boundary
+
+The approved behavior is in [plan.md](plan.md#stateful-demo). Current DEMO is not
+an end-to-end simulator: `MainWindow._on_connect_success()` and
+`DiagnosticsPage._read_dtcs()` read `MockConnection.data`, `demo_cbs()` decodes
+canned records, coding saves previews and history vehicle writes are blocked.
+`MockConnection.send_uds()` lacks the facade's context/raw/grant contract.
+
+The replacement seam is stream creation in `DiagnosticConnection.connect()`:
+`BoundedStream(sock, generation)` can wrap the app end of a local socket pair,
+retaining `HsfzAdapter`, UDS validation, native jobs and the single owner. A
+background virtual peer owns the other end; it never opens physical networking.
+This is a planned integration point, not an implemented simulator.
+
+Environment isolation must cover `CodingWriteWorker`'s hardcoded `mode="live"`,
+CBS intent's `environment="live"`, history journal defaults, recovery inventory,
+comparison/restore eligibility and the Backups page. Existing record schemas
+already distinguish live/DEMO; directory isolation alone is not authorization.
 
 ### Identity, configuration and diagnostics
 
@@ -204,6 +228,23 @@ rereads/counts remain separate. The UI retains outcomes across refreshes, waits
 for worker thread exit before unlocking, and requires reconnect after stream
 failure. It never retries or automatically rereads a stopped clear batch.
 
+#### Additional display-reader leads
+
+These are source leads, not validated wire contracts. Canonical PRG tables are
+readable with `app.ista_data.read_job_table()`:
+
+- `dme_bx8.prg`: `STATUS_BZEDIAG` exposes `STAT_LADEZUSTAND_AKTUELL_WERT`
+  and quality; `STATUS_SYSTEMCHECK_AEP_INFO_2` references `STAT_SOH_WERT`.
+- `bdc_g05.prg`: `SG_FUNKTIONEN` maps `BZEDIAG_SOC` to DID `4055` and
+  `BZEDIAG_SOH` to `482A`, with result and quality tables.
+- `bdc.prg`, `fem_20.prg`, `bdc_g11.prg`: `STATUS_KLEMMEN` maps to DID `DC56`;
+  `TAB_CAS_KLEMMENSTATUS` distinguishes KL15, transitions and invalid states.
+
+Validate exact ECU applicability, native execution, scaling and invalid/quality
+values before generating standalone reader assets. Supply voltage cannot stand
+in for SOC, SOH or ignition state. Overview omits those fields until implemented;
+installed I-Levels do not establish available software upgrades.
+
 ### CBS
 
 `app/cbs.py` uses exact generated definitions and native readers. Records are
@@ -259,6 +300,12 @@ The supplied diagnostic APK (`da6f5b39efaa590fce68782f439c1b8f1b9f09ed41344055b8
 `j6.b.<init>(int,byte,byte[])` and `j6.b.a(Context)`, retains the unsigned field
 and suppresses both values before distance formatting. `app/cbs.py` applies
 this presentation validity rule to native results and fallback records.
+
+CBS availability is not measured pad thickness or brake-fluid moisture. Optional
+oil specifications need full vehicle-validity matching in
+`Rheingold/SQLiteDBs/xmlvalueprimitive_ENGB.sqlite`: capacity documents
+`2000038371761204` / `2000046148798804`, approval document `2000044171972504`.
+Their engine/type predicates do not authorize universal capacity or oil grades.
 
 Physical observation: the owner's F48 session on 2026-11-06 reset brake fluid
 through KOMB25 at `0x60`, CBS 5. Journal
@@ -325,6 +372,9 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   write compares against intended bytes. A response-confirmed recovery
   compares against original bytes. The journal retains the comparison and
   the separate application outcome.
+- Backup comparisons currently show original/intended bytes. Semantic labels
+  need exact saved-definition matching through `CodingDatabase.get_presets()`
+  and `resolve_dynamic_preset()`; names alone cannot identify changed features.
 - Ordinary coding group reads do not imply session changes. Address `63` or
   primary CAFD `00004224` uses source FSC-backup prerequisites (`1003`, `1042`,
   `31010F1F04` and per-item reads). The exact `63/0F2230` integration-level,
