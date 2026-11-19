@@ -112,8 +112,8 @@ def encode_nbt_add(
     """Encode a new NBT add routine after product and source field validation.
 
     This is a payload encoder, NOT a send operation or proof of preserved car
-    history. Callers still need an exactly identified supported headunit, durable
-    local state/intent/results and the mode-specific execution contract. Prior
+    history. Callers still need an exactly identified supported headunit, confirmed
+    in-memory intent/results and the mode-specific execution contract. Prior
     car history is unavailable under D-50–D-55; this checks known local dates only.
     """
     _validate_fields(entry)

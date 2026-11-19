@@ -148,6 +148,8 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 - Show compact service entries with their item details always visible and distinct
   unwritten, accepted and uncertain states. This page is a temporary staging area:
   discard its entries on page exit, disconnect or app close, without save prompts.
+  Volatile duplicate-date and uncertainty guards survive page changes within
+  the same connection; disconnect or an environment change clears those guards.
   No autosave, automatic project loading or history operation journals. Keep
   **Load from file**, **Write to file** and **Write to car** visible; align car-write
   buttons to the right and style them red. Use a larger two-column entry form
@@ -170,6 +172,10 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   operation. Only explicit **Write to file** persists the entry list. Prior car
   history is unavailable, never an empty backup. Report checked application
   completion and required activation/iDrive inspection; do not retain write journals.
+  Keep full per-step outcomes in memory until staging clears, distinguish rejected
+  and unattempted entries, and show partial-write instructions before asking to
+  reconnect after a dropped connection. Previously sent dates remain editable for
+  full replacement, with individual append disabled and explained before preparation.
 - Valid nonfuture dates; reject duplicate new dates against known local/pending
   records and duplicates within a replacement list. Unseen car dates cannot be
   checked. Keep imported conflicts/unknown fields visible and exportable; never

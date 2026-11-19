@@ -6,6 +6,10 @@ Current source contracts and reproduction routes are in [docs.md](docs.md).
 
 ## Easy Coding write acceptance
 
+The implementation milestone is closed with the current source-backed coverage.
+Known source limitations remain in `docs.md`; only physical write/restore
+acceptance remains in this milestone.
+
 - [ ] Verify a live supported coding change and explicit restore after any required
   cycle. From Backups, run **Verify coding after vehicle cycle** on each completed
   operation and retain the session log and comparison. Response-confirmed

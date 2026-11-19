@@ -3,7 +3,9 @@
 import copy
 import logging
 import uuid
+from collections import Counter
 from collections.abc import Callable, Collection
+from datetime import date
 from typing import Any
 
 from PySide6.QtCore import QDate, QLocale, Qt, Signal, Slot
@@ -326,9 +328,10 @@ class ServiceHistoryPage(QWidget):
         self._connection: Any = None
         self._ecus: list[dict] = []
         self.can_mutate: Callable[[], bool] = lambda: False
-        self._written_dates: set = set()
+        self._written_dates: set[date] = set()
         self._consumed_ids: set[str] = set()
         self._uncertain_operation = False
+        self._write_results: list[dict[str, Any]] = []
         self._writing = False
         self._pending_confirmation: tuple[object, dict, str, object] | None = None
         self._worker: CarWorker | None = None
@@ -348,9 +351,7 @@ class ServiceHistoryPage(QWidget):
         self.workspace = new_workspace()
         self._key = uuid.uuid4().hex
         self._pending_confirmation = None
-        self._written_dates.clear()
-        self._consumed_ids.clear()
-        self._uncertain_operation = False
+        self._write_results.clear()
         self._page = 0
         self.message.clear()
         self._render()
@@ -542,13 +543,21 @@ class ServiceHistoryPage(QWidget):
         """Discard staging when switching between live and isolated DEMO sessions."""
         if self._environment != current:
             self._environment = current
+            self._clear_session_guards()
             self.clear_staging()
+
+    def _clear_session_guards(self) -> None:
+        """Forget volatile write guards only when the connection or environment changes."""
+        self._written_dates.clear()
+        self._consumed_ids.clear()
+        self._uncertain_operation = False
 
     def set_connection(self, connection: Any, ecus: list[dict] | None = None) -> None:
         """Update the target without loading or saving any service entries."""
         previous = self._connection
         if previous is not connection:
             self._ecus = []
+            self._clear_session_guards()
         self._connection = connection
         if connection is not None:
             self.set_environment(environment(connection))
@@ -640,9 +649,17 @@ class ServiceHistoryPage(QWidget):
                 entry_header.addWidget(button)
                 entry_buttons.append(button)
             append = DangerButton("Write this entry")
-            append.setToolTip("Append only this entry, preserving existing car history.")
+            date_sent = date.fromisoformat(entry["date"]) in self._written_dates
+            append.setToolTip(
+                "This date was already sent in this session. Use Write to car for replacement."
+                if date_sent
+                else "Append only this entry, preserving existing car history."
+            )
             append.setEnabled(
-                self._can_offer_write() and not self._consumed(index) and not conflicts[index]
+                self._can_offer_write()
+                and not self._consumed(index)
+                and not date_sent
+                and not conflicts[index]
             )
             append.clicked.connect(
                 lambda _checked=False, i=index: self._prepare_history("append", i)
@@ -675,6 +692,13 @@ class ServiceHistoryPage(QWidget):
                 metadata += " · Imported entry"
             if conflicts[index]:
                 box.addWidget(_label("Cannot write: " + "; ".join(conflicts[index])))
+            if date_sent and not self._consumed(index):
+                box.addWidget(
+                    caption(
+                        "This date was already sent in this session. Use Write to car to "
+                        "replace history with the displayed list."
+                    )
+                )
             if "source_workspace" in meta and meta.get("source_vin") != project["vin"]:
                 box.addWidget(
                     caption("Copied entry; original vehicle assignment retained in saved data.")
@@ -848,7 +872,7 @@ class ServiceHistoryPage(QWidget):
             return False
         return True
 
-    def _known_dates(self) -> set:
+    def _known_dates(self) -> set[date]:
         return set(self._written_dates)
 
     def _consumed(self, index: int) -> bool:
@@ -872,13 +896,45 @@ class ServiceHistoryPage(QWidget):
                 if self._environment.mode == "demo"
                 else "Outcome uncertain · check iDrive"
             )
+        if meta.get("write_state") == "rejected":
+            return "rejected", "Rejected"
+        if meta.get("write_state") == "unattempted":
+            return "unattempted", "Not attempted"
         return "pending", "Not written"
+
+    def interrupted_write_notice(self) -> str:
+        """Expose an interrupted write outcome before a connection dialog can clear staging."""
+        if not self._uncertain_operation:
+            return ""
+        from app.history_write import INSTRUCTIONS
+
+        if self._write_results:
+            return str(self._write_results[-1]["summary"])
+        return "A previous history write was interrupted or incomplete. " + INSTRUCTIONS
 
     @Slot()
     def _replace_history(self) -> None:
         self._prepare_history("replace", None)
 
     def _prepare_history(self, mode: str, index: int | None) -> None:
+        if mode == "append" and (
+            index is None or not 0 <= index < len(self.workspace["project"]["entries"])
+        ):
+            self.message.setText(
+                "The staged entry changed. Reopen the action for the current list."
+            )
+            return
+        if (
+            mode == "append"
+            and index is not None
+            and date.fromisoformat(self.workspace["project"]["entries"][index]["date"])
+            in self._written_dates
+        ):
+            self.message.setText(
+                "This date was already sent in this session. Use Write to car to replace "
+                "history with the displayed list."
+            )
+            return
         if (
             self.is_busy()
             or not self._can_offer_write()
@@ -1016,7 +1072,6 @@ class ServiceHistoryPage(QWidget):
 
     def _history_written(self, value: object) -> None:
         assert isinstance(value, dict)
-        from datetime import date
 
         from app.history_write import HistoryWriteWorker
 
@@ -1044,16 +1099,59 @@ class ServiceHistoryPage(QWidget):
                     record["write_state"] = "uncertain"
         for index, step in enumerate(intent["requests"]):
             state = latest.get(index)
-            if step["kind"] != "add" or state not in ("accepted", "sending", "uncertain"):
+            if step["kind"] != "add":
                 continue
             entry_index = step["entry_index"]
             identity = intent["draft_ids"][entry_index]
-            self._consumed_ids.add(identity)
-            self._written_dates.add(date.fromisoformat(intent["intended"][entry_index]["date"]))
-            if identity in metadata:
-                metadata[identity]["write_state"] = (
-                    "accepted" if state == "accepted" else "uncertain"
-                )
+            if state in ("accepted", "sending", "uncertain"):
+                self._consumed_ids.add(identity)
+                self._written_dates.add(date.fromisoformat(intent["intended"][entry_index]["date"]))
+                if identity in metadata:
+                    metadata[identity]["write_state"] = (
+                        "accepted" if state == "accepted" else "uncertain"
+                    )
+            elif (
+                state in ("rejected", "unattempted")
+                and identity in metadata
+                and metadata[identity].get("write_state") not in ("accepted", "uncertain")
+            ):
+                metadata[identity]["write_state"] = state
         self._uncertain_operation = value["state"] not in ("response-confirmed", "rejected")
-        self.message.setText(f"History outcome: {value['state']}. " + value["instructions"])
+        summary = self._write_summary(intent, value)
+        self._write_results.append(
+            {"intent": copy.deepcopy(intent), "report": copy.deepcopy(value), "summary": summary}
+        )
+        self.message.setText(summary)
         self._render()
+
+    @staticmethod
+    def _write_summary(intent: dict, report: dict) -> str:
+        """Summarize the exact failed step and counts without repeating every accepted entry."""
+        latest = {event["step"]: event for event in report["events"] if event["step"] is not None}
+        counts: Counter[str] = Counter()
+        lines = [f"History outcome: {report['state']}."]
+        failures = []
+        for index, request in enumerate(intent["requests"]):
+            event = latest.get(index, {"state": "unattempted", "detail": ""})
+            state = event["state"]
+            label = request["kind"].capitalize()
+            if request["kind"] == "add":
+                counts[state] += 1
+                label = "Entry " + intent["intended"][request["entry_index"]]["date"]
+            elif request["kind"] in ("erase", "reset"):
+                label = "Erase history" if request["kind"] == "erase" else "Headunit restart"
+                detail = (
+                    " " + event["detail"] if state in ("rejected", "uncertain", "sending") else ""
+                )
+                lines.append(f"{label}: {state}.{detail}")
+            if request["kind"] not in ("erase", "reset") and state in (
+                "rejected",
+                "uncertain",
+                "sending",
+            ):
+                failures.append(f"{label}: {state}. {event['detail']}".strip())
+        if counts:
+            lines.append(
+                "Entries: " + ", ".join(f"{count} {state}" for state, count in counts.items()) + "."
+            )
+        return "\n".join([*lines, *failures, report["instructions"]])

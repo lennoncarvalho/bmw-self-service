@@ -24,8 +24,9 @@ durable required state and exclusive protocol ownership.
 
 No write Cancel or disruptive app actions. Where a feature requires durable state,
 persistence failure before sending blocks the mutation; failure after a step stops
-later mutations and preserves in-memory outcomes. Exact application results and source-required activation/cycle
-semantics determine completion. A transport ACK alone is insufficient; distinguish
+later mutations and preserves in-memory outcomes. Exact application results and
+source-required activation/cycle semantics determine completion. A transport ACK
+alone is insufficient; distinguish
 response-confirmed from observed verification. Universal immediate readback is
 not required where the source needs a cycle or provides no meaningful reader.
 

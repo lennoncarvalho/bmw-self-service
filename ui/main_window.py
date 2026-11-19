@@ -1201,11 +1201,13 @@ class MainWindow(QMainWindow):
 
         self._connection_loss_dialog = True
         try:
+            history_notice = self.history_page.interrupted_write_notice()
             reply = QMessageBox.warning(
                 self,
                 "Connection Lost",
                 "The connection to the vehicle has been lost.\n\n"
-                "Check the ENET cable and ensure ignition is on.\n\n"
+                + (history_notice + "\n\n" if history_notice else "")
+                + "Check the ENET cable and ensure ignition is on.\n\n"
                 "Reconnect?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes,

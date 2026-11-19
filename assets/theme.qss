@@ -735,6 +735,7 @@ QFrame#recordCard[class="historyEntry"][writeState="accepted"] {
     background: #142333; border-left-color: #80b5ed;
 }
 QFrame#recordCard[class="historyEntry"][writeState="uncertain"],
+QFrame#recordCard[class="historyEntry"][writeState="rejected"],
 QFrame#recordCard[class="historyEntry"][writeState="conflict"] {
     background: #2b1b23; border-left-color: #f19a99;
 }
@@ -746,6 +747,7 @@ QLabel[role="historyWriteState"][writeState="accepted"] {
     color: #adc7ff; background: #263a54;
 }
 QLabel[role="historyWriteState"][writeState="uncertain"],
+QLabel[role="historyWriteState"][writeState="rejected"],
 QLabel[role="historyWriteState"][writeState="conflict"] {
     color: #ffb4ab; background: #44222b;
 }
