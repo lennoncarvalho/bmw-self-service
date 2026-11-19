@@ -1,4 +1,4 @@
-# Protocol dependency notices
+# Third-party notices
 
 The protocol migration incorporates these exact releases. Their unmodified
 license texts are in `licenses/` and must accompany distributed bundles.
@@ -41,3 +41,14 @@ PolyForm Noncommercial permits personal, noncommercial use only. This is accepta
 under D-63 (personal use, no public or commercial release). Any public or commercial
 distribution of a build that includes this library needs a different license from
 the licensor first.
+
+## Interface fonts
+
+The unmodified variable fonts in `assets/fonts/` are bundled for offline use.
+Their SIL Open Font License 1.1 texts are included in `licenses/`.
+
+| Font | Pinned source | License file |
+|---|---|---|
+| Space Grotesk | [Google Fonts](https://github.com/google/fonts/tree/cc5661d43cd4f9aad5567033a8e15ca28dc35c86/ofl/spacegrotesk) | `licenses/SpaceGrotesk-OFL.txt` |
+| Geist | [Google Fonts](https://github.com/google/fonts/tree/cc5661d43cd4f9aad5567033a8e15ca28dc35c86/ofl/geist) | `licenses/Geist-OFL.txt` |
+| JetBrains Mono | [Google Fonts](https://github.com/google/fonts/tree/cc5661d43cd4f9aad5567033a8e15ca28dc35c86/ofl/jetbrainsmono) | `licenses/JetBrainsMono-OFL.txt` |

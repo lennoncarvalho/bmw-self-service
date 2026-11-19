@@ -1,8 +1,8 @@
 """Bounded, data-only local history JSON interchange (workflow 28).
 
 Projects preserve same-version extension fields and semantic conflicts. They
-carry neither operation authority nor trusted vehicle outcomes; those belong to
-separate local journals. Import and export never contact a vehicle.
+carry neither operation authority nor trusted vehicle outcomes. Import and
+export never contact a vehicle.
 """
 
 import json
@@ -11,7 +11,9 @@ import os
 import re
 import tempfile
 from collections import Counter
+from collections.abc import Sequence
 from datetime import date
+from itertools import groupby
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +21,7 @@ from app.service_history import SERVICE_TYPES, HistoryEntry, HistoryItem, encode
 
 MAX_BYTES = 1024 * 1024
 MAX_ENTRIES = 1000
+MAX_MILEAGE_KM = 0xFFFFFFFF
 MAX_ITEMS = 255
 MAX_DEPTH = 16
 MAX_NODES = 50000
@@ -90,7 +93,7 @@ def _entry(entry: object) -> dict[str, Any]:
         raise ValueError("History date must be a valid ISO calendar date") from exc
     if parsed_day.isoformat() != day:
         raise ValueError("History date must use YYYY-MM-DD")
-    _integer(entry["mileage_km"], 0, 0xFFFFFFFF, "Mileage")
+    _integer(entry["mileage_km"], 0, MAX_MILEAGE_KM, "Mileage")
     _integer(entry["dealer_flag"], 0, 255, "Garage flag")
     _integer(entry["correction"], 0, 255, "Correction")
     _integer(entry["status"], 0, 255, "Entry status")
@@ -227,21 +230,64 @@ def entry_model(entry: dict[str, Any]) -> HistoryEntry:
     )
 
 
+def mileage_conflicts(
+    entries: Sequence[dict[str, Any]],
+) -> list[dict[str, Any] | None]:
+    """Find a conflicting reference for each structurally valid entry without changing data.
+
+    Mileage must increase strictly between different dates. Group equal dates so
+    duplicate-date validation remains separate. Prefix maxima and suffix minima
+    check every earlier/later record without a quadratic scan of imported lists.
+    """
+    ordered = sorted(enumerate(entries), key=lambda pair: pair[1]["date"])
+    groups = [list(group) for _, group in groupby(ordered, key=lambda pair: pair[1]["date"])]
+    result: list[dict[str, Any] | None] = [None] * len(entries)
+    earlier: dict[str, Any] | None = None
+    for group in groups:
+        for index, entry in group:
+            if earlier is not None and entry["mileage_km"] <= earlier["mileage_km"]:
+                result[index] = earlier
+        largest = max((entry for _, entry in group), key=lambda entry: entry["mileage_km"])
+        if earlier is None or largest["mileage_km"] > earlier["mileage_km"]:
+            earlier = largest
+    later: dict[str, Any] | None = None
+    for group in reversed(groups):
+        for index, entry in group:
+            if (
+                result[index] is None
+                and later is not None
+                and entry["mileage_km"] >= later["mileage_km"]
+            ):
+                result[index] = later
+        smallest = min((entry for _, entry in group), key=lambda entry: entry["mileage_km"])
+        if later is None or smallest["mileage_km"] < later["mileage_km"]:
+            later = smallest
+    return result
+
+
 def entry_conflicts(project: dict[str, Any], today: date | None = None) -> list[list[str]]:
     """Return each entry's send conflicts; retain every imported entry unchanged.
 
-    This checks duplicate dates within this project. Append preparation must
-    additionally check dates in the bound vehicle's known local journal, excluding
+    This checks duplicate dates and mileage chronology within this project.
+    Append preparation must additionally check known dates from this session, excluding
     only the edited draft identity. Imported extension fields confer no authority.
     """
     validate_project(project)
     counts = Counter(entry["date"] for entry in project["entries"])
     codes = {code for _, code in SERVICE_TYPES}
+    chronology = mileage_conflicts(project["entries"])
     result: list[list[str]] = []
-    for entry in project["entries"]:
+    for index, entry in enumerate(project["entries"]):
         conflicts = []
         if counts[entry["date"]] > 1:
             conflicts.append("Duplicate date in local project")
+        reference = chronology[index]
+        if reference is not None:
+            direction = "higher" if reference["date"] < entry["date"] else "lower"
+            conflicts.append(
+                f"Mileage must be {direction} than {reference['mileage_km']} km "
+                f"from the entry on {reference['date']}"
+            )
         unknown = sorted({item["code"] for item in entry["items"] if item["code"] not in codes})
         if unknown:
             conflicts.append("Unknown service types: " + ", ".join(map(str, unknown)))

@@ -29,6 +29,10 @@ SERVICE_TYPES: tuple[tuple[str, int], ...] = (
     ("Statutory vehicle inspection", 32),
     ("Statutory emissions test", 33),
 )
+# Canonical headunit ADD argument tables distinguish overall completion from
+# individual service-item completion: only the latter defines status 3 as overdue.
+RECORD_STATUS_LABELS = {1: "Completed", 2: "Completed late", 3: "Incomplete"}
+ITEM_STATUS_LABELS = {1: "Completed", 2: "Completed late", 3: "Overdue"}
 ADD_REQUEST = b"\x31\x01\xa0\x81"
 
 

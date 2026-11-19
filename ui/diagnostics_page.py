@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -24,7 +23,8 @@ from PySide6.QtWidgets import (
 
 from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker, coverage_complete
 from app.worker import CarWorker
-from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, caption
+from ui.cockpit import CardSearch, CockpitCard, DangerButton, PageHeader, ResponsiveColumns, caption
+from ui.dialogs import MessageBox as QMessageBox
 from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
@@ -136,8 +136,7 @@ class DiagnosticsPage(QWidget):
         list_layout.addWidget(scroll_container)
 
         # Clear button
-        self.clear_btn = QPushButton("Clear All DTCs")
-        self.clear_btn.setObjectName("dangerButton")
+        self.clear_btn = DangerButton("Clear All DTCs")
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         self.clear_btn.setVisible(False)
         self.search = CardSearch(self.list_container, "Search fault code, ECU or description")
@@ -351,7 +350,10 @@ class DiagnosticsPage(QWidget):
             card_layout = QVBoxLayout(card)
             card_layout.setSpacing(8)
             header = QHBoxLayout()
-            heading = QLabel(f"{code} — {description}")
+            code_label = caption(str(code), "technical")
+            code_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            header.addWidget(code_label, 0, Qt.AlignmentFlag.AlignTop)
+            heading = QLabel(description)
             heading.setObjectName("dtcHeading")
             heading.setWordWrap(True)
             heading.setTextFormat(Qt.TextFormat.PlainText)
@@ -441,6 +443,8 @@ class DiagnosticsPage(QWidget):
                 prompt,
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No,
+                destructive=True,
+                action_text="Clear all faults",
             )
             != QMessageBox.StandardButton.Yes
         ):

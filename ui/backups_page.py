@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -18,7 +17,8 @@ from PySide6.QtWidgets import (
 
 from app.operation_store import OperationStore, coding_comparison_basis, load_record
 from app.session import LIVE, SessionEnvironment, environment
-from ui.cockpit import CardSearch, CockpitCard, PageHeader, caption
+from ui.cockpit import CardSearch, CockpitCard, DangerButton, PageHeader, caption
+from ui.dialogs import MessageBox as QMessageBox
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +138,7 @@ class BackupsPage(QWidget):
                 identity.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
                 identity.setWordWrap(True)
                 identity.setTextFormat(Qt.TextFormat.PlainText)
+                identity.setProperty("role", "technical")
                 box.addWidget(identity)
                 card.setProperty(
                     "searchText",
@@ -157,7 +158,7 @@ class BackupsPage(QWidget):
                     )
                 )
                 if original["kind"] == "coding" and original["mode"] == self._environment.mode:
-                    restore = QPushButton("Review coding restoration")
+                    restore = DangerButton("Review coding restoration")
                     restore.clicked.connect(
                         lambda checked=False, source=path: self.restore_requested.emit(source)
                     )
@@ -181,8 +182,7 @@ class BackupsPage(QWidget):
                         f"Unreadable or corrupt backup: {path.name}\nKept on disk; recovery eligibility unavailable."
                     )
                 )
-            delete = QPushButton("Delete backup")
-            delete.setProperty("class", "dangerOutline")
+            delete = DangerButton("Delete backup")
             delete.clicked.connect(lambda checked=False, source=path: self._delete(source))
             box.addWidget(delete)
             self.list_layout.insertWidget(self.list_layout.count() - 1, card)
@@ -232,24 +232,24 @@ class BackupsPage(QWidget):
         for target in original["targets"][:25]:
             title = caption(
                 f"{target['variant']} · 0x{target['address']:02X} · {target['software']}",
-                "featureTitle",
+                "technical",
             )
             box.addWidget(title)
             grid = QGridLayout()
             grid.setColumnStretch(1, 1)
             grid.setColumnStretch(2, 1)
             for column, text in enumerate(("BLOCK", "ORIGINAL BYTES", "INTENDED BYTES")):
-                grid.addWidget(caption(text, "eyebrow"), 0, column)
+                grid.addWidget(caption(text, "tableHeader"), 0, column)
             blocks = list(target["baseline"])
             for row, block in enumerate(blocks[:25], 1):
-                grid.addWidget(caption(block), row, 0)
+                grid.addWidget(caption(block, "technical"), row, 0)
                 for column, field in ((1, "baseline"), (2, "intended")):
                     value = target[field][block]
                     preview = " ".join(
                         value[index : index + 8] for index in range(0, min(64, len(value)), 8)
                     )
                     preview += "…" if len(value) > 64 else ""
-                    label = caption(f"{preview}  ({len(value) // 2} bytes)")
+                    label = caption(f"{preview}  ({len(value) // 2} bytes)", "technical")
                     label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
                     grid.addWidget(label, row, column)
             box.addLayout(grid)
@@ -259,7 +259,7 @@ class BackupsPage(QWidget):
                     "Export JSON for complete original and intended data."
                 )
             )
-            definition = caption("Definition SHA-256 · " + target["definition_sha256"])
+            definition = caption("Definition SHA-256 · " + target["definition_sha256"], "technical")
             definition.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             box.addWidget(definition)
         if len(original["targets"]) > 25:
@@ -305,6 +305,8 @@ class BackupsPage(QWidget):
             "Permanently delete this local backup? You will lose its recovery information, including any unresolved operation state.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
+            destructive=True,
+            action_text="Delete backup",
         )
         if reply != QMessageBox.StandardButton.Yes:
             return

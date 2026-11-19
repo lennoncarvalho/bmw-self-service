@@ -1,18 +1,17 @@
 """Status of the standalone generated job data and interpreter included in the app."""
 
 from PySide6.QtWidgets import (
-    QDialog,
     QDialogButtonBox,
     QFormLayout,
     QLabel,
     QPushButton,
-    QVBoxLayout,
     QWidget,
 )
 
 from app.ediabas import library_path
 from app.ista_data import BundleProvider, IstaDataSource, bundle_root
 from app.ista_jobs import refresh_bundled_data
+from ui.dialogs import CockpitDialog
 
 
 def bundle_summary() -> str:
@@ -35,15 +34,13 @@ def bundle_summary() -> str:
     )
 
 
-class IstaSettingsDialog(QDialog):
+class IstaSettingsDialog(CockpitDialog):
     """Show bundled diagnostic-data status with no runtime source-folder chooser."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the status dialog using only generated runtime-asset metadata."""
-        super().__init__(parent)
-        self.setWindowTitle("ECU Job Data")
-        self.setMinimumWidth(520)
-        layout = QVBoxLayout(self)
+        super().__init__("ECU job data", parent, width=680, height=460)
+        layout = self.body
         intro = QLabel("Diagnostic jobs use the data and interpreter included with this build.")
         intro.setWordWrap(True)
         layout.addWidget(intro)
@@ -64,11 +61,12 @@ class IstaSettingsDialog(QDialog):
         layout.addWidget(self.status_label)
 
         refresh = QPushButton("Refresh Status")
+        refresh.setProperty("class", "secondary")
         refresh.clicked.connect(self._refresh)
         layout.addWidget(refresh)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        self.add_buttons(buttons)
         self._refresh()
 
     def _refresh(self) -> None:

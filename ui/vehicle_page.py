@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from ui.cbs_panel import CbsPanel
-from ui.cockpit import CockpitCard, caption
+from ui.cockpit import CockpitCard, caption, match_button_widths
 from ui.regional import regional_locale
 
 
@@ -47,7 +47,7 @@ class VehiclePage(QWidget):
         """Compose the approved overview from settled observations and shortcuts."""
         self.setObjectName("vehicleOverview")
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 24)
+        layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
         self.hero_grid = QGridLayout()
         self.hero_grid.setSpacing(14)
@@ -63,6 +63,7 @@ class VehiclePage(QWidget):
         self.health_value = caption("Not scanned", "metric")
         self.mileage_value = caption("Unavailable", "metric")
         self.service_value = caption("Not read", "metric")
+        self.mileage_source = caption("")
         for title, value in (
             ("HEALTH SCAN", self.health_value),
             ("SERVICE STATUS", self.service_value),
@@ -71,6 +72,8 @@ class VehiclePage(QWidget):
             card = CockpitCard(title)
             card.setProperty("class", "metricCard")
             card.box.addWidget(value)
+            if value is self.mileage_value:
+                card.box.addWidget(self.mileage_source)
             metrics.addWidget(card, 1)
         self.hero.box.addLayout(metrics)
         self.coverage_label = caption("Scan coverage · Not read")
@@ -87,10 +90,11 @@ class VehiclePage(QWidget):
         actions.addWidget(self.scan_button)
         actions.addWidget(self.refresh_button)
         actions.addStretch()
+        match_button_widths((self.scan_button, self.refresh_button))
         self.hero.box.addLayout(actions)
 
         self.power_card = CockpitCard("Battery & power")
-        self.voltage_value = caption("Unavailable", "display")
+        self.voltage_value = caption("Unavailable", "technicalDisplay")
         self.power_card.box.addWidget(self.voltage_value)
         self.power_card.box.addWidget(caption("Observed supply voltage"))
         self.power_card.box.addSpacing(12)
@@ -174,7 +178,7 @@ class VehiclePage(QWidget):
         layout.addWidget(self.order_button)
         self.facts_card = CockpitCard("Vehicle details")
         facts = self.facts_card.box
-        self.vin_label = caption("")
+        self.vin_label = caption("", "technical")
         self.mileage_label = caption("")
         self.prod_date_label = caption("")
         self.order_label = caption("")
@@ -384,7 +388,10 @@ class VehiclePage(QWidget):
             self.time_criterion_label.setText("Vehicle-order date: Unavailable")
             self.time_criterion_label.setToolTip("")
         self._populate_order(order if isinstance(order, dict) else None)
-        self.mileage_value.setText(str(mileage or "Unavailable"))
+        amount, separator, source = str(mileage or "Unavailable").partition(" (")
+        self.mileage_value.setText(amount)
+        self.mileage_source.setText("(" + source if separator else "")
+        self.mileage_source.setVisible(bool(separator))
         self.voltage_value.setText(str(results.get("battery_voltage") or "Unavailable"))
         self._populate_power_status(results.get("power_status"))
         self._update_age()
@@ -502,5 +509,6 @@ class VehiclePage(QWidget):
             )
             label.setTextFormat(Qt.TextFormat.PlainText)
             label.setWordWrap(True)
+            label.setProperty("role", "technical")
             self.ecu_layout.addWidget(label)
         self.ecu_layout.addStretch()

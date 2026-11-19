@@ -1,33 +1,34 @@
 """Condition Based Service section of the vehicle page (B-CBS-R / B-CBS-W).
 
-Displays decoded per-owner CBS records with raw bytes and explicit unavailable
-states. All vehicle I/O belongs to CarWorkers started by the main window.
+Displays service intervals and explicit unavailable states without technical
+provenance. All vehicle I/O belongs to CarWorkers started by the main window.
 """
 
 from copy import deepcopy
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QDate, QLocale, Qt, Signal
 from PySide6.QtWidgets import (
     QLabel,
     QProgressBar,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
-from ui.cockpit import CardGrid, CockpitCard, PageHeader, StatusLabel, caption
+from ui.cockpit import CardGrid, CockpitCard, DangerButton, PageHeader, StatusLabel, caption
 from ui.regional import regional_locale
 
 
 class CbsPanel(QWidget):
-    """Collapsible service-due list with one confirmed reset action per item."""
+    """Manually read service-due list with one confirmed reset action per item."""
 
     read_requested = Signal()
     reset_requested = Signal(object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
-        """Build the service-status toggle and expanding record container."""
+        """Build the read action and initially empty service record container."""
         super().__init__(parent)
         self.setObjectName("cbsPage")
         self._resets_allowed = False
@@ -43,11 +44,6 @@ class CbsPanel(QWidget):
             "Service & maintenance",
             "Read supported service intervals and review each item before resetting.",
         )
-        self.toggle_button = QPushButton("Show service status (CBS)")
-        self.toggle_button.setProperty("class", "secondary")
-        self.toggle_button.setCheckable(True)
-        self.toggle_button.toggled.connect(self._toggle)
-        header.action_layout.addWidget(self.toggle_button)
         self.read_button = QPushButton("Read service status")
         self.read_button.clicked.connect(self.read_requested)
         header.action_layout.addWidget(self.read_button)
@@ -60,27 +56,17 @@ class CbsPanel(QWidget):
         self.outcome_label.setWordWrap(True)
         self.outcome_label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.outcome_label)
-        self.status_label = QLabel()
-        self.status_label.setWordWrap(True)
-        self.status_label.setTextFormat(Qt.TextFormat.PlainText)
+        self.status_label = StatusLabel()
         layout.addWidget(self.status_label)
         self.container = QWidget()
         body = QVBoxLayout(self.container)
         body.setContentsMargins(0, 0, 0, 0)
         self.service_grid = CardGrid()
+        self.service_grid.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         self.rows = self.service_grid.box
         body.addWidget(self.service_grid)
         layout.addWidget(self.container)
         self.clear("Service status not read in this session")
-        self._toggle(False)
-
-    def _toggle(self, visible: bool) -> None:
-        """Show the complete service list and its source status together."""
-        self.container.setVisible(visible)
-        self.status_label.setVisible(visible)
-        self.toggle_button.setText(
-            "Hide service status (CBS)" if visible else "Show service status (CBS)"
-        )
 
     def set_busy(self, busy: bool, text: str = "") -> None:
         """Disable actions while a CBS read/reset or another mutation runs."""
@@ -102,7 +88,7 @@ class CbsPanel(QWidget):
             self.message_label.setText(text)
 
     def show_error(self, text: str) -> None:
-        """Retain previous values as stale and keep the failure visible when collapsed."""
+        """Retain previous values as stale and keep the failure visible."""
         self.invalidate_resets(text + "\nPrevious values may be stale; read service status again.")
 
     def show_outcome(self, report: dict[str, Any]) -> None:
@@ -124,54 +110,86 @@ class CbsPanel(QWidget):
         self.message_label.clear()
         self.outcome_label.clear()
         self.status_label.setText(text)
+        self.container.hide()
         self.set_busy(False)
 
     def _clear_rows(self) -> None:
         self.service_grid.clear()
 
     @staticmethod
-    def _describe(item: dict[str, Any]) -> str:
-        """Show service values; raw records and source descriptions stay in the result data."""
+    def _due_summary(item: dict[str, Any]) -> str:
+        """Show only reported remaining units and valid dates, without inventing precision."""
         locale = regional_locale()
-        parts = [str(item["label"])]
+        parts = []
         remaining, unit = item.get("remaining"), item.get("unit")
-        if isinstance(remaining, int):
+        if isinstance(remaining, int) and unit in ("km", "days", "%"):
             amount = locale.toString(abs(remaining))
             parts.append(
                 f"{amount} {unit} remaining" if remaining >= 0 else f"overdue by {amount} {unit}"
             )
         if item.get("due_month") and item.get("due_year"):
-            day = f"{item['due_day']:02d}/" if item.get("due_day") else ""
-            parts.append(f"due {day}{item['due_month']:02d}/{item['due_year']}")
-        if item.get("availability") is not None:
-            parts.append(f"availability {item['availability']} %")
+            date = QDate(item["due_year"], item["due_month"], item.get("due_day") or 1)
+            if date.isValid():
+                formatted = (
+                    locale.toString(date, QLocale.FormatType.ShortFormat)
+                    if item.get("due_day")
+                    else locale.toString(date, "MM/yyyy")
+                )
+                parts.append(f"Due {formatted}")
+        return " · ".join(parts) or "Due information unavailable"
+
+    @staticmethod
+    def _details(item: dict[str, Any]) -> str:
+        """Keep reset counts and forecast intervals separate from current due values."""
+        locale = regional_locale()
+        lines = []
         if item.get("count") is not None:
-            parts.append(f"services done {item['count']}")
+            lines.append(f"Reset count: {locale.toString(item['count'])}")
+        forecast = []
         for key, unit in (("forecast_km", "km"), ("forecast_months", "months")):
-            if item.get(key) is not None:
-                parts.append(f"forecast interval {locale.toString(item[key])} {unit}")
-        lines = [" · ".join(parts)]
-        if item.get("status_text"):
-            lines.append(f"ECU status: {item['status_text']}")
-        if item.get("notes"):
-            lines.append("; ".join(item["notes"]))
-        if not item.get("resettable"):
-            lines.append("Reset not available for this item/ECU in the recovered sources")
+            if isinstance(item.get(key), int) and item[key] > 0:
+                forecast.append(f"{locale.toString(item[key])} {unit}")
+        if forecast:
+            lines.append("Forecast interval: " + " / ".join(forecast))
         return "\n".join(lines)
 
-    def show_result(self, result: dict[str, Any], *, resets_allowed: bool, note: str = "") -> None:
-        """Publish one settled read with per-owner coverage and per-item actions."""
-        owners = result.get("owners", [])
-        coverage = (
-            "\n".join(
-                f"{o['name']} 0x{o['address']:02X}: {o['state']}"
-                + (f" — software {o['software_state']}" if o.get("software_state") else "")
-                + (f" — {o['source']}" if o.get("source") else "")
-                for o in owners
-            )
-            or "no ECU with a CBS reader was identified"
+    @staticmethod
+    def _warnings(item: dict[str, Any]) -> str:
+        """Retain actionable quality/reset warnings while keeping raw job text out of cards."""
+        lines = []
+        status_text = str(item.get("status_text") or "").lower()
+        if item.get("status") not in (None, 0) and not status_text.startswith("status ok"):
+            lines.append("The vehicle reported a warning for this service measurement.")
+        translations = (
+            ("Stale value:", "Previous value — refresh failed. Read service status again."),
+            ("Software identity unavailable", "Read service status again before resetting."),
+            ("This ECU returned repeated records", "Conflicting service records were returned."),
+            ("Not every CBS owner could be read", "Some services could not be read."),
+            ("Invalid target calendar date", "The reported due date is invalid."),
         )
-        self.status_label.setText((note + "\n" if note else "") + f"Sources:\n{coverage}")
+        informational = (
+            "Remaining:",
+            "Remaining value",
+            "Remaining distance",
+            "Service count not available",
+            "Availability",
+        )
+        for note in item.get("notes", []):
+            for prefix, message in translations:
+                if note.startswith(prefix):
+                    lines.append(message)
+                    break
+            else:
+                if item.get("resettable") and not note.startswith(informational):
+                    lines.append("Some service data could not be verified.")
+        if not item.get("resettable"):
+            lines.append("Reset unavailable for this service.")
+        return "\n".join(dict.fromkeys(lines))
+
+    def show_result(self, result: dict[str, Any], *, resets_allowed: bool, note: str = "") -> None:
+        """Publish due values and per-item actions, retaining technical provenance in data."""
+        owners = result.get("owners", [])
+        self.status_label.setText(note)
         failed = {
             (owner["name"], owner["address"])
             for owner in owners
@@ -202,44 +220,33 @@ class CbsPanel(QWidget):
         self.message_label.clear()
         if failed:
             self.message_label.setText(
-                "Service status refresh failed for some sources. "
+                "Some service information could not be refreshed. "
                 "Any retained values are stale; their resets are disabled."
             )
         for item in items:
-            frame = CockpitCard(str(item["label"]))
+            frame = CockpitCard(str(item["label"]), context=self._due_summary(item))
             row = frame.box
-            remaining = item.get("remaining")
-            distance = (
-                regional_locale().toString(remaining) + " " + str(item.get("unit") or "")
-                if isinstance(remaining, int)
-                else "Unavailable"
-            )
-            row.addWidget(caption(distance, "serviceValue"))
-            row.addWidget(caption("Remaining interval"))
-            if item.get("due_month") and item.get("due_year"):
-                row.addWidget(
-                    caption(
-                        f"Due date · {item['due_month']:02d}/{item['due_year']}", "sectionTitle"
-                    )
-                )
             availability = item.get("availability")
             if isinstance(availability, (int, float)) and 0 <= availability <= 100:
-                row.addWidget(caption(f"Availability · {availability}%"))
+                row.addWidget(caption(f"Service availability · {availability}%", "supporting"))
                 progress = QProgressBar()
                 progress.setRange(0, 100)
                 progress.setValue(int(availability))
                 progress.setTextVisible(False)
                 progress.setFixedHeight(6)
-                progress.setAccessibleName(f"Source availability {availability}%")
+                progress.setAccessibleName(f"Service availability {availability}%")
                 row.addWidget(progress)
-            label = QLabel(self._describe(item))
-            label.setWordWrap(True)
-            label.setTextFormat(Qt.TextFormat.PlainText)
-            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            row.addWidget(label)
+            details = self._details(item)
+            if details:
+                label = caption(details, "supporting")
+                label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                row.addWidget(label)
+            warnings = self._warnings(item)
+            if warnings:
+                row.addWidget(caption(warnings, "notice"))
             row.addStretch()
             if item.get("resettable"):
-                button = QPushButton("Reset…")
+                button = DangerButton("Reset…")
                 button.setEnabled(resets_allowed and not self._busy)
                 button.setToolTip(note if not resets_allowed else "Reset this service item")
                 selection = self._selection
@@ -253,7 +260,7 @@ class CbsPanel(QWidget):
         if not items:
             empty = QLabel("No CBS records were returned")
             self.service_grid.add_card(empty)
-        self.toggle_button.setChecked(True)
+        self.container.show()
 
     def _request_reset(self, item: dict[str, Any], selection: int) -> None:
         """Reject stale queued clicks after refresh, failure or another operation."""

@@ -64,10 +64,10 @@ After a focused producer changes assets, call
 `scripts.build_runtime_assets.publish_manifest(ROOT)` or finish the full builder.
 Never change manifest hashes to hide missing or mismatched data.
 
-The five BMW Group TN Pro / TN Condensed Pro fonts come from the BMW Group
-website's `grpw-base/resources/fonts/` directory. Development conversion expands
-WOFF to TrueType and removes the invalidated DSIG table. Qt loads only bundled
-`assets/fonts/*.ttf`; runtime makes no font network requests.
+Visual roles follow `DESIGN.md`. Qt loads the bundled Space Grotesk, Geist and
+JetBrains Mono variable TrueType fonts in `assets/fonts/` without runtime network
+requests. Pinned font sources and license texts are listed in
+`THIRD_PARTY_NOTICES.md`.
 
 ### Diagnostic text database
 
@@ -157,9 +157,10 @@ identity from each connection generation. Plans, records and stores check that
 context before writes, restoration or verification. DEMO stores live under
 `~/BMW-Tool/demo/<instance>/`; imports must match the environment and enter the
 active instance's store. Reconnect retains virtual ECU state. App restart or
-Reset DEMO creates a fresh instance, including a separate local history draft;
-saved evidence remains on disk and old workspace callbacks cannot populate the
-new instance. Legacy metadata previews remain non-restorable files.
+Reset DEMO creates a fresh instance and clears temporary history staging. History
+starts empty and creates no project file. Other features' saved evidence remains
+on disk; old callbacks cannot populate a new history staging area. Legacy metadata
+previews remain non-restorable files.
 
 ### Identity, configuration and diagnostics
 
@@ -359,14 +360,24 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   The full builder uses its existing cipher reader. Runtime loads only generated
   `vehicle_models.json`; source hashes and row IDs remain build provenance.
   This recovers 13 combustion G26 labels and two G08 iX3 labels. G26 has 19 of
-  58 exact types labelled; the remaining 39 stay unknown. FAFP `00003002` has
-  numeric criteria for all 58 G26 keys, but their names are empty.
+  58 exact types labelled; the remaining 39 stay unknown. Those keys have no
+  `Typschlüssel` rows in the supplied `DiagDocDb.sqlite`; similarly named
+  `Leittyp` rows have no vehicle links. FAFP `00003002` has numeric criteria
+  for all 58 G26 keys, but all 26 supplied FAFPs have empty `criteriaName` and
+  `categoryName` fields. Numeric matches alone do not establish fuel or model
+  semantics; further labels require additional exact source records.
   An exact non-i4 G26 label settles only the negative `excludedSeries: ["i4"]`
   predicate. It does not assign an unproven category or satisfy a positive
   `gasoline` selector. Catalogue/value reads use that exact context; preparation
   and frozen-plan validation derive it again from fresh/saved FA bytes. Execution
   still checks the unchanged FA before mutation. Four otherwise mapped presets
   can therefore pass their model filter on these newly identified G26 types.
+- Source `models.o.L("gasoline")` selects `t()`, including category 42 but not
+  43. `models.o.N` describes 42 as G22 and 43 as i4/G26. Categories come from
+  the saved user selection (`models.o.I`/`S`,
+  `ConnectCarActivity.b.onItemClick`), not an automatic combustion-G26 decoder.
+  This source does not justify assigning an unlabelled G26 or a known combustion
+  G26 to category 42. A positive category mapping needs additional source evidence.
 - The i3 and i8 category descriptions omit chassis codes. Source `models.o.L`
   resolves the `i3` and `i8` tags used in presets. KIS `I001` links the i3 to
   `I01` and the i8 Coupé and Roadster to `I12` and `I15` respectively.
@@ -426,6 +437,8 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   field. Identical catalogue rows display once at their first source index.
   Values stay in the connection's UI cache, not backup files.
   `CodingPrepareWorker` still reads complete fresh target baselines.
+  The dynamic lighting activity's `a0` exposes the observed brightness and 100%
+  only (one choice when already 100%); it supplies no arbitrary brightness range.
 - The supplied APK's `c.a.m.z` dispatches to `c.a.o.doInBackground`/`d`: response
   header window `o.b = 1000 ms`, pending window `o.c = 7000 ms` (also explicit in
   `bimmercode_extracted/smali/de/appomotive/bimmercode/c/a/o.smali`). The headunit
@@ -445,7 +458,7 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
 ## History data
 
 `app/service_history.py`, `history_files.py`, `history_workspace.py` and
-`history_write.py` own models, JSON, local drafts, exact encoders and workers.
+`history_write.py` own models, JSON, staged-entry identities, exact encoders and workers.
 Generated `coding_data/history_contracts.json` binds 12 source-supported headunit
 profiles to exact identities/hashes/jobs. CICM/RAD12 lack ADD/ERASE jobs; a marketing
 name such as NBT is not a selector. No runtime history read or legacy-format API.
@@ -465,6 +478,18 @@ garage text is at most seven ASCII bytes without NUL, padded on wire, with a
 separate dealer flag. No invented coolant/transmission/custom type, truncation
 or unknown-ID coercion. Source signed remaining-distance semantics and exact
 business status/echo decoding live in the generated contracts and encoder.
+All 12 canonical ADD argument tables distinguish overall completion
+(`ARG_WARTUNGSSTATUS`: 1 completed, 2 completed late, 3 incomplete) from each
+item's completion (`ARG_STATUSWARTUNGSPOS_n`: 1 completed, 2 completed late,
+3 overdue). Each item separately encodes signed 32-bit remaining distance and
+unsigned 16-bit remaining time; neither is an entry-header field. The tables do
+not establish their units. `ARG_KORREKTURZAEHLER` defaults to zero and says to
+increment for a correction; no matching/replacement behavior is proven. The UI
+omits that control while preserving imported correction values. It also hides
+per-item distance/time: new items encode zero, while imported values remain
+unchanged through edits and file round-trips. SHM's entry
+renderer at `FUN_00628998` corroborates entry byte `0x11`: On time/Late/Incomplete;
+the supplied Java UI's Overdue label for entry status 3 conflicts with the jobs.
 
 Interchange is deterministic, atomic version-1 JSON with nullable VIN and entries
 of ISO date, `mileage_km`, dealer/flag, correction/status and item arrays. Reject
@@ -472,11 +497,13 @@ structural/schema errors before replacing a project; preserve same-version unkno
 fields and semantic conflicts. Resource caps are parser protections, not headunit
 capacity: 1 MiB, 1,000 entries, 255 structurally retained items, depth 16 and
 50,000 nodes. Sendability still enforces 1–13 sourced items and field/date rules.
-Workspaces under `~/BMW-Tool/history/projects` separate offline/live-VIN/DEMO data.
-
-The history journal stores kind, mode/target/encoder, `vehicle_history_before: null`,
-local snapshot, frozen requests and per-step outcomes. It is not a coding backup.
-Source pacing is 200 ms after ERASE and 100 ms after each ADD, then checked `1101`
+The page holds this data in memory and clears it on page exit, disconnect or close.
+Loading and writing JSON require explicit file actions. History does not open or
+save automatic project files or operation journals; existing files are not deleted.
+Car-write preparation freezes the source list, exact identity/software, requests
+and target VIN in memory. A file VIN is provenance, not authority to write a car.
+Execution rechecks the fresh verified target. Per-step results stay in memory for
+the current staging session. Source pacing is 200 ms after ERASE and 100 ms after each ADD, then checked `1101`
 activation where defined. Use at most 30 seconds per request under a five-minute
 overall deadline. Stop after failure; accepted entries plus failed activation
 remain partial. No source establishes a universal capacity, eviction order or

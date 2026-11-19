@@ -7,7 +7,8 @@ Implementation and offline checks do not establish universal vehicle validation.
 
 - [Plan](plan.md): wanted features and approved behavior.
 - [Data guide](docs.md): source locations, recovered contracts and reproduction.
-- [Tasks](tasks.md): current implementation steps, starting with CBS.
+- [Tasks](tasks.md): remaining implementation and physical acceptance work.
+- [Visual design](DESIGN.md): shared appearance and component rules.
 - [Contributor rules](AGENTS.md): workflow, safety and quality gate.
 
 ## Run
@@ -59,9 +60,13 @@ them on the console, and `--no-log` disables file logging. Each session retains
 up to six 10 MiB segments; include rotated segments when sharing a large session.
 Logs contain full vehicle identifiers. Existing `~/BMW-Tool/logs` files are preserved.
 
-`~/BMW-Tool/cbs` stores reset intent/results, `backups` stores coding baselines
-and outcomes, and `history` stores local projects and write journals. These are
-durable operation data; keep them until explicitly deleted. `investigations`
+`~/BMW-Tool/cbs` stores reset intent/results and `backups` stores coding baselines
+and outcomes. Keep these durable operation data until explicitly deleted. Service
+history is a temporary staging area: **Load from file** and **Write to file** are
+explicit actions, with no autosave, saved write journal or save prompt. Leaving
+the page, disconnecting or closing discards the staged list. **Write this entry**
+appends one record; **Write to car** replaces car history with every displayed
+entry after confirmation. Existing files under `history` remain untouched. `investigations`
 contains development research only and is never read or created by the running app.
 
 ## Development

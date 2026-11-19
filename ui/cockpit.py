@@ -1,14 +1,19 @@
 """Reusable presentation components for the desktop cockpit."""
 
-from PySide6.QtCore import Qt, Slot
-from PySide6.QtGui import QIcon, QPainter, QPixmap, QResizeEvent
+from collections.abc import Iterable
+
+from PySide6.QtCore import QEvent, Qt, Slot
+from PySide6.QtGui import QIcon, QPainter, QPixmap, QResizeEvent, QShowEvent
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
+    QAbstractButton,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -51,17 +56,85 @@ def caption(text: str, role: str = "caption") -> QLabel:
     return label
 
 
+def match_button_widths(buttons: Iterable[QAbstractButton]) -> None:
+    """Give sibling command buttons the width required by their longest label."""
+    group = list(buttons)
+    for button in group:
+        button.ensurePolished()
+    width = max((button.sizeHint().width() for button in group), default=0)
+    for button in group:
+        button.setFixedWidth(width)
+
+
+class DangerButton(QPushButton):
+    """Shared red action button for vehicle mutations and destructive actions."""
+
+    def __init__(self, text: str, parent: QWidget | None = None) -> None:
+        """Apply the common danger role without changing standard Qt button behavior."""
+        super().__init__(text, parent)
+        self.setProperty("class", "dangerOutline")
+
+
+class ElidedLabel(QLabel):
+    """Single-line context that yields space while retaining its full accessible text."""
+
+    def __init__(self, text: str, parent: QWidget | None = None) -> None:
+        """Keep long context out of neighbouring titles and action groups."""
+        super().__init__(parent)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.setProperty("role", "caption")
+        self.setText(text)
+
+    def setText(self, text: str) -> None:
+        """Retain full context for accessibility, search and the tooltip."""
+        self._full_text = text
+        self.setAccessibleName(text)
+        self.setToolTip(text)
+        self._refresh()
+
+    def text(self) -> str:
+        """Return the full value even when the visible presentation is shortened."""
+        return self._full_text
+
+    def _refresh(self) -> None:
+        super().setText(
+            self.fontMetrics().elidedText(
+                self._full_text, Qt.TextElideMode.ElideRight, self.contentsRect().width()
+            )
+        )
+
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Recalculate the visible context at the new available width."""
+        super().resizeEvent(event)
+        self._refresh()
+
+    def changeEvent(self, event: QEvent) -> None:
+        """Refresh after font or theme changes without losing the full value."""
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.FontChange, QEvent.Type.StyleChange) and hasattr(
+            self, "_full_text"
+        ):
+            self._refresh()
+
+
 class CockpitCard(QFrame):
     """Shared graphite surface with consistent padding and label hierarchy."""
 
-    def __init__(self, title: str, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, title: str, parent: QWidget | None = None, *, context: str | None = None
+    ) -> None:
         """Build a titled, vertically laid out cockpit surface."""
         super().__init__(parent)
         self.setProperty("class", "cockpitCard")
         self.box = QVBoxLayout(self)
         self.box.setContentsMargins(18, 16, 18, 16)
         self.box.setSpacing(10)
-        self.box.addWidget(caption(title.upper(), "eyebrow"))
+        if context is None:
+            self.box.addWidget(caption(title.upper(), "eyebrow"))
+        else:
+            self.box.addWidget(caption(context))
+            self.box.addWidget(caption(title, "cardTitle"))
 
 
 class PageHeader(QFrame):
@@ -81,6 +154,16 @@ class PageHeader(QFrame):
         row.addLayout(self.action_layout)
         box.addLayout(row)
         box.addWidget(caption(description))
+
+    def showEvent(self, event: QShowEvent) -> None:
+        """Match action widths once their labels and shared theme are available."""
+        match_button_widths(
+            button
+            for index in range(self.action_layout.count())
+            if (item := self.action_layout.itemAt(index)) is not None
+            and isinstance(button := item.widget(), QPushButton)
+        )
+        super().showEvent(event)
 
 
 class ResponsiveColumns(QWidget):

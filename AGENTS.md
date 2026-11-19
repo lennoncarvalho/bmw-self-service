@@ -3,15 +3,17 @@
 ## Start here
 
 Read [plan.md](plan.md) for approved scope, [tasks.md](tasks.md) for current
-implementation steps and the relevant section of [docs.md](docs.md) for source
-contracts/data recovery. Inspect current code before trusting a status claim.
+implementation steps, [DESIGN.md](DESIGN.md) for visual rules and the relevant
+section of [docs.md](docs.md) for source contracts/data recovery.
+Inspect current code before trusting a status claim.
 Load the applicable local skill from `.agents/skills/`; project rules override
 its generic examples. Do not run setup or install tools just because a skill
 mentions them.
 
 ## Documentation budget
 
-There are only three project documents: `plan.md`, `docs.md`, `tasks.md`.
+Project documents are `plan.md`, `docs.md`, `tasks.md` and `DESIGN.md`.
+`DESIGN.md` defines visuals only, without feature or operation decisions.
 `README.md` is setup/usage; this file is contributor policy. Licences and reusable
 skill/native-library manuals are utility files, not extra project plans.
 
@@ -71,9 +73,10 @@ choices. Do not introduce unsupported restrictions to match a tool limitation.
 Follow `plan.md` and `docs.md` for exact feature behavior. Every write requires
 fresh matching identity/software/source definition, confirmed intent, adequate
 power or explicit acknowledgement, durable required state and one owner.
-Coding saves complete original baseline/target bytes; history saves local JSON,
-intent and outcomes with unreadable prior car history explicitly unavailable.
-CBS saves its exact before-state/intent/results. Fault clearing needs no backup.
+Coding saves complete original baseline/target bytes; CBS saves its exact
+before-state/intent/results. History follows the explicit file-only persistence
+policy in `plan.md`, with unreadable prior car history explicitly unavailable.
+Fault clearing needs no backup.
 
 No write Cancel; block disruptive UI actions. Check final application responses
 and meaningful post-state/cycle completion. A transport ACK is insufficient.

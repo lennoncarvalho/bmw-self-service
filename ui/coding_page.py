@@ -14,13 +14,11 @@ from typing import Any
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtWidgets import (
     QButtonGroup,
-    QCheckBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
     QFrame,
     QLabel,
-    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QRadioButton,
@@ -32,7 +30,10 @@ from app.coding import CodingCatalogueWorker, CodingValuesWorker
 from app.operation_store import OperationStore
 from app.protocol.contracts import TransportKind
 from app.worker import CarWorker
-from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, caption
+from ui.cockpit import CardSearch, CockpitCard, DangerButton, PageHeader, ResponsiveColumns, caption
+from ui.dialogs import CockpitDialog
+from ui.dialogs import MessageBox as QMessageBox
+from ui.form_inputs import CheckInput
 from ui.page_stack import PageStack
 
 logger = logging.getLogger(__name__)
@@ -137,7 +138,7 @@ class CodingPage(QWidget):
         clear_btn.setProperty("class", "secondary")
         clear_btn.clicked.connect(self._on_clear)
         bar_layout.addWidget(clear_btn)
-        self._write_btn = QPushButton("Review coding changes")
+        self._write_btn = DangerButton("Review coding changes")
         self._write_btn.clicked.connect(self._on_write)
         bar_layout.addWidget(self._write_btn)
         review.box.addWidget(self._bottom_bar)
@@ -715,10 +716,13 @@ class CodingPage(QWidget):
             self._write_btn.setEnabled(bool(self._live_selections))
             return
         data = plan.data()
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Restore coding" if data["mode"] == "restore" else "Review coding")
-        dialog.resize(650, 560)
-        layout = QVBoxLayout(dialog)
+        dialog = CockpitDialog(
+            "Restore coding" if data["mode"] == "restore" else "Review coding",
+            self,
+            width=720,
+            height=680,
+        )
+        layout = dialog.body
         message = QLabel(
             f"VIN: {data['vin']}\n"
             "Complete original coding will be saved before writing. "
@@ -769,12 +773,12 @@ class CodingPage(QWidget):
                 lines.append(f"{change['preset']}: {change['option']}")
         preview.setPlainText("\n".join(lines))
         layout.addWidget(preview)
-        power = QCheckBox(
+        power = CheckInput(
             "I confirm adequate vehicle and computer power throughout this operation."
         )
         layout.addWidget(power)
         prior = data.get("prior_operations", [])
-        recovery = QCheckBox(
+        recovery = CheckInput(
             "I have completed any required vehicle cycle and reviewed the prior interrupted "
             "operation against the fresh readings. This is a new operation, not a replay."
         )
@@ -807,7 +811,7 @@ class CodingPage(QWidget):
             prior_notice.setReadOnly(True)
             prior_notice.setPlainText("\n".join(prior_lines))
             layout.addWidget(prior_notice)
-        restore = QCheckBox("Replace current coding with the reviewed backup values.")
+        restore = CheckInput("Replace current coding with the reviewed backup values.")
         restore.setVisible(data["mode"] == "restore")
         layout.addWidget(restore)
         buttons = QDialogButtonBox(
@@ -830,7 +834,7 @@ class CodingPage(QWidget):
         recovery.toggled.connect(refresh)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
+        dialog.add_buttons(buttons, destructive=True)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             self._pending_label.setText("Coding review cancelled; no write was started.")
             self._write_btn.setEnabled(bool(self._live_selections))

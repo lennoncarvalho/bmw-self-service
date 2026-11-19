@@ -1,4 +1,4 @@
-"""Frozen headunit history plans and checked journal-backed execution (workflow28)."""
+"""Frozen in-memory headunit history plans and checked, explicitly requested writes."""
 
 import hashlib
 import json
@@ -9,12 +9,18 @@ from datetime import date
 from typing import Any, cast
 
 from app.coding import decode_cafd_identifiers
-from app.history_files import entry_conflicts, entry_model, project_bytes, valid_vin
-from app.history_journal import HistoryJournalStore
+from app.history_files import (
+    entry_conflicts,
+    entry_model,
+    mileage_conflicts,
+    project_bytes,
+    valid_vin,
+    validate_project,
+)
 from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
 from app.resources import resource_path
 from app.service_history import decode_nbt_add_result, encode_nbt_add
-from app.session import LIVE, check_binding, check_store, environment
+from app.session import LIVE, check_binding, environment
 from app.vehicle import DiagnosticCatalog, did_data
 from app.worker import CarWorker
 
@@ -96,29 +102,31 @@ def build_plan(
     """Freeze append or replacement against local data, never an invented car baseline."""
     data, digest = contracts()
     project = json.loads(project_bytes(workspace["project"]))
-    if not valid_vin(vin) or project["vin"] != vin:
-        raise ValueError("Associate the local project with the verified VIN before writing")
+    if not valid_vin(vin):
+        raise ValueError("A verified vehicle VIN is required before writing")
     if mode not in ("append", "replace"):
         raise ValueError("Invalid history mode")
     if mode == "append":
         if type(index) is not int or not 0 <= index < len(project["entries"]):
-            raise ValueError("Select one local draft for append")
+            raise ValueError("Select one staged entry for append")
         indices = [index]
     else:
         indices = list(range(len(project["entries"])))
     if not indices:
         raise ValueError("Replacement requires a nonempty reviewed list")
     intended = [project["entries"][i] for i in indices]
-    send_project = {"schema_version": 1, "vin": vin, "entries": intended}
-    if any(entry_conflicts(send_project)):
-        raise ValueError("Resolve future, duplicate or unsupported history values before writing")
+    conflicts = entry_conflicts(project)
+    if any(conflicts[index] for index in indices):
+        raise ValueError(
+            "Correct the selected entries' dates, mileage, garage and service items before writing"
+        )
     ids = [workspace["records"][i]["id"] for i in indices]
     if mode == "append":
         if ids[0] in consumed or workspace["records"][indices[0]].get("write_state") in (
             "accepted",
             "uncertain",
         ):
-            raise ValueError("This draft may already have been sent; inspect its journal")
+            raise ValueError("This draft may already have been sent; inspect iDrive")
         existing = {
             date.fromisoformat(entry["date"])
             for i, entry in enumerate(project["entries"])
@@ -169,6 +177,15 @@ def build_plan(
 def validate_execution(data: dict) -> dict:
     """Reject altered, incomplete or unsupported byte plans at the send boundary."""
     definition, digest = contracts()
+    before = validate_project(data["local_before"])
+    intended = validate_project(
+        {"schema_version": 1, "vin": data["vin"], "entries": data["intended"]}
+    )
+    comparison = [*before["entries"], *intended["entries"]]
+    if any(entry_conflicts(intended)) or any(
+        mileage_conflicts(comparison)[len(before["entries"]) :]
+    ):
+        raise ValueError("Correct conflicting history dates and mileage before writing")
     if data["encoder"] != {"id": definition["id"], "sha256": digest}:
         raise ValueError("History execution definition changed")
     target = data["target"]
@@ -212,7 +229,7 @@ def validate_execution(data: dict) -> dict:
 
 
 class HistoryPrepareWorker(CarWorker):
-    """Read target identity and local journal guards before showing confirmation."""
+    """Read target identity and freeze the staging area before confirmation."""
 
     def __init__(
         self,
@@ -221,17 +238,20 @@ class HistoryPrepareWorker(CarWorker):
         workspace: dict,
         mode: str,
         index: int | None,
-        store: HistoryJournalStore,
+        *,
+        known_dates: set[date] | None = None,
+        consumed: set[str] | None = None,
     ) -> None:
         super().__init__(connection)
         self.ecus = [dict(row) for row in ecus]
         self.workspace = json.loads(json.dumps(workspace))
-        self.mode, self.index, self.store = mode, index, store
+        self.mode, self.index = mode, index
+        self.known_dates = set(known_dates or ())
+        self.consumed = set(consumed or ())
 
     def do_work(self) -> HistoryPlan:
         """Prepare on the owner with a whole30second read budget, no mutations."""
         connection = self.connection
-        check_store(connection, self.store)
         if connection.read_only or connection.kind != TransportKind.HSFZ:
             raise PermissionError("History writes require a supported writable session")
         row = select_target(self.ecus)
@@ -239,8 +259,8 @@ class HistoryPrepareWorker(CarWorker):
         if not valid_vin(vin):
             raise ValueError("Verified vehicle identity is required")
         context = connection.context(30.0)
-        known_dates = self.store.known_dates(vin, environment(connection).mode)
-        consumed = self.store.consumed_draft_ids(vin, environment(connection).mode)
+        known_dates = self.known_dates
+        consumed = self.consumed
         context.remaining()
 
         def prepare(services: Any, ctx: OperationContext) -> bytes:
@@ -285,31 +305,27 @@ class HistoryWriteWorker(CarWorker):
         self,
         connection: Any,
         plan: HistoryPlan,
-        store: HistoryJournalStore,
         *,
         power_acknowledged: bool = False,
         replacement_acknowledged: bool = False,
     ) -> None:
         super().__init__(connection)
-        self.plan, self.store = plan, store
+        self.plan = plan
         self.power_acknowledged = power_acknowledged
         self.replacement_acknowledged = replacement_acknowledged
         self._executed = False
         self.report: dict[str, Any] = {
-            "path": "",
             "state": "not-started",
             "events": [],
             "instructions": INSTRUCTIONS,
-            "persistence_failed": False,
         }
 
     def do_work(self) -> dict[str, Any]:
-        """Persist intent, then exclusively execute a bounded checked sequence."""
+        """Execute one confirmed in-memory intent without creating a saved history record."""
         if self._executed:
             raise PermissionError("A history operation cannot be replayed")
         self._executed = True
         connection = self.connection
-        check_store(connection, self.store)
         context = connection.context(300.0)
         data = self.plan.data()
         check_binding(connection, data.get("session"))
@@ -329,27 +345,7 @@ class HistoryWriteWorker(CarWorker):
             or not connection.alive_ok
         ):
             raise PermissionError("Vehicle identity/session changed before history write")
-        # Recheck known local operation effects after confirmation, before any send.
-        if data["mode"] == "append" and (
-            data["draft_ids"][0]
-            in self.store.consumed_draft_ids(data["vin"], environment(connection).mode)
-            or date.fromisoformat(data["intended"][0]["date"])
-            in self.store.known_dates(data["vin"], environment(connection).mode)
-        ):
-            raise ValueError("This date/draft has a prior accepted or uncertain operation")
         context.remaining()
-        try:
-            journal = {key: value for key, value in data.items() if key != "session"}
-            path = self.store.prepare(**journal, environment=environment(connection).mode)
-        except (OSError, ValueError):
-            logger.warning("Could not persist history intent before sending", exc_info=True)
-            self.report.update(
-                state="blocked",
-                instructions="The required local journal could not be prepared. No request was "
-                "sent. Check local storage and review the journal before trying again.",
-            )
-            return self.report
-        self.report["path"] = str(path)
         requests = data["requests"]
         attempted = -1
         accepted_mutation = False
@@ -360,11 +356,6 @@ class HistoryWriteWorker(CarWorker):
         ) -> None:
             event = {"state": state, "step": step, "response": response.hex(), "detail": detail}
             self.report["events"].append(event)
-            try:
-                self.store.record(path, state=state, step=step, response=response, detail=detail)
-            except (OSError, ValueError):
-                self.report["persistence_failed"] = True
-                raise
 
         def execute(services: Any, ctx: OperationContext) -> bytes:
             nonlocal attempted, accepted_mutation, failure
@@ -449,7 +440,7 @@ class HistoryWriteWorker(CarWorker):
                 "History operation stopped; retained exact in-memory outcomes", exc_info=True
             )
             # Ambiguous service/stream failures must never be hidden from the owner.
-            # run_operation invalidates transport failures; disk/decoder exceptions may
+            # run_operation invalidates transport failures; decoder exceptions may
             # also occur after effects, so explicitly stop this connection conservatively.
             connection.request_close()
             failure = "uncertain"
@@ -461,32 +452,23 @@ class HistoryWriteWorker(CarWorker):
                 ),
                 None,
             )
-            if attempted >= 0 and pending == "sending" and not self.report["persistence_failed"]:
-                try:
-                    record(
-                        "uncertain",
-                        attempted,
-                        detail="Operation interrupted; inspect iDrive before any new action",
-                    )
-                except (OSError, ValueError):
-                    self.report["persistence_failed"] = True
+            if attempted >= 0 and pending == "sending":
+                record(
+                    "uncertain",
+                    attempted,
+                    detail="Operation interrupted; inspect iDrive before any new action",
+                )
         if self.report.get("identity_changed"):
             connection.request_close()
         overall = ("partial" if accepted_mutation else failure) if failure else "response-confirmed"
         self.report["state"] = overall
-        if not self.report["persistence_failed"]:
-            try:
-                for step in range(attempted + 1, len(requests)):
-                    record(
-                        "unattempted",
-                        step,
-                        detail="Stopped after an earlier failed or uncertain step",
-                    )
-                record(overall, detail=INSTRUCTIONS)
-            except (OSError, ValueError):
-                self.report["persistence_failed"] = True
-        if self.report["persistence_failed"]:
-            self.report["state"] = "partial" if accepted_mutation else "uncertain"
+        for step in range(attempted + 1, len(requests)):
+            record(
+                "unattempted",
+                step,
+                detail="Stopped after an earlier failed or uncertain step",
+            )
+        record(overall, detail=INSTRUCTIONS)
         return self.report
 
 
