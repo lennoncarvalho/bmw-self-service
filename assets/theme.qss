@@ -464,7 +464,6 @@ QRadioButton::indicator {
     background: #0a0e17;
 }
 QRadioButton::indicator:checked {
-    border-color: #1c69d2;
     background: #1c69d2;
     border: 3px solid #adc7ff;
 }
@@ -581,7 +580,6 @@ QComboBox {
     font-family: "Geist";
     font-size: 14px;
     selection-background-color: #1c69d2;
-    padding-right: 32px;
     combobox-popup: 0;
     padding: 0px 36px 0px 12px;
     min-height: 42px;
