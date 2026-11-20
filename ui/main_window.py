@@ -15,7 +15,6 @@ from PySide6.QtGui import QAction, QCloseEvent, QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
-    QCheckBox,
     QDialog,
     QDialogButtonBox,
     QFrame,
@@ -23,7 +22,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMenu,
-    QMessageBox,
     QProgressBar,
     QPushButton,
     QScrollArea,
@@ -44,6 +42,9 @@ from ui.backups_page import BackupsPage
 from ui.cockpit import caption, cockpit_icon
 from ui.coding_page import CodingPage
 from ui.diagnostics_page import DiagnosticsPage
+from ui.dialogs import CockpitDialog
+from ui.dialogs import MessageBox as QMessageBox
+from ui.form_inputs import CheckInput
 from ui.ista_settings_dialog import IstaSettingsDialog
 from ui.page_stack import PageStack
 from ui.service_history_page import ServiceHistoryPage
@@ -196,7 +197,7 @@ class MainWindow(QMainWindow):
         identity = QVBoxLayout()
         identity.setSpacing(2)
         self.car_label = caption("Not connected", "identity")
-        self.vin_label = caption("")
+        self.vin_label = caption("", "technical")
         self.vin_label.setWordWrap(False)
         identity.addWidget(self.car_label)
         metadata = QHBoxLayout()
@@ -212,7 +213,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.status_dot)
         self.link_label = caption("Disconnected", "badge")
         layout.addWidget(self.link_label)
-        self.power_status = caption("Voltage unavailable")
+        self.power_status = caption("Voltage unavailable", "technical")
         layout.addWidget(self.power_status)
         gear_btn = QPushButton()
         gear_btn.setIcon(cockpit_icon("settings"))
@@ -333,7 +334,7 @@ class MainWindow(QMainWindow):
         self.vehicle_page.service_note.setText(
             panel.message_label.text()
             or (
-                "Last service read · Open CBS for source coverage and due values"
+                "Last service read · Open CBS for service intervals and due dates"
                 if self._connected and panel._has_result
                 else "Service status not read in this session"
             )
@@ -355,7 +356,7 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         label = QLabel(f"{title_text}\n\nConnect to a vehicle to begin")
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label.setStyleSheet("font-size: 18px; color: #a0a0a0;")
+        label.setProperty("role", "placeholder")
         layout.addWidget(label)
         return page
 
@@ -388,11 +389,7 @@ class MainWindow(QMainWindow):
         # G-13: Cancel button (appears after 10s)
         self._cancel_btn = QPushButton("Cancel")
         self._cancel_btn.setVisible(False)
-        self._cancel_btn.setStyleSheet(
-            "QPushButton { background: #3a3a5a; color: #a0a0a0; "
-            "border-radius: 8px; padding: 6px 24px; font-weight: bold; }"
-            "QPushButton:hover { background: #5a5a7a; color: white; }"
-        )
+        self._cancel_btn.setProperty("class", "secondary")
         self._cancel_btn.clicked.connect(self._on_disconnect)
         layout.addWidget(self._cancel_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -412,6 +409,7 @@ class MainWindow(QMainWindow):
         self._cancel_btn.setVisible(
             not self._mutation_active and not self._diagnostics_loading and self._cbs_worker is None
         )
+        self._position_spinner()
 
     def _show_retry_dialog(self) -> None:
         """G-13: Show retry dialog after 30s timeout."""
@@ -444,6 +442,10 @@ class MainWindow(QMainWindow):
         if self.spinner_overlay and self.stack:
             self.loading_backdrop.setGeometry(self.rect())
             viewport = self.content_scroll.viewport()
+            width = min(480, viewport.width() - 48)
+            layout = self.spinner_overlay.layout()
+            height = max(160, layout.heightForWidth(width) + 8 if layout is not None else 160)
+            self.spinner_overlay.setFixedSize(width, height)
             center = self.loading_backdrop.mapFrom(
                 self, viewport.mapTo(self, viewport.rect().center())
             )
@@ -508,6 +510,7 @@ class MainWindow(QMainWindow):
         """Display progress from the current foreground coding operation."""
         if self._coding_loading:
             self.spinner_text.setText(message)
+            self._position_spinner()
 
     @Slot(bool)
     def _set_diagnostics_loading(self, active: bool) -> None:
@@ -530,6 +533,7 @@ class MainWindow(QMainWindow):
         """Update the modal only while its current diagnostic worker is active."""
         if self._diagnostics_loading:
             self.spinner_text.setText(message)
+            self._position_spinner()
 
     @Slot(bool)
     def _set_history_loading(self, active: bool) -> None:
@@ -550,6 +554,7 @@ class MainWindow(QMainWindow):
         """Publish progress from the foreground history worker."""
         if self.history_page.is_using_vehicle():
             self.spinner_text.setText(message)
+            self._position_spinner()
 
     # ---- Gear menu ----
 
@@ -746,7 +751,6 @@ class MainWindow(QMainWindow):
         read_only = self._read_only
 
         def do_connect(cancelled: Event) -> tuple[HSFZConnection, str]:
-            vehicle.prepare_workspace()
             conn = HSFZConnection(
                 "127.0.0.1",
                 local_ip="127.0.0.1",
@@ -859,6 +863,7 @@ class MainWindow(QMainWindow):
         if not self._closing and self.sender() in (self._worker, self._post_connect_worker):
             if self._overview_refresh:
                 self.spinner_text.setText(message)
+                self._position_spinner()
             else:
                 self.show_spinner(message)
 
@@ -1196,11 +1201,13 @@ class MainWindow(QMainWindow):
 
         self._connection_loss_dialog = True
         try:
+            history_notice = self.history_page.interrupted_write_notice()
             reply = QMessageBox.warning(
                 self,
                 "Connection Lost",
                 "The connection to the vehicle has been lost.\n\n"
-                "Check the ENET cable and ensure ignition is on.\n\n"
+                + (history_notice + "\n\n" if history_notice else "")
+                + "Check the ENET cable and ensure ignition is on.\n\n"
                 "Reconnect?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes,
@@ -1301,16 +1308,6 @@ class MainWindow(QMainWindow):
                 "Export coding results",
                 "Some coding results could not be saved. Use Export retained coding results "
                 "before closing so the operation outcome remains available.",
-            )
-            return
-        if self.history_page.has_unexported_results():
-            event.ignore()
-            self.stack.setCurrentWidget(self.history_page)
-            QMessageBox.warning(
-                self,
-                "Export history evidence",
-                "Some history results could not be saved. Export the retained operation "
-                "evidence before closing.",
             )
             return
         if not self._closing:
@@ -1565,9 +1562,8 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Reset Unavailable", str(exc))
             return
         owner = item["owner"]
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Reset Service Item")
-        layout = QVBoxLayout(dialog)
+        dialog = CockpitDialog("Reset service item", self, width=680, height=440)
+        layout = dialog.body
         text = QLabel(
             f"Reset “{item['label']}” in {owner['name']} (0x{owner['address']:02X}, CBS "
             f"{owner['version']})?\n\nThe ECU applies its standard reset and recalculates "
@@ -1577,10 +1573,10 @@ class MainWindow(QMainWindow):
         )
         text.setWordWrap(True)
         layout.addWidget(text)
-        power = QCheckBox("Battery charger connected or supply voltage is stable")
+        power = CheckInput("Battery charger connected or supply voltage is stable")
         layout.addWidget(power)
         dsc_extra = owner.get("reset") == "dsc25-plain"
-        extra_ack = QCheckBox(
+        extra_ack = CheckInput(
             "I understand this ECU may also clear all DSC faults, run its reset "
             "completion routine and temporarily stop/restart event reporting. "
             "The extra sequence sends two planned reset writes to the ECU."
@@ -1602,7 +1598,7 @@ class MainWindow(QMainWindow):
         extra_ack.toggled.connect(update_reset_confirmation)
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
+        dialog.add_buttons(buttons, destructive=True)
         if (
             dialog.exec() != QDialog.DialogCode.Accepted
             or connection is not self._connection

@@ -29,6 +29,10 @@ SERVICE_TYPES: tuple[tuple[str, int], ...] = (
     ("Statutory vehicle inspection", 32),
     ("Statutory emissions test", 33),
 )
+# Canonical headunit ADD argument tables distinguish overall completion from
+# individual service-item completion: only the latter defines status 3 as overdue.
+RECORD_STATUS_LABELS = {1: "Completed", 2: "Completed late", 3: "Incomplete"}
+ITEM_STATUS_LABELS = {1: "Completed", 2: "Completed late", 3: "Overdue"}
 ADD_REQUEST = b"\x31\x01\xa0\x81"
 
 
@@ -108,8 +112,8 @@ def encode_nbt_add(
     """Encode a new NBT add routine after product and source field validation.
 
     This is a payload encoder, NOT a send operation or proof of preserved car
-    history. Callers still need an exactly identified supported headunit, durable
-    local state/intent/results and the mode-specific execution contract. Prior
+    history. Callers still need an exactly identified supported headunit, confirmed
+    in-memory intent/results and the mode-specific execution contract. Prior
     car history is unavailable under D-50–D-55; this checks known local dates only.
     """
     _validate_fields(entry)

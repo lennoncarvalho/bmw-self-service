@@ -1,34 +1,44 @@
-"""Local JSON service records; vehicle execution is a separate workflow28 task."""
+"""Temporary service-history staging with explicit file and reviewed vehicle writes."""
 
 import copy
 import logging
-from collections.abc import Callable
+import uuid
+from collections import Counter
+from collections.abc import Callable, Collection
+from datetime import date
 from typing import Any
 
 from PySide6.QtCore import QDate, QLocale, Qt, Signal, Slot
+from PySide6.QtGui import QHideEvent
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QDateEdit,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
-    QFormLayout,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
-    QMessageBox,
     QPushButton,
-    QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
-from app.service_history import SERVICE_TYPES
+from app.service_history import ITEM_STATUS_LABELS, RECORD_STATUS_LABELS, SERVICE_TYPES
 from app.session import LIVE, SessionEnvironment, environment
 from app.worker import CarWorker
-from ui.cockpit import CardSearch, CockpitCard, PageHeader, ResponsiveColumns, StatusLabel, caption
+from ui.cockpit import (
+    DangerButton,
+    ElidedLabel,
+    PageHeader,
+    StatusLabel,
+    caption,
+    match_button_widths,
+)
+from ui.dialogs import CockpitDialog
+from ui.form_inputs import CheckInput, DateInput, SelectInput
 from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
@@ -41,65 +51,94 @@ def _label(text: str) -> QLabel:
     return label
 
 
-class AddServiceDialog(QDialog):
+def _status_control(value: int, labels: dict[int, str], *, compact: bool = False) -> SelectInput:
+    """Label supported source statuses while retaining an imported unknown code."""
+    control = SelectInput(compact=compact)
+    for code, label in labels.items():
+        control.addItem(label, code)
+    if value not in labels:
+        control.addItem(f"Unknown status ({value})", value)
+    control.setCurrentIndex(control.findData(value))
+    return control
+
+
+def _status_text(value: int, labels: dict[int, str]) -> str:
+    return labels.get(value, f"Unknown status ({value})")
+
+
+class AddServiceDialog(CockpitDialog):
     """Edit a local record without losing unknown imported fields or items."""
 
     SERVICE_ITEMS = SERVICE_TYPES
 
-    def __init__(self, parent: QWidget | None = None, entry: dict | None = None) -> None:
-        super().__init__(parent)
-        self.setWindowTitle("Local service entry")
-        self.setObjectName("cockpitDialog")
-        self.setMinimumWidth(440)
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        entry: dict | None = None,
+        *,
+        existing_dates: Collection[str] = (),
+        existing_entries: Collection[dict] = (),
+    ) -> None:
+        """Validate a staged entry against the other displayed records, excluding itself."""
+        super().__init__(
+            "Edit service entry" if entry else "Add service entry", parent, width=960, height=780
+        )
+        self.setMinimumWidth(780)
         self.original = copy.deepcopy(entry or {})
-        layout = QVBoxLayout(self)
-        form = QFormLayout()
-        self.date_edit = QDateEdit()
-        self.date_edit.setCalendarPopup(True)
-        self.date_edit.setDisplayFormat(
-            regional_locale().dateFormat(QLocale.FormatType.ShortFormat)
+        self._existing_entries = copy.deepcopy(list(existing_entries))
+        self._existing_dates = frozenset(existing_dates) | {
+            row["date"] for row in self._existing_entries
+        }
+        layout = self.body
+        form = QGridLayout()
+        form.setHorizontalSpacing(24)
+        form.setVerticalSpacing(8)
+
+        def field(text: str, control: QWidget, row: int, column: int) -> None:
+            label = QLabel(text)
+            label.setBuddy(control)
+            form.addWidget(label, row * 2, column)
+            form.addWidget(control, row * 2 + 1, column)
+            form.setColumnStretch(column, 1)
+
+        original_date = QDate.fromString(self.original.get("date", ""), "yyyy-MM-dd")
+        self.date_edit = DateInput(
+            value=original_date if entry else QDate.currentDate(),
+            minimum=QDate(1, 1, 1),
+            maximum=max(QDate.currentDate(), original_date),
         )
-        self.date_edit.setDateRange(
-            QDate(1, 1, 1),
-            max(QDate.currentDate(), QDate.fromString(self.original.get("date", ""), "yyyy-MM-dd")),
-        )
-        self.date_edit.setDate(
-            QDate.fromString(self.original.get("date", ""), "yyyy-MM-dd")
-            if entry
-            else QDate.currentDate()
-        )
-        form.addRow("Date", self.date_edit)
+        field("Date", self.date_edit, 0, 0)
         self.mileage_edit = QLineEdit(str(self.original.get("mileage_km", 0)))
-        form.addRow("Mileage (km)", self.mileage_edit)
+        field("Mileage (km)", self.mileage_edit, 0, 1)
         self.dealer_edit = QLineEdit(self.original.get("dealer", "OWNER"))
-        form.addRow("Garage (1–7 ASCII bytes)", self.dealer_edit)
-        self.dealer_flag = QComboBox()
-        for text, value in (("Independent / owner", 0), ("BMW garage", 1)):
-            self.dealer_flag.addItem(text, value)
+        field("Garage (1–7 ASCII characters)", self.dealer_edit, 1, 0)
+        self.dealer_flag = SelectInput(options=(("Independent / owner", 0), ("BMW garage", 1)))
         original_flag = self.original.get("dealer_flag", 0)
         if original_flag not in (0, 1):
             self.dealer_flag.addItem(f"Unknown flag {original_flag}", original_flag)
         self.dealer_flag.setCurrentIndex(self.dealer_flag.findData(original_flag))
-        form.addRow("Garage flag", self.dealer_flag)
-        self.status = QLineEdit(str(self.original.get("status", 1)))
-        self.correction = QLineEdit(str(self.original.get("correction", 0)))
-        form.addRow("Record status (1–3 to send)", self.status)
-        form.addRow("Correction (0–255)", self.correction)
+        field("Garage type", self.dealer_flag, 1, 1)
+        self.status = _status_control(self.original.get("status", 1), RECORD_STATUS_LABELS)
+        self.status.setToolTip(
+            "Overall completion of this dated entry; item completion is separate."
+        )
+        field("Overall completion", self.status, 2, 0)
         layout.addLayout(form)
         layout.addWidget(
-            _label(
-                "Select 1–13 items for sending. Raw status/distance/time values and unknown fields are preserved until you explicitly edit or remove them."
-            )
+            _label("Select 1–13 service items and choose the completion status for each.")
         )
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumHeight(200)
         body = QWidget()
-        items_layout = QVBoxLayout(body)
-        scroll.setWidget(body)
-        layout.addWidget(scroll, 1)
+        body.setObjectName("historyItemTable")
+        items_layout = QGridLayout(body)
+        items_layout.setContentsMargins(12, 8, 12, 8)
+        items_layout.setHorizontalSpacing(12)
+        items_layout.setVerticalSpacing(4)
+        for column, title in enumerate(("", "Service item", "Completion")):
+            items_layout.addWidget(caption(title, "tableHeader"), 0, column)
+        items_layout.setColumnStretch(1, 1)
+        layout.addWidget(body)
         self.checkboxes: dict[int, QCheckBox] = {}
-        self.item_rows: list[tuple[dict, QCheckBox, QLineEdit, QLineEdit, QLineEdit]] = []
+        self.item_rows: list[tuple[dict, QCheckBox, QComboBox]] = []
         originals = self.original.get("items", [])
         represented = {item["code"] for item in originals}
         choices = [(copy.deepcopy(item), True) for item in originals]
@@ -109,99 +148,154 @@ class AddServiceDialog(QDialog):
             if code not in represented
         )
         labels = {code: text for text, code in SERVICE_TYPES}
-        for item, selected in choices:
+        for row, (item, selected) in enumerate(choices, 1):
             code = item["code"]
-            box = QCheckBox(labels.get(code, f"Unknown service ID {code}"))
+            title = labels.get(code, f"Unknown service ID {code}")
+            box = QCheckBox()
+            box.setAccessibleName(f"Include {title}")
             box.setChecked(selected)
             self.checkboxes.setdefault(code, box)
-            items_layout.addWidget(box)
-            fields = QFormLayout()
-            values = [
-                QLineEdit(str(item[field]))
-                for field in ("status", "remaining_distance", "remaining_time")
-            ]
-            for label, control in zip(
-                (
-                    "Status (1–3 to send)",
-                    "Remaining distance (signed native)",
-                    "Remaining time (native)",
-                ),
-                values,
-                strict=True,
-            ):
-                fields.addRow(label, control)
-                control.textChanged.connect(self._validate)
-            items_layout.addLayout(fields)
-            self.item_rows.append((item, box, *values))
+            items_layout.addWidget(box, row, 0)
+            item_label = _label(title)
+            item_label.setBuddy(box)
+            items_layout.addWidget(item_label, row, 1)
+            control = _status_control(item["status"], ITEM_STATUS_LABELS, compact=True)
+            control.setFixedWidth(180)
+            control.setAccessibleName(f"{title}: Completion")
+            control.setToolTip(
+                "Completion of this service item, independent of overall entry completion"
+            )
+            control.setEnabled(selected)
+            box.toggled.connect(control.setEnabled)
+            control.currentIndexChanged.connect(self._validate)
+            items_layout.addWidget(control, row, 2)
+            self.item_rows.append((item, box, control))
             box.toggled.connect(self._validate)
         self.error_label = _label("")
-        layout.addWidget(self.error_label)
+        self.error_label.setProperty("role", "notice")
+        self.add_notice(self.error_label)
         self.buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
+        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText(
+            "Add to list" if not entry else "Update entry"
+        )
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
-        layout.addWidget(self.buttons)
+        self.add_buttons(self.buttons)
+        self.date_edit.dateChanged.connect(self._validate)
         self.mileage_edit.textChanged.connect(self._validate)
         self.dealer_edit.textChanged.connect(self._validate)
-        self.status.textChanged.connect(self._validate)
-        self.correction.textChanged.connect(self._validate)
-        self.resize(560, 650)
+        self.dealer_flag.currentIndexChanged.connect(self._validate)
+        self.status.currentIndexChanged.connect(self._validate)
+        self.resize(960, 780)
         self._validate()
 
     def get_data(self) -> dict:
         """Return native-unit JSON, preserving retained imported item values."""
         data = copy.deepcopy(self.original)
         items = []
-        for original, box, status, distance, remaining_time in self.item_rows:
+        for original, box, status in self.item_rows:
             if box.isChecked():
                 item = copy.deepcopy(original)
-                item.update(
-                    status=int(status.text()),
-                    remaining_distance=int(distance.text()),
-                    remaining_time=int(remaining_time.text()),
-                )
+                item["status"] = status.currentData()
                 items.append(item)
         data.update(
             date=self.date_edit.date().toString("yyyy-MM-dd"),
             mileage_km=int(self.mileage_edit.text()),
             dealer=self.dealer_edit.text(),
             dealer_flag=self.dealer_flag.currentData(),
-            correction=int(self.correction.text()),
-            status=int(self.status.text()),
+            correction=self.original.get("correction", 0),
+            status=self.status.currentData(),
             items=items,
         )
         return data
 
     @Slot()
+    def accept(self) -> None:
+        """Keep invalid or duplicate entries open instead of silently dropping the edit."""
+        self._validate()
+        if self.buttons.button(QDialogButtonBox.StandardButton.Ok).isEnabled():
+            super().accept()
+
+    @Slot()
     def _validate(self) -> None:
         if not hasattr(self, "buttons"):
             return
+        message = self._validation_message()
+        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(not message)
+        self.error_label.setText(message)
+        self.error_label.setVisible(bool(message))
+
+    def _validation_message(self) -> str:
+        """Explain the first fix needed without closing or changing the staged record."""
+        from app.history_files import (
+            MAX_ENTRIES,
+            MAX_MILEAGE_KM,
+            entry_conflicts,
+            mileage_conflicts,
+            validate_project,
+        )
+
+        text = self.mileage_edit.text().strip()
+        if not text.isdecimal():
+            return "Enter mileage as whole kilometres, zero or greater (for example, 56000)."
         try:
-            from app.history_files import validate_project
-
-            data = self.get_data()
-            validate_project({"schema_version": 1, "vin": None, "entries": [data]})
-            valid = bool(data["items"])
-            if (
-                data["date"] != self.original.get("date")
-                and self.date_edit.date() > QDate.currentDate()
-            ):
-                valid = False
-            if not self.original:
-                from app.history_files import entry_conflicts
-
-                valid = (
-                    valid
-                    and not entry_conflicts({"schema_version": 1, "vin": None, "entries": [data]})[
-                        0
-                    ]
-                )
+            mileage = int(text)
         except (ValueError, OverflowError):
-            valid = False
-        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(valid)
-        self.error_label.setText(
-            "" if valid else "Check numeric ranges, date, garage and service items."
+            mileage = MAX_MILEAGE_KM + 1
+        if mileage > MAX_MILEAGE_KM:
+            maximum = regional_locale().toString(MAX_MILEAGE_KM)
+            return f"Enter mileage between 0 and {maximum} km."
+        day = self.date_edit.date()
+        if not day.isValid() or day > QDate.currentDate():
+            return "Choose a valid service date that is today or earlier."
+        if day.toString("yyyy-MM-dd") in self._existing_dates:
+            return (
+                "Another entry already uses this date. Choose a different date or edit that entry."
+            )
+        garage = self.dealer_edit.text()
+        if not garage or len(garage) > 7 or not garage.isascii() or "\x00" in garage:
+            return "Enter a garage name or code with 1–7 characters and no accents."
+        if self.dealer_flag.currentData() not in (0, 1):
+            return "Choose Independent / owner or BMW garage as the garage type."
+        if self.status.currentData() not in RECORD_STATUS_LABELS:
+            return "Choose a supported overall completion status."
+        selected = [(item, status) for item, box, status in self.item_rows if box.isChecked()]
+        if not 1 <= len(selected) <= 13:
+            return "Select at least one service item, up to a maximum of 13."
+        codes = {code for _, code in SERVICE_TYPES}
+        if any(item["code"] not in codes for item, _ in selected):
+            return "Remove unsupported service items before saving this entry."
+        if any(status.currentData() not in ITEM_STATUS_LABELS for _, status in selected):
+            return "Choose a supported completion status for each selected service item."
+        if len(self._existing_entries) >= MAX_ENTRIES:
+            return "This list supports up to 1,000 entries. Remove an entry before adding another."
+        data = self.get_data()
+        try:
+            project = validate_project(
+                {"schema_version": 1, "vin": None, "entries": [*self._existing_entries, data]}
+            )
+            if entry_conflicts({"schema_version": 1, "vin": None, "entries": [data]})[0]:
+                return "Check the entry's date, garage, completion and selected service items."
+        except (ValueError, OverflowError):
+            return (
+                "This entry exceeds the supported history limits. Correct its values and try again."
+            )
+        reference = mileage_conflicts(project["entries"])[-1]
+        if reference is None:
+            return ""
+        locale = regional_locale()
+        reference_date = locale.toString(
+            QDate.fromString(reference["date"], "yyyy-MM-dd"), QLocale.FormatType.ShortFormat
+        )
+        reference_mileage = locale.toString(reference["mileage_km"])
+        relation, direction = (
+            ("later", "more") if data["date"] > reference["date"] else ("earlier", "less")
+        )
+        return (
+            f"The entry on {reference_date} has {reference_mileage} km. For a {relation} date, "
+            f"enter {direction} than {reference_mileage} km, or correct the service date."
         )
 
 
@@ -218,7 +312,7 @@ class HistoryFileWorker(CarWorker):
 
 
 class ServiceHistoryPage(QWidget):
-    """Offline local editor with isolated live and demonstration workspaces."""
+    """In-memory staging, cleared on page exit, disconnect or environment change."""
 
     busy_changed = Signal(bool)
     mutation_active = Signal(bool)
@@ -227,133 +321,118 @@ class ServiceHistoryPage(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        from app.history_workspace import HistoryWorkspaceStore, new_workspace
+        from app.history_workspace import new_workspace
 
         self._environment = LIVE
-        self.store = HistoryWorkspaceStore()
         self.workspace = new_workspace()
         self._connection: Any = None
         self._ecus: list[dict] = []
         self.can_mutate: Callable[[], bool] = lambda: False
-        from app.history_journal import HistoryJournalStore
-
-        self.journals = HistoryJournalStore()
-        self._journal_records: list[dict] = []
-        self._journal_states: dict[str, dict[int, str]] = {}
-        self._journal_dates: set = set()
+        self._written_dates: set[date] = set()
         self._consumed_ids: set[str] = set()
-        self._journal_ready = False
-        self._journal_dirty = False
+        self._uncertain_operation = False
+        self._write_results: list[dict[str, Any]] = []
         self._writing = False
         self._pending_confirmation: tuple[object, dict, str, object] | None = None
-        self._write_report: dict | None = None
         self._worker: CarWorker | None = None
-        self._key = "offline"
-        self._desired_key = "offline"
+        self._key = uuid.uuid4().hex
         self._success: Callable[[object], None] | None = None
-        self._loading_key: str | None = None
         self._page = 0
         self._shutting_down = False
-        self._workspace_ready = False
         self._controls: list[QPushButton] = []
         self._setup_ui()
-        self._load_workspace("offline")
+        self._render()
+        self._set_busy(False)
 
-    def _button(self, text: str, slot: Callable) -> QPushButton:
-        button = QPushButton(text)
+    def clear_staging(self) -> None:
+        """Discard temporary entries and invalidate callbacks without writing a file."""
+        from app.history_workspace import new_workspace
+
+        self.workspace = new_workspace()
+        self._key = uuid.uuid4().hex
+        self._pending_confirmation = None
+        self._write_results.clear()
+        self._page = 0
+        self.message.clear()
+        self._render()
+        self._set_busy(self.is_busy())
+
+    def hideEvent(self, event: QHideEvent) -> None:
+        """Leaving the page discards its staging area without a save prompt."""
+        if not event.spontaneous() and not self._writing:
+            self.clear_staging()
+        super().hideEvent(event)
+
+    def _worker_current(self) -> bool:
+        worker = self._worker
+        return bool(
+            self.sender() is worker
+            and worker is not None
+            and worker.property("environmentContext") == self._environment.binding()
+            and worker.property("stageKey") == self._key
+        )
+
+    def _button(self, text: str, slot: Callable, *, danger: bool = False) -> QPushButton:
+        button = DangerButton(text) if danger else QPushButton(text)
         button.clicked.connect(slot)
         self._controls.append(button)
         return button
 
     def _setup_ui(self) -> None:
-        """Build local history cards, journal expansion and explicit write controls."""
+        """Show explicit file actions and separate full-list and single-entry car writes."""
         self.setObjectName("historyPage")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
-        layout.setSpacing(16)
-        notice = CockpitCard("Offline local service logbook")
-        notice.box.addWidget(
-            _label(
-                "Existing vehicle history cannot be read. These records come from this app "
-                "or an imported JSON file. Editing a local record never changes the car."
-            )
-        )
-        layout.addWidget(notice)
+        layout.setSpacing(12)
         header = PageHeader(
-            "Service history", "Manage local records and review each vehicle append separately."
+            "Service history",
+            "Temporary list. Nothing is saved or written until you choose an action. "
+            "Leaving this page discards the list. Existing car history cannot be read.",
         )
-        self.add_btn = self._button("+ Add local record", self._on_add_clicked)
+        self.add_btn = self._button("+ Add entry", self._on_add_clicked)
         header.action_layout.addWidget(self.add_btn)
         layout.addWidget(header)
-        self.context_label = caption("", "eyebrow")
-        layout.addWidget(self.context_label)
-        row = QHBoxLayout()
-        for text, slot in (
-            ("Import JSON…", self._import),
-            ("Export JSON…", self._export),
-            ("Reload local project", self._reload),
-        ):
+        actions = QHBoxLayout()
+        for text, slot in (("Load from file", self._import), ("Write to file", self._export)):
             button = self._button(text, slot)
             button.setProperty("class", "secondary")
-            row.addWidget(button)
-        row.addStretch()
-        layout.addLayout(row)
-        contexts = QHBoxLayout()
-        for text, slot in (
-            ("Offline project", self._offline),
-            ("Associate with connected VIN…", self._associate),
-        ):
-            button = self._button(text, slot)
-            button.setProperty("class", "secondary")
-            contexts.addWidget(button)
-        contexts.addStretch()
-        layout.addLayout(contexts)
+            actions.addWidget(button)
+        actions.addStretch()
+        self.replace_btn = self._button("Write to car", self._replace_history, danger=True)
+        self.replace_btn.setToolTip(
+            "Erase the existing car history and replace it with every entry in this list."
+        )
+        actions.addWidget(self.replace_btn)
+        match_button_widths(
+            action_widget
+            for index in range(actions.count())
+            if (item := actions.itemAt(index)) is not None
+            and isinstance(action_widget := item.widget(), QPushButton)
+        )
+        layout.addLayout(actions)
         self.message = StatusLabel()
-        self.message.setProperty("role", "notice")
         layout.addWidget(self.message)
+        self.entries_table = QFrame()
+        self.entries_table.setObjectName("historyEntriesTable")
+        table_layout = QVBoxLayout(self.entries_table)
+        table_layout.setContentsMargins(0, 0, 0, 0)
+        table_layout.setSpacing(0)
+        table_header = QFrame()
+        table_header.setObjectName("historyTableHeader")
+        heading = QHBoxLayout(table_header)
+        heading.setContentsMargins(16, 12, 16, 12)
+        heading.addWidget(caption("Entries to write", "featureTitle"))
+        self.entry_count = caption("")
+        heading.addWidget(self.entry_count, 1, Qt.AlignmentFlag.AlignRight)
+        table_layout.addWidget(table_header)
         self.entry_container = QWidget()
         self.entry_container.setProperty("class", "transparent")
         self.entry_layout = QVBoxLayout(self.entry_container)
         self.entry_layout.setContentsMargins(0, 0, 0, 0)
-        self.entry_layout.setSpacing(14)
-        self.search = CardSearch(self.entry_container, "Search local date, mileage or service item")
-        layout.addWidget(self.search)
-        layout.addWidget(self.entry_container)
-
-        append_card = CockpitCard("Append one local record")
-        append_card.box.addWidget(
-            _label(
-                "Use Append this entry on an eligible record to review and send one local draft. "
-                "Existing vehicle entries are preserved. Unknown car dates cannot be checked."
-            )
-        )
-        replacement = CockpitCard("Erase & replace vehicle history")
-        replacement.setProperty("tone", "danger")
-        replacement.box.addWidget(
-            _label(
-                "Existing car entries absent from your reviewed list are permanently erased. "
-                "Prior vehicle history is unavailable for backup."
-            )
-        )
-        self.replace_btn = self._button("Review full replacement list…", self._replace_history)
-        self.replace_btn.setProperty("class", "dangerOutline")
-        replacement.box.addWidget(self.replace_btn)
-        layout.addWidget(ResponsiveColumns(append_card, replacement, ratio=(1, 1)))
-        self.journal_button = QPushButton("Show history operation journals")
-        self.journal_button.setProperty("class", "disclosure")
-        self.journal_button.setCheckable(True)
-        layout.addWidget(self.journal_button)
-        self.journal_container = QWidget()
-        self.journal_container.setProperty("class", "transparent")
-        self.journal_layout = QVBoxLayout(self.journal_container)
-        self.journal_container.hide()
-        self.journal_button.toggled.connect(self.journal_container.setVisible)
-        layout.addWidget(self.journal_container)
-        self.report_export = self._button(
-            "Export interrupted operation evidence…", self._export_memory_report
-        )
-        self.report_export.hide()
-        layout.addWidget(self.report_export)
+        self.entry_layout.setSpacing(0)
+        table_layout.addWidget(self.entry_container)
+        layout.addWidget(self.entries_table)
+        layout.addStretch()
 
     def _run(self, operation: Callable[[], object], success: Callable[[object], None]) -> None:
         if self._worker is not None or self._shutting_down:
@@ -364,6 +443,7 @@ class ServiceHistoryPage(QWidget):
         self._success = success
         self._worker = worker
         worker.setProperty("environmentContext", self._environment.binding())
+        worker.setProperty("stageKey", self._key)
         worker.result_ready.connect(self._result)
         worker.error.connect(self._error)
         worker.progress.connect(self.message.setText)
@@ -378,113 +458,60 @@ class ServiceHistoryPage(QWidget):
         busy = busy or self._shutting_down
         for button in self._controls:
             button.setEnabled(not busy)
-        self.add_btn.setEnabled(
-            not busy
-            and self._workspace_ready
-            and (self._journal_ready or self.workspace["project"]["vin"] is None)
-        )
-        self.entry_container.setEnabled(not busy and self._workspace_ready)
+        self.entry_container.setEnabled(not busy)
         self.replace_btn.setEnabled(
-            not busy and self._workspace_ready and self._journal_ready and self._can_offer_write()
+            not busy and bool(self.workspace["project"]["entries"]) and self._can_offer_write()
         )
         self.busy_changed.emit(busy)
 
     @Slot(object)
     def _result(self, value: object) -> None:
-        if (
-            self.sender() is self._worker
-            and self._success is not None
-            and self._worker.property("environmentContext") == self._environment.binding()
-        ):
+        if self._worker_current() and self._success is not None:
             self._success(value)
 
     @Slot(str)
     def _error(self, message: str) -> None:
-        if (
-            self.sender() is not self._worker
-            or self._worker.property("environmentContext") != self._environment.binding()
-        ):
+        if not self._worker_current():
             return
-        if isinstance(self._worker, HistoryFileWorker):
-            if self._loading_key is None or self._loading_key == self._desired_key:
-                self._workspace_ready = False
-            self.message.setText(
-                "Local file operation failed. Publication could not be confirmed; displayed data is retained for inspection. Reload before editing, or explicitly import a replacement. Check format, permissions, free space and the session log."
-            )
-        else:
-            self.message.setText(
-                "History operation could not start or complete. "
-                + message
-                + " No automatic retry will occur. Inspect the local journals before a new action."
-            )
+        self.message.setText(
+            "File operation failed; the staged list is retained. Check the file and session log."
+            if isinstance(self._worker, HistoryFileWorker)
+            else "History operation could not complete. "
+            + message
+            + " No automatic retry will occur."
+        )
 
     @Slot()
     def _finished(self) -> None:
         worker = self.sender()
         if worker is not self._worker:
             return
-        loading_key = self._loading_key
+        current = self._worker_current()
         self._worker = None
         self._success = None
-        self._loading_key = None
         worker.deleteLater()
         was_writing = self._writing
         self._writing = False
-        self._set_busy(False)
         if was_writing:
             self.mutation_active.emit(False)
         if not isinstance(worker, HistoryFileWorker):
             self.vehicle_loading_changed.emit(False)
         if self._shutting_down:
             return
-        if worker.property("environmentContext") != self._environment.binding():
+        if not current:
             self._pending_confirmation = None
-            self._load_workspace(self._desired_key)
-            return
-        if self._desired_key != self._key:
-            self._pending_confirmation = None
-            if self._desired_key != loading_key:
-                self._load_workspace(self._desired_key)
-        elif self._pending_confirmation is not None:
+        self._render()
+        self._set_busy(False)
+        if self._pending_confirmation is not None:
             pending = self._pending_confirmation
             self._pending_confirmation = None
             self._confirm_history(*pending)
-        elif self._journal_dirty:
-            self._refresh_journals()
-
-    def _load_workspace(self, key: str) -> None:
-        if self._shutting_down:
-            return
-        self._desired_key = key
-        if self._worker is not None:
-            return
-        self._journal_ready = False
-        self._loading_key = key
-
-        def loaded(value: object) -> None:
-            self._key = key
-            self._loaded(value)
-
-        store = self.store
-        self._run(lambda: store.load_workspace(key), loaded)
 
     def _loaded(self, value: object) -> None:
         assert isinstance(value, dict)
-        self.workspace = value
-        self._workspace_ready = True
-        self._journal_records = []
-        self._journal_states = {}
-        self._journal_dates = set()
-        self._consumed_ids = set()
-        self._journal_ready = False
-        self._clear_layout(self.journal_layout)
-        self._journal_dirty = True
         self._page = 0
-        if self.has_unexported_results():
-            self.message.setText("Export the retained history operation evidence before closing.")
-        else:
-            self.message.clear()
-        self._render()
+        self.message.clear()
+        self._stage(value)
 
     def is_busy(self) -> bool:
         """Whether this page still owns an active worker."""
@@ -493,11 +520,6 @@ class ServiceHistoryPage(QWidget):
     def is_using_vehicle(self) -> bool:
         """Whether history preparation or execution still owns the foreground."""
         return self._worker is not None and not isinstance(self._worker, HistoryFileWorker)
-
-    def has_unexported_results(self) -> bool:
-        """Whether an interruption report still needs durable publication."""
-        report = self._write_report or {}
-        return bool(report.get("persistence_failed") and not report.get("evidence_exported"))
 
     def shutdown(self) -> None:
         """Finish a current durable publication without starting any more file work."""
@@ -518,178 +540,191 @@ class ServiceHistoryPage(QWidget):
         return True
 
     def set_environment(self, current: SessionEnvironment) -> None:
-        """Switch isolated editor and journal roots without vehicle requests."""
-        if self._environment == current:
-            return
-        from app.history_journal import HistoryJournalStore
-        from app.history_workspace import HistoryWorkspaceStore
+        """Discard staging when switching between live and isolated DEMO sessions."""
+        if self._environment != current:
+            self._environment = current
+            self._clear_session_guards()
+            self.clear_staging()
 
-        self._environment = current
-        self._workspace_ready = False
-        self.store = HistoryWorkspaceStore(current.root / "history" / "projects")
-        self.journals = HistoryJournalStore(current.root / "history" / "operations")
-        self._load_workspace("demo-unbound" if current.mode == "demo" else "offline")
+    def _clear_session_guards(self) -> None:
+        """Forget volatile write guards only when the connection or environment changes."""
+        self._written_dates.clear()
+        self._consumed_ids.clear()
+        self._uncertain_operation = False
 
     def set_connection(self, connection: Any, ecus: list[dict] | None = None) -> None:
-        """Switch isolated local workspace; do not query the vehicle."""
-        if self._connection is not connection:
+        """Update the target without loading or saving any service entries."""
+        previous = self._connection
+        if previous is not connection:
             self._ecus = []
+            self._clear_session_guards()
         self._connection = connection
+        if connection is not None:
+            self.set_environment(environment(connection))
+        if previous is not None and previous is not connection:
+            self.clear_staging()
         if ecus is not None:
-            self.set_targets(ecus)
-        if connection is None:
-            self._load_workspace("demo-unbound" if self._environment.mode == "demo" else "offline")
-            return
-        self.set_environment(environment(connection))
-        demo = self._environment.mode == "demo"
-        vin = getattr(connection, "verified_vin", "")
-        from app.history_files import valid_vin
+            self._ecus = [dict(row) for row in ecus]
+        self._render()
+        self._set_busy(self.is_busy())
 
-        self._load_workspace(
-            ("demo-" if demo else "live-") + vin
-            if valid_vin(vin)
-            else ("demo-unbound" if demo else "offline")
+    def _stage(self, workspace: dict, *, focus_id: str | None = None) -> None:
+        """Apply an explicit edit in memory; only Write to file persists entries.
+
+        Keep entries paired with their stable metadata when sorting by mileage.
+        """
+        self.workspace = copy.deepcopy(workspace)
+        pairs = sorted(
+            zip(self.workspace["project"]["entries"], self.workspace["records"], strict=True),
+            key=lambda pair: pair[0]["mileage_km"],
+            reverse=True,
         )
-
-    @Slot()
-    def _reload(self) -> None:
-        self._load_workspace(self._desired_key)
-
-    @Slot()
-    def _offline(self) -> None:
-        self._load_workspace("offline")
-
-    def _save(self, workspace: dict) -> None:
-        if not self._workspace_ready:
-            return
-        key = self._key
-        snapshot = copy.deepcopy(workspace)
-
-        def save() -> object:
-            self.store.save_workspace(key, snapshot)
-            return snapshot
-
-        self._run(save, self._loaded)
+        self.workspace["project"]["entries"] = [entry for entry, _ in pairs]
+        self.workspace["records"] = [record for _, record in pairs]
+        if focus_id is not None:
+            self._page = next(
+                index // 25 for index, (_, record) in enumerate(pairs) if record["id"] == focus_id
+            )
+        self._render()
+        self._set_busy(self.is_busy())
 
     def _render(self) -> None:
         from app.history_files import entry_conflicts
 
         project = self.workspace["project"]
-        self.context_label.setText(
-            f"Workspace: {self._key} · File VIN: {project['vin'] or 'Unbound'} · Local evidence only"
-        )
         self._clear_layout(self.entry_layout)
         conflicts = entry_conflicts(project)
         labels = {code: text for text, code in SERVICE_TYPES}
         entries = project["entries"]
+        pending = sum(not self._consumed(index) for index in range(len(entries)))
+        total = f"{len(entries)} {'entry' if len(entries) == 1 else 'entries'}"
+        self.entry_count.setText(f"{total} · {pending} not written")
         if not entries:
-            self.entry_layout.addWidget(
-                _label("No local entries. Existing car history is unknown.")
-            )
+            empty = caption("No entries yet. Add a service entry to prepare it for writing.")
+            empty.setObjectName("historyEmpty")
+            self.entry_layout.addWidget(empty)
         self._page = min(self._page, max(0, (len(entries) - 1) // 25))
         for index in range(self._page * 25, min(len(entries), (self._page + 1) * 25)):
             entry = entries[index]
             card = QFrame()
             card.setObjectName("recordCard")
+            state, state_text = self._record_status(index)
+            if conflicts[index]:
+                state, state_text = "conflict", "Needs attention"
+            card.setProperty("class", "historyEntry")
+            card.setProperty("writeState", state)
             box = QVBoxLayout(card)
+            box.setContentsMargins(16, 10, 16, 10)
+            box.setSpacing(8)
             meta = self.workspace["records"][index]
             day = QDate.fromString(entry["date"], "yyyy-MM-dd")
             locale = regional_locale()
             entry_header = QHBoxLayout()
-            date_tile = QFrame()
-            date_tile.setProperty("class", "dateTile")
-            date_tile.setFixedWidth(66)
-            date_box = QVBoxLayout(date_tile)
-            date_box.setContentsMargins(8, 6, 8, 6)
-            date_box.setSpacing(2)
-            date_box.addWidget(caption(locale.toString(day, "MMM").upper(), "eyebrow"))
-            date_box.addWidget(caption(locale.toString(day, "d"), "serviceValue"))
-            entry_header.addWidget(date_tile)
-            entry_header.addWidget(
-                caption(
-                    f"{locale.toString(day, QLocale.FormatType.ShortFormat)} · "
-                    f"{locale.toString(entry['mileage_km'])} km · {entry['dealer']}",
-                    "sectionTitle",
-                ),
-                1,
+            entry_header.setSpacing(8)
+            entry_title = caption(
+                f"{locale.toString(day, QLocale.FormatType.ShortFormat)} · "
+                f"{locale.toString(entry['mileage_km'])} km",
+                "technical",
             )
-            box.addLayout(entry_header)
-            box.addWidget(
-                _label(
-                    f"{meta['origin'].capitalize()} · {self._record_state(index)} · Record status {entry['status']} · {len(entry['items'])} items"
-                )
+            entry_title.setObjectName("historyEntryTitle")
+            entry_title.setWordWrap(False)
+            entry_header.addWidget(entry_title)
+            garage_type = {0: "Independent / owner", 1: "BMW garage"}.get(
+                entry["dealer_flag"], f"Unknown garage flag {entry['dealer_flag']}"
             )
-            box.addWidget(
-                _label(
-                    ", ".join(
-                        labels.get(item["code"], f"Unknown ID {item['code']}")
-                        for item in entry["items"]
-                    )
-                )
+            garage = ElidedLabel(f"{entry['dealer']} · {garage_type}")
+            garage.setObjectName("historyEntryGarage")
+            entry_header.addWidget(garage, 1)
+            badge = caption(state_text, "historyWriteState")
+            badge.setProperty("writeState", state)
+            badge.setWordWrap(False)
+            entry_buttons = []
+            for text, handler in (
+                ("Edit", lambda _checked=False, i=index: self._edit(i)),
+                ("Remove", lambda _checked=False, i=index: self._remove(i)),
+            ):
+                button = QPushButton(text)
+                button.setProperty("class", "historyAction")
+                button.clicked.connect(handler)
+                entry_header.addWidget(button)
+                entry_buttons.append(button)
+            append = DangerButton("Write this entry")
+            date_sent = date.fromisoformat(entry["date"]) in self._written_dates
+            append.setToolTip(
+                "This date was already sent in this session. Use Write to car for replacement."
+                if date_sent
+                else "Append only this entry, preserving existing car history."
             )
-            if conflicts[index]:
-                box.addWidget(_label("Cannot send: " + "; ".join(conflicts[index])))
-            if "source_workspace" in meta:
-                box.addWidget(
-                    _label(
-                        f"Copied from {meta['source_workspace']}; original VIN: {meta.get('source_vin') or 'Unbound'}"
-                    )
-                )
-            toggle = QPushButton("Show all item details")
-            toggle.setCheckable(True)
-            toggle.setProperty("class", "disclosure")
-            box.addWidget(toggle)
-            detail = _label(
-                "\n".join(
-                    f"{labels.get(item['code'], 'Unknown ID ' + str(item['code']))}: status {item['status']}, remaining distance {item['remaining_distance']} (native), remaining time {item['remaining_time']} (native)"
-                    for item in entry["items"]
-                )
-            )
-            detail.hide()
-            toggle.toggled.connect(detail.setVisible)
-            box.addWidget(detail)
-            row = QHBoxLayout()
-            edit = QPushButton("Edit local draft")
-            edit.setProperty("class", "secondary")
-            edit.clicked.connect(lambda _checked=False, i=index: self._edit(i))
-            remove = QPushButton("Remove local draft")
-            remove.setProperty("class", "secondary")
-            remove.clicked.connect(lambda _checked=False, i=index: self._remove(i))
-            edit.setEnabled(not self._consumed(index))
-            remove.setEnabled(not self._consumed(index))
-            row.addWidget(edit)
-            row.addWidget(remove)
-            append = QPushButton("Append this entry…")
             append.setEnabled(
-                self._journal_ready
-                and self._can_offer_write()
+                self._can_offer_write()
                 and not self._consumed(index)
+                and not date_sent
                 and not conflicts[index]
             )
             append.clicked.connect(
                 lambda _checked=False, i=index: self._prepare_history("append", i)
             )
-            row.addWidget(append)
-            box.addLayout(row)
+            entry_header.addWidget(append)
+            entry_buttons.append(append)
+            match_button_widths(entry_buttons)
+            box.addLayout(entry_header)
+            details = QGridLayout()
+            details.setHorizontalSpacing(18)
+            details.setVerticalSpacing(4)
+            for column, title in enumerate(("Service item", "Completion")):
+                details.addWidget(caption(title, "tableHeader"), 0, column)
+            details.setColumnStretch(0, 1)
+            for row, item in enumerate(entry["items"], 1):
+                for column, value in enumerate(
+                    (
+                        labels.get(item["code"], f"Unknown service ID {item['code']}"),
+                        _status_text(item["status"], ITEM_STATUS_LABELS),
+                    )
+                ):
+                    label = _label(value)
+                    if column:
+                        label.setMinimumWidth(180)
+                        label.setToolTip("Completion of this service item")
+                    details.addWidget(label, row, column)
+            box.addLayout(details)
+            metadata = f"Overall: {_status_text(entry['status'], RECORD_STATUS_LABELS)}"
+            if meta["origin"] == "imported":
+                metadata += " · Imported entry"
+            if conflicts[index]:
+                box.addWidget(_label("Cannot write: " + "; ".join(conflicts[index])))
+            if date_sent and not self._consumed(index):
+                box.addWidget(
+                    caption(
+                        "This date was already sent in this session. Use Write to car to "
+                        "replace history with the displayed list."
+                    )
+                )
+            if "source_workspace" in meta and meta.get("source_vin") != project["vin"]:
+                box.addWidget(
+                    caption("Copied entry; original vehicle assignment retained in saved data.")
+                )
+            footer = QHBoxLayout()
+            footer.setSpacing(8)
+            footer.addWidget(caption(metadata, "historyMetadata"), 1)
+            footer.addWidget(badge, 0, Qt.AlignmentFlag.AlignRight)
+            box.addLayout(footer)
             self.entry_layout.addWidget(card)
         if len(entries) > 25:
-            row = QHBoxLayout()
+            pagination = QHBoxLayout()
             for text, delta in (("Previous 25", -1), ("Next 25", 1)):
                 button = QPushButton(text)
                 button.setEnabled(0 <= self._page + delta <= (len(entries) - 1) // 25)
                 button.clicked.connect(lambda _checked=False, step=delta: self._page_move(step))
-                row.addWidget(button)
+                pagination.addWidget(button)
             self.entry_layout.addWidget(
                 _label(
-                    f"Page {self._page + 1} of {(len(entries) + 24) // 25}; imported order preserved"
+                    f"Page {self._page + 1} of {(len(entries) + 24) // 25}; highest mileage first"
                 )
             )
-            self.entry_layout.addLayout(row)
-        self.entry_layout.addStretch()
-        self.search.apply()
+            self.entry_layout.addLayout(pagination)
 
     @staticmethod
-    def _clear_layout(layout: QVBoxLayout | QHBoxLayout) -> None:
+    def _clear_layout(layout: QVBoxLayout | QHBoxLayout | QGridLayout) -> None:
         while layout.count():
             item = layout.takeAt(0)
             if item is None:
@@ -699,7 +734,7 @@ class ServiceHistoryPage(QWidget):
             if widget is not None:
                 widget.hide()
                 widget.deleteLater()
-            elif isinstance(child_layout, (QVBoxLayout, QHBoxLayout)):
+            elif isinstance(child_layout, (QVBoxLayout, QHBoxLayout, QGridLayout)):
                 ServiceHistoryPage._clear_layout(child_layout)
                 child_layout.deleteLater()
 
@@ -712,11 +747,7 @@ class ServiceHistoryPage(QWidget):
         self._edit(None)
 
     def _edit(self, index: int | None) -> None:
-        if (
-            self._worker is not None
-            or not self._workspace_ready
-            or (self.workspace["project"]["vin"] is not None and not self._journal_ready)
-        ):
+        if self._worker is not None:
             return
         import json
 
@@ -724,24 +755,23 @@ class ServiceHistoryPage(QWidget):
         from app.history_workspace import new_record
 
         before, key = self.workspace, self._key
-        if index is not None and self._consumed(index):
-            return
         entry = before["project"]["entries"][index] if index is not None else None
-        dialog = AddServiceDialog(self, entry)
+        dialog = AddServiceDialog(
+            self,
+            entry,
+            existing_dates=[
+                row["date"] for i, row in enumerate(before["project"]["entries"]) if i != index
+            ],
+            existing_entries=[
+                row for i, row in enumerate(before["project"]["entries"]) if i != index
+            ],
+        )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         if not self._context_current(before, key):
             return
         data = dialog.get_data()
-        from datetime import date
 
-        if (entry is None or data["date"] != entry["date"]) and date.fromisoformat(
-            data["date"]
-        ) in self._known_journal_dates():
-            self.message.setText(
-                "That date belongs to a prior accepted or uncertain local operation. Inspect its journal; it is not a new append draft."
-            )
-            return
         workspace = copy.deepcopy(self.workspace)
         entries = workspace["project"]["entries"]
         if (entry is None or data["date"] != entry["date"]) and any(
@@ -756,39 +786,32 @@ class ServiceHistoryPage(QWidget):
             workspace["records"].append(new_record("draft"))
         else:
             entries[index] = data
+            if data != entry:
+                workspace["records"][index] = new_record("draft")
         try:
             parse_project(json.dumps(workspace["project"]).encode())
             problems = entry_conflicts(workspace["project"])[index if index is not None else -1]
-            if problems and index is None:
+            if problems:
                 raise ValueError("; ".join(problems))
         except ValueError:
             self.message.setText(
-                "The entry contains unsupported values. Remove unknown service types or correct its fields before saving this edit. The original is preserved."
+                "The entry contains unsupported values. Remove unknown service types or correct its fields before adding this edit. The original is preserved."
             )
             return
-        self._save(workspace)
+        record_index = index if index is not None else len(entries) - 1
+        self._stage(workspace, focus_id=workspace["records"][record_index]["id"])
 
     def _remove(self, index: int) -> None:
-        if self._worker is not None or not self._workspace_ready or self._consumed(index):
+        if self.is_busy():
             return
-        before, key = self.workspace, self._key
-        if (
-            QMessageBox.question(
-                self, "Remove local draft", "Remove only this local draft? The car is unchanged."
-            )
-            != QMessageBox.StandardButton.Yes
-        ):
-            return
-        if not self._context_current(before, key):
-            return
-        workspace = copy.deepcopy(before)
+        workspace = copy.deepcopy(self.workspace)
         del workspace["project"]["entries"][index]
         del workspace["records"][index]
-        self._save(workspace)
+        self._stage(workspace)
 
     @Slot()
     def _import(self) -> None:
-        if self._worker is not None:
+        if self.is_busy():
             return
         from pathlib import Path
 
@@ -796,32 +819,14 @@ class ServiceHistoryPage(QWidget):
         from app.history_workspace import new_workspace
 
         before, key = self.workspace, self._key
-        path, _ = QFileDialog.getOpenFileName(self, "Import local project", "", "JSON (*.json)")
-        if not path:
+        path, _ = QFileDialog.getOpenFileName(self, "Load from file", "", "JSON (*.json)")
+        if not path or not self._context_current(before, key):
             return
-        if (
-            QMessageBox.question(
-                self,
-                "Replace local project",
-                "Replace the open local project with this JSON file? No car request or write authorization is imported.",
-            )
-            != QMessageBox.StandardButton.Yes
-        ):
-            return
-        if not self._context_current(before, key):
-            return
-
-        def operation() -> object:
-            project = load_project(Path(path))
-            workspace = new_workspace(project, origin="imported")
-            self.store.save_workspace(key, workspace)
-            return workspace
-
-        self._run(operation, self._loaded)
+        self._run(lambda: new_workspace(load_project(Path(path)), origin="imported"), self._loaded)
 
     @Slot()
     def _export(self) -> None:
-        if self._worker is not None:
+        if self.is_busy():
             return
         from pathlib import Path
 
@@ -829,68 +834,19 @@ class ServiceHistoryPage(QWidget):
 
         before, key = self.workspace, self._key
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export local project", "history.json", "JSON (*.json)"
+            self, "Write to file", "history.json", "JSON (*.json)"
         )
         if path and self._context_current(before, key):
             project = copy.deepcopy(self.workspace["project"])
             self._run(
                 lambda: save_project(Path(path), project),
-                lambda _: self.message.setText(
-                    "Local JSON exported. No vehicle state was verified."
-                ),
+                lambda _: self.message.setText("Entries written to file. The car is unchanged."),
             )
-
-    @Slot()
-    def _associate(self) -> None:
-        if self._worker is not None or self._connection is None or not self._workspace_ready:
-            return
-        from app.history_files import valid_vin
-
-        before, previous_key, connection = self.workspace, self._key, self._connection
-        demo = self._environment.mode == "demo"
-        vin = getattr(connection, "verified_vin", "")
-        if not valid_vin(vin):
-            return
-        if (
-            QMessageBox.question(
-                self,
-                "Associate local project",
-                f"Copy this local project to {vin}? This replaces that vehicle's open local editing project. Source VIN/provenance is retained. This never writes the car.",
-            )
-            != QMessageBox.StandardButton.Yes
-        ):
-            return
-        if not self._context_current(before, previous_key) or self._connection is not connection:
-            return
-        workspace = copy.deepcopy(before)
-        for record in workspace["records"]:
-            record.setdefault("source_vin", workspace["project"]["vin"])
-            record.setdefault("source_workspace", previous_key)
-        workspace["project"]["vin"] = vin
-        key = ("demo-" if demo else "live-") + vin
-        if key != previous_key:
-            for record in workspace["records"]:
-                if "write_state" in record:
-                    record["source_write_state"] = record.pop("write_state")
-                if "last_operation" in record:
-                    record["source_last_operation"] = record.pop("last_operation")
-
-        def operation() -> object:
-            self.store.save_workspace(key, workspace)
-            return workspace
-
-        self._desired_key = key
-
-        def loaded(value: object) -> None:
-            self._key = key
-            self._loaded(value)
-
-        self._run(operation, loaded)
 
     def set_targets(self, ecus: list[dict]) -> None:
         """Update identified targets without reading the car or changing local records."""
         self._ecus = [dict(row) for row in ecus]
-        if self._workspace_ready and not self.is_busy():
+        if not self.is_busy():
             self._render()
             self._set_busy(False)
 
@@ -906,10 +862,8 @@ class ServiceHistoryPage(QWidget):
             or getattr(connection, "kind", None) != TransportKind.HSFZ
             or not getattr(connection, "alive_ok", False)
             or not valid_vin(getattr(connection, "verified_vin", ""))
-            or self.workspace["project"]["vin"] != connection.verified_vin
-            or not self._key.startswith(self._environment.mode + "-")
+            or environment(connection) != self._environment
             or getattr(connection, "power_sufficient", None) is False
-            or self.has_unexported_results()
         ):
             return False
         try:
@@ -918,11 +872,8 @@ class ServiceHistoryPage(QWidget):
             return False
         return True
 
-    def _known_journal_dates(self) -> set:
-        return set(self._journal_dates)
-
-    def _step_state(self, record: dict, index: int) -> str:
-        return self._journal_states.get(record["intent"]["id"], {}).get(index, "unattempted")
+    def _known_dates(self) -> set[date]:
+        return set(self._written_dates)
 
     def _consumed(self, index: int) -> bool:
         meta = self.workspace["records"][index]
@@ -930,175 +881,83 @@ class ServiceHistoryPage(QWidget):
             meta.get("write_state") in ("accepted", "uncertain") or meta["id"] in self._consumed_ids
         )
 
-    def _record_state(self, index: int) -> str:
-        return (
-            "Previously accepted or possibly sent; inspect journal"
-            if self._consumed(index)
-            else "Local unsent draft"
-        )
-
-    def _refresh_journals(self) -> None:
-        from app.history_journal import HistoryJournalLimitError
-
-        self._journal_dirty = False
-        key, before = self._key, self.workspace
-        vin = before["project"]["vin"]
-        environment = "demo" if key.startswith("demo-") else "live"
-        session = self._environment.binding()
-        memory = copy.deepcopy(self._write_report)
-
-        def operation() -> object:
-            try:
-                records = self.journals.list_records(vin, environment) if vin else []
-            except HistoryJournalLimitError as exc:
-                return {"listing_error": str(exc)}
-            from datetime import date
-
-            workspace = copy.deepcopy(before)
-            metas = {meta["id"]: meta for meta in workspace["records"]}
-            states = {}
-            dates = set()
-            consumed = set()
-
-            def latch(intent: dict, latest: dict) -> None:
-                for i, step in enumerate(intent["requests"]):
-                    state = latest.get(i, "unattempted")
-                    if step["kind"] != "add" or state not in ("accepted", "sending", "uncertain"):
-                        continue
-                    identity = intent["draft_ids"][step["entry_index"]]
-                    dates.add(date.fromisoformat(intent["intended"][step["entry_index"]]["date"]))
-                    consumed.add(identity)
-                    if identity in metas:
-                        metas[identity]["write_state"] = (
-                            "accepted" if state == "accepted" else "uncertain"
-                        )
-
-            for record in records:
-                intent = record["intent"]
-                latest = {
-                    event["step"]: event["state"]
-                    for event in record["events"]
-                    if event["step"] is not None
-                }
-                states[intent["id"]] = latest
-                latch(intent, latest)
-                for i, step in enumerate(intent["requests"]):
-                    if step["kind"] == "add" and latest.get(i) in (
-                        "accepted",
-                        "sending",
-                        "uncertain",
-                    ):
-                        identity = intent["draft_ids"][step["entry_index"]]
-                        if identity in metas:
-                            metas[identity]["last_operation"] = intent["id"]
-            if (
-                memory
-                and memory.get("workspace_key") == key
-                and memory.get("intent", {}).get("vin") == vin
-                and memory.get("intent", {}).get("session") == session
-            ):
-                latest = {
-                    event["step"]: event["state"]
-                    for event in memory["events"]
-                    if event["step"] is not None
-                }
-                latch(memory["intent"], latest)
-            if workspace != before:
-                self.store.save_workspace(key, workspace)
-            return {
-                "records": records,
-                "workspace": workspace,
-                "states": states,
-                "dates": dates,
-                "consumed": consumed,
-            }
-
-        def loaded(value: object) -> None:
-            assert isinstance(value, dict)
-            if "listing_error" in value:
-                self._journal_ready = False
-                self.message.setText(value["listing_error"])
-                return
-            self.workspace = value["workspace"]
-            self._journal_records = value["records"]
-            self._journal_states = value["states"]
-            self._journal_dates = value["dates"]
-            self._consumed_ids = value["consumed"]
-            self._journal_ready = True
-            self._render()
-            self._render_journals()
-
-        self._run(operation, loaded)
-
-    def _render_journals(self) -> None:
-        self._clear_layout(self.journal_layout)
-        self.journal_layout.addWidget(
-            _label(
-                "Local history intent/results only. Prior car history is unavailable; these journals cannot restore it. No automatic replay or resume."
+    def _record_status(self, index: int) -> tuple[str, str]:
+        """Distinguish unsent entries, checked acceptance and uncertain vehicle outcomes."""
+        meta = self.workspace["records"][index]
+        if meta.get("write_state") == "accepted":
+            return "accepted", (
+                "Accepted in DEMO"
+                if self._environment.mode == "demo"
+                else "Accepted · check iDrive"
             )
-        )
-        # Most recent50report previews; all files remain on disk and count in guards.
-        for record in self._journal_records[-50:]:
-            intent = record["intent"]
-            state = record["events"][-1]["state"]
-            if record["events"][-1]["step"] is not None or state == "prepared":
-                state = "Interrupted / outcome uncertain — inspect iDrive"
-            box = QFrame()
-            box.setObjectName("recordCard")
-            layout = QVBoxLayout(box)
-            layout.addWidget(
-                _label(
-                    f"{intent['created']} · {intent['mode']} · {state}\nVIN {intent['vin']} · {intent['target']['name']} · {len(intent['intended'])} record(s)"
-                )
+        if self._consumed(index):
+            return "uncertain", (
+                "Outcome uncertain · DEMO"
+                if self._environment.mode == "demo"
+                else "Outcome uncertain · check iDrive"
             )
-            details = _label(
-                "\n".join(
-                    f"{i + 1}. {step['kind']}: {self._step_state(record, i)}"
-                    for i, step in enumerate(intent["requests"][:100])
-                )
-                + "\n"
-                + record["events"][-1]["detail"]
-            )
-            if len(intent["requests"]) > 100:
-                details.setText(
-                    details.text()
-                    + "\nFirst100steps shown. Export the journal for every step and raw response."
-                )
-            details.hide()
-            toggle = QPushButton("Show step outcomes")
-            toggle.setCheckable(True)
-            toggle.toggled.connect(details.setVisible)
-            layout.addWidget(toggle)
-            layout.addWidget(details)
-            export = QPushButton("Export history journal…")
-            export.clicked.connect(lambda _checked=False, r=record: self._export_journal(r))
-            layout.addWidget(export)
-            delete = QPushButton("Delete local journal…")
-            delete.clicked.connect(lambda _checked=False, r=record: self._delete_journal(r))
-            layout.addWidget(delete)
-            self.journal_layout.addWidget(box)
-        self.journal_layout.addStretch()
+        if meta.get("write_state") == "rejected":
+            return "rejected", "Rejected"
+        if meta.get("write_state") == "unattempted":
+            return "unattempted", "Not attempted"
+        return "pending", "Not written"
+
+    def interrupted_write_notice(self) -> str:
+        """Expose an interrupted write outcome before a connection dialog can clear staging."""
+        if not self._uncertain_operation:
+            return ""
+        from app.history_write import INSTRUCTIONS
+
+        if self._write_results:
+            return str(self._write_results[-1]["summary"])
+        return "A previous history write was interrupted or incomplete. " + INSTRUCTIONS
 
     @Slot()
     def _replace_history(self) -> None:
         self._prepare_history("replace", None)
 
     def _prepare_history(self, mode: str, index: int | None) -> None:
+        if mode == "append" and (
+            index is None or not 0 <= index < len(self.workspace["project"]["entries"])
+        ):
+            self.message.setText(
+                "The staged entry changed. Reopen the action for the current list."
+            )
+            return
+        if (
+            mode == "append"
+            and index is not None
+            and date.fromisoformat(self.workspace["project"]["entries"][index]["date"])
+            in self._written_dates
+        ):
+            self.message.setText(
+                "This date was already sent in this session. Use Write to car to replace "
+                "history with the displayed list."
+            )
+            return
         if (
             self.is_busy()
-            or not self._journal_ready
             or not self._can_offer_write()
             or not self.can_mutate()
             or (mode == "append" and index is not None and self._consumed(index))
         ):
             self.message.setText(
-                "Bind the project to the connected VIN and wait for all page operations to settle. A supported exact headunit, writable session and readable local journals are required."
+                "Wait for the page to finish loading and check the connection. Writing requires "
+                "a supported headunit and a writable connection."
             )
             return
         from app.history_write import HistoryPrepareWorker
 
         before, key, connection = self.workspace, self._key, self._connection
-        worker = HistoryPrepareWorker(connection, self._ecus, before, mode, index, self.journals)
+        worker = HistoryPrepareWorker(
+            connection,
+            self._ecus,
+            before,
+            mode,
+            index,
+            known_dates=self._known_dates(),
+            consumed=set(self._consumed_ids),
+        )
 
         def prepared(value: object) -> None:
             self._pending_confirmation = (value, before, key, connection)
@@ -1117,14 +976,15 @@ class ServiceHistoryPage(QWidget):
         ):
             return
         data = plan.data()
-        dialog = QDialog(self)
-        dialog.setWindowTitle(
+        dialog = CockpitDialog(
             "Confirm history append"
             if data["mode"] == "append"
-            else "Confirm irreversible history replacement"
+            else "Confirm irreversible history replacement",
+            self,
+            width=720,
+            height=680,
         )
-        dialog.resize(620, 650)
-        layout = QVBoxLayout(dialog)
+        layout = dialog.body
         layout.addWidget(
             _label(
                 f"VIN: {data['vin']}\nHeadunit: {data['target']['name']}\nMode: {data['mode']} · {len(data['intended'])} dated record(s) in the order below"
@@ -1135,28 +995,24 @@ class ServiceHistoryPage(QWidget):
                 "Existing vehicle history cannot be read or backed up. Unseen duplicate dates and available capacity cannot be checked. Append never erases; a rejection stops this operation. Replacement permanently deletes records absent from this list."
             )
         )
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
         labels = {code: name for name, code in SERVICE_TYPES}
         preview = _label(
             "\n\n".join(
-                f"{i + 1}. {entry['date']} · {entry['mileage_km']} km · {entry['dealer']} · status {entry['status']}\n"
+                f"{i + 1}. {entry['date']} · {entry['mileage_km']} km · {entry['dealer']} · {_status_text(entry['status'], RECORD_STATUS_LABELS)}\n"
                 + ", ".join(
-                    labels[item["code"]]
-                    + f" (status {item['status']}, distance {item['remaining_distance']}, time {item['remaining_time']})"
+                    labels[item["code"]] + f" ({_status_text(item['status'], ITEM_STATUS_LABELS)})"
                     for item in entry["items"]
                 )
                 for i, entry in enumerate(data["intended"])
             )
         )
-        scroll.setWidget(preview)
-        layout.addWidget(scroll, 1)
+        layout.addWidget(preview)
         layout.addWidget(
             _label(
                 "The headunit will be reset after accepted entries. Wait for it to restart and inspect iDrive. No readback, rollback or automatic retry is available. Once started there is no Cancel; navigation, disconnect and normal close are blocked."
             )
         )
-        power = QCheckBox(
+        power = CheckInput(
             "I confirm sufficient vehicle and computer power for the entire operation."
         )
         layout.addWidget(power)
@@ -1165,27 +1021,22 @@ class ServiceHistoryPage(QWidget):
                 "No source-derived power threshold is available for this operation; reliable power sufficiency is unknown. Do not proceed if the car or computer reports insufficient power."
             )
         )
-        irreversible = QCheckBox(
+        irreversible = CheckInput(
             "I accept irreversible loss of all car entries absent from this replacement list."
         )
         irreversible.setVisible(data["mode"] == "replace")
         layout.addWidget(irreversible)
-        prior = QCheckBox(
+        prior = CheckInput(
             "I inspected iDrive and the prior interrupted/uncertain operation before this new action."
         )
-        needs_prior = any(
-            record["events"][-1]["state"]
-            not in ("response-confirmed", "rejected", "cycle-required")
-            or record["events"][-1]["step"] is not None
-            for record in self._journal_records
-        )
+        needs_prior = self._uncertain_operation
         prior.setVisible(needs_prior)
         layout.addWidget(prior)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
-        ok.setText("Append entry" if data["mode"] == "append" else "Erase and replace")
+        ok.setText("Write this entry" if data["mode"] == "append" else "Erase and replace all")
 
         def valid() -> None:
             ok.setEnabled(
@@ -1199,7 +1050,7 @@ class ServiceHistoryPage(QWidget):
         valid()
         buttons.accepted.connect(dialog.accept)
         buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
+        dialog.add_buttons(buttons, destructive=True)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
         if (
@@ -1214,7 +1065,6 @@ class ServiceHistoryPage(QWidget):
         worker = HistoryWriteWorker(
             connection,
             plan,
-            self.journals,
             power_acknowledged=power.isChecked(),
             replacement_acknowledged=irreversible.isChecked(),
         )
@@ -1222,90 +1072,86 @@ class ServiceHistoryPage(QWidget):
 
     def _history_written(self, value: object) -> None:
         assert isinstance(value, dict)
+
         from app.history_write import HistoryWriteWorker
 
         worker = self.sender()
         assert isinstance(worker, HistoryWriteWorker)
-        self._write_report = copy.deepcopy(value)
-        self._write_report["intent"] = worker.plan.data()
-        self._write_report["workspace_key"] = self._key
-        self.report_export.setVisible(bool(value["persistence_failed"]))
-        self.message.setText(
-            f"History outcome: {value['state']}. "
-            + value["instructions"]
-            + (
-                " Local journal persistence failed; export the retained evidence before closing."
-                if value["persistence_failed"]
-                else ""
-            )
-        )
-        self._journal_dirty = True
-
-    def _export_memory_report(self) -> None:
-        if self.is_busy() or self._write_report is None:
-            return
-        from pathlib import Path
-
-        from app.history_journal import export_memory_evidence
-
-        before, key = self.workspace, self._key
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export retained history evidence", "history-interruption.json", "JSON (*.json)"
-        )
-        if not path or not self._context_current(before, key):
-            return
-        report = copy.deepcopy(self._write_report)
-
-        def exported(_value: object) -> None:
-            assert self._write_report is not None
-            self._write_report["evidence_exported"] = True
-            self.report_export.hide()
-            self.message.setText(
-                "Interrupted history evidence exported; inspect iDrive before any new action."
-            )
-            self._render()
-
-        self._run(
-            lambda: export_memory_evidence(Path(path), report),
-            exported,
-        )
-
-    def _export_journal(self, record: dict) -> None:
-        if self.is_busy():
-            return
-        from pathlib import Path
-
-        before, key = self.workspace, self._key
-        source = self.journals.root / (record["intent"]["id"] + ".json")
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Export history journal", source.name, "JSON (*.json)"
-        )
-        if path and self._context_current(before, key):
-            self._run(
-                lambda: self.journals.export_record(source, Path(path)),
-                lambda _: self.message.setText(
-                    "Local history journal exported. This is not a restorable car-history backup."
-                ),
-            )
-
-    def _delete_journal(self, record: dict) -> None:
-        if self.is_busy():
-            return
-        before, key = self.workspace, self._key
-        if (
-            QMessageBox.question(
-                self,
-                "Delete local history journal",
-                "Delete this local intent/result record? This loses preservation, prior-date guard and troubleshooting evidence. Accepted/uncertain cards stay non-resendable, but deleted journal dates may no longer be known. The car is unchanged and unknown old history cannot be restored.",
-            )
-            != QMessageBox.StandardButton.Yes
+        intent = worker.plan.data()
+        latest = {
+            event["step"]: event["state"] for event in value["events"] if event["step"] is not None
+        }
+        metadata = {record["id"]: record for record in self.workspace["records"]}
+        if any(
+            step["kind"] == "erase" and latest.get(index) == "accepted"
+            for index, step in enumerate(intent["requests"])
         ):
-            return
-        if not self._context_current(before, key):
-            return
-        source = self.journals.root / (record["intent"]["id"] + ".json")
+            self._written_dates.clear()
+            self._consumed_ids.clear()
+            for record in metadata.values():
+                record.pop("write_state", None)
+        elif any(
+            step["kind"] == "erase" and latest.get(index) in ("sending", "uncertain")
+            for index, step in enumerate(intent["requests"])
+        ):
+            for record in metadata.values():
+                if record.get("write_state") == "accepted":
+                    record["write_state"] = "uncertain"
+        for index, step in enumerate(intent["requests"]):
+            state = latest.get(index)
+            if step["kind"] != "add":
+                continue
+            entry_index = step["entry_index"]
+            identity = intent["draft_ids"][entry_index]
+            if state in ("accepted", "sending", "uncertain"):
+                self._consumed_ids.add(identity)
+                self._written_dates.add(date.fromisoformat(intent["intended"][entry_index]["date"]))
+                if identity in metadata:
+                    metadata[identity]["write_state"] = (
+                        "accepted" if state == "accepted" else "uncertain"
+                    )
+            elif (
+                state in ("rejected", "unattempted")
+                and identity in metadata
+                and metadata[identity].get("write_state") not in ("accepted", "uncertain")
+            ):
+                metadata[identity]["write_state"] = state
+        self._uncertain_operation = value["state"] not in ("response-confirmed", "rejected")
+        summary = self._write_summary(intent, value)
+        self._write_results.append(
+            {"intent": copy.deepcopy(intent), "report": copy.deepcopy(value), "summary": summary}
+        )
+        self.message.setText(summary)
+        self._render()
 
-        def removed(_: object) -> None:
-            self._journal_dirty = True
-
-        self._run(lambda: self.journals.delete_record(source), removed)
+    @staticmethod
+    def _write_summary(intent: dict, report: dict) -> str:
+        """Summarize the exact failed step and counts without repeating every accepted entry."""
+        latest = {event["step"]: event for event in report["events"] if event["step"] is not None}
+        counts: Counter[str] = Counter()
+        lines = [f"History outcome: {report['state']}."]
+        failures = []
+        for index, request in enumerate(intent["requests"]):
+            event = latest.get(index, {"state": "unattempted", "detail": ""})
+            state = event["state"]
+            label = request["kind"].capitalize()
+            if request["kind"] == "add":
+                counts[state] += 1
+                label = "Entry " + intent["intended"][request["entry_index"]]["date"]
+            elif request["kind"] in ("erase", "reset"):
+                label = "Erase history" if request["kind"] == "erase" else "Headunit restart"
+                detail = (
+                    " " + event["detail"] if state in ("rejected", "uncertain", "sending") else ""
+                )
+                lines.append(f"{label}: {state}.{detail}")
+            if request["kind"] not in ("erase", "reset") and state in (
+                "rejected",
+                "uncertain",
+                "sending",
+            ):
+                failures.append(f"{label}: {state}. {event['detail']}".strip())
+        if counts:
+            lines.append(
+                "Entries: " + ", ".join(f"{count} {state}" for state, count in counts.items()) + "."
+            )
+        return "\n".join([*lines, *failures, report["instructions"]])

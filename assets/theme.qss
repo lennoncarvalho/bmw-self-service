@@ -2,15 +2,15 @@
  *
  * Colors:
  *   Background:    #0a0e17 (dark navy)
- *   Surface:       #101520 (slightly lighter card bg)
- *   Primary:       #1C69D4 (BMW blue)
- *   Primary hover: #0653B6 (BMW dark blue)
- *   Danger:        #E30B1F (BMW red)
- *   Text primary:  #e0e0e0
- *   Text secondary:#a0a0a0
+ *   Surface:       #0f131c (slightly lighter card bg)
+ *   Primary:       #1c69d2 (BMW blue)
+ *   Primary hover: #005bc0 (BMW dark blue)
+ *   Danger:        #93000a (BMW red)
+ *   Text primary:  #dfe2ef
+ *   Text secondary:#c2c6d5
  *   Border:        #262a34
- *   Success:       #2ECC71
- *   Warning:       #F39C12
+ *   Success:       #10b981
+ *   Warning:       #f59e0b
  *
  * Style: rounded corners (8px), dark palette, high contrast.
  */
@@ -23,14 +23,14 @@ QMainWindow {
 
 QWidget {
     background-color: #0a0e17;
-    color: #e0e0e0;
-    font-size: 14px;
+    color: #dfe2ef;
+    font-size: 13px;
 }
 
 /* ── Labels ──────────────────────────────────────────────────────────── */
 
 QLabel {
-    color: #e0e0e0;
+    color: #dfe2ef;
     background: transparent;
     border: none;
 }
@@ -43,7 +43,7 @@ QLabel#titleLabel {
 
 QLabel#subtitleLabel {
     font-size: 16px;
-    color: #a0a0a0;
+    color: #c2c6d5;
 }
 
 QLabel#statusDot {
@@ -54,57 +54,49 @@ QLabel#statusDot {
 /* ── Buttons ─────────────────────────────────────────────────────────── */
 
 QPushButton {
-    background-color: #1C69D4;
+    background-color: #1c69d2;
     color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-size: 14px;
-    font-weight: bold;
+    border: 1px solid #424753;
+    border-radius: 4px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
     min-height: 20px;
 }
 
 QPushButton:hover {
-    background-color: #0653B6;
+    background-color: #005bc0;
 }
 
 QPushButton:pressed {
-    background-color: #0442A0;
+    background-color: #004493;
 }
 
 QPushButton:disabled {
-    background-color: #242933;
-    color: #888888;
+    background-color: #262a34;
+    color: #8c909e;
 }
 
 QPushButton#connectButton {
-    font-size: 18px;
-    padding: 16px 48px;
-    border-radius: 12px;
-    min-height: 48px;
-}
-
-QPushButton#dangerButton {
-    background-color: #E30B1F;
-}
-
-QPushButton#dangerButton:hover {
-    background-color: #C40A1A;
+    font-size: 13px;
+    padding: 9px 14px;
+    border-radius: 4px;
+    min-height: 20px;
 }
 
 QPushButton#successButton {
-    background-color: #2ECC71;
+    background-color: #10b981;
 }
 
 QPushButton#successButton:hover {
-    background-color: #27AE60;
+    background-color: #10b981;
 }
 
 /* ── Navigation Buttons (Bottom Bar) ──────────────────────────────── */
 
 QPushButton#navButton {
-    background-color: transparent;
-    color: #a0a0a0;
+    background-color: #0a0e17;
+    color: #c2c6d5;
     border-radius: 8px;
     padding: 8px 16px;
     font-size: 11px;
@@ -112,7 +104,7 @@ QPushButton#navButton {
 }
 
 QPushButton#navButton:checked {
-    color: #1C69D4;
+    color: #1c69d2;
     background-color: rgba(28, 105, 212, 0.12);
 }
 
@@ -122,7 +114,7 @@ QPushButton#navButton:hover:!checked {
 
 QPushButton#navButton:disabled {
     color: #555555;
-    background-color: transparent;
+    background-color: #0a0e17;
 }
 
 /* ── Scroll Areas ────────────────────────────────────────────────── */
@@ -139,9 +131,9 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle:vertical {
-    background-color: #242933;
+    background-color: #262a34;
     border-radius: 4px;
-    min-height: 30 px;
+    min-height: 30px;
 }
 
 QScrollBar::handle:vertical:hover {
@@ -159,7 +151,7 @@ QScrollBar:horizontal {
 }
 
 QScrollBar::handle:horizontal {
-    background-color: #242933;
+    background-color: #262a34;
     border-radius: 4px;
     min-width: 30px;
 }
@@ -172,14 +164,14 @@ QScrollBar::sub-line:horizontal {
 /* ── Cards ─────────────────────────────────────────────────────────── */
 
 QFrame#card {
-    background-color: #101520;
+    background-color: #0f131c;
     border: 1px solid #262a34;
     border-radius: 8px;
     padding: 12px;
 }
 
 QFrame#card:hover {
-    border-color: #1C69D4;
+    border-color: #1c69d2;
 }
 
 QPushButton#codingSection {
@@ -200,34 +192,34 @@ QWidget#codingFeature {
 /* ── Top Bar ──────────────────────────────────────────────────────────── */
 
 QFrame#topBar {
-    background-color: #0f0f23;
+    background-color: #181c25;
     border-bottom: 1px solid #262a34;
     min-height: 48px;
-    max-height: 48 px;
+    max-height: 48px;
 }
 
 /* ── Bottom Nav Bar ─────────────────────────────────────────────── */
 
 QFrame#bottomNav {
-    background-color: #0f0f23;
+    background-color: #181c25;
     border-top: 1px solid #262a34;
-    min-height: 68 px;
+    min-height: 68px;
     max-height: 68px;
 }
 
 /* ── Comobox (Series/Interface Pickers) ─────────────────────────── */
 
 QComboBox {
-    background-color: #101520;
-    color: #e0e0e0;
-    border: 1 px solid #262a34;
+    background-color: #0f131c;
+    color: #dfe2ef;
+    border: 1px solid #262a34;
     border-radius: 8px;
     padding: 8px 12px;
     min-height: 24px;
 }
 
 QComboBox:hover {
-    border-color: #1C69D4;
+    border-color: #1c69d2;
 }
 
 QComboBox::drop-down {
@@ -236,17 +228,17 @@ QComboBox::drop-down {
 }
 
 QComboBox QAbstractItemView {
-    background-color: #101520;
-    color: #e0e0e0;
+    background-color: #0f131c;
+    color: #dfe2ef;
     border: 1px solid #262a34;
-    selection-background-color: #1C69D4;
+    selection-background-color: #1c69d2;
 }
 
 /* ── Mens ──────────────────────────────────────────────────────────── */
 
 QMenu {
-    background-color: #101520;
-    color: #e0e0e0;
+    background-color: #0f131c;
+    color: #dfe2ef;
     border: 1px solid #262a34;
     border-radius: 8px;
     padding: 4px;
@@ -258,7 +250,7 @@ QMenu::item {
 }
 
 QMenu::item:selected {
-    background-color: #1C69D4;
+    background-color: #1c69d2;
 }
 
 QMenu::separator {
@@ -276,8 +268,8 @@ QMenu::indicator {
 /* ── Tooltips ─────────────────────────────────────────────────────── */
 
 QToolTip {
-    background-color: #0f0f23;
-    color: #e0e0e0;
+    background-color: #181c25;
+    color: #dfe2ef;
     border: 1px solid #262a34;
     border-radius: 4px;
     padding: 4px 8px;
@@ -287,13 +279,15 @@ QToolTip {
 /* ── Spinner Overlay ──────────────────────────────────────────────── */
 
 QFrame#spinnerOverlay {
-    background-color: rgba(26, 26, 46, 0.85);
+    background-color: #181c25;
+    border: 1px solid #424753;
     border-radius: 12px;
 }
 
 QLabel#spinnerText {
-    color: #e0e0e0;
-    font-size: 16px;
+    color: #dfe2ef;
+    font-family: "Space Grotesk";
+    font-size: 18px;
     font-weight: bold;
 }
 
@@ -306,62 +300,62 @@ QDialog {
 /* ── Checkox ──────────────────────────────────────────────────────── */
 
 QCheckBox {
-    color: #e0e0e0;
+    color: #dfe2ef;
     spacing: 8px;
 }
 
 QCheckBox::indicator {
     width: 18px;
     height: 18px;
-    border: 2px solid #242933;
+    border: 2px solid #262a34;
     border-radius: 4px;
-    background-color: #101520;
+    background-color: #0f131c;
 }
 
 QCheckBox::indicator:checked {
-    background-color: #1C69D4;
-    border-color: #1C69D4;
+    background-color: #1c69d2;
+    border-color: #1c69d2;
 }
 
 /* ── Radio Button ──────────────────────────────────────────────────── */
 
 QRadioButton {
-    color: #e0e0e0;
+    color: #dfe2ef;
     spacing: 8px;
 }
 
 QRadioButton::indicator {
     width: 18px;
     height: 18px;
-    border: 2px solid #242933;
+    border: 2px solid #262a34;
     border-radius: 9px;
-    background-color: #101520;
+    background-color: #0f131c;
 }
 
 QRadioButton::indicator:checked {
-    background-color: #1C69D4;
-    border-color: #1C69D4;
+    background-color: #1c69d2;
+    border-color: #1c69d2;
 }
 
 /* ── Line Edit / Text Input ─────────────────────────────────────────── */
 
 QLineEdit {
-    background-color: #101520;
-    color: #e0e0e0;
+    background-color: #0f131c;
+    color: #dfe2ef;
     border: 1px solid #262a34;
     border-radius: 8px;
     padding: 8px 12px;
 }
 
 QLineEdit:focus {
-    border-color: #1C69D4;
+    border-color: #1c69d2;
 }
 
 /* ── SpinBox ────────────────────────────────────────────────────────── */
 
 QSpinBox {
-    background-color: #101520;
-    color: #e0e0e0;
+    background-color: #0f131c;
+    color: #dfe2ef;
     border: 1px solid #262a34;
     border-radius: 8px;
     padding: 8px 12px;
@@ -376,9 +370,9 @@ QSpinBox::up-button, QSpinBox::down-button {
 /* ── DateEdit ────────────────────────────────────────────────────────── */
 
 QDateEdit {
-    background-color: #101520;
-    color: #e0e0e0;
-    border: 1 px solid #262a34;
+    background-color: #0f131c;
+    color: #dfe2ef;
+    border: 1px solid #262a34;
     border-radius: 8px;
     padding: 8px 12px;
     min-height: 24px;
@@ -390,24 +384,24 @@ QLabel#milStatus {
     font-size: 14px;
     font-weight: bold;
     background: #242430;
-    color: #a0a0a0;
+    color: #c2c6d5;
 }
 QLabel#milStatus[milState="on"] { color: #ff6666; background: #382020; }
 QLabel#milStatus[milState="off"] { color: #66cc88; background: #203328; }
-QLabel#overviewCaption { color: #a0a0a0; font-size: 12px; }
-QLabel#faultDetailHeading { font-size: 12px; font-weight: bold; color: #e0e0e0; }
-QLabel#faultDetailValue { font-size: 12px; color: #a0a0a0; }
-QLabel#dtcHeading { font-size: 15px; font-weight: bold; color: #1C69D4; }
-QLabel#dtcMeta { font-size: 11px; color: #a0a0a0; }
+QLabel#overviewCaption { color: #c2c6d5; font-size: 12px; }
+QLabel#faultDetailHeading { font-size: 12px; font-weight: bold; color: #dfe2ef; }
+QLabel#faultDetailValue { font-size: 12px; color: #c2c6d5; }
+QLabel#dtcHeading { font-size: 15px; font-weight: bold; color: #1c69d2; }
+QLabel#dtcMeta { font-size: 11px; color: #c2c6d5; }
 QPushButton#dtcSearchButton {
-    background: transparent;
-    color: #1C69D4;
-    border: 1px solid #1C69D4;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 11px;
+    background: #262a34;
+    color: #1c69d2;
+    border: 1px solid #1c69d2;
+    border-radius: 4px;
+    padding: 9px 14px;
+    font-size: 13px;
 }
-QPushButton#dtcSearchButton:hover { background: rgba(28,105,212,0.15); }
+QPushButton#dtcSearchButton:hover { background: #353943; }
 
 /* Foreground loading blocks interaction with the underlying pages. */
 QFrame#loadingBackdrop {
@@ -421,139 +415,116 @@ QProgressBar#loadingProgress {
 }
 QProgressBar#loadingProgress::chunk {
     border-radius: 3px;
-    background-color: #1C69D4;
+    background-color: #1c69d2;
 }
 
 /* Stitch cockpit surfaces and shared presentation roles. */
 QWidget {
-    font-family: "BMWGroupTN Pro TT", "Helvetica Neue";
+    font-family: "Geist", "Helvetica Neue";
 }
 QMainWindow, QWidget#vehicleOverview, QStackedWidget, QScrollArea#pageScrollArea {
     background: #0a0e17;
 }
 QFrame#cockpitTopBar, QFrame#cockpitRail {
-    background: #090e16;
+    background: #0a0e17;
     border: none;
     border-bottom: 1px solid #1c2029;
 }
 QFrame[class="cockpitCard"] {
-    background: #101520;
-    border: 1px solid #1c2230;
+    background: #0f131c;
+    border: 1px solid #1c2029;
     border-radius: 8px;
 }
 QFrame[class="metricCard"] {
-    background: #181d26;
+    background: #181c25;
     border: 1px solid #262a34;
     border-radius: 4px;
 }
 QLabel[role="caption"] { color: #c2c6d5; font-size: 13px; }
+QLabel[role="supporting"] { color: #c2c6d5; font-size: 12px; }
+QLabel[role="cardTitle"] {
+    font-family: "Space Grotesk"; font-size: 22px; font-weight: 600; color: #dfe2ef;
+}
 QLabel[role="eyebrow"] {
-    color: #c2c6d5; font-size: 12px; font-weight: bold;
+    color: #c2c6d5; font-family: "JetBrains Mono"; font-size: 11px; font-weight: 500;
 }
 QLabel[role="display"] {
-    font-family: "BMWGroupTN Condensed Pro TT";
-    font-size: 32px; font-weight: bold; color: #dfe2ef;
+    font-family: "Space Grotesk";
+    font-size: 36px; font-weight: 700; color: #dfe2ef;
 }
 QLabel[role="metric"] {
-    font-family: "BMWGroupTN Condensed Pro TT";
-    font-size: 25px; font-weight: bold; color: #dfe2ef;
+    font-family: "JetBrains Mono";
+    font-size: 22px; font-weight: 600; color: #dfe2ef;
+}
+QLabel[role="technical"], QLabel#faultDetailValue {
+    font-family: "JetBrains Mono"; font-size: 13px;
+}
+QLabel[role="technicalDisplay"] {
+    font-family: "JetBrains Mono"; font-size: 36px; font-weight: 700; color: #dfe2ef;
 }
 QLabel[role="brand"] { font-size: 16px; font-weight: bold; color: #dfe2ef; }
 QLabel[role="identity"] { font-size: 13px; font-weight: bold; color: #dfe2ef; }
 QLabel[role="badge"] {
     background: #18283f; border-radius: 10px; padding: 4px 10px;
-    color: #adc7ff; font-size: 12px;
+    color: #adc7ff; font-family: "JetBrains Mono"; font-size: 11px;
 }
 QToolButton#railButton {
-    background: transparent; color: #c2c6d5; border: 1px solid transparent;
-    border-radius: 7px; padding: 5px 0px;
+    background: #0a0e17; color: #c2c6d5; border: 1px solid #424753;
+    border-radius: 4px; padding: 5px 0px;
 }
 QToolButton#railButton:checked { background: #1c69d2; border-color: #337ddd; }
 QToolButton#railButton:hover { background: #263249; }
-QToolButton#railButton:disabled { background: transparent; color: #616979; }
+QToolButton#railButton:disabled { background: #0a0e17; color: #616979; }
 QLabel[role="navLabel"] { font-size: 11px; color: #c2c6d5; }
 QPushButton[class="railPlaceholder"] {
-    background: transparent; padding: 4px; min-height: 24px; border-radius: 4px;
+    background: #0a0e17; padding: 4px; min-height: 24px; border-radius: 4px;
     color: #8c909e; font-size: 10px;
 }
 QPushButton[class="iconButton"] {
-    background: #1c2029; padding: 3px; min-height: 0px; border-radius: 6px;
+    background: #1c2029; padding: 3px; min-height: 0px; border-radius: 4px;
 }
 QWidget#vehicleOverview QPushButton, QPushButton[class="secondary"] {
     border-radius: 4px; padding: 9px 14px; font-size: 13px;
 }
 QPushButton[class="secondary"], QWidget#vehicleOverview QPushButton[class="secondary"] {
-    background: #242933; color: #dfe2ef; border: 1px solid #353943;
+    background: #262a34; color: #dfe2ef; border: 1px solid #353943;
 }
 QWidget#vehicleOverview QPushButton[class="cardAction"] {
-    background: transparent; color: #adc7ff; text-align: left;
-    padding: 8px 0px; border-radius: 4px;
+    background: #262a34; color: #adc7ff; text-align: left;
+    padding: 9px 14px; border-radius: 4px;
 }
-QWidget#vehicleOverview QPushButton:hover { background: #2679e5; }
+QWidget#vehicleOverview QPushButton:hover { background: #186eba; }
 QWidget#vehicleOverview QPushButton[class="secondary"]:hover { background: #353943; }
 QWidget#vehicleOverview QPushButton[class="cardAction"]:hover { background: #1c283e; }
-QPushButton:focus { border: 2px solid #adc7ff; }
-QToolButton#railButton:focus { border: 2px solid #adc7ff; }
-QWidget#vehicleOverview QPushButton:disabled { background: #242933; color: #737c8d; }
+QPushButton:focus { border: 1px solid #adc7ff; }
+QToolButton#railButton:focus { border: 1px solid #adc7ff; }
+QWidget#vehicleOverview QPushButton:disabled { background: #262a34; color: #737c8d; }
 
 QWidget[class="transparent"] { background: transparent; }
 
 /* Connection setup and persistent rail utilities. */
 QWidget#connectionPage { background: #0a0e17; }
 QLabel[role="connectionTitle"] {
-    font-family: "BMWGroupTN Condensed Pro TT";
-    font-size: 40px;
+    font-family: "Space Grotesk";
+    font-size: 36px;
     font-weight: bold;
     color: #dfe2ef;
-}
-QWidget#connectionPage QComboBox {
-    background: #0a0e17;
-    color: #dfe2ef;
-    border: 1px solid #424753;
-    border-radius: 4px;
-    padding: 12px 36px 12px 14px;
-    min-height: 22px;
-    font-size: 15px;
-}
-QWidget#connectionPage QComboBox:hover { border-color: #adc7ff; }
-QWidget#connectionPage QComboBox:focus {
-    border: 1px solid #adc7ff;
-    background: #141d2c;
-}
-QWidget#connectionPage QComboBox::drop-down {
-    width: 30px;
-    border-left: 1px solid #262a34;
-}
-QWidget#connectionPage QComboBox QAbstractItemView {
-    background: #181c25;
-    color: #dfe2ef;
-    border: 1px solid #424753;
-    selection-background-color: #1c69d2;
-    selection-color: #ffffff;
-    outline: 0px;
-    padding: 6px;
-    font-family: "BMWGroupTN Pro TT";
-    font-size: 15px;
-}
-QWidget#connectionPage QComboBox QAbstractItemView::item {
-    min-height: 32px;
-    padding: 6px 10px;
 }
 QPushButton#connectionAction {
     background: #1c69d2;
     color: #ffffff;
     border: 1px solid #337ddd;
     border-radius: 4px;
-    padding: 13px 18px;
-    min-height: 22px;
-    font-size: 15px;
-    font-weight: bold;
+    padding: 9px 14px;
+    min-height: 20px;
+    font-size: 13px;
+    font-weight: 600;
 }
-QPushButton#connectionAction:hover { background: #2679e5; }
-QPushButton#connectionAction:pressed { background: #1257b7; }
-QPushButton#connectionAction:focus { border: 2px solid #adc7ff; }
+QPushButton#connectionAction:hover { background: #186eba; }
+QPushButton#connectionAction:pressed { background: #005bc0; }
+QPushButton#connectionAction:focus { border: 1px solid #adc7ff; }
 QPushButton#connectionAction:disabled {
-    background: #242933;
+    background: #262a34;
     color: #8c909e;
     border-color: #353943;
 }
@@ -565,44 +536,60 @@ QToolButton[class="languagePlaceholder"] {
     font-size: 23px;
 }
 QToolButton[class="railUtility"] {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 6px;
+    background: #0a0e17;
+    border: 1px solid #424753;
+    border-radius: 4px;
     padding: 4px;
 }
 QToolButton[class="railUtility"]:hover { background: #263249; }
 QToolButton[class="railUtility"]:pressed { background: #18283f; }
-QToolButton[class="railUtility"]:focus { border: 2px solid #adc7ff; }
-QToolButton[class="railUtility"]:disabled { background: transparent; }
-QWidget#connectionPage QComboBox::down-arrow {
-    image: url(cockpit:chevron-down.svg);
-    width: 16px;
-    height: 16px;
-}
+QToolButton[class="railUtility"]:focus { border: 1px solid #adc7ff; }
+QToolButton[class="railUtility"]:disabled { background: #0a0e17; }
+
 
 /* Shared content surfaces for diagnostics, service, coding and local records. */
 QWidget { background: transparent; }
 QMainWindow, QDialog { background: #0a0e17; }
+/* Popup surfaces must remain opaque after the shared transparent-widget rule. */
+QMenu {
+    background: #181c25;
+    color: #dfe2ef;
+    border: 1px solid #424753;
+    border-radius: 4px;
+    padding: 5px;
+    font-family: "Geist";
+}
+QMenu::item {
+    padding: 8px 28px;
+    border-radius: 3px;
+}
+QMenu::item:selected { background: #263a54; color: #ffffff; }
+QMenu::item:disabled { color: #8c909e; }
+QMenu::separator { background: #424753; margin: 5px 8px; }
 QFrame[class="pageHeader"] {
     background: #181c25;
     border: 1px solid #262a34;
     border-radius: 7px;
 }
 QLabel[role="pageTitle"] {
-    font-family: "BMWGroupTN Condensed Pro TT";
-    font-size: 30px;
-    font-weight: bold;
+    font-family: "Space Grotesk";
+    font-size: 28px;
+    font-weight: 600;
     color: #dfe2ef;
 }
 QLabel[role="sectionTitle"], QLabel[role="serviceValue"] {
-    font-family: "BMWGroupTN Condensed Pro TT";
+    font-family: "Space Grotesk";
     font-size: 23px;
     font-weight: bold;
     color: #dfe2ef;
 }
-QLabel[role="serviceValue"] { font-size: 30px; color: #adc7ff; }
-QLabel[role="featureTitle"] { font-size: 16px; font-weight: bold; color: #dfe2ef; }
-QLabel[role="notice"] { color: #e9c27e; }
+QLabel[role="serviceValue"] {
+    font-family: "JetBrains Mono"; font-size: 28px; color: #adc7ff;
+}
+QLabel[role="featureTitle"] {
+    font-family: "Space Grotesk"; font-size: 18px; font-weight: 500; color: #dfe2ef;
+}
+QLabel[role="notice"] { color: #f59e0b; }
 QFrame#recordCard {
     background: #181c25;
     border: 1px solid #262a34;
@@ -611,19 +598,23 @@ QFrame#recordCard {
 }
 QFrame#recordCard:hover { border-color: #424753; }
 QWidget#codingFeature, QWidget[class="comparison"] {
-    background: #101520;
+    background: #0f131c;
     border-radius: 5px;
 }
 QPushButton {
     border-radius: 4px;
     padding: 9px 14px;
     background: #1c69d2;
+    color: #eaeeff;
+    border: 1px solid #424753;
+    font-size: 13px;
+    font-weight: 600;
 }
-QPushButton:hover { background: #2679e5; }
-QPushButton:pressed { background: #1257b7; }
-QPushButton:disabled { background: #242933; color: #8c909e; }
+QPushButton:hover { background: #186eba; }
+QPushButton:pressed { background: #005bc0; }
+QPushButton:disabled { background: #262a34; color: #8c909e; }
 QPushButton[class="disclosure"], QPushButton#codingSection {
-    background: #101520;
+    background: #0f131c;
     color: #adc7ff;
     text-align: left;
     border: 1px solid #262a34;
@@ -631,21 +622,24 @@ QPushButton[class="disclosure"], QPushButton#codingSection {
     border-radius: 4px;
 }
 QPushButton#codingSection {
-    font-family: "BMWGroupTN Condensed Pro TT";
+    font-family: "Space Grotesk";
     font-size: 22px;
 }
 QPushButton[class="disclosure"]:hover, QPushButton#codingSection:hover {
     background: #263249;
 }
-QPushButton[class="secondary"] { background: #242933; border: 1px solid #353943; }
+QPushButton[class="secondary"] { background: #262a34; border: 1px solid #353943; }
 QPushButton[class="secondary"]:hover { background: #353943; }
 QPushButton[class="dangerOutline"] {
     color: #ffb4ab;
     background: #28191f;
-    border: 1px solid #74353e;
+    border: 1px solid #ef4444;
 }
 QPushButton[class="dangerOutline"]:hover { background: #44222b; }
-QPushButton[class="dangerOutline"]:disabled { color: #8c909e; border-color: #353943; }
+QPushButton[class="dangerOutline"]:pressed { background: #5f2932; }
+QPushButton[class="dangerOutline"]:disabled {
+    background: #34232a; color: #9e8287; border-color: #5d3b43;
+}
 QFrame[tone="danger"] { border-color: #74353e; }
 QLineEdit, QPlainTextEdit, QDateEdit, QComboBox {
     background: #0a0e17;
@@ -653,7 +647,7 @@ QLineEdit, QPlainTextEdit, QDateEdit, QComboBox {
     border: 1px solid #424753;
     border-radius: 4px;
     padding: 10px 12px;
-    font-family: "BMWGroupTN Pro TT";
+    font-family: "Geist";
     font-size: 14px;
     selection-background-color: #1c69d2;
 }
@@ -661,6 +655,7 @@ QLineEdit:focus, QPlainTextEdit:focus, QDateEdit:focus, QComboBox:focus {
     border: 1px solid #adc7ff;
 }
 QLineEdit:disabled, QComboBox:disabled { color: #8c909e; background: #181c25; }
+QPlainTextEdit { font-family: "JetBrains Mono"; font-size: 13px; }
 QComboBox { padding-right: 32px; }
 QComboBox::down-arrow { image: url(cockpit:chevron-down.svg); width: 16px; height: 16px; }
 QComboBox QAbstractItemView {
@@ -668,7 +663,7 @@ QComboBox QAbstractItemView {
     color: #dfe2ef;
     selection-background-color: #1c69d2;
     border: 1px solid #424753;
-    font-family: "BMWGroupTN Pro TT";
+    font-family: "Geist";
 }
 QRadioButton, QCheckBox { color: #c2c6d5; spacing: 9px; padding: 6px 2px; }
 QRadioButton::indicator {
@@ -678,12 +673,36 @@ QRadioButton::indicator {
 QRadioButton::indicator:checked { background: #1c69d2; border: 3px solid #adc7ff; }
 QRadioButton:disabled, QCheckBox:disabled { color: #737c8d; }
 QRadioButton:focus, QCheckBox:focus { color: #adc7ff; }
+QRadioButton::indicator:focus, QCheckBox::indicator:focus { border-color: #adc7ff; }
+QCheckBox::indicator:checked { image: url(cockpit:check.svg); }
+QCheckBox QLabel:disabled { color: #8c909e; }
 QProgressBar { background: #31353f; border: none; border-radius: 3px; }
 QProgressBar::chunk { background: #adc7ff; border-radius: 3px; }
-QLabel#dtcHeading { color: #dfe2ef; font-size: 18px; }
+QLabel#dtcHeading {
+    color: #dfe2ef; font-family: "Space Grotesk"; font-size: 18px; font-weight: 500;
+}
 QLabel#faultDetailHeading { color: #adc7ff; font-size: 13px; }
 QLabel#faultDetailValue, QLabel#dtcMeta { color: #c2c6d5; font-size: 13px; }
 QDialog#cockpitDialog QLabel { color: #c2c6d5; }
+QDialog#cockpitDialog QLabel[role="notice"] { color: #f59e0b; }
+QDialogButtonBox { button-layout: 1; }
+QDialog#cockpitDialog QLabel[role="dialogTitle"] {
+    font-family: "Space Grotesk";
+    font-size: 28px;
+    font-weight: 600;
+    color: #dfe2ef;
+}
+QScrollArea#dialogScroll, QWidget#dialogContent {
+    background: #0a0e17;
+    border: none;
+}
+QDialog#cockpitDialog[tone="warning"] QLabel[role="dialogTitle"] {
+    color: #f59e0b;
+}
+QLabel[role="placeholder"] { font-size: 18px; color: #c2c6d5; }
+QPushButton[class="secondary"]:disabled {
+    background: #262a34; color: #737c8d; border-color: #353943;
+}
 QFrame[class="dateTile"] { background: #262a34; border-radius: 5px; }
 QLabel[state="uncertain"], QLabel[state="mismatch"] {
     background: #44222b; color: #ffb4ab;
@@ -691,4 +710,152 @@ QLabel[state="uncertain"], QLabel[state="mismatch"] {
 QLabel[state="verified"] { background: #18352b; color: #9de3bd; }
 QLabel[state="cycle-required"], QLabel[state="response-confirmed"] {
     background: #18283f; color: #adc7ff;
+}
+
+/* Service history: a compact logbook with explicit vehicle-write states. */
+QFrame#historyEntriesTable, QWidget#historyItemTable {
+    background: #0f131c;
+    border: 1px solid #424753;
+    border-radius: 5px;
+}
+QFrame#historyTableHeader {
+    background: #202c40;
+    border-bottom: 1px solid #424753;
+}
+QFrame#recordCard[class="historyEntry"] {
+    background: #141b27;
+    border: none;
+    border-bottom: 1px solid #353943;
+    border-left: 3px solid #d5aa62;
+    border-radius: 0;
+    padding: 0;
+}
+QFrame#recordCard[class="historyEntry"][writeState="pending"] { background: #241f18; }
+QFrame#recordCard[class="historyEntry"][writeState="accepted"] {
+    background: #142333; border-left-color: #80b5ed;
+}
+QFrame#recordCard[class="historyEntry"][writeState="uncertain"],
+QFrame#recordCard[class="historyEntry"][writeState="rejected"],
+QFrame#recordCard[class="historyEntry"][writeState="conflict"] {
+    background: #2b1b23; border-left-color: #f19a99;
+}
+QLabel[role="historyWriteState"] {
+    color: #f59e0b; background: #403320; padding: 4px 8px; border-radius: 3px;
+    font-family: "JetBrains Mono"; font-size: 11px;
+}
+QLabel[role="historyWriteState"][writeState="accepted"] {
+    color: #adc7ff; background: #263a54;
+}
+QLabel[role="historyWriteState"][writeState="uncertain"],
+QLabel[role="historyWriteState"][writeState="rejected"],
+QLabel[role="historyWriteState"][writeState="conflict"] {
+    color: #ffb4ab; background: #44222b;
+}
+QLabel[role="historyMetadata"] { color: #a0a8b9; font-size: 12px; }
+QLabel#historyEntryTitle { font-weight: 600; }
+QLabel[role="tableHeader"] {
+    font-family: "Geist"; font-size: 13px; font-weight: 600; color: #dfe2ef;
+}
+QHeaderView::section {
+    background: #1c2029; color: #dfe2ef;
+    font-family: "Geist"; font-size: 13px; font-weight: 600;
+    border: 1px solid #424753; padding: 8px;
+}
+QLabel#historyEmpty { padding: 24px 16px; }
+QPushButton[class="historyAction"] { background: #262a34; color: #c2c6d5; }
+QPushButton[class="historyAction"]:hover { background: #353943; }
+QPushButton[class="historyAction"]:disabled { color: #737c8d; }
+/* Shared Qt form controls, including every surface of their popups. */
+/* Qt maps combobox-popup to SH_ComboBox_Popup: use its standard list mode.
+ * Set height with min-height, not vertical padding. Qt reads popup margins
+ * during construction, before per-instance properties and parents are assigned.
+ */
+QComboBox {
+    combobox-popup: 0;
+    padding: 0px 36px 0px 12px;
+    min-height: 42px;
+}
+QDateEdit[formInput="true"] { padding-right: 36px; min-height: 22px; }
+QComboBox[formInput="true"][compact="true"] {
+    padding: 0px 32px 0px 8px;
+    min-height: 32px;
+}
+QComboBox[formInput="true"]::drop-down, QDateEdit[formInput="true"]::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 30px;
+    border-left: 1px solid #353943;
+}
+QDateEdit[formInput="true"]::down-arrow {
+    image: url(cockpit:calendar.svg);
+    width: 16px;
+    height: 16px;
+}
+QDateEdit[formInput="true"] QLineEdit {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+QListView#formSelectPopup {
+    background: #181c25;
+    color: #dfe2ef;
+    border: 1px solid #424753;
+    padding: 4px;
+    outline: none;
+    selection-background-color: #263a54;
+    selection-color: #ffffff;
+}
+QWidget#formSelectViewport { background: #181c25; }
+QListView#formSelectPopup::item { min-height: 24px; padding: 6px 10px; }
+QListView#formSelectPopup::item:hover { background: #202c40; }
+QListView#formSelectPopup::item:selected { background: #263a54; color: #ffffff; }
+QListView#formSelectPopup::item:disabled { color: #8c909e; }
+QCalendarWidget#formCalendar {
+    background: #181c25;
+    color: #dfe2ef;
+    border: 1px solid #424753;
+    border-radius: 4px;
+}
+QCalendarWidget#formCalendar QWidget#qt_calendar_navigationbar {
+    background: #202c40;
+    border-bottom: 1px solid #424753;
+}
+QCalendarWidget#formCalendar QAbstractItemView,
+QCalendarWidget#formCalendar QAbstractItemView QWidget {
+    background: #181c25;
+    alternate-background-color: #202c40;
+    color: #dfe2ef;
+    border: none;
+    outline: none;
+    selection-background-color: #1c69d2;
+    selection-color: #ffffff;
+}
+QCalendarWidget#formCalendar QToolButton {
+    background: transparent;
+    color: #dfe2ef;
+    border: none;
+    border-radius: 3px;
+    padding: 6px;
+    min-height: 24px;
+}
+QCalendarWidget#formCalendar QToolButton:hover { background: #263a54; }
+QCalendarWidget#formCalendar QToolButton:disabled { color: #737c8d; }
+QCalendarWidget#formCalendar QToolButton#qt_calendar_prevmonth {
+    qproperty-icon: url(cockpit:chevron-left.svg);
+}
+QCalendarWidget#formCalendar QToolButton#qt_calendar_nextmonth {
+    qproperty-icon: url(cockpit:chevron-right.svg);
+}
+QCalendarWidget#formCalendar QToolButton::menu-indicator {
+    image: url(cockpit:chevron-down.svg); width: 12px; height: 12px;
+}
+QCalendarWidget#formCalendar QSpinBox {
+    background: #0f131c;
+    color: #dfe2ef;
+    border: 1px solid #adc7ff;
+    padding: 2px;
+}
+QCalendarWidget#formCalendar QLineEdit { background: transparent; border: none; padding: 0; }
+QPushButton[class="secondary"]:focus, QPushButton[class="dangerOutline"]:focus {
+    border-color: #adc7ff;
 }

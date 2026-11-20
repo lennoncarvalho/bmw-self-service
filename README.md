@@ -7,7 +7,8 @@ Implementation and offline checks do not establish universal vehicle validation.
 
 - [Plan](plan.md): wanted features and approved behavior.
 - [Data guide](docs.md): source locations, recovered contracts and reproduction.
-- [Tasks](tasks.md): current implementation steps, starting with CBS.
+- [Tasks](tasks.md): remaining implementation and physical acceptance work.
+- [Visual design](DESIGN.md): shared appearance and component rules.
 - [Contributor rules](AGENTS.md): workflow, safety and quality gate.
 
 ## Run
@@ -45,8 +46,9 @@ DEMO mode in the gear menu connects a local virtual HSFZ vehicle through the
 normal readers and write workflows. Simulated changes survive reconnects;
 restarting the app or **Reset DEMO vehicle** restores the initial vehicle state.
 DEMO records remain isolated under `~/BMW-Tool/demo/` and are retained after reset.
-Simulation does not validate car behavior. Writes require the exact source-backed gates,
-confirmation and durable state. History shows local records; it cannot read or
+Simulation does not validate car behavior. Writes require exact source-backed
+gates, confirmation and the state required by each feature. History shows staged
+local records; it cannot read or
 back up the existing car history. Replacement irreversibly removes omitted
 entries. No operation is automatically replayed after an uncertain outcome.
 
@@ -59,9 +61,13 @@ them on the console, and `--no-log` disables file logging. Each session retains
 up to six 10 MiB segments; include rotated segments when sharing a large session.
 Logs contain full vehicle identifiers. Existing `~/BMW-Tool/logs` files are preserved.
 
-`~/BMW-Tool/cbs` stores reset intent/results, `backups` stores coding baselines
-and outcomes, and `history` stores local projects and write journals. These are
-durable operation data; keep them until explicitly deleted. `investigations`
+`~/BMW-Tool/cbs` stores reset intent/results and `backups` stores coding baselines
+and outcomes. Keep these durable operation data until explicitly deleted. Service
+history is a temporary staging area: **Load from file** and **Write to file** are
+explicit actions, with no autosave, saved write journal or save prompt. Leaving
+the page, disconnecting or closing discards the staged list. **Write this entry**
+appends one record; **Write to car** replaces car history with every displayed
+entry after confirmation. Existing files under `history` remain untouched. `investigations`
 contains development research only and is never read or created by the running app.
 
 ## Development

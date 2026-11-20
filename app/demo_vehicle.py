@@ -18,7 +18,7 @@ from app.history_files import valid_vin
 from app.protocol.contracts import OperationContext
 from app.protocol.stream import MAX_BODY, BoundedStream
 from app.resources import resource_path
-from app.service_history import _HEADER, _ITEM, SERVICE_TYPES
+from app.service_history import _HEADER, _ITEM
 from app.session import SessionEnvironment
 
 logger = logging.getLogger(__name__)
@@ -69,39 +69,6 @@ class DemoVehicle:
         self._lock = threading.Lock()
         self._peers: list[tuple[socket.socket, threading.Thread]] = []
         self._history: list[bytes] = []
-        self._workspace_seeded = False
-
-    def prepare_workspace(self) -> None:
-        """Seed an editable local draft separately from unreadable headunit state."""
-        if self._workspace_seeded:
-            return
-        from app.history_workspace import HistoryWorkspaceStore, new_workspace
-
-        project = {
-            "schema_version": 1,
-            "vin": self.vin,
-            "entries": [
-                {
-                    "date": "2025-03-20",
-                    "mileage_km": 64000,
-                    "dealer": "DEMO",
-                    "dealer_flag": 0,
-                    "status": 1,
-                    "correction": 0,
-                    "items": [
-                        {
-                            "code": SERVICE_TYPES[0][1],
-                            "status": 1,
-                            "remaining_distance": 0,
-                            "remaining_time": 0,
-                        }
-                    ],
-                }
-            ],
-        }
-        store = HistoryWorkspaceStore(self.environment.root / "history" / "projects")
-        store.save_workspace("demo-" + self.vin, new_workspace(project))
-        self._workspace_seeded = True
 
     def connect_stream(self, context: OperationContext) -> BoundedStream:
         """Create a private socket pair; never discover or connect a network endpoint."""
@@ -218,8 +185,12 @@ class DemoVehicle:
                     if request == reset_request(record[0]):
                         record[4] = (record[4] + 1) % 31
                         record[5] = 100
-                        record[1:3] = (3000 if record[3] & 15 == 1 else 730).to_bytes(2, "big")
-                        record[8] = min(record[8] + 2, 62)
+                        remaining = int.from_bytes(record[1:3], "big", signed=True)
+                        unit = record[3] & 15
+                        if remaining not in (-0x8000, 0x7FFF) and unit in (1, 2):
+                            record[1:3] = (3000 if unit == 1 else 730).to_bytes(2, "big")
+                        if 1 <= record[7] & 15 <= 12 and 0 < record[8] < 63:
+                            record[8] = min(record[8] + 2, 62)
                         ecu["cbs"][index] = record.hex()
                         return b"\x6e\x10\x01"
                 return reject

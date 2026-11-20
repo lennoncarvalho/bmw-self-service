@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
 from app.connection import _InterfaceInfo, list_interfaces_detailed
 from app.worker import ConnectWorker
 from ui.cockpit import CockpitCard, caption
+from ui.form_inputs import SelectInput
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class WelcomePage(QWidget):
         # Series picker
         series_label = caption("VEHICLE SERIES", "eyebrow")
         setup.box.addWidget(series_label)
-        self.series_combo = QComboBox()
+        self.series_combo = SelectInput()
         self.series_combo.setAccessibleName("Vehicle series")
         self.series_combo.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
@@ -112,7 +113,7 @@ class WelcomePage(QWidget):
         self.interface_layout.setSpacing(12)
         iface_label = caption("NETWORK ADAPTER", "eyebrow")
         self.interface_layout.addWidget(iface_label)
-        self.interface_combo = QComboBox()
+        self.interface_combo = SelectInput()
         self.interface_combo.setAccessibleName("Network adapter")
         self.interface_combo.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon

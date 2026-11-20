@@ -37,6 +37,9 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   indicator/backdrop and blocks competing actions; failures remain visible
   according to each feature's display rules.
   One main window, inline details and a single outer scrollbar per page.
+- Reuse consistently styled Qt date and selection controls across forms, with
+  configurable bounds, regional formatting and option lists. Popups must remain
+  opaque, expose every option through normal scrolling and support keyboard use.
 - English interface. Prefer English diagnostic descriptions, but keep all fault
   codes visible with available source-language text or no description. Conflicting
   descriptions never justify guessing or dropping a fault. Use the system region
@@ -65,12 +68,13 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 - Simulated writes change virtual ECU state and subsequent reads observe it.
   Exercise fault clearing, CBS resets, coding/restoration and history
   append/replacement with their existing confirmations, power policy, durable
-  intent, application-response checks and uncertainty rules.
+  state where required by the feature, application-response checks and uncertainty rules.
 - Complete simulated activation/cycles automatically after the normal source
   restart sequence; add no cycle control. Verification still performs fresh
   reads and records observed simulated state separately from response completion.
-- History uses normal application results and journals. Prior headunit history
-  remains unavailable; add no virtual iDrive view or history-read capability.
+- History uses normal application results with temporary in-memory outcomes.
+  Prior headunit history remains unavailable; add no virtual iDrive view or
+  history-read capability.
 - Keep the DEMO label and explicit environment metadata for session composition,
   logging and persistence. Isolate simulated workspaces, backups and journals;
   never allow a DEMO record to authorize a live operation or the reverse.
@@ -95,9 +99,15 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   independently of engine-running state. Red for present/confirmed faults, green
   only after complete supported engine reads without them, grey when unavailable.
 - CBS is a manual read followed by a separately confirmed single-item reset.
-  Expansion performs no I/O. No generic erase-all, automatic reset, history erase
+  Start with no service rows; display results directly after reading, without a
+  show/hide control. No generic erase-all, automatic reset, history erase
   substitution, duplicate-owner guessing or observational-source reset authority.
   Failed refreshes retain clearly stale values with reset disabled.
+- CBS cards show available due values on a small first line, followed by the
+  larger service name, one reported-percentage bar and smaller reset counts and
+  forecast intervals. Hide technical source listings and repeated descriptions;
+  keep actionable warnings. Dates and distances are optional and independent;
+  never substitute forecast intervals for current remaining values.
 
 ### Coding and writes
 
@@ -117,8 +127,9 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   ban on diagnostics, clearing or legitimate CBS operations at those addresses.
 - Coding requires a complete vehicle baseline and complete original data for
   each target, immutable intent, exact definition/software, confirmation and power
-  checks. Source flags alone do not authorize a write. History and CBS use their
-  own local intent/results rather than a fake coding baseline.
+  checks. Source flags alone do not authorize a write. CBS retains its own local
+  intent/results. History uses confirmed in-memory intent without a coding baseline
+  or saved operation journal.
 - No write Cancel. Block disruptive navigation, disconnect, competing operations
   and normal closing during mutation/check/recovery. Block known insufficient
   power; when reliable power readings are unavailable require acknowledgement.
@@ -134,21 +145,48 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 
 ### Local history
 
+- Show compact service entries with their item details always visible and distinct
+  unwritten, accepted and uncertain states. This page is a temporary staging area:
+  discard its entries on page exit, disconnect or app close, without save prompts.
+  Volatile duplicate-date and uncertainty guards survive page changes within
+  the same connection; disconnect or an environment change clears those guards.
+  No autosave, automatic project loading or history operation journals. Keep
+  **Load from file**, **Write to file** and **Write to car** visible; align car-write
+  buttons to the right and style them red. Use a larger two-column entry form
+  and a three-column item selector (checkbox, title, completion). Hide individual
+  remaining distance/time controls and columns. Use source labels for completion,
+  not raw numeric codes. Hide the correction field: new entries use zero;
+  imported values remain preserved.
+- Keep staged entries in descending mileage order, including after additions,
+  edits and file loads. Keep each entry's identity and write state attached when
+  sorting; file output and replacement follow the displayed order.
 - JSON only, useful offline. Existing car history cannot be read or backed up;
   do not pursue a reader, hidden probes, legacy adapters or fabricated readback.
-- Append one unsent multi-item entry with ADD only. Explicit erase-and-replace
-  uses a reviewed nonempty list in frozen order and warns that omitted existing
-  entries are irrecoverably lost. No silent replacement fallback, standalone erase
-  or direct editing/deleting individual car entries.
-- Preserve local state, exact intent/requests and per-step outcomes before and
-  through writes. Prior car history is unavailable, never an empty backup.
-  Report checked application completion and required activation/iDrive inspection.
+- Each **Write this entry** appends that one staged entry with ADD only. The top
+  **Write to car** erases previous car history and writes every staged entry in
+  frozen order, including entries already appended individually. Warn and confirm
+  before either car write; replacement must explicitly disclose irreversible loss
+  of omitted entries. No automatic write, silent replacement fallback, standalone
+  erase or direct editing/deleting individual car entries.
+- Freeze exact intent/requests and retain per-step outcomes in memory through the
+  operation. Only explicit **Write to file** persists the entry list. Prior car
+  history is unavailable, never an empty backup. Report checked application
+  completion and required activation/iDrive inspection; do not retain write journals.
+  Keep full per-step outcomes in memory until staging clears, distinguish rejected
+  and unattempted entries, and show partial-write instructions before asking to
+  reconnect after a dropped connection. Previously sent dates remain editable for
+  full replacement, with individual append disabled and explained before preparation.
 - Valid nonfuture dates; reject duplicate new dates against known local/pending
   records and duplicates within a replacement list. Unseen car dates cannot be
   checked. Keep imported conflicts/unknown fields visible and exportable; never
-  silently drop, merge or shift them. User-entered mileage is not constrained by
-  chronology or a current-odometer read. Use the sourced service types/field limits
-  in [docs.md](docs.md#history-data).
+  silently drop, merge or change their values. New and edited entries must have
+  strictly increasing mileage between different dates. For any two staged entries,
+  the later date must have higher mileage. Equal mileage on different dates is a
+  conflict. Show friendly validation messages while keeping the form open.
+  Imported conflicts remain visible and
+  exportable, with affected car writes blocked until corrected. Do not constrain
+  entries by a current-odometer read or claim knowledge of unreadable car history.
+  Use the sourced service types/field limits in [docs.md](docs.md#history-data).
 
 ## Validation boundary
 
