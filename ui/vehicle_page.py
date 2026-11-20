@@ -139,7 +139,7 @@ class VehiclePage(QWidget):
         self.observed_label = caption("")
         self.observed_label.setParent(self)
         self.observed_label.hide()
-        layout.addWidget(caption("VEHICLE SUBSYSTEMS", "eyebrow"))
+        layout.addWidget(caption("Vehicle subsystems", "featureTitle"))
         self.subsystem_grid = QGridLayout()
         self.subsystem_grid.setSpacing(12)
         self.subsystem_cards: list[CockpitCard] = []

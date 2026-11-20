@@ -76,7 +76,7 @@ class WelcomePage(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(24, 24, 24, 28)
         outer.setSpacing(18)
-        self.mode_label = caption("ENET CONNECTION", "eyebrow")
+        self.mode_label = caption("ENET connection", "identity")
         outer.addWidget(self.mode_label)
         outer.addWidget(caption("Connect to your BMW", "connectionTitle"))
         outer.addWidget(
@@ -89,7 +89,7 @@ class WelcomePage(QWidget):
         setup.box.setSpacing(14)
 
         # Series picker
-        series_label = caption("VEHICLE SERIES", "eyebrow")
+        series_label = caption("Vehicle series", "identity")
         setup.box.addWidget(series_label)
         self.series_combo = SelectInput()
         self.series_combo.setAccessibleName("Vehicle series")
@@ -111,7 +111,7 @@ class WelcomePage(QWidget):
         self.interface_layout = QVBoxLayout(self.interface_container)
         self.interface_layout.setContentsMargins(0, 0, 0, 0)
         self.interface_layout.setSpacing(12)
-        iface_label = caption("NETWORK ADAPTER", "eyebrow")
+        iface_label = caption("Network adapter", "identity")
         self.interface_layout.addWidget(iface_label)
         self.interface_combo = SelectInput()
         self.interface_combo.setAccessibleName("Network adapter")
@@ -295,7 +295,7 @@ class WelcomePage(QWidget):
 
     def set_demo_mode(self, enabled):
         self._demo_mode = enabled
-        self.mode_label.setText("DEMO MODE · SIMULATED VEHICLE" if enabled else "ENET CONNECTION")
+        self.mode_label.setText("DEMO mode · Simulated vehicle" if enabled else "ENET connection")
         self.connect_btn.setText("Connect DEMO vehicle" if enabled else "Connect to your BMW")
         self.interface_container.setVisible(not enabled)
         if enabled:

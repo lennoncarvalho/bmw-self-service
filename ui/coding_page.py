@@ -30,7 +30,15 @@ from app.coding import CodingCatalogueWorker, CodingValuesWorker
 from app.operation_store import OperationStore
 from app.protocol.contracts import TransportKind
 from app.worker import CarWorker
-from ui.cockpit import CardSearch, CockpitCard, DangerButton, PageHeader, ResponsiveColumns, caption
+from ui.cockpit import (
+    CardSearch,
+    CockpitCard,
+    DangerButton,
+    PageHeader,
+    ResponsiveColumns,
+    ReviewItem,
+    caption,
+)
 from ui.dialogs import CockpitDialog
 from ui.dialogs import MessageBox as QMessageBox
 from ui.form_inputs import CheckInput
@@ -106,25 +114,33 @@ class CodingPage(QWidget):
         body.addWidget(self._sub_stack)
 
         review = CockpitCard("Changes to apply")
-        self._pending_label = caption("No changes selected", "sectionTitle")
+        self._pending_label = caption("No changes selected", "supportingStrong")
         review.box.addWidget(self._pending_label)
         review.box.addWidget(
             caption(
-                "Choose options in a section. Current values stay selected until you change them."
+                "Choose options in a section. Current values stay selected until you change them.",
+                "supporting",
             )
         )
-        self._selection_summary = caption("")
+        self._selection_summary = QWidget()
+        self._selection_summary.setProperty("class", "transparent")
+        self._selection_rows = QVBoxLayout(self._selection_summary)
+        self._selection_rows.setContentsMargins(0, 0, 0, 0)
+        self._selection_rows.setSpacing(8)
+        self._selection_summary.setVisible(False)
         review.box.addWidget(self._selection_summary)
-        review.box.addWidget(caption("PREPARATION CHECKS", "eyebrow"))
+        review.box.addWidget(caption("Preparation checks", "identity"))
         review.box.addWidget(
             caption(
                 "Vehicle identity, current software, original data and power "
-                "are checked during the guarded review."
+                "are checked during the guarded review.",
+                "supporting",
             )
         )
         review.box.addWidget(
             caption(
-                "Original data is saved before a live write. Restoration requires a new review."
+                "Original data is saved before a live write. Restoration requires a new review.",
+                "supporting",
             )
         )
 
@@ -552,7 +568,11 @@ class CodingPage(QWidget):
 
     def _update_pending_label(self) -> None:
         """Show staged source options while preserving the existing review controls."""
-        selected = []
+        while self._selection_rows.count():
+            item = self._selection_rows.takeAt(0)
+            if item is not None and (widget := item.widget()) is not None:
+                widget.hide()
+                widget.deleteLater()
         for row in self._source_rows:
             for preset in row.get("presets", []):
                 key = (
@@ -571,11 +591,13 @@ class CodingPage(QWidget):
                         ),
                         value,
                     )
-                    selected.append(f"{preset['label']} · {label}")
-        self._selection_summary.setText("\n\n".join(selected))
+                    self._selection_rows.addWidget(ReviewItem(preset["label"], label))
+        self._selection_summary.setVisible(self._selection_rows.count() > 0)
         self.search.apply()
         self._pending_label.setText(
-            f"{self._pending} changes pending" if self._pending else "No changes selected"
+            f"{self._pending} change{'s' if self._pending != 1 else ''} pending"
+            if self._pending
+            else "No changes selected"
         )
         self._bottom_bar.setVisible(self._pending > 0)
 

@@ -7,6 +7,9 @@ description: Review Python changes for correctness, resource ownership, concurre
 
 Read `AGENTS.md` and relevant `plan.md`/`docs.md` sections. Start from the
 actual diff and trace callers, results and failure paths before suggesting edits.
+Check DRY and ownership: reuse existing validators, encoders, storage and UI helpers;
+flag obsolete code from removed behavior and competing implementations of one rule.
+For UI work, apply `DESIGN.md` and the shared component owners in `AGENTS.md`.
 
 Check concrete failure triggers: truncated/empty input before indexing, checked
 positive and negative protocol responses, bounds and integer widths, resource

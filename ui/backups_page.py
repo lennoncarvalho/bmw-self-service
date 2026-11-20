@@ -56,10 +56,10 @@ class BackupsPage(QWidget):
             )
         )
         note.box.addWidget(
-            caption("Portable unencrypted JSON · Retained until you delete it", "eyebrow")
+            caption("Portable unencrypted JSON · Retained until you delete it", "supporting")
         )
         layout.addWidget(note)
-        self.record_count = caption("", "eyebrow")
+        self.record_count = caption("", "supportingStrong")
         layout.addWidget(self.record_count)
         location = caption(f"Backup location: {self.store.root}")
         self._location = location

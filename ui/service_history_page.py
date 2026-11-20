@@ -699,10 +699,6 @@ class ServiceHistoryPage(QWidget):
                         "replace history with the displayed list."
                     )
                 )
-            if "source_workspace" in meta and meta.get("source_vin") != project["vin"]:
-                box.addWidget(
-                    caption("Copied entry; original vehicle assignment retained in saved data.")
-                )
             footer = QHBoxLayout()
             footer.setSpacing(8)
             footer.addWidget(caption(metadata, "historyMetadata"), 1)

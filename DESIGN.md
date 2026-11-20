@@ -67,6 +67,11 @@ reserve modest tracking and uppercase for short labels.
 
 Respect font metrics, display scaling and wrapping rather than clipping text to
 force a nominal line height. Use larger headings sparingly in dense content.
+Card titles use the 22 px section-heading style in sentence case. Never use tiny
+technical labels as card, section or field headings. Smaller supporting counts
+use 12 px semibold text; field and subsection labels use at least 13 px semibold.
+Separate selected changes from guidance with compact bordered rows, bold setting
+names and blue target values. Keep guidance secondary in size and contrast.
 
 ## Geometry and spacing
 
@@ -131,5 +136,6 @@ Keep QSS in `assets/theme.qss`, shared controls in `ui/form_inputs.py` and share
 dialog presentation in `ui/dialogs.py`. Reuse `DangerButton` from `ui/cockpit.py`
 for red page actions; standard dialog buttons use the same `dangerOutline` role.
 Keep their normal, hover, pressed, focus and disabled colors in one shared rule set.
-Use presentation roles instead of inline
-styles. Visual changes must preserve feature behavior, validation and write guards.
+Use presentation roles instead of inline styles. Update shared rules in place
+instead of adding competing overrides or copying controls into pages. Visual
+changes must preserve feature behavior, validation and write guards.

@@ -130,11 +130,23 @@ class CockpitCard(QFrame):
         self.box = QVBoxLayout(self)
         self.box.setContentsMargins(18, 16, 18, 16)
         self.box.setSpacing(10)
-        if context is None:
-            self.box.addWidget(caption(title.upper(), "eyebrow"))
-        else:
+        if context is not None:
             self.box.addWidget(caption(context))
-            self.box.addWidget(caption(title, "cardTitle"))
+        self.box.addWidget(caption(title, "cardTitle"))
+
+
+class ReviewItem(QFrame):
+    """Separate a selected setting and its target value from review guidance."""
+
+    def __init__(self, title: str, value: str, parent: QWidget | None = None) -> None:
+        """Build a compact, wrapping review row with a highlighted target value."""
+        super().__init__(parent)
+        self.setProperty("class", "reviewItem")
+        box = QVBoxLayout(self)
+        box.setContentsMargins(12, 8, 12, 8)
+        box.setSpacing(4)
+        box.addWidget(caption(title, "identity"))
+        box.addWidget(caption(f"Selected: {value}", "selectedValue"))
 
 
 class PageHeader(QFrame):

@@ -349,17 +349,6 @@ class MainWindow(QMainWindow):
             else "Not read"
         )
 
-    @staticmethod
-    def _make_placeholder(title_text: str) -> QWidget:
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label = QLabel(f"{title_text}\n\nConnect to a vehicle to begin")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label.setProperty("role", "placeholder")
-        layout.addWidget(label)
-        return page
-
     def _build_spinner(self) -> QFrame:
         self.loading_backdrop = QFrame(self)
         self.loading_backdrop.setObjectName("loadingBackdrop")

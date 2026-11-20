@@ -1,35 +1,17 @@
 """Dark theme loader for the BMW Self Service.
 
 Loads QSS from assets/theme.qss and applies it to a QApplication.
-Also provides color constants for use in Python code when QSS is insufficient.
 
 Reference: AGENTS.md#implementation-rules (one QSS file).
 """
 
-import os
 from pathlib import Path
 
 from PySide6.QtCore import QDir, QEvent, QObject, Qt
 from PySide6.QtGui import QFont, QFontDatabase
 from PySide6.QtWidgets import QAbstractButton, QApplication
 
-# BMW M colour palette — use these for programmatic styling only
-# (e.g. status dots, dynamic colour changes). Prefer QSS for static styles.
-COLOR_BG_DARK = "#0a0e17"
-COLOR_SURFACE = "#0f131c"
-COLOR_BORDER = "#424753"
-COLOR_PRIMARY = "#1c69d2"
-COLOR_PRIMARY_HOVER = "#005bc0"
-COLOR_PRIMARY_PRESSED = "#004493"
-COLOR_DANGER = "#93000a"
-COLOR_DANGER_HOVER = "#690005"
-COLOR_SUCCESS = "#10b981"
-COLOR_SUCCESS_HOVER = "#10b981"
-COLOR_WARNING = "#f59e0b"
-COLOR_TEXT_PRIMARY = "#dfe2ef"
-COLOR_TEXT_SECONDARY = "#c2c6d5"
-COLOR_TEXT_DISABLED = "#8c909e"
-COLOR_BG_TOP_BAR = "#181c25"
+from app.resources import resource_path
 
 
 def _set_button_cursor(button: QAbstractButton) -> None:
@@ -52,33 +34,18 @@ class _ButtonCursorFilter(QObject):
 
 
 def _find_theme_qss() -> Path:
-    """Locate theme.qss relative to this module.
-
-    Development: app/theme.py  → ../assets/theme.qss
-    PyInstaller: _MEIPASS/assets/theme.qss → relative to bundle
-    """
-    # Try relative path first (both development and bundle)
-    module_dir = Path(__file__).resolve().parent
-    for candidate in [
-        module_dir / ".." / "assets" / "theme.qss",
-        module_dir.parent / "assets" / "theme.qss",
-        # PyInstaller bundle: sys._MEIPASS + assets/theme.qss
-        Path(getattr(os, "_MEIPASS", "")) / "assets" / "theme.qss",
-    ]:
-        try:
-            resolved = candidate.resolve()
-            if resolved.is_file():
-                return resolved
-        except (OSError, FileNotFoundError):
-            pass
-    raise FileNotFoundError(f"Cannot find theme.qss. Searched from module_dir={module_dir}")
+    """Locate the shared theme through the same source/bundle owner as other assets."""
+    path = resource_path("assets/theme.qss")
+    if not path.is_file():
+        raise FileNotFoundError(f"Cannot find theme.qss at {path}")
+    return path
 
 
 def load_theme() -> str:
     """Read theme.qss and return the stylesheet string.
 
     Returns:
-        CSS-like Qt Style Sheet string (~150 lines).
+        CSS-like Qt Style Sheet string.
 
     Raises:
         FileNotFoundError: If theme.qss can't be found.

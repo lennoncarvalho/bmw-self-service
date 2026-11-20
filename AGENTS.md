@@ -5,7 +5,10 @@
 Read [plan.md](plan.md) for approved scope, [tasks.md](tasks.md) for current
 implementation steps, [DESIGN.md](DESIGN.md) for visual rules and the relevant
 section of [docs.md](docs.md) for source contracts/data recovery.
-Inspect current code before trusting a status claim.
+These instructions apply to every agent session working in this repository.
+Load them and the documents above before editing. `DESIGN.md` is the canonical,
+case-sensitive visual guide; do not create a separate `design.md` or copy its
+rules into another specification. Inspect current code before trusting a status claim.
 Load the applicable local skill from `.agents/skills/`; project rules override
 its generic examples. Do not run setup or install tools just because a skill
 mentions them.
@@ -50,6 +53,20 @@ choices. Do not introduce unsupported restrictions to match a tool limitation.
 
 ## Implementation rules
 
+- Follow DRY: find and reuse the existing owner of a rule before adding another
+  implementation. Keep validation, encoding, file publication and operation
+  ownership in their existing app layers; pages consume those results.
+- For UI changes, follow `DESIGN.md` and reuse `ui/cockpit.py` for presentation
+  components and action roles, `ui/form_inputs.py` for inputs and `ui/dialogs.py`
+  for dialogs/messages. Extend the shared component when appropriate instead of
+  copying its implementation or adding page-specific styling. Native file pickers
+  retain platform presentation.
+- Keep one active QSS definition for each visual concern in `assets/theme.qss`.
+  Remove superseded rules instead of stacking corrective overrides. Preserve
+  native Qt popup behavior and constructor-time styling requirements.
+- Keep changes focused. Remove code left unused by retired behavior after checking
+  all callers, but never delete existing user files as code cleanup. Avoid speculative
+  abstractions and do not combine rules whose contracts differ merely to reduce lines.
 - Python 3.13 target, PySide6/Qt Widgets, 100-column Python style, typed signatures
   and public-method docstrings. Use existing dependencies; `python3`, not `python`.
 - One `CarWorker(QThread)` base and one protocol owner for all vehicle I/O.
@@ -67,6 +84,9 @@ choices. Do not introduce unsupported restrictions to match a tool limitation.
   connection ownership. No WAL or schema mutation on embedded static assets.
 - Keep source tool names out of new application code/shipped data; research
   provenance belongs in development records. The runtime must remain standalone.
+- Keep generated assets reproducible: update their owning producer, verify its
+  output against shipped data and publish `runtime-assets.json` through
+  `scripts/build_runtime_assets.py`. Never hand-edit hashes to hide asset drift.
 
 ## Vehicle writes
 
@@ -90,6 +110,12 @@ No automated test suite or `tests/` directory. Use meaningful one-off offline
 source/native/byte/error checks and actual Qt/DEMO flows as needed; no new test
 framework/dependency. Review nontrivial code and fix concrete findings. A short
 PR description and existing source contracts suffice; no review-report file.
+
+Before finishing, check the changed paths for duplicated rules, obsolete callers,
+stale documentation and design drift. Exercise affected UI states and failure paths,
+including keyboard use, disabled controls and the supported minimum window size.
+Current owner decisions take precedence over historical docs, review suggestions
+and scratch checks; update the owning guidance rather than restoring retired behavior.
 
 Before **every push**, run `scripts/preflight.sh` over all `app/`, `ui/`, `main.py`:
 Ruff check, Ruff format check and mypy must all pass. No subset or pre-existing
