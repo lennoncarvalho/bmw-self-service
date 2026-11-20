@@ -20,7 +20,7 @@ release gate; a local development build is not distribution approval.
 
 These notices cover the newly selected protocol libraries. Existing Qt,
 PyInstaller, networking, crypto and data-asset distribution obligations also
-remain part of the release review described in docs/15-tech-stack.md.
+remain part of the release review.
 
 ## Job interpreter (native)
 

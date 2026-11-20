@@ -5,7 +5,7 @@ description: Keep implementation aligned with the compact BMW Self Service plan,
 
 # Implementation workflow
 
-Read `AGENTS.md`, `plan.md`, `tasks.md` and the relevant section of `docs.md`.
+Read `AGENTS.md`, `DESIGN.md`, `plan.md`, `tasks.md` and the relevant section of `docs.md`.
 Inspect current code and source contracts; documentation is not proof of behavior.
 
 1. Identify the concrete outcome and affected code. Use existing `tasks.md` for
@@ -14,8 +14,12 @@ Inspect current code and source contracts; documentation is not proof of behavio
    unresolved product choices. Preserve exact source identity/decoder coordinates.
 3. Implement the recovered behavior through the existing architecture. Continue
    through integration, meaningful verification and correction of findings.
+   Reuse existing code owners and shared UI components; remove obsolete paths
+   instead of retaining duplicate implementations or stacked style overrides.
 4. Exercise source/native/error boundaries and actual Qt flows as appropriate.
    Distinguish offline checks from physical observations; no automated suite.
+   For generated assets, check producer/output agreement and republish the runtime
+   manifest through the builder after intentional data changes.
 5. Run full `scripts/preflight.sh` before pushing. Deliver a concise result/PR.
 
 Update only the relevant canonical document when useful facts or steps change.

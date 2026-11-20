@@ -2,7 +2,9 @@
 
 Project rules are in [AGENTS.md](../AGENTS.md); product scope, source discoveries
 and implementation steps live only in [plan.md](../plan.md), [docs.md](../docs.md)
-and [tasks.md](../tasks.md). Load only the skills relevant to the work.
+and [tasks.md](../tasks.md). [DESIGN.md](../DESIGN.md) owns visual rules for every
+session. Reuse the shared components named in AGENTS.md and apply DRY without
+introducing speculative abstractions. Load only the skills relevant to the work.
 
 | Skill | Purpose |
 |---|---|

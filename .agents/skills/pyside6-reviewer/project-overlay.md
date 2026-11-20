@@ -4,6 +4,9 @@ This overlay precedes the vendored upstream advice. Keep the existing Qt Widgets
 QScrollArea/QVBoxLayout, QSS and CarWorker(QThread) architecture. QML, model/view
 and asyncio examples are background reference, not migration instructions.
 Use Python 3.13 target, 100-column lines, existing dependencies and no test suite.
+Read `DESIGN.md` before UI work. Reuse `ui/cockpit.py`, `ui/form_inputs.py` and
+`ui/dialogs.py`; keep appearance in `assets/theme.qss`. Check shared behavior and
+callers before extracting helpers, and remove obsolete style overrides after a redesign.
 
 For implementation as well as review, trace object/thread ownership and actual
 signal delivery. QThread objects live in their creator thread; normal method

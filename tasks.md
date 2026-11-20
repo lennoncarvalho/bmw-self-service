@@ -22,7 +22,22 @@ acceptance remains in this milestone.
   remains physically unverified and requires an independently intended operation.
 - [ ] Confirm live reconnect after a naturally interrupted read and Clear All
   results during an intended fault clear. Retain actual identities and outcomes.
+- [ ] During an intended car session, verify the source-backed Overview battery
+  SOC/SOH and ignition readings. Their source/native checks do not establish
+  physical read acceptance.
 
-Later: full-width DoIP feature addressing/newer releases, Advanced Coding,
-validated deferred coding targets, additional DEMO profiles/DoIP simulation,
-Windows/Intel Mac and packaged releases.
+## Later implementation choices
+
+- [ ] Show semantic feature/option names in coding backup comparisons alongside
+  original/intended bytes, using exact saved-definition matching. Current
+  comparisons retain bytes and do not explain each changed setting.
+- [ ] Recover full-width DoIP ECU inventory and feature-address mappings, then
+  enable the supported diagnostic/CBS/coding/history paths. Existing discovery
+  and routing do not establish feature-level support or support for newer releases.
+- [ ] Add source-backed DEMO profiles and a DoIP simulation. The current DEMO
+  covers one HSFZ profile.
+- [ ] Implement Advanced Coding and separately validate deferred coding targets
+  when that scope is selected. Existing Easy Coding remains complete for this milestone.
+- [ ] Validate Windows and Intel Mac operation, including native library builds.
+- [ ] Prepare packaged releases: bundle/runtime asset checks, signing and the
+  release/distribution requirements in `THIRD_PARTY_NOTICES.md`.

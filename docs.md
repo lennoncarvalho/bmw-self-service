@@ -459,6 +459,8 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
 
 `app/service_history.py`, `history_files.py`, `history_workspace.py` and
 `history_write.py` own models, JSON, staged-entry identities, exact encoders and workers.
+`history_workspace.py` only creates detached in-memory entries and identities;
+there is no automatic workspace or history-journal persistence implementation.
 Generated `coding_data/history_contracts.json` binds 12 source-supported headunit
 profiles to exact identities/hashes/jobs. CICM/RAD12 lack ADD/ERASE jobs; a marketing
 name such as NBT is not a selector. No runtime history read or legacy-format API.

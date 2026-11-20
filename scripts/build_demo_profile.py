@@ -93,8 +93,8 @@ def build(asset_root: Path = ROOT) -> dict:
     ecus["63"]["faults"] = [{"code": "B7F805", "status": 8}]
     ecus["12"]["cbs"] = [bytes((1, 1, 44, 1, 3, 20, 255, 11, 26, 0, 0, 0)).hex()]
     ecus["60"]["cbs"] = [
-        bytes((3, 0, 30, 2, 2, 10, 255, 11, 26, 0, 0, 0)).hex(),
-        bytes((17, 1, 44, 1, 1, 20, 255, 11, 26, 0, 0, 0)).hex(),
+        bytes((3, 128, 0, 1, 2, 100, 255, 11, 28, 24, 0, 0)).hex(),
+        bytes((17, 11, 54, 1, 3, 47, 50, 9, 28, 48, 0, 0)).hex(),
     ]
     return {"schema": 1, "vin": vin, "ecus": ecus}
 
