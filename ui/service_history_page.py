@@ -904,8 +904,9 @@ class ServiceHistoryPage(QWidget):
             return ""
         from app.history_write import INSTRUCTIONS
 
-        if self._write_results:
-            return str(self._write_results[-1]["summary"])
+        for result in reversed(self._write_results):
+            if result["report"]["state"] != "blocked":
+                return str(result["summary"])
         return "A previous history write was interrupted or incomplete. " + INSTRUCTIONS
 
     @Slot()

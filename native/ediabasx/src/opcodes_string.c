@@ -31,6 +31,8 @@ static inline int hex_val(char c) {
 
 edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
                              const edxn_operand_t *a0, const edxn_operand_t *a1) {
+    /* Local: array operations reserve one byte within the S-register buffer. */
+    const size_t array_max = vm->regs.s_capacity - 1;
     switch (op) {
 
     /* scmp (0x20) — binary compare, Z = equal */
@@ -51,13 +53,11 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         const uint8_t *dst = edxn_reg_get_s(&vm->regs, si, &dlen);
         size_t slen;
         const uint8_t *src = edxn_resolve_binary(vm, a1, &slen);
-        if (dlen + slen >= vm->regs.s_capacity) return EDXN_OK;
-        uint8_t tmp[vm->regs.s_capacity];
         size_t total = dlen + slen;
-        if (total > vm->regs.s_capacity) total = vm->regs.s_capacity;
+        if (slen == 0 || total > array_max) return EDXN_OK;
+        uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, dst, dlen);
-        size_t copy = total - dlen;
-        if (src && copy > 0) memcpy(tmp + dlen, src, copy);
+        memcpy(tmp + dlen, src, slen);
         edxn_reg_set_s(&vm->regs, si, tmp, total);
         return EDXN_OK;
     }
@@ -108,10 +108,10 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         if (start < 0) start = 0;
         if ((size_t)start >= blen) return EDXN_OK;
         size_t total = blen + ilen;
-        if (total > vm->regs.s_capacity) return EDXN_OK;
+        if (ilen == 0 || total > array_max) return EDXN_OK;
         uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, base, (size_t)start);
-        if (ins) memcpy(tmp + start, ins, ilen);
+        memcpy(tmp + start, ins, ilen);
         memcpy(tmp + start + ilen, base + start, blen - (size_t)start);
         edxn_reg_set_s(&vm->regs, a0->u.idx.base_s, tmp, total);
         return EDXN_OK;
@@ -243,7 +243,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         return EDXN_OK;
     }
 
-    /* strcat (0x7E) — string concatenation (truncating at S reg max) */
+    /* strcat (0x7E) — string concatenation (truncating the appended bytes) */
     case 0x7E: {
         if (a0->kind != EDXN_OP_REG || a0->u.reg.type != EDXN_REG_S)
             return EDXN_ERR_OPERAND;
@@ -252,11 +252,12 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         const uint8_t *dst = edxn_reg_get_s(&vm->regs, si, &dlen);
         size_t slen;
         const uint8_t *src = edxn_resolve_binary(vm, a1, &slen);
-        size_t remaining = vm->regs.s_capacity > dlen ? vm->regs.s_capacity - dlen : 0;
+        size_t remaining = dlen < array_max ? array_max - dlen : 0;
         if (slen > remaining) slen = remaining;
+        if (slen == 0) return EDXN_OK;
         uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, dst, dlen);
-        if (slen > 0 && src) memcpy(tmp + dlen, src, slen);
+        memcpy(tmp + dlen, src, slen);
         edxn_reg_set_s(&vm->regs, si, tmp, dlen + slen);
         return EDXN_OK;
     }

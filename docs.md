@@ -229,6 +229,8 @@ Cap the allocation at the supplied bundle's 65,536-byte maximum. DME_BX8
 `IS_LESEN_DETAIL` at `0xC5925` uses 4,096 bytes. The owner's captured 288-byte
 `62 20 01` reply fits with BMW-FAST framing and decodes three occurrences.
 The host rejects replies exceeding the active buffer before copying them.
+`scat`, `spaste` and `strcat` use the array payload limit of buffer size minus
+one. Only `strcat` truncates the appended bytes on overflow.
 `app/fault_details.py` normalizes results; `DiagnosticReadWorker` preserves basic
 faults and independent detail failures. Each ECU/memory detail batch shares
 30 seconds within the original five-minute scan. Cards display all settled

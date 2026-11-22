@@ -238,17 +238,18 @@ edxn_error_t edxn_op_misc(edxn_vm_t *vm, uint8_t op,
     case 0x1F: {
         if (a0->kind != EDXN_OP_REG) return EDXN_ERR_OPERAND;
         int len = edxn_reg_byte_len(&a0->u.reg);
-        int32_t val = 0;
+        /* Local: assemble the register bits without overflowing a signed shift. */
+        uint32_t val = 0;
         for (int i = 0; i < len; i++) {
             uint8_t b;
             edxn_error_t err = edxn_stack_pop(&vm->data_stack, &b);
             if (err != EDXN_OK) return err;
             val = (val << 8) | b;
         }
-        edxn_reg_set_int(&vm->regs, &a0->u.reg, val);
+        edxn_reg_set_int(&vm->regs, &a0->u.reg, (int32_t)val);
         uint32_t mask = edxn_mask(len);
         uint32_t sm = edxn_sign_mask(len);
-        uint32_t masked = (uint32_t)val & mask;
+        uint32_t masked = val & mask;
         vm->flags.z = (masked == 0);
         vm->flags.s = (masked & sm) != 0;
         vm->flags.v = false;
@@ -311,18 +312,19 @@ edxn_error_t edxn_op_misc(edxn_vm_t *vm, uint8_t op,
         if (a0->kind != EDXN_OP_REG) return EDXN_ERR_OPERAND;
         int32_t offset = edxn_resolve_int(vm, a1);
         int len = edxn_reg_byte_len(&a0->u.reg);
-        int32_t index = offset - len;
-        int32_t val = 0;
+        int64_t index = (int64_t)offset - len;
+        /* Local: assemble the register bits without overflowing a signed shift. */
+        uint32_t val = 0;
         for (int i = 0; i < len; i++) {
             uint8_t b = 0;
             if (index + i >= 0)
                 (void)edxn_stack_peek(&vm->data_stack, (size_t)(index + i), &b);
             val = (val << 8) | b;
         }
-        edxn_reg_set_int(&vm->regs, &a0->u.reg, val);
+        edxn_reg_set_int(&vm->regs, &a0->u.reg, (int32_t)val);
         uint32_t mask = edxn_mask(len);
         uint32_t sm = edxn_sign_mask(len);
-        uint32_t masked = (uint32_t)val & mask;
+        uint32_t masked = val & mask;
         vm->flags.z = (masked == 0);
         vm->flags.s = (masked & sm) != 0;
         vm->flags.v = false;

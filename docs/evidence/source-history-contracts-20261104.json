@@ -15,9 +15,9 @@
     }
   },
   "native_width_verification": {
-    "arithmetic_source_sha256": "cce65efba18cdc0018f3634141c66ab0339b5c8c0c5f4643ae8bed519b67b5fe",
+    "arithmetic_source_sha256": "9ebf626b2f0d9b0f173a5adc90784cdf7470dda1943c8992ee9d5e1ee5779456",
     "boundary_vectors": "I32 min/max, negative256/65536 multiples, U32 maximum mileage",
-    "conversion_source_sha256": "d3e7f75b708d4781a8784f51d72ecfd596ac3bc673f79646800f74488ee6652a",
+    "conversion_source_sha256": "a699926ea066619aa4922ae5578ee344f335f77453921ced1f67f00f8b6a06d0",
     "correction": "32-bit registers are already signed; sign-extend only shorter widths",
     "opcodes": [
       "ASR 0x18",
