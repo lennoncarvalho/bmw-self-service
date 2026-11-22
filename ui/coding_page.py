@@ -284,7 +284,7 @@ class CodingPage(QWidget):
             self._section_reads.clear()
             return False
         row = matches[0]
-        worker = CodingValuesWorker(connection, row, connection.verified_vin)
+        worker = CodingValuesWorker(connection, row, connection.verified_vin, self._snapshot_ecus)
         worker.setProperty("coding_values_addr", address)
         self._coding_reader = worker
         self._snapshot_workers.append(worker)
@@ -768,6 +768,18 @@ class CodingPage(QWidget):
             origin = data.get("restore_origin", {}).get("original", {})
             lines.append(f"Original snapshot: {origin.get('created', 'Selected backup')}")
             lines.append("Replace the listed ECU coding with that snapshot's original values.")
+            originals = {target["address"]: target["baseline"] for target in origin["targets"]}
+            for target in data["targets"]:
+                differs = [
+                    did
+                    for did, raw in target["intended"].items()
+                    if raw != originals[target["address"]][did]
+                ]
+                if differs:
+                    lines.append(
+                        f"{target['name']} · regenerated signature differs from the archive "
+                        f"in {', '.join(differs)}."
+                    )
         for change in data.get("changes", []):
             if "preset" not in change:
                 continue
@@ -795,8 +807,11 @@ class CodingPage(QWidget):
                 lines.append(f"{change['preset']}: {change['option']}")
         preview.setPlainText("\n".join(lines))
         layout.addWidget(preview)
+        conditions = QLabel(data["write_conditions"])
+        conditions.setWordWrap(True)
+        layout.addWidget(conditions)
         power = CheckInput(
-            "I confirm adequate vehicle and computer power throughout this operation."
+            "I confirm ignition is on, the engine is off, and vehicle and computer power are adequate."
         )
         layout.addWidget(power)
         prior = data.get("prior_operations", [])
@@ -882,6 +897,7 @@ class CodingPage(QWidget):
             plan,
             power_acknowledged=True,
             recovery_acknowledged=recovery.isChecked(),
+            ecus=self._snapshot_ecus,
         )
         self._coding_writer = worker
         self._snapshot_workers.append(worker)
@@ -991,7 +1007,7 @@ class CodingPage(QWidget):
             "Verify coding",
             "Have you completed any required vehicle cycle for this operation? "
             "Verification compares current bytes with the backup. A headunit may require a "
-            "temporary reader session. Keep the vehicle powered and the cable connected.",
+            "temporary reader session. Keep ignition on, the engine off, stable power and the cable connected.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -1003,7 +1019,9 @@ class CodingPage(QWidget):
             or not self.can_mutate()
         ):
             return None
-        worker = CodingVerificationWorker(connection, path, store, cycle_acknowledged=True)
+        worker = CodingVerificationWorker(
+            connection, path, store, cycle_acknowledged=True, ecus=self._snapshot_ecus
+        )
         self._worker = worker
         self._snapshot_workers.append(worker)
         worker.sensitive_operation_requested.connect(self._begin_sensitive_read)

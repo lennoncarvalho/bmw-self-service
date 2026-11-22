@@ -12,18 +12,20 @@
  *   I[n]  → byte[n*2 .. n*2+1]   n = 0..15  (I8..IF overlap A0..AF)
  *   L[n]  → byte[n*4 .. n*4+3]   n = 0..7   (L4..L7 overlap A0..AF)
  *
- * S registers: 16 binary buffers, each up to EDXN_S_REG_MAXLEN bytes.
+ * S registers: 16 binary buffers sized for the active SGBD.
  * F registers: 8 double-precision floats, independent of the byte buffer.
  */
 
 typedef struct {
     uint8_t  bytes[EDXN_NUM_REG_BYTES];
-    uint8_t  s[EDXN_S_REG_COUNT][EDXN_S_REG_MAXLEN];
+    uint8_t  *s;
+    size_t   s_capacity;
     size_t   s_len[EDXN_S_REG_COUNT];
     double   f[EDXN_F_REG_COUNT];
 } edxn_registers_t;
 
 void     edxn_reg_reset(edxn_registers_t *r);
+edxn_error_t edxn_reg_resize_s(edxn_registers_t *r, size_t capacity);
 
 uint8_t  edxn_reg_get_b(const edxn_registers_t *r, int idx);
 void     edxn_reg_set_b(edxn_registers_t *r, int idx, uint8_t val);

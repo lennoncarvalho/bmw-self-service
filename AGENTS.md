@@ -43,7 +43,7 @@ Generate runtime assets during development. The app must not open source folders
 reference applications, encrypted research inputs or a runtime REA service.
 Preserve exact reported and source-selected identities/hashes separately.
 
-Support the broad source-supported F/G/U/I ENET scope. Only the owner's F48/NBT
+Support the broad source-supported F/G/U/I ENET scope. Only the owner's F48/ENTRYNAV
 is available for physical observations; other cars are not a development
 prerequisite. Separate source support, offline verification and actual car
 observations. Ask for targeted car logs at a hard blocker they can resolve,

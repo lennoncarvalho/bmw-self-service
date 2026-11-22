@@ -690,7 +690,7 @@ edxn_error_t edxn_op_misc(edxn_vm_t *vm, uint8_t op,
 
     /* ssize (0xB5) */
     case 0xB5:
-        edxn_write_int(vm, a0, EDXN_ARRAY_MAX_SIZE + 1);
+        edxn_write_int(vm, a0, vm->prg->array_size);
         return EDXN_OK;
 
     /* ppop (0xA4) */
@@ -791,7 +791,7 @@ edxn_error_t edxn_op_misc(edxn_vm_t *vm, uint8_t op,
             vm->flags.c = true;
             return EDXN_OK;
         }
-        uint8_t buf[EDXN_S_REG_MAXLEN];
+        uint8_t buf[vm->regs.s_capacity];
         size_t n = 0;
         bool any = false;
         int c;

@@ -9,6 +9,9 @@ from enum import StrEnum
 from threading import Event
 from typing import Protocol
 
+# Source ENET headunit reader initial and response-pending windows, in seconds.
+ENET_HEADUNIT_READ_TIMING = (1.0, 7.0)
+
 
 class TransportKind(StrEnum):
     """Explicit transport selected from discovery evidence."""

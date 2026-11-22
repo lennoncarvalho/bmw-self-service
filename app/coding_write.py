@@ -23,23 +23,28 @@ from app.coding_guards import CodingGuardBlocked
 from app.coding_guards import contracts as guard_contracts
 from app.coding_guards import observe as observe_guard
 from app.coding_prerequisites import (
-    ENET_READER_TIMING,
     applies,
     reader_contract,
     run_prerequisites,
 )
 from app.history_files import valid_vin
 from app.operation_store import OperationStore, coding_comparison_basis, load_record
-from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
+from app.protocol.contracts import (
+    ENET_HEADUNIT_READ_TIMING,
+    FailureKind,
+    OperationContext,
+    ProtocolFailure,
+    TransportKind,
+)
 from app.session import check_binding, check_record, check_store, environment, operation_store
-from app.vehicle import DiagnosticCatalog, did_data
+from app.vehicle import DiagnosticCatalog, WriteConditionsBlocked, check_write_conditions, did_data
 from app.vehicle_order import decode_vehicle_order
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
 _INSTRUCTIONS = (
-    "Wait for ECU restart and any required vehicle cycle, then reconnect. Use Verify coding "
-    "from Backups for a completed operation. "
+    "Wait for ECU restart and any required vehicle cycle, then reconnect. "
+    "Compare current coding from Backups. "
     "Response-confirmed completion is not an observed post-cycle verification. "
     "Do not replay an interrupted operation; compare current data before a separately confirmed restore."
 )
@@ -340,7 +345,7 @@ class CodingPrepareWorker(CarWorker):
                     timing = ctx.response_timing
                     ctx.deadline = min(deadline, time.monotonic() + 30.0)
                     if headunit_reader and address_override is None:
-                        ctx.response_timing = ENET_READER_TIMING
+                        ctx.response_timing = ENET_HEADUNIT_READ_TIMING
                     try:
                         result = (
                             services.invoke(payload, ctx)
@@ -399,7 +404,15 @@ class CodingPrepareWorker(CarWorker):
                             "No coding write was sent. Check the connection, local evidence and session log."
                         )
                         raise
-                if applies(address, definitions, db):
+                if "write_conditions" not in plan or headunit_reader:
+                    try:
+                        plan["write_conditions"] = check_write_conditions(
+                            connection, self.ecus, ctx
+                        )
+                    except WriteConditionsBlocked as error:
+                        self.guard_notice = str(error)
+                        raise
+                if headunit_reader:
                     acknowledged = Event()
                     self.sensitive_operation_requested.emit(acknowledged)
                     while not acknowledged.wait(0.05):
@@ -549,18 +562,25 @@ class CodingRestorePrepareWorker(CodingPrepareWorker):
 
 
 class CodingVerificationWorker(CarWorker):
-    """Compare complete observed coding groups with a saved completed operation."""
+    """Compare complete observed coding groups with a saved operation."""
 
     sensitive_operation_requested = Signal(object)
 
     def __init__(
-        self, connection: Any, path: Path, store: OperationStore, *, cycle_acknowledged: bool
+        self,
+        connection: Any,
+        path: Path,
+        store: OperationStore,
+        *,
+        cycle_acknowledged: bool,
+        ecus: list[dict] | None = None,
     ) -> None:
         """Retain the explicitly selected record and its local storage owner."""
         super().__init__(connection)
         self.path = path
         self.store = store
         self.cycle_acknowledged = cycle_acknowledged
+        self.ecus = [dict(row) for row in ecus or ()]
         self.guard_notice = ""
 
     def do_work(self) -> dict:
@@ -575,7 +595,9 @@ class CodingVerificationWorker(CarWorker):
         original = record["original"]
         vin = original["vin"]
         if basis is None:
-            self.guard_notice = "This coding record has no completed operation to verify."
+            self.guard_notice = (
+                "This coding record has no applied or interrupted operation to compare."
+            )
             raise ValueError(self.guard_notice)
         if (
             connection.kind != TransportKind.HSFZ
@@ -588,6 +610,25 @@ class CodingVerificationWorker(CarWorker):
         db = CodingDatabase()
         context = connection.context(300.0)
         observed: dict[str, Any] = {"kind": "coding-comparison", "basis": basis, "targets": []}
+        archived = {}
+        for event in record["events"]:
+            for response in event["responses"]:
+                if isinstance(response, dict) and response.get("kind") == "frozen-plan":
+                    origin = response["plan"].get("restore_origin")
+                    if origin is not None:
+                        archived_original = origin["original"]
+                        if (
+                            hashlib.sha256(_canonical(archived_original)).hexdigest()
+                            != origin["original_sha256"]
+                            or archived_original["vin"] != vin
+                            or archived_original["mode"] != original["mode"]
+                        ):
+                            raise ValueError("Archived restore source failed its integrity check")
+                        archived = {
+                            target["address"]: target for target in archived_original["targets"]
+                        }
+                        if set(archived) != {target["address"] for target in original["targets"]}:
+                            raise ValueError("Archived restore source target set does not match")
         sensitive = False
 
         def read_target(services: Any, ctx: OperationContext, saved: dict) -> bytes:
@@ -601,7 +642,7 @@ class CodingVerificationWorker(CarWorker):
                 timing = ctx.response_timing
                 ctx.deadline = min(deadline, time.monotonic() + 30.0)
                 if headunit_reader and override is None:
-                    ctx.response_timing = ENET_READER_TIMING
+                    ctx.response_timing = ENET_HEADUNIT_READ_TIMING
                 try:
                     return bytes(
                         services.invoke(payload, ctx)
@@ -630,16 +671,33 @@ class CodingVerificationWorker(CarWorker):
                 raise ValueError(
                     f"ECU 0x{address:02X} source layout differs from the saved operation"
                 )
-            expected = saved[basis]
-            if set(expected) != {f"{did:04X}" for did in _groups(db, definitions)}:
-                raise ValueError(f"ECU 0x{address:02X} record lacks the complete coding group set")
-            db.validate_blocks(
-                definitions, {int(did, 16): bytes.fromhex(raw) for did, raw in expected.items()}
-            )
+            expected = {key: saved[key] for key in ("baseline", "intended")}
+            if address in archived:
+                archived_target = archived[address]
+                if any(
+                    archived_target[key] != saved[key]
+                    for key in ("variant", "software", "definition_sha256")
+                ):
+                    raise ValueError("Archived restore source differs from the observed ECU")
+                expected["archived"] = archived_target["baseline"]
+            groups = {f"{did:04X}" for did in _groups(db, definitions)}
+            for values in expected.values():
+                if set(values) != groups:
+                    raise ValueError(
+                        f"ECU 0x{address:02X} record lacks the complete coding group set"
+                    )
+                db.validate_blocks(
+                    definitions, {int(did, 16): bytes.fromhex(raw) for did, raw in values.items()}
+                )
             headunit_reader = applies(address, definitions, db)
             if headunit_reader:
-                if connection.read_only or getattr(connection, "power_sufficient", None) is False:
+                if connection.read_only:
                     raise PermissionError("This ECU requires an available headunit reader session")
+                try:
+                    check_write_conditions(connection, self.ecus, ctx)
+                except WriteConditionsBlocked as error:
+                    self.guard_notice = str(error)
+                    raise
                 acknowledged = Event()
                 self.sensitive_operation_requested.emit(acknowledged)
                 while not acknowledged.wait(0.05):
@@ -662,6 +720,10 @@ class CodingVerificationWorker(CarWorker):
             }
             if read(b"\x22\xf1\x50") != identity or read(b"\x22\xf1\x01") != software:
                 raise ValueError(f"ECU 0x{address:02X} identity changed during verification")
+            differences = {
+                key: [did for did in blocks if blocks[did] != values[did]]
+                for key, values in expected.items()
+            }
             observed["targets"].append(
                 {
                     "address": address,
@@ -670,7 +732,8 @@ class CodingVerificationWorker(CarWorker):
                     "software": software.hex(),
                     "definition_sha256": saved["definition_sha256"],
                     "blocks": blocks,
-                    "different_groups": [did for did in blocks if blocks[did] != expected[did]],
+                    "differences": differences,
+                    "different_groups": differences.get(basis, []),
                 }
             )
             return b""
@@ -687,20 +750,40 @@ class CodingVerificationWorker(CarWorker):
         except Exception as error:
             if sensitive:
                 connection.request_close()
-            if isinstance(error, (ValueError, PermissionError)):
+            if not self.guard_notice and isinstance(error, (ValueError, PermissionError)):
                 self.guard_notice = str(error)
             raise
-        state = (
-            "mismatch"
-            if any(target["different_groups"] for target in observed["targets"])
-            else "verified"
-        )
-        expected_label = "original" if basis == "baseline" else "intended"
-        message = (
-            f"Observed coding matches the saved {expected_label} bytes."
-            if state == "verified"
-            else f"Observed coding differs from the saved {expected_label} bytes."
-        )
+        if basis == "both":
+            state = record["events"][-1]["state"]
+            lines = ["The operation remains interrupted. Observed coding groups:"]
+            for target in observed["targets"]:
+                differences = target["differences"]
+                lines.append(
+                    f"ECU 0x{target['address']:02X} · "
+                    f"{len(differences['baseline'])} differ from original, "
+                    f"{len(differences['intended'])} differ from intended."
+                )
+            message = "\n".join(lines)
+        else:
+            mismatch = any(target["different_groups"] for target in observed["targets"])
+            expected_label = "original" if basis == "baseline" else "intended"
+            comparison = "differs from" if mismatch else "matches"
+            message = f"Observed coding {comparison} the saved {expected_label} bytes."
+            state = "mismatch" if mismatch else "verified"
+        if archived:
+            archived_diff = [
+                f"ECU 0x{target['address']:02X} · " + ", ".join(target["differences"]["archived"])
+                for target in observed["targets"]
+                if target["differences"].get("archived")
+            ]
+            if archived_diff:
+                message += "\nGroups differing from the archived restore source:\n" + "\n".join(
+                    archived_diff
+                )
+                if basis == "intended":
+                    state = "mismatch"
+            else:
+                message += "\nObserved coding matches the archived restore source."
         logger.info("Coding verification backup=%s state=%s", self.path.name, state)
         report: dict[str, Any] = {
             "path": str(self.path),
@@ -863,6 +946,10 @@ def validate_plan(plan: CodingPlan, db: CodingDatabase) -> dict:
 class _Rejected(Exception):
     """A correlated final ECU negative response, with no inferred acceptance."""
 
+    def __init__(self, stage: str) -> None:
+        super().__init__(f"ECU rejected the coding {stage} request")
+        self.stage = stage
+
 
 class CodingWriteWorker(CarWorker):
     """Execute one confirmed frozen plan with durable before/intent/step outcomes."""
@@ -875,6 +962,7 @@ class CodingWriteWorker(CarWorker):
         *,
         power_acknowledged: bool = False,
         recovery_acknowledged: bool = False,
+        ecus: list[dict] | None = None,
     ) -> None:
         """Retain the frozen plan and explicit power/recovery acknowledgements."""
         super().__init__(connection)
@@ -882,6 +970,7 @@ class CodingWriteWorker(CarWorker):
         self.store = store or operation_store(connection)
         self.power_acknowledged = power_acknowledged
         self.recovery_acknowledged = recovery_acknowledged
+        self.ecus = [dict(row) for row in ecus or ()]
         self._executed = False
         self.report: dict[str, Any] = {
             "path": "",
@@ -937,6 +1026,25 @@ class CodingWriteWorker(CarWorker):
         self.report["path"] = str(path)
         accepted: dict[int, dict[str, str]] = {}
         attempted_mutation = False
+        rejected_stage = ""
+
+        def check_conditions(ctx: OperationContext) -> None:
+            try:
+                notice = check_write_conditions(connection, self.ecus, ctx)
+            except WriteConditionsBlocked as error:
+                self.report["guard_notice"] = str(error)
+                self.report["instructions"] = str(error) + " " + _INSTRUCTIONS
+                raise
+            self.report["write_conditions"] = notice
+            try:
+                self.store.record(
+                    path,
+                    state="writing",
+                    responses=[{"kind": "write-conditions", "detail": notice}],
+                )
+            except (OSError, ValueError):
+                self.report["persistence_failed"] = True
+                raise
 
         def event(
             kind: str, address: int, request: bytes, response: bytes = b"", state: str = "sending"
@@ -967,7 +1075,7 @@ class CodingWriteWorker(CarWorker):
             timing = ctx.response_timing
             ctx.deadline = min(deadline, time.monotonic() + 30.0)
             if address in timed_readers and payload[:1] == b"\x22":
-                ctx.response_timing = ENET_READER_TIMING
+                ctx.response_timing = ENET_HEADUNIT_READ_TIMING
             try:
                 try:
                     response = connection.send_uds(
@@ -988,7 +1096,7 @@ class CodingWriteWorker(CarWorker):
                 if len(response) != 3 or response[1] != payload[0] or response[2] == 0x78:
                     raise ValueError("Malformed final coding response")
                 event(kind, address, payload, response, "rejected")
-                raise _Rejected("ECU rejected the coding request")
+                raise _Rejected(kind)
             if kind == "session":
                 valid = response[:2] == bytes((0x50, payload[1])) and len(response) in (2, 6)
             elif kind == "write" or kind == "stamp":
@@ -1037,6 +1145,7 @@ class CodingWriteWorker(CarWorker):
                 "3010"
             ):
                 raise ValueError("Coding changes a source-excluded engine group")
+            check_conditions(ctx)
             for session in (1, 3, 0x41):
                 send(ctx, address, bytes((0x10, session)), "session")
             auth = db.authorization(bootloader_identifier(bytes.fromhex(target["software"])))
@@ -1079,6 +1188,7 @@ class CodingWriteWorker(CarWorker):
 
         def execute(services: Any, ctx: OperationContext) -> bytes:
             """Recheck confirmed recovery evidence and fresh targets before programming."""
+            nonlocal rejected_stage
             prior_now = _prior_records(
                 self.store,
                 data["vin"],
@@ -1160,6 +1270,8 @@ class CodingWriteWorker(CarWorker):
                         "reader-prerequisite",
                     )
 
+                if target["address"] in timed_readers:
+                    check_conditions(ctx)
                 run_prerequisites(
                     address=target["address"],
                     variant=target["variant"],
@@ -1177,43 +1289,52 @@ class CodingWriteWorker(CarWorker):
             self.store.record(
                 path, state="writing", responses=[{"kind": "frozen-plan", "plan": data}]
             )
-            try:
-                for target in data["targets"]:
+            for target in data["targets"]:
+                try:
                     program(ctx, target, target["intended"])
-            except _Rejected:
-                # Only established rejection is eligible for rollback, and only
-                # when fresh current bytes equal the known accepted transitions.
-                if not accepted:
-                    raise
-                self.report["rollback_attempted"] = True
-                for target in reversed(data["targets"]):
+                except _Rejected as error:
+                    # Keep automatic recovery within the group-write stage and
+                    # the single target whose accepted transitions are known.
                     address = target["address"]
-                    if address not in accepted:
-                        continue
+                    if error.stage != "write" or set(accepted) != {address}:
+                        rejected_stage = error.stage
+                        return b""
+                    self.report["rollback_attempted"] = True
                     expected = {**target["baseline"], **accepted[address]}
-                    check(ctx, target, expected)
-                    program(ctx, target, target["baseline"], current=expected)
-                self.report["state"] = "recovered"
-                self.report["instructions"] = (
-                    "The requested coding was rejected. Original coding bytes were rewritten "
-                    "with checked application responses; restoration is not yet observed after a cycle. "
-                    + _INSTRUCTIONS
-                )
+                    try:
+                        check(ctx, target, expected)
+                        program(ctx, target, target["baseline"], current=expected)
+                    except _Rejected as recovery_error:
+                        rejected_stage = recovery_error.stage
+                        return b""
+                    self.report["state"] = "recovered"
+                    self.report["instructions"] = (
+                        "The ECU rejected a coding group. Original coding bytes were rewritten "
+                        "with checked application responses. " + _INSTRUCTIONS
+                    )
+                    return b""
             return b""
 
         try:
             connection.run_operation(data["targets"][0]["address"], execute, context=context)
-            if self.report["state"] != "recovered":
+            if rejected_stage:
+                self.report["state"] = "partial" if accepted else "rejected"
+                if self.report.get("rollback_attempted"):
+                    notice = f"Automatic recovery stopped at a rejected {rejected_stage} step. "
+                elif rejected_stage == "clear":
+                    notice = "Fault clearing was rejected after the coding activation response. "
+                else:
+                    notice = f"The ECU rejected the {rejected_stage} step. "
+                self.report["instructions"] = notice + _INSTRUCTIONS
+                connection.request_close()
+            elif self.report["state"] != "recovered":
                 self.report["state"] = "response-confirmed"
-        except _Rejected:
-            self.report["state"] = "partial" if accepted else "rejected"
-            connection.request_close()
         except Exception:
             logger.warning(
                 "Coding stopped; preserve original/intent and inspect outcomes", exc_info=True
             )
             self.report["state"] = (
-                "blocked"
+                ("partial" if attempted_mutation else "blocked")
                 if self.report.get("guard_notice")
                 else "uncertain"
                 if attempted_mutation

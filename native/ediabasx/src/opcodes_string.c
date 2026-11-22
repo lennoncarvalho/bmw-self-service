@@ -51,10 +51,10 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         const uint8_t *dst = edxn_reg_get_s(&vm->regs, si, &dlen);
         size_t slen;
         const uint8_t *src = edxn_resolve_binary(vm, a1, &slen);
-        if (dlen + slen > EDXN_ARRAY_MAX_SIZE) return EDXN_OK;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        if (dlen + slen >= vm->regs.s_capacity) return EDXN_OK;
+        uint8_t tmp[vm->regs.s_capacity];
         size_t total = dlen + slen;
-        if (total > EDXN_S_REG_MAXLEN) total = EDXN_S_REG_MAXLEN;
+        if (total > vm->regs.s_capacity) total = vm->regs.s_capacity;
         memcpy(tmp, dst, dlen);
         size_t copy = total - dlen;
         if (src && copy > 0) memcpy(tmp + dlen, src, copy);
@@ -108,8 +108,8 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         if (start < 0) start = 0;
         if ((size_t)start >= blen) return EDXN_OK;
         size_t total = blen + ilen;
-        if (total > EDXN_S_REG_MAXLEN) return EDXN_OK;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        if (total > vm->regs.s_capacity) return EDXN_OK;
+        uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, base, (size_t)start);
         if (ins) memcpy(tmp + start, ins, ilen);
         memcpy(tmp + start + ilen, base + start, blen - (size_t)start);
@@ -132,7 +132,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         size_t end = (size_t)start + (size_t)length;
         if (end > blen) end = blen;
         size_t new_len = blen - (end - (size_t)start);
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, base, (size_t)start);
         memcpy(tmp + start, base + end, blen - end);
         edxn_reg_set_s(&vm->regs, a0->u.idx.base_s, tmp, new_len);
@@ -153,7 +153,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         size_t slen;
         const uint8_t *buf = edxn_reg_get_s(&vm->regs, a0->u.idx.base_s, &slen);
         if ((size_t)(start + length) > slen) return EDXN_OK;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, buf, slen);
         for (int i = 0; i < length / 2; i++) {
             uint8_t t = tmp[start + i];
@@ -172,7 +172,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         size_t slen;
         const uint8_t *buf = edxn_reg_get_s(&vm->regs, si, &slen);
         if (slen == 0) return EDXN_OK;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        uint8_t tmp[vm->regs.s_capacity];
         for (size_t i = 0; i < slen; i++)
             tmp[i] = buf[slen - 1 - i];
         edxn_reg_set_s(&vm->regs, si, tmp, slen);
@@ -185,7 +185,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         if (a0->kind != EDXN_OP_REG || a0->u.reg.type != EDXN_REG_S)
             return EDXN_ERR_OPERAND;
         if (vm->token_sep[0] == '\0') { vm->flags.z = true; return EDXN_OK; }
-        char source[EDXN_S_REG_MAXLEN + 1];
+        char source[vm->regs.s_capacity + 1];
         edxn_resolve_string(vm, a1, source, sizeof(source));
         int target = vm->token_idx - 1;
         if (target < 0) { vm->flags.z = true; return EDXN_OK; }
@@ -252,9 +252,9 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
         const uint8_t *dst = edxn_reg_get_s(&vm->regs, si, &dlen);
         size_t slen;
         const uint8_t *src = edxn_resolve_binary(vm, a1, &slen);
-        size_t remaining = EDXN_S_REG_MAXLEN > dlen ? EDXN_S_REG_MAXLEN - dlen : 0;
+        size_t remaining = vm->regs.s_capacity > dlen ? vm->regs.s_capacity - dlen : 0;
         if (slen > remaining) slen = remaining;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        uint8_t tmp[vm->regs.s_capacity];
         memcpy(tmp, dst, dlen);
         if (slen > 0 && src) memcpy(tmp + dlen, src, slen);
         edxn_reg_set_s(&vm->regs, si, tmp, dlen + slen);
@@ -279,9 +279,9 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
        - Empty (whitespace-only) group → push group.length + 1 zero bytes.
        - Otherwise: trim, split on whitespace, parseInt each hex sub-token. */
     case 0x8C: {
-        char source[EDXN_S_REG_MAXLEN + 1];
+        char source[vm->regs.s_capacity + 1];
         size_t srclen = edxn_resolve_string(vm, a1, source, sizeof(source));
-        uint8_t result[EDXN_S_REG_MAXLEN];
+        uint8_t result[vm->regs.s_capacity];
         size_t rlen = 0;
         if (srclen == 0) {
             edxn_write_binary(vm, a0, result, 0);
@@ -309,12 +309,12 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
             while (ge > gp && source[ge - 1] == ' ') ge--;
             if (gp >= ge) {
                 /* Empty group → push group_len + 1 zeros */
-                for (size_t j = 0; j < group_len + 1 && rlen < EDXN_S_REG_MAXLEN; j++)
+                for (size_t j = 0; j < group_len + 1 && rlen < vm->regs.s_capacity; j++)
                     result[rlen++] = 0;
             } else {
                 /* Split on whitespace, parse each as hex */
                 size_t sp = gp;
-                while (sp < ge && rlen < EDXN_S_REG_MAXLEN) {
+                while (sp < ge && rlen < vm->regs.s_capacity) {
                     while (sp < ge && source[sp] == ' ') sp++;
                     if (sp >= ge) break;
                     uint32_t val = 0;
@@ -327,7 +327,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
                         sp++;
                     }
                     if (exit_loop) break;
-                    if (got && rlen < EDXN_S_REG_MAXLEN)
+                    if (got && rlen < vm->regs.s_capacity)
                         result[rlen++] = (uint8_t)(val & 0xFF);
                 }
             }
@@ -341,21 +341,21 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
 
     /* hex2y (0x8E) — hex string to binary (strict pairs) */
     case 0x8E: {
-        char source[EDXN_S_REG_MAXLEN + 1];
+        char source[vm->regs.s_capacity + 1];
         size_t srclen = edxn_resolve_string(vm, a1, source, sizeof(source));
         if (srclen % 2 != 0) {
             edxn_write_binary(vm, a0, NULL, 0);
             vm->flags.c = true;
             return EDXN_OK;
         }
-        uint8_t result[EDXN_S_REG_MAXLEN];
+        uint8_t result[vm->regs.s_capacity];
         size_t rlen = 0;
         bool failed = false;
         for (size_t i = 0; i + 1 < srclen; i += 2) {
             int h0 = hex_val(source[i]);
             int h1 = hex_val(source[i + 1]);
             if (h0 < 0 || h1 < 0) { failed = true; break; }
-            if (rlen < EDXN_S_REG_MAXLEN)
+            if (rlen < vm->regs.s_capacity)
                 result[rlen++] = (uint8_t)((h0 << 4) | h1);
         }
         if (failed) {
@@ -370,8 +370,8 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
 
     /* strcmp (0x8F) — string compare ordinal, Z=true when DIFFERENT */
     case 0x8F: {
-        char left[EDXN_S_REG_MAXLEN + 1];
-        char right[EDXN_S_REG_MAXLEN + 1];
+        char left[vm->regs.s_capacity + 1];
+        char right[vm->regs.s_capacity + 1];
         edxn_resolve_string(vm, a0, left, sizeof(left));
         edxn_resolve_string(vm, a1, right, sizeof(right));
         vm->flags.z = (strcmp(left, right) != 0);
@@ -381,7 +381,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
     /* strlen (0x90) — string length (NUL-terminated) */
     case 0x90: {
         if (a0->kind != EDXN_OP_REG) return EDXN_ERR_OPERAND;
-        char buf[EDXN_S_REG_MAXLEN + 1];
+        char buf[vm->regs.s_capacity + 1];
         size_t slen = edxn_resolve_string(vm, a1, buf, sizeof(buf));
         edxn_reg_set_int(&vm->regs, &a0->u.reg, (int32_t)slen);
         int bw = edxn_reg_byte_len(&a0->u.reg);
@@ -398,7 +398,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
     case 0x91: {
         size_t blen;
         const uint8_t *bytes = edxn_resolve_binary(vm, a1, &blen);
-        char buf[EDXN_S_REG_MAXLEN * 2 + 1];
+        char buf[vm->regs.s_capacity * 2 + 1];
         size_t pos = 0;
         for (size_t i = 0; i < blen && pos + 2 < sizeof(buf); i++) {
             buf[pos++] = hex_chars[(bytes[i] >> 4) & 0xF];
@@ -413,7 +413,7 @@ edxn_error_t edxn_op_string(edxn_vm_t *vm, uint8_t op,
     case 0x92: {
         size_t blen;
         const uint8_t *bytes = edxn_resolve_binary(vm, a1, &blen);
-        char buf[EDXN_S_REG_MAXLEN * 2 + 1];
+        char buf[vm->regs.s_capacity * 2 + 1];
         size_t pos = 0;
         for (size_t i = 0; i < blen && pos + 2 < sizeof(buf); i++) {
             buf[pos++] = hex_chars[(bytes[i] >> 4) & 0xF];

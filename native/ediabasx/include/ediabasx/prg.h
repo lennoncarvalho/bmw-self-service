@@ -51,6 +51,7 @@ typedef struct {
 typedef struct {
     edxn_prg_header_t   header;
     edxn_prg_metadata_t metadata;
+    uint32_t           array_size;
 
     const uint8_t *raw;
     size_t         raw_len;

@@ -17,9 +17,10 @@ acceptance remains in this milestone.
 
 ## History and integrated acceptance
 
-- [ ] During the next intended physical history append, compare the confirmed
-  request and activation with the date and items shown in iDrive. Replacement
-  remains physically unverified and requires an independently intended operation.
+- [ ] On the owner's ENTRYNAV, confirm that append preparation reaches review.
+  During the next intended physical append, compare the confirmed request and
+  activation with the date and items shown in iDrive. Replacement remains
+  physically unverified and requires an independently intended operation.
 - [ ] Confirm live reconnect after a naturally interrupted read and Clear All
   results during an intended fault clear. Retain actual identities and outcomes.
 - [ ] During an intended car session, verify the source-backed Overview battery

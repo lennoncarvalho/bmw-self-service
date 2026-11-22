@@ -13,6 +13,7 @@ from app.coding_db import CodingDatabase
 from app.history_files import valid_vin
 from app.operation_store import OperationStore
 from app.protocol.contracts import (
+    ENET_HEADUNIT_READ_TIMING,
     FailureKind,
     OperationCancelled,
     OperationContext,
@@ -23,7 +24,6 @@ from app.resources import resource_path
 from app.vehicle import did_data
 
 _MAX_FILE = 4 * 1024 * 1024
-ENET_READER_TIMING = (1.0, 7.0)
 logger = logging.getLogger(__name__)
 
 
@@ -148,7 +148,7 @@ def run_prerequisites(
         timing = context.response_timing
         # Recovered ENET initial/pending response windows, still bounded by the
         # caller's absolute per-request and overall operation deadlines.
-        context.response_timing = ENET_READER_TIMING
+        context.response_timing = ENET_HEADUNIT_READ_TIMING
         logger.debug(
             "Coding reader request conn=%s operation=%s ecu=0x%04X data=%s "
             "initial_floor=1.000 pending_floor=7.000 remaining=%.3f",

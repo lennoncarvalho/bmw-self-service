@@ -4,7 +4,7 @@ BMW Self Service is a personal-use desktop application for source-supported
 BMW F/G/U/I vehicles over an ENET cable. The current milestone is functional
 macOS use from Python source with the supplied ISTA 4.29/HSFZ contracts.
 Windows, Intel Mac, packaging/signing and newer transport releases come later.
-Only the owner's F48 X1 MY2018 with NBT is available for physical observations;
+Only the owner's F48 X1 MY2018 with ENTRYNAV is available for physical observations;
 that is neither the product boundary nor a dependency for other source work.
 
 ## Delivery order
@@ -137,8 +137,9 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   post-state; report response-confirmed separately from observed verification.
   Respect source-required activation/cycles instead of demanding universal
   immediate readback. Uncertain outcomes never trigger automatic replay,
-  resume or rollback. Easy Coding's established failures use the evidenced
-  recovery path; failed recovery remains explicit.
+  resume or rollback. An established Easy Coding group rejection before activation
+  may use the evidenced same-target recovery path. A later-stage rejection stops
+  further mutation. Compare interrupted coding without changing its outcome.
 - Keep backups/journals until explicit user deletion; support portable unencrypted
   file export/import. Imports are data, never write authorization. Recheck vehicle,
   software, definitions and current state before a separately confirmed restore.
@@ -162,6 +163,8 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   sorting; file output and replacement follow the displayed order.
 - JSON only, useful offline. Existing car history cannot be read or backed up;
   do not pursue a reader, hidden probes, legacy adapters or fabricated readback.
+  Show a nonempty staged file VIN alongside the verified target VIN. A mismatch
+  requires explicit acknowledgement before append or replacement.
 - Each **Write this entry** appends that one staged entry with ADD only. The top
   **Write to car** erases previous car history and writes every staged entry in
   frozen order, including entries already appended individually. Warn and confirm

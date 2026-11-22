@@ -223,6 +223,12 @@ scaled values and units; keep their source language and typed raw results.
 The native `tabset` missing-table trap must set bit 10 so jobs can fall back from
 optional composite tables to simple environment decoders. Native examples:
 DSC_I1 DID `2800`, raw `78` → 12 V; KOMB25 `170C`, raw `2EE0` → 12000 mV.
+The interpreter reads the little-endian S-register array size at PRG header
+offset `0x18`, with zero selecting 1,024 bytes. This is also the `ssize` result.
+Cap the allocation at the supplied bundle's 65,536-byte maximum. DME_BX8
+`IS_LESEN_DETAIL` at `0xC5925` uses 4,096 bytes. The owner's captured 288-byte
+`62 20 01` reply fits with BMW-FAST framing and decodes three occurrences.
+The host rejects replies exceeding the active buffer before copying them.
 `app/fault_details.py` normalizes results; `DiagnosticReadWorker` preserves basic
 faults and independent detail failures. Each ECU/memory detail batch shares
 30 seconds within the original five-minute scan. Cards display all settled
@@ -271,6 +277,12 @@ The fixed DEMO uses SOC 82%, SOH 90% and KL15 on through the normal HSFZ/native 
 Native/error and source-free Qt/DEMO checks passed; physical reads remain unverified.
 These fields do not grant power-readiness or write authority. Supply voltage is
 separate, and installed I-Levels do not establish available software upgrades.
+History and Easy Coding read fresh KL15 and available supply voltage under the
+same owner before write sessions. Coding also checks before headunit reader
+sessions. Confirmed off, cranking or transition states block the operation.
+Voltage uses the exact DME_BX8 `402B` decoder or the applicable engine
+measurement row. No write-voltage threshold is established. Retain explicit
+operator confirmation of power, ignition on and engine off.
 
 ### CBS
 
@@ -416,12 +428,14 @@ prerequisite/guard helpers implement the source-selected layout/shared engine.
   No universal XOR checksum or Bluetooth-only `31 01 0F01` routine belongs here.
   Strict application echoes, journals, meaningful reread and explicit recovery
   are enforced by the app; do not copy source automatic write retries.
-- Backups can verify completed coding or restoration after the owner confirms
-  any required cycle. The comparison checks the fresh VIN, ECU variant,
-  complete software identity, source digest and all coding groups. A completed
-  write compares against intended bytes. A response-confirmed recovery
-  compares against original bytes. The journal retains the comparison and
-  the separate application outcome.
+- Backups can compare current coding after the owner confirms any required cycle.
+  Check fresh VIN, ECU variant, complete software identity, source digest and
+  all coding groups. Interrupted operations compare against both saved byte sets
+  and retain the interrupted outcome. Completed restores also compare with the
+  archived source baseline, including any regenerated signature difference.
+  Automatic recovery is limited to an established same-target group rejection
+  before activation and rechecks all expected bytes. A later fault-clear
+  rejection retains the activation result and stops the operation.
 - Backup comparisons currently show original/intended bytes. Semantic labels
   need exact saved-definition matching through `CodingDatabase.get_presets()`
   and `resolve_dynamic_preset()`; names alone cannot identify changed features.
@@ -504,7 +518,11 @@ Loading and writing JSON require explicit file actions. History does not open or
 save automatic project files or operation journals; existing files are not deleted.
 Car-write preparation freezes the source list, exact identity/software, requests
 and target VIN in memory. A file VIN is provenance, not authority to write a car.
-Execution rechecks the fresh verified target. Per-step results stay in memory for
+Execution rechecks the fresh verified target. History preparation and execution
+share the source ENET headunit read windows for F150/F101 only. On the owner's
+ENTRYNAV `63 0F1BE0`, F101 replied about 191 ms after the request in the
+2026-11-21 capture, after the negotiated 50 ms wait. That attempt stopped before
+any mutation. Per-step results stay in memory for
 the current staging session. Source pacing is 200 ms after ERASE and 100 ms after each ADD, then checked `1101`
 activation where defined. Use at most 30 seconds per request under a five-minute
 overall deadline. Stop after failure; accepted entries plus failed activation

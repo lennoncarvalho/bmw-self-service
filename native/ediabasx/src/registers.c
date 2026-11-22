@@ -1,12 +1,22 @@
 #include "ediabasx/registers.h"
+#include <stdlib.h>
 #include <string.h>
+
+edxn_error_t edxn_reg_resize_s(edxn_registers_t *r, size_t capacity) {
+    if (capacity == 0 || capacity > EDXN_MAX_ARRAY_SIZE)
+        return EDXN_ERR_INVALID_PRG;
+    if (capacity == r->s_capacity) return EDXN_OK;
+    uint8_t *storage = (uint8_t *)realloc(r->s, EDXN_S_REG_COUNT * capacity);
+    if (!storage) return EDXN_ERR_NOMEM;
+    r->s = storage;
+    r->s_capacity = capacity;
+    return EDXN_OK;
+}
 
 void edxn_reg_reset(edxn_registers_t *r) {
     memset(r->bytes, 0, EDXN_NUM_REG_BYTES);
-    for (int i = 0; i < EDXN_S_REG_COUNT; i++) {
-        memset(r->s[i], 0, EDXN_S_REG_MAXLEN);
-        r->s_len[i] = 0;
-    }
+    if (r->s) memset(r->s, 0, EDXN_S_REG_COUNT * r->s_capacity);
+    memset(r->s_len, 0, sizeof(r->s_len));
     for (int i = 0; i < EDXN_F_REG_COUNT; i++) {
         r->f[i] = 0.0;
     }
@@ -57,18 +67,17 @@ void edxn_reg_set_l(edxn_registers_t *r, int idx, uint32_t val) {
 
 const uint8_t *edxn_reg_get_s(const edxn_registers_t *r, int idx, size_t *len) {
     *len = r->s_len[idx];
-    return r->s[idx];
+    return r->s + (size_t)idx * r->s_capacity;
 }
 
 void edxn_reg_set_s(edxn_registers_t *r, int idx, const uint8_t *data, size_t len) {
-    if (len > EDXN_S_REG_MAXLEN)
-        len = EDXN_S_REG_MAXLEN;
-    memcpy(r->s[idx], data, len);
+    if (len > r->s_capacity) len = r->s_capacity;
+    if (len > 0) memmove(r->s + (size_t)idx * r->s_capacity, data, len);
     r->s_len[idx] = len;
 }
 
 void edxn_reg_clear_s(edxn_registers_t *r, int idx) {
-    memset(r->s[idx], 0, EDXN_S_REG_MAXLEN);
+    memset(r->s + (size_t)idx * r->s_capacity, 0, r->s_capacity);
     r->s_len[idx] = 0;
 }
 

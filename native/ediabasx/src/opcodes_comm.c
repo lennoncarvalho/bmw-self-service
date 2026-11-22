@@ -102,10 +102,10 @@ edxn_error_t edxn_op_comm(edxn_vm_t *vm, uint8_t op,
             return EDXN_ERR_OPERAND;
         size_t req_len;
         const uint8_t *req = edxn_resolve_binary(vm, a1, &req_len);
-        uint8_t resp[EDXN_S_REG_MAXLEN];
+        uint8_t resp[vm->regs.s_capacity];
         size_t resp_len = 0;
         edxn_error_t err = vm->transport->send(vm->transport,
-            req, req_len, resp, &resp_len, EDXN_S_REG_MAXLEN);
+            req, req_len, resp, &resp_len, vm->regs.s_capacity);
         if (err != EDXN_OK) return comm_error(vm);
         edxn_reg_set_s(&vm->regs, a0->u.reg.index, resp, resp_len);
         return EDXN_OK;
@@ -129,10 +129,10 @@ edxn_error_t edxn_op_comm(edxn_vm_t *vm, uint8_t op,
             return comm_error(vm);
         if (a0->kind != EDXN_OP_REG || a0->u.reg.type != EDXN_REG_S)
             return EDXN_ERR_OPERAND;
-        uint8_t buf[EDXN_S_REG_MAXLEN];
+        uint8_t buf[vm->regs.s_capacity];
         size_t len = 0;
         edxn_error_t err = vm->transport->receive_frequent(
-            vm->transport, buf, &len, EDXN_S_REG_MAXLEN);
+            vm->transport, buf, &len, vm->regs.s_capacity);
         if (err != EDXN_OK) return comm_error(vm);
         edxn_reg_set_s(&vm->regs, a0->u.reg.index, buf, len);
         return EDXN_OK;
@@ -315,15 +315,15 @@ edxn_error_t edxn_op_comm(edxn_vm_t *vm, uint8_t op,
         if (!vm->transport) return comm_error(vm);
         size_t req_len;
         const uint8_t *req = edxn_reg_get_s(&vm->regs, a1->u.reg.index, &req_len);
-        uint8_t resp[EDXN_S_REG_MAXLEN];
+        uint8_t resp[vm->regs.s_capacity];
         size_t resp_len = 0;
         edxn_error_t err;
         if (vm->transport->raw_data) {
             err = vm->transport->raw_data(vm->transport,
-                req, req_len, resp, &resp_len, EDXN_S_REG_MAXLEN);
+                req, req_len, resp, &resp_len, vm->regs.s_capacity);
         } else if (vm->transport->send) {
             err = vm->transport->send(vm->transport,
-                req, req_len, resp, &resp_len, EDXN_S_REG_MAXLEN);
+                req, req_len, resp, &resp_len, vm->regs.s_capacity);
         } else {
             return comm_error(vm);
         }
