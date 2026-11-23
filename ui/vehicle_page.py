@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 )
 
 from ui.cbs_panel import CbsPanel
-from ui.cockpit import CockpitCard, caption, match_button_widths
+from ui.cockpit import CockpitCard, caption, match_button_widths, set_lamp_state
 from ui.regional import regional_locale
 
 
@@ -32,10 +32,9 @@ class VehiclePage(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._mil_on: bool | None = None
         self._observed_at: datetime | None = None
         self._observed_clock = monotonic()
-        self._mil_clock = monotonic()
+        self._mil_clock: float | None = None
         self._ecus: list[dict[str, Any]] = []
         self._setup_ui()
         self._age_timer = QTimer(self)
@@ -50,7 +49,7 @@ class VehiclePage(QWidget):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
         self.hero_grid = QGridLayout()
-        self.hero_grid.setSpacing(14)
+        self.hero_grid.setSpacing(16)
         self.hero = CockpitCard("Vehicle systems overview")
         self.model_label = caption("", "display")
         self.hero.box.addWidget(self.model_label)
@@ -93,53 +92,22 @@ class VehiclePage(QWidget):
         match_button_widths((self.scan_button, self.refresh_button))
         self.hero.box.addLayout(actions)
 
-        self.power_card = CockpitCard("Battery & power")
-        self.voltage_value = caption("Unavailable", "technicalDisplay")
-        self.power_card.box.addWidget(self.voltage_value)
-        self.power_card.box.addWidget(caption("Observed supply voltage"))
-        self.power_card.box.addSpacing(12)
-        self.power_labels: dict[str, QLabel] = {}
-        for metric in ("soc", "soh", "kl15"):
-            label = caption("")
-            self.power_labels[metric] = label
-            self.power_card.box.addWidget(label)
-        self.power_card.box.addWidget(
-            caption("Charge and health are low-voltage battery estimates.", "caption")
-        )
-        self.power_card.box.addSpacing(12)
-        self.power_card.box.addWidget(
-            caption("Power readiness is checked when preparing a vehicle write.", "caption")
-        )
-        self.side_column = QWidget()
-        self.side_column.setProperty("class", "transparent")
-        side = QVBoxLayout(self.side_column)
-        side.setContentsMargins(0, 0, 0, 0)
-        side.setSpacing(14)
-        side.addWidget(self.power_card)
-        quick = CockpitCard("Quick actions")
-        for text, target in (("Scan vehicle  ›", 1), ("Service status  ›", 4)):
-            button = QPushButton(text)
-            button.clicked.connect(
-                lambda checked=False, index=target: self.navigation_requested.emit(index)
-            )
-            if target == 4:
-                button.setProperty("class", "secondary")
-            quick.box.addWidget(button)
-        side.addStretch()
-        side.addWidget(quick)
+        self.mil_card = CockpitCard("Check engine (MIL)")
+        self.mil_label = caption("", "metric")
+        self.mil_detail = caption("")
+        self.mil_age = caption("")
+        self.mil_card.box.addStretch()
+        self.mil_card.box.addWidget(self.mil_label)
+        self.mil_card.box.addWidget(self.mil_detail)
+        self.mil_card.box.addStretch()
+        self.mil_card.box.addWidget(self.mil_age)
         self.hero_grid.addWidget(self.hero, 0, 0)
-        self.hero_grid.addWidget(self.side_column, 0, 1)
-        self.hero_grid.setColumnStretch(0, 3)
-        self.hero_grid.setColumnStretch(1, 2)
+        self.hero_grid.setColumnStretch(0, 5)
         layout.addLayout(self.hero_grid)
 
-        self.mil_label = caption("")
-        self.mil_label.setObjectName("milStatus")
-        layout.addWidget(self.mil_label)
         self.observed_label = caption("")
         self.observed_label.setParent(self)
         self.observed_label.hide()
-        layout.addWidget(caption("Vehicle subsystems", "featureTitle"))
         self.subsystem_grid = QGridLayout()
         self.subsystem_grid.setSpacing(12)
         self.subsystem_cards: list[CockpitCard] = []
@@ -169,17 +137,7 @@ class VehiclePage(QWidget):
             )
             card.box.addWidget(button)
             self.subsystem_cards.append(card)
-        layout.addLayout(self.subsystem_grid)
-
-        self.order_button = QPushButton("Show vehicle configuration")
-        self.order_button.setProperty("class", "secondary")
-        self.order_button.setCheckable(True)
-        self.order_button.toggled.connect(self._toggle_order)
-        layout.addWidget(self.order_button)
-        self.facts_card = CockpitCard("Vehicle details")
-        facts = self.facts_card.box
-        self.vin_label = caption("", "technical")
-        self.mileage_label = caption("")
+        details = CockpitCard("Vehicle details")
         self.prod_date_label = caption("")
         self.order_label = caption("")
         self.time_criterion_label = caption("")
@@ -187,27 +145,35 @@ class VehiclePage(QWidget):
         self.upholstery_label = caption("")
         self.previous_ilevel_label = caption("")
         self.factory_ilevel_label = caption("")
-        self.battery_label = caption("")
         self.engine_label = caption("")
+        self.supply_voltage = ""
         for label in (
-            self.vin_label,
-            self.mileage_label,
-            self.prod_date_label,
             self.order_label,
             self.time_criterion_label,
+            self.prod_date_label,
             self.paint_label,
             self.upholstery_label,
             self.previous_ilevel_label,
             self.factory_ilevel_label,
-            self.battery_label,
             self.engine_label,
         ):
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            facts.addWidget(label)
+            details.box.addWidget(label)
+        layout.addWidget(details)
+
+        self.order_button = QPushButton("Show vehicle configuration")
+        self.order_button.setProperty("class", "secondary")
+        self.order_button.setCheckable(True)
+        self.order_button.toggled.connect(self._toggle_order)
+        layout.addWidget(self.order_button)
+        self.configuration_card = CockpitCard("Vehicle configuration")
         self.order_details = caption("")
-        facts.addWidget(self.order_details)
-        self.facts_card.hide()
-        layout.addWidget(self.facts_card)
+        self.configuration_card.box.addWidget(self.order_details)
+        self.configuration_card.hide()
+        layout.addWidget(self.configuration_card)
+
+        layout.addWidget(caption("Vehicle subsystems", "featureTitle"))
+        layout.addLayout(self.subsystem_grid)
 
         # Keep one CBS instance and its established signal/worker ownership.
         # The main window mounts this panel on its own navigation page.
@@ -232,8 +198,8 @@ class VehiclePage(QWidget):
         columns = 4 if self.width() >= 1250 else 2
         for i, card in enumerate(self.subsystem_cards):
             self.subsystem_grid.addWidget(card, i // columns, i % columns)
-        wide = self.width() >= 1150
-        self.hero_grid.addWidget(self.side_column, 0 if wide else 1, 1 if wide else 0)
+        wide = self.width() >= 820
+        self.hero_grid.addWidget(self.mil_card, 0 if wide else 1, 1 if wide else 0)
         self.hero_grid.setColumnStretch(1, 2 if wide else 0)
 
     def resizeEvent(self, event) -> None:
@@ -243,14 +209,14 @@ class VehiclePage(QWidget):
 
     def _toggle_order(self, visible: bool) -> None:
         """Expand configuration details without a nested viewport."""
-        self.facts_card.setVisible(visible)
+        self.configuration_card.setVisible(visible)
         self.order_button.setText(
             "Hide vehicle configuration" if visible else "Show vehicle configuration"
         )
 
     def _populate_order(self, order: dict[str, Any] | None) -> None:
         """Display decoded equipment or clear unavailable configuration details."""
-        self.order_button.setEnabled(True)
+        self.order_button.setEnabled(order is not None)
         if order is None:
             self.order_button.setChecked(False)
             self.order_details.clear()
@@ -277,7 +243,8 @@ class VehiclePage(QWidget):
 
     def reset(self) -> None:
         """Discard all facts and MIL observations from the previous session."""
-        self.populate({}, vin="Unavailable")
+        self._mil_clock = None
+        self.populate({})
         self.cbs_panel.clear("Service status not read in this session")
         self._observed_at = None
         self.observed_label.setText("No current vehicle observation")
@@ -287,9 +254,8 @@ class VehiclePage(QWidget):
 
     def invalidate(self, reason: str = "Observation is no longer current") -> None:
         """Immediately remove a current MIL color after a disruptive event."""
-        self._mil_on = None
-        self._set_mil(None, reason)
-        self._populate_power_status(None)
+        self._mil_clock = None
+        self.set_mil_observation({"on": None, "detail": reason})
 
     def invalidate_order(self) -> None:
         """Discard configuration details after a fatal overview read failure."""
@@ -304,7 +270,7 @@ class VehiclePage(QWidget):
         self.refresh_button.setEnabled(not loading)
         self.refresh_button.setText("Reading overview…" if loading else "Refresh overview")
 
-    def populate(self, results: dict[str, object], series: str = "", vin: str = "") -> None:
+    def populate(self, results: dict[str, object]) -> None:
         """Publish one settled batch; missing data never inherits earlier values."""
         self._observed_at = datetime.now(UTC)
         self._observed_clock = monotonic()
@@ -315,39 +281,24 @@ class VehiclePage(QWidget):
             or "BMW — model designation unavailable"
         )
         self.model_label.setText(str(model))
-        self.vin_label.setText(f"VIN: {vin or results.get('vin') or 'Unavailable'}")
         self.connection_label.setText(
             str(results.get("connection_info") or "Connection unavailable")
         )
         mileage = results.get("mileage")
         if isinstance(mileage, dict):
             mileage = f"{regional_locale().toString(int(mileage['km']))} km ({mileage['source']})"
-        self.mileage_label.setText(f"Odometer: {mileage or 'Unavailable'}")
         production = results.get("prod_date")
         self.prod_date_label.setText(f"Production date: {production or 'Unavailable'}")
         self.prod_date_label.setVisible(bool(production))
         self._populate_ilevel(results.get("i-level"))
-        self.battery_label.setText(
-            f"Supply voltage: {results.get('battery_voltage') or 'Unavailable'}"
-        )
+        self.supply_voltage = str(results.get("battery_voltage") or "")
         engine = results.get("engine_data")
-        self.engine_label.setVisible(isinstance(engine, list))
-        if isinstance(engine, list):
-            self.engine_label.setText(
-                "Engine: " + " · ".join(self._measurement(item) for item in engine)
-            )
-        mil = results.get("mil")
-        self._mil_on = mil.get("on") if isinstance(mil, dict) else None
-        if type(self._mil_on) is not bool:
-            self._mil_on = None
-        clock = mil.get("observed_clock") if isinstance(mil, dict) else None
-        self._mil_clock = float(clock) if isinstance(clock, (int, float)) else monotonic()
-        detail = (
-            str(mil.get("detail", ""))
-            if isinstance(mil, dict)
-            else "No verified read contract for this ECU"
+        self.engine_label.setText(
+            "\n".join(self._measurement(item) for item in engine)
+            if isinstance(engine, list) and engine
+            else "Engine readings: Unavailable"
         )
-        self._set_mil(self._mil_on, detail)
+        self.set_mil_observation(results.get("mil"))
         ecus = results.get("ecu_list")
         self._ecus = ecus if isinstance(ecus, list) else []
         identified = sum(row.get("identified") is True for row in self._ecus)
@@ -392,44 +343,7 @@ class VehiclePage(QWidget):
         self.mileage_value.setText(amount)
         self.mileage_source.setText("(" + source if separator else "")
         self.mileage_source.setVisible(bool(separator))
-        self.voltage_value.setText(str(results.get("battery_voltage") or "Unavailable"))
-        self._populate_power_status(results.get("power_status"))
         self._update_age()
-
-    def _populate_power_status(self, report: object) -> None:
-        """Display independent observations with reported quality and explicit availability."""
-        titles = {"soc": "Charge (SOC)", "soh": "Health (SOH)", "kl15": "Ignition (KL15)"}
-        for metric, label in self.power_labels.items():
-            readings = report.get(metric) if isinstance(report, dict) else None
-            lines, details = [], []
-            if isinstance(readings, list):
-                for reading in readings:
-                    value = reading.get("value")
-                    text = "Unavailable"
-                    if metric == "kl15" and isinstance(value, str):
-                        text = value
-                    elif isinstance(value, (int, float)):
-                        text = regional_locale().toString(float(value), "f", 0) + " %"
-                    quality = reading.get("quality")
-                    if isinstance(quality, (int, float)):
-                        text += (
-                            " · reported quality "
-                            + regional_locale().toString(float(quality), "f", 0)
-                            + " %"
-                        )
-                    if len(readings) > 1:
-                        text += f" ({reading['source']})"
-                    lines.append(text)
-                    details.append(f"{reading['source']}: {reading['detail']}")
-            label.setText(f"{titles[metric]}: " + ("\n".join(lines) or "Unavailable"))
-            label.setToolTip(
-                "\n".join(details)
-                or str(
-                    report.get("detail", "Read unavailable")
-                    if isinstance(report, dict)
-                    else "Read unavailable"
-                )
-            )
 
     def _populate_ilevel(self, levels: object) -> None:
         """Label the source's three roles, collapsing equal values without losing their meaning."""
@@ -456,40 +370,48 @@ class VehiclePage(QWidget):
     @staticmethod
     def _measurement(item: dict[str, Any]) -> str:
         value, unit = item.get("value"), str(item.get("unit", ""))
+        label = str(item.get("label", "Engine reading"))
+        if unit in {"C", "°C"}:
+            label += " temperature"
         if not isinstance(value, (int, float)):
-            return f"{item.get('label')} unavailable"
+            return f"{label}: Unavailable"
         if unit == "mV":
             value, unit = value / 1000, "V"
         unit = {"C": "°C", "rpm": "1/min"}.get(unit, unit)
         decimals = 0 if unit == "1/min" else 1
-        return (
-            f"{item.get('label')} {regional_locale().toString(float(value), 'f', decimals)} {unit}"
-        )
+        return f"{label}: {regional_locale().toString(float(value), 'f', decimals)} {unit}"
 
-    def _set_mil(self, on: bool | None, detail: str) -> None:
-        state = "on" if on is True else "off" if on is False else "unknown"
-        text = (
-            "ON — engine has a present or confirmed fault"
-            if on is True
-            else "OFF — no present or confirmed engine fault"
-            if on is False
-            else "Unavailable"
+    def set_mil_observation(self, result: object) -> None:
+        """Publish the settled lamp command and its read time to both displays."""
+        on = result.get("on") if isinstance(result, dict) else None
+        clock = result.get("observed_clock") if isinstance(result, dict) else None
+        if type(on) is bool and isinstance(clock, (int, float)):
+            self._mil_clock = float(clock)
+        elif self._mil_clock is not None:
+            return
+        detail = (
+            str(result.get("detail", ""))
+            if isinstance(result, dict)
+            else "No lamp observation in this session."
         )
-        self.mil_label.setText(f"● Check engine (MIL): {text}\n{detail}")
-        self.mil_label.setProperty("milState", state)
-        self.mil_label.style().unpolish(self.mil_label)
-        self.mil_label.style().polish(self.mil_label)
+        self.mil_label.setText(set_lamp_state(self.mil_label, on))
+        self.mil_detail.setText(detail)
+        self._update_age()
         self.mil_changed.emit(on, detail)
 
     def _update_age(self) -> None:
-        if self._observed_at is None:
-            return
-        age = max(0, int(monotonic() - self._observed_clock))
-        self.observed_label.setText(
-            f"Overview read at {self._observed_at.astimezone():%H:%M:%S} · {age}s ago"
-        )
-        if monotonic() - self._mil_clock >= 60 and self._mil_on is not None:
-            self.invalidate("Stale observation — refresh to read the current MIL")
+        if self._mil_clock is None:
+            self.mil_age.clear()
+            self.mil_age.hide()
+        else:
+            age = max(0, int(monotonic() - self._mil_clock))
+            self.mil_age.setText(f"Last read {age}s ago")
+            self.mil_age.show()
+        if self._observed_at is not None:
+            age = max(0, int(monotonic() - self._observed_clock))
+            self.observed_label.setText(
+                f"Overview read at {self._observed_at.astimezone():%H:%M:%S} · {age}s ago"
+            )
 
     def _populate_ecus(self, ecus: list[dict[str, Any]]) -> None:
         """Replace ECU detail rows without retaining prior session widgets."""

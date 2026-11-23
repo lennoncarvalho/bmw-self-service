@@ -23,6 +23,7 @@ REVIEWED_JOBS = {
     "aeec47c5f4ff7476fb9548e761d577f5673c7fcb1f63349881a0594d206aee66",
     "003e4b778b0bf725b88dcdd9d982c8528355f4266c4b568547b992f1e0c0844e",
     "36f664998c2827d1c2742f4b7ab3b591a84deefec6843c7bb1369c72a4888a6e",
+    "8f9ba5aeb7f0f16c27c988733b2ee49ed410290e5e89c7c456e54717760afcaf",
     "a71e62867f0b5a076d9ad05efce917dbca85c82482db2595d333194970e13789",
 }
 # Complete STATUS_BLOCK_LESEN listing shared by the five older engines; see
@@ -30,9 +31,17 @@ REVIEWED_JOBS = {
 REVIEWED_BLOCK_JOB = "6ddbe56e3449b7195d15a71d56d9475831dd0d6095987b4b6cc14a82503a9675"
 # The source application's fixed dynamic slot for engine sensor selection (k6.c0.m).
 BLOCK_SLOT = 0xF303
+D94_SHA256 = "98a5f17ebfe99e73b998ed029ae11e650452d19a930ec546fb035fe95ae55a0c"
 
 
-def recover(root: Path, parser_path: Path, output: Path, manifest: Path, ecu_dir: Path) -> None:
+def recover(
+    root: Path,
+    parser_path: Path,
+    output: Path,
+    manifest: Path,
+    ecu_dir: Path,
+    d94_supplement: Path | None = None,
+) -> None:
     """Select exact engine rows, preserving every non-enabled disposition."""
     spec = importlib.util.spec_from_file_location("mil_prg_reference", parser_path)
     if spec is None or spec.loader is None:
@@ -50,6 +59,10 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path, ecu_dir
         key: row for key, row in catalog["variants"].items() if key.startswith("12 ") and row["uds"]
     }
     files = {path.stem.upper(): path for path in ecu_dir.iterdir() if path.suffix.lower() == ".prg"}
+    if "D94BX7A0" not in files and d94_supplement is not None:
+        if hashlib.sha256(d94_supplement.read_bytes()).hexdigest() != D94_SHA256:
+            raise ValueError("Unexpected D94 MIL supplement")
+        files["D94BX7A0"] = d94_supplement
     definitions: dict[str, Any] = {}
     provenance: dict[str, Any] = {}
     for name in sorted({row["name"] for row in engine_rows.values()}):
@@ -67,7 +80,7 @@ def recover(root: Path, parser_path: Path, output: Path, manifest: Path, ecu_dir
             if dict(zip(table.columns, row.values, strict=True)).get("ARG") == "ISMIL"
         ]
         source: dict[str, Any] = {
-            "path": str(path.resolve()),
+            "path": str(path.resolve().relative_to(root.resolve(), walk_up=True)),
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
         source["boolean_labels"] = [
@@ -150,5 +163,8 @@ if __name__ == "__main__":
     cli.add_argument("output", type=Path)
     cli.add_argument("manifest", type=Path)
     cli.add_argument("--ecu-dir", type=Path, required=True)
+    cli.add_argument("--d94-supplement", type=Path)
     args = cli.parse_args()
-    recover(args.root, args.parser_path, args.output, args.manifest, args.ecu_dir)
+    recover(
+        args.root, args.parser_path, args.output, args.manifest, args.ecu_dir, args.d94_supplement
+    )

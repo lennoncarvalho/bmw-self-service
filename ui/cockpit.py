@@ -56,6 +56,16 @@ def caption(text: str, role: str = "caption") -> QLabel:
     return label
 
 
+def set_lamp_state(label: QLabel, on: object) -> str:
+    """Apply shared MIL colors and return the matching state label."""
+    state = "on" if on is True else "off" if on is False else "unknown"
+    label.setObjectName("milStatus")
+    label.setProperty("milState", state)
+    label.style().unpolish(label)
+    label.style().polish(label)
+    return {"on": "On", "off": "Off", "unknown": "Unavailable"}[state]
+
+
 def match_button_widths(buttons: Iterable[QAbstractButton]) -> None:
     """Give sibling command buttons the width required by their longest label."""
     group = list(buttons)

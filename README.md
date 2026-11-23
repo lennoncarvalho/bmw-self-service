@@ -46,7 +46,12 @@ DEMO mode in the gear menu connects a local virtual HSFZ vehicle through the
 normal readers and write workflows. Simulated changes survive reconnects;
 restarting the app or **Reset DEMO vehicle** restores the initial vehicle state.
 DEMO records remain isolated under `~/BMW-Tool/demo/` and are retained after reset.
-Simulation does not validate car behavior. Writes require exact source-backed
+To preview a recorded HSFZ session, run
+`python3 scripts/build_demo_profile.py --capture <debug-session.log>`, then
+enable or reset DEMO. Add `--observed-mil off` or `--observed-mil on` if you
+observed the lamp yourself and the log has no lamp read. DEMO uses the private
+`~/BMW-Tool/demo/captured_vehicle.json` when present. Move that file aside to
+use the bundled profile. Simulation does not validate car behavior. Writes require exact source-backed
 gates, confirmation and the state required by each feature. History shows staged
 local records; it cannot read or
 back up the existing car history. Replacement irreversibly removes omitted

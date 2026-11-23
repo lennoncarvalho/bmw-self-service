@@ -23,7 +23,15 @@ from PySide6.QtWidgets import (
 
 from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker, coverage_complete
 from app.worker import CarWorker
-from ui.cockpit import CardSearch, CockpitCard, DangerButton, PageHeader, ResponsiveColumns, caption
+from ui.cockpit import (
+    CardSearch,
+    CockpitCard,
+    DangerButton,
+    PageHeader,
+    ResponsiveColumns,
+    caption,
+    set_lamp_state,
+)
 from ui.dialogs import MessageBox as QMessageBox
 from ui.regional import regional_locale
 
@@ -33,6 +41,7 @@ logger = logging.getLogger(__name__)
 class DiagnosticsPage(QWidget):
     """Diagnostics tab — read and clear fault codes from all ECUs."""
 
+    mil_observed = Signal(object)
     mutation_active = Signal(bool, bool)
     loading_changed = Signal(bool)
     loading_progress = Signal(str)
@@ -93,14 +102,8 @@ class DiagnosticsPage(QWidget):
         self._stale_scan_notice.hide()
         layout.addWidget(self._stale_scan_notice)
 
-        # T-9: MIL (Check Engine) status indicator
-        mil_row = QHBoxLayout()
-        self._mil_indicator = QLabel("")
-        mil_row.addWidget(self._mil_indicator)
-        self._mil_label = caption("MIL status unavailable until the vehicle endpoint is verified")
-        mil_row.addWidget(self._mil_label)
-        mil_row.addStretch()
-        self.summary_card.box.addLayout(mil_row)
+        self._mil_label = caption("Check engine (MIL): Unavailable")
+        self.summary_card.box.addWidget(self._mil_label)
 
         # Stack: empty state vs DTC list
         self.stack = QVBoxLayout()
@@ -270,6 +273,8 @@ class DiagnosticsPage(QWidget):
             dtcs = result.get("dtcs", [])
             complete = result.get("complete", True)
             self._coverage = result.get("coverage", [])
+            if result.get("mil") is not None:
+                self.mil_observed.emit(result["mil"])
         else:
             dtcs = result if isinstance(result, list) else []
             complete = True
@@ -549,17 +554,9 @@ class DiagnosticsPage(QWidget):
 
     @Slot(object, str)
     def set_mil_observation(self, on: object, detail: str) -> None:
-        """Mirror the overview's engine fault-memory indicator (D-59)."""
-        state = "on" if on is True else "off" if on is False else "unknown"
-        text = "ON" if on is True else "OFF" if on is False else "Unavailable"
-        self._mil_indicator.setText("")
-        self._mil_label.setObjectName("milStatus")
+        """Mirror the last settled lamp-command read."""
+        text = set_lamp_state(self._mil_label, on)
         self._mil_label.setText(f"Check engine (MIL): {text} · {detail}")
-        self._mil_label.setWordWrap(True)
-        self._mil_label.setTextFormat(Qt.TextFormat.PlainText)
-        self._mil_label.setProperty("milState", state)
-        self._mil_label.style().unpolish(self._mil_label)
-        self._mil_label.style().polish(self._mil_label)
 
 
 # ---- Helpers ----

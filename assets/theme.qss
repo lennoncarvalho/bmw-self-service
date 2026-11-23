@@ -163,7 +163,7 @@ QSpinBox::up-button, QSpinBox::down-button {
 QDateEdit {
     min-height: 24px;
 }
-/* Connection overview: color always accompanies an explicit MIL label. */
+/* MIL colors accompany a read state in both the overview and fault scan. */
 QLabel#milStatus {
     border-radius: 8px;
     padding: 12px;
@@ -172,7 +172,8 @@ QLabel#milStatus {
     background: #242430;
     color: #c2c6d5;
 }
-QLabel#milStatus[milState="on"] { color: #ff6666; background: #382020; }
+QLabel#milStatus[role="metric"] { font-size: 22px; }
+QLabel#milStatus[milState="on"] { color: #ffb4ab; background: #44222b; }
 QLabel#milStatus[milState="off"] { color: #66cc88; background: #203328; }
 
 QLabel#faultDetailValue { font-size: 12px; color: #c2c6d5; }

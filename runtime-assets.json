@@ -1,8 +1,8 @@
 {
   "files": {
     "assets/demo_vehicle.json": {
-      "bytes": 21295,
-      "sha256": "5435a019431126d12ed82dac0904719b8464d093e661633fa880c73259137f62"
+      "bytes": 21349,
+      "sha256": "96d2f402f2c3e97fabca208d2fac1354105ccf0a30906ae867a57f3e710c3136"
     },
     "coding_data/cbs_definitions.json": {
       "bytes": 66003,
@@ -33,8 +33,8 @@
       "sha256": "c649181bd3b4dc9c6c52ef930f096afd1099d9558abf672a4fcf6fb0e33c190c"
     },
     "coding_data/mil_contracts.json": {
-      "bytes": 6494,
-      "sha256": "13c38d54840ba6071efc6b7e772fc59cc5c37532624d1608c0e51e8fc876d269"
+      "bytes": 6495,
+      "sha256": "d03499cc2d362eb75ffe9c04ddf8082bc42a91e3efecea9565c603373650619d"
     },
     "coding_data/power_readers.json": {
       "bytes": 23796,

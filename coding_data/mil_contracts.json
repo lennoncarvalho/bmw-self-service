@@ -291,7 +291,7 @@
     },
     "12 0F28E0": {
       "name": "DME9FF_R",
-      "state": "no-direct-mil-row"
+      "state": "missing-definition"
     },
     "12 0F2930": {
       "did": 19049,

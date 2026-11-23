@@ -21,7 +21,7 @@ from app.ista_jobs import APP_SOURCE, JobBackend, fault_records
 from app.protocol.contracts import FailureKind
 from app.resources import resource_path
 from app.uds import decode_dtc_records
-from app.vehicle import DiagnosticCatalog, did_data, fault_state
+from app.vehicle import DiagnosticCatalog, did_data, fault_state, read_mil
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -329,7 +329,13 @@ class DiagnosticReadWorker(CarWorker):
             "coverage": coverage,
             "complete": complete,
             "topology_known": self.coverage_known,
-            "mil": None,
+            "mil": (
+                None
+                if self._cancelled.is_set() or stopped or not self.connection.alive_ok
+                else read_mil(
+                    self.connection, self.ecus, timeout=min(30.0, deadline - time.monotonic())
+                )
+            ),
         }
 
     def _read_details(

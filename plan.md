@@ -54,8 +54,10 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   restoration/verification and history append/replacement. Additional profiles
   and DoIP simulation come later; existing unsupported features stay unavailable.
 - Ship a fixed starting set of representative faults, service items and coding
-  values. Successful supported actions produce visible results through normal
-  workflows. Do not randomize each connection or expose failure-injection UI.
+  values. Prefer the private profile when one has been compiled from an owner
+  session. Missing capture data stays unavailable. Successful supported actions
+  produce visible results through normal workflows. Do not randomize each
+  connection or expose failure-injection UI.
 - Keep virtual vehicle changes across disconnect/reconnect within the app run.
   Restarting the app or explicit Reset DEMO restores the bundled vehicle state.
   Saved DEMO backups/journals remain separate from this volatile vehicle state
@@ -95,9 +97,10 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   incomplete coverage; disclose gaps, continue after definite local rejection on
   a usable stream, and reread. No per-code/per-ECU clear UI, backup or saved-report
   prerequisite. Permanent faults have no separate erase action.
-- The engine indicator follows present or confirmed engine fault memory,
-  independently of engine-running state. Red for present/confirmed faults, green
-  only after complete supported engine reads without them, grey when unavailable.
+- The Check engine (MIL) card displays the latest successfully read lamp command.
+  Red means on, green means off and grey means no successful observation in this
+  connection. Report the read age. Only a successful new read changes the observed
+  state within a connection. Fault memory remains a separate result.
 - CBS is a manual read followed by a separately confirmed single-item reset.
   Start with no service rows; display results directly after reading, without a
   show/hide control. No generic erase-all, automatic reset, history erase

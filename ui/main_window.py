@@ -32,11 +32,12 @@ from PySide6.QtWidgets import (
 
 from app.cbs import CbsJournalStore, CbsReadWorker, CbsResetWorker, plan_reset
 from app.connection import DoIPConnection, HSFZConnection
-from app.demo_vehicle import DemoVehicle
+from app.demo_vehicle import CAPTURED_DEMO_PROFILE, DemoVehicle
 from app.diagnostics import coverage_complete
 from app.ista_jobs import refresh_bundled_data
 from app.protocol.contracts import TransportKind
 from app.session import LIVE, environment
+from app.vehicle import post_connect_tasks
 from app.worker import ConnectWorker, PostConnectWorker, ProtocolWorker
 from ui.backups_page import BackupsPage
 from ui.cockpit import caption, cockpit_icon
@@ -89,7 +90,6 @@ class MainWindow(QMainWindow):
         self._worker: ConnectWorker | None = None
         self._connect_selection: tuple[str, str] | None = None
         self._post_connect_worker: PostConnectWorker | None = None
-        self._post_connect_context: tuple[object, str, str] | None = None
         self._overview_refresh = False
         self._overview_identity = ("", "")
         self._keepalive_worker: ProtocolWorker | None = None
@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
 
         self.diag_page = DiagnosticsPage()
         self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
+        self.diag_page.mil_observed.connect(self.vehicle_page.set_mil_observation)
         self.diag_page.mutation_active.connect(self._on_diagnostics_mutation_active)
         self.diag_page.loading_changed.connect(self._set_diagnostics_loading)
         self.diag_page.loading_progress.connect(self._on_diagnostics_loading_progress)
@@ -310,9 +311,7 @@ class MainWindow(QMainWindow):
             self.vehicle_page.observed_label.text() if self._connected else ""
         )
         self.power_status.setText(
-            self.vehicle_page.battery_label.text().replace("Supply voltage: ", "")
-            if self._connected
-            else "Voltage unavailable"
+            (self.vehicle_page.supply_voltage if self._connected else "") or "Voltage unavailable"
         )
         self.vehicle_page.scan_button.setEnabled(self._connected and not self._mutation_active)
         self.vehicle_page.health_value.setText(
@@ -614,16 +613,18 @@ class MainWindow(QMainWindow):
         logger.info("DEMO mode %s", "enabled" if checked else "disabled")
 
     def _load_demo_vehicle(self) -> DemoVehicle | None:
-        """Report missing or invalid bundled data without granting a live fallback."""
+        """Load the private capture when installed, otherwise use the bundled profile."""
         try:
+            if CAPTURED_DEMO_PROFILE.exists():
+                return DemoVehicle(CAPTURED_DEMO_PROFILE)
             return DemoVehicle()
         except (OSError, ValueError, KeyError, TypeError):
             logger.warning("DEMO vehicle data is unavailable", exc_info=True)
             QMessageBox.warning(
                 self,
                 "DEMO unavailable",
-                "The bundled DEMO vehicle data is missing or invalid. "
-                "Regenerate the runtime assets before trying again.",
+                "The DEMO vehicle profile is missing or invalid. Check the session log "
+                "and regenerate the selected profile before trying again.",
             )
             return None
 
@@ -906,7 +907,7 @@ class MainWindow(QMainWindow):
         self._start_keepalive()
 
         if not vin:
-            self.vehicle_page.populate({}, series, "Unverified")
+            self.vehicle_page.populate({})
             self.vehicle_page.refresh_button.setEnabled(False)
             self.vehicle_page.cbs_panel.read_button.setEnabled(False)
             self.hide_spinner()
@@ -924,9 +925,7 @@ class MainWindow(QMainWindow):
         # sequentially (with queue progress shown in spinner).
         self.show_spinner("Reading vehicle data...")
         self.vehicle_page.set_loading(True)
-        tasks = self._build_post_connect_tasks(vin)
-        self._post_connect_worker = PostConnectWorker(connection, tasks)
-        self._post_connect_context = (connection, vin, series)
+        self._post_connect_worker = PostConnectWorker(connection, post_connect_tasks())
         self._post_connect_worker.progress.connect(self._on_connection_progress)
         self._post_connect_worker.result_ready.connect(self._on_post_connect_result)
         self._post_connect_worker.error.connect(self._on_post_connect_worker_error)
@@ -937,14 +936,12 @@ class MainWindow(QMainWindow):
     @Slot(object)
     def _on_post_connect_result(self, result: dict) -> None:
         worker = self.sender()
-        if worker is not self._post_connect_worker or self._post_connect_context is None:
+        if not isinstance(worker, PostConnectWorker) or worker is not self._post_connect_worker:
             return
-        connection, vin, series = self._post_connect_context
+        connection = worker.connection
         self._post_connect_worker = None
-        self._post_connect_context = None
-        assert isinstance(worker, QThread)
         self._retire_worker(worker)
-        self._on_post_connect_finished(result, connection, vin, series)
+        self._on_post_connect_finished(result, connection)
 
     @Slot()
     def _refresh_overview(self) -> None:
@@ -961,16 +958,14 @@ class MainWindow(QMainWindow):
             or not getattr(self._connection, "alive_ok", True)
         ):
             return
-        vin, series = self._overview_identity
-        if not vin:
+        if not self._overview_identity[0]:
             return
         self._overview_refresh = True
         self.vehicle_page.set_loading(True)
         self.show_spinner("Refreshing vehicle data...")
         self._spinner_cancel_timer.stop()
         self._spinner_retry_timer.stop()
-        self._post_connect_context = (self._connection, vin, series)
-        worker = PostConnectWorker(self._connection, self._build_post_connect_tasks(vin))
+        worker = PostConnectWorker(self._connection, post_connect_tasks())
         self._post_connect_worker = worker
         worker.progress.connect(self._on_connection_progress)
         worker.result_ready.connect(self._on_post_connect_result)
@@ -980,41 +975,15 @@ class MainWindow(QMainWindow):
     @Slot(str)
     def _on_post_connect_worker_error(self, message: str) -> None:
         worker = self.sender()
-        if worker is not self._post_connect_worker or self._post_connect_context is None:
+        if not isinstance(worker, PostConnectWorker) or worker is not self._post_connect_worker:
             return
-        connection, _vin, _series = self._post_connect_context
+        connection = worker.connection
         self._post_connect_worker = None
-        self._post_connect_context = None
-        assert isinstance(worker, QThread)
         self._retire_worker(worker)
         self._on_post_connect_error(message, connection)
 
-    def _build_post_connect_tasks(self, vin: str = "") -> list[tuple[str, Callable[[Any], object]]]:
-        """Build the queue of data-loading tasks for PostConnectWorker.
-
-        Each task is a ``(label, fn)`` tuple where ``fn(connection)``
-        performs one or more UDS reads and returns a parsed value.
-        Fallback logic lives inside each task function.
-        """
-
-        from app.vehicle import post_connect_tasks
-
-        return post_connect_tasks()
-
-    @Slot(object)
-    def _on_post_connect_finished(
-        self, result: dict, connection: object, vin: str, series: str
-    ) -> None:
-        """Handle PostConnectWorker completion on the main thread.
-
-        Populates the vehicle page with results, reports any errors,
-        then starts the secondary workers (DTC read, service history,
-        coding load).
-
-        If the active connection has changed since the worker started
-        (e.g. user disconnected and reconnected), the results are
-        stale and this handler returns immediately.
-        """
+    def _on_post_connect_finished(self, result: dict, connection: object) -> None:
+        """Publish settled Overview and capability data for the active connection."""
         if self._connection is not connection:
             return  # connection changed, results are stale
         if self._closing or not getattr(connection, "alive_ok", True):
@@ -1043,8 +1012,11 @@ class MainWindow(QMainWindow):
             f"{getattr(config, 'local_ipv4', None) or 'Unavailable'}"
         )
 
+        if self._demo_mode and self._demo_vehicle is not None and self._demo_vehicle.captured:
+            results["connection_info"] = "DEMO · Replaying a captured vehicle session"
+
         # Populate vehicle page with all results
-        self.vehicle_page.populate(results, series, vin)
+        self.vehicle_page.populate(results)
         prefix = (
             "[DEMO] "
             if environment(connection).mode == "demo"
@@ -1114,7 +1086,6 @@ class MainWindow(QMainWindow):
         if connection is not None and self._connection is not connection:
             return  # connection changed, error is stale
         self.hide_spinner()
-        self.vehicle_page.invalidate("Overview read failed — refresh or reconnect")
         self.vehicle_page.invalidate_order()
         self.vehicle_page.set_loading(False)
         if self._closing or not getattr(connection, "alive_ok", True):
@@ -1350,7 +1321,6 @@ class MainWindow(QMainWindow):
             page._connection = None
         self._worker = None
         self._post_connect_worker = None
-        self._post_connect_context = None
         if self._connection:
             try:
                 if hasattr(self._connection, "disconnect"):
@@ -1653,9 +1623,7 @@ class MainWindow(QMainWindow):
         self.diag_page.setEnabled(not active)
         self.vehicle_page.refresh_button.setEnabled(self._connected and not active)
         self.vehicle_page.cbs_panel.set_busy(active or self._cbs_worker is not None)
-        if active:
-            self.vehicle_page.invalidate("Vehicle operation in progress — refresh afterwards")
-        elif self._connected and not self._coding_loading and refresh_overview:
+        if not active and self._connected and not self._coding_loading and refresh_overview:
             if self._diagnostics_loading:
                 self._overview_after_diagnostics = True
             else:
