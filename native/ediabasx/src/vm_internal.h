@@ -30,8 +30,6 @@
 #include <ctype.h>
 #include <math.h>
 
-#define EDXN_ARRAY_MAX_SIZE 1023
-
 /* ── Opcode handler signature ──────────────────────────────────────── */
 
 typedef edxn_error_t (*edxn_op_fn)(edxn_vm_t *vm,
@@ -282,8 +280,8 @@ static inline void edxn_write_int(edxn_vm_t *vm,
         const uint8_t *old = edxn_reg_get_s(&vm->regs, op->u.idx.base_s, &slen);
         size_t needed = (size_t)start + (size_t)len;
         size_t new_len = needed > slen ? needed : slen;
-        if (new_len > EDXN_S_REG_MAXLEN) new_len = EDXN_S_REG_MAXLEN;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        if (new_len > vm->regs.s_capacity) new_len = vm->regs.s_capacity;
+        uint8_t tmp[vm->regs.s_capacity];
         memset(tmp, 0, new_len);
         if (slen > 0) memcpy(tmp, old, slen < new_len ? slen : new_len);
         for (int i = 0; i < len && (size_t)(start + i) < new_len; i++)
@@ -308,13 +306,13 @@ static inline void edxn_write_binary(edxn_vm_t *vm,
         if (start < 0) start = 0;
         /* local: a start at or past the register capacity cannot hold any byte;
            without this the capped length below would be smaller than start. */
-        if ((size_t)start >= EDXN_S_REG_MAXLEN) return;
+        if ((size_t)start >= vm->regs.s_capacity) return;
         size_t slen_old;
         const uint8_t *old = edxn_reg_get_s(&vm->regs, op->u.idx.base_s, &slen_old);
         size_t needed = (size_t)start + len;
         size_t new_len = needed > slen_old ? needed : slen_old;
-        if (new_len > EDXN_S_REG_MAXLEN) new_len = EDXN_S_REG_MAXLEN;
-        uint8_t tmp[EDXN_S_REG_MAXLEN];
+        if (new_len > vm->regs.s_capacity) new_len = vm->regs.s_capacity;
+        uint8_t tmp[vm->regs.s_capacity];
         memset(tmp, 0, new_len);
         if (slen_old > 0) memcpy(tmp, old, slen_old < new_len ? slen_old : new_len);
         size_t copy = len;

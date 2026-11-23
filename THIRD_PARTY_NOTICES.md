@@ -36,6 +36,9 @@ after a refused telegram; two `-Wextra` warnings are silenced; table cell walks
 are bounded by the table data length; indexed binary writes starting at or past
 the S-register capacity are ignored; and int/immediate byte views use a per-VM
 scratch ring instead of process-wide static buffers.
+The VM also sizes S registers and transport reply buffers from the active PRG's
+declared array size within the supplied bundle's supported range and assembles
+register bits with unsigned arithmetic in the affected stack and move operations.
 
 PolyForm Noncommercial permits personal, noncommercial use only. This is acceptable
 under D-63 (personal use, no public or commercial release). Any public or commercial

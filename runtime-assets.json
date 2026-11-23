@@ -2237,8 +2237,8 @@
       "sha256": "cc80bcef37c441dbb25582170036cbb53f2ea6bd5643c1609d0d02690b753d9e"
     },
     "native/build/libedx.dylib": {
-      "bytes": 189840,
-      "sha256": "a6fed6737d7ab1eb8abfa46420aaf6e03349b94232b8add14b7290ab679fa0a9"
+      "bytes": 189904,
+      "sha256": "7d51940bf99b6ed61bb615198852e60abbc1c2cbfb8f77facfbb285313d8bc3b"
     }
   },
   "schema_version": 1

@@ -63,6 +63,13 @@ edxn_error_t edxn_vm_init(edxn_vm_t *vm, edxn_prg_t *prg) {
         return err;
     }
 
+    err = edxn_reg_resize_s(&vm->regs, prg->array_size);
+    if (err != EDXN_OK) {
+        edxn_result_free(&vm->system_results);
+        edxn_result_free(&vm->current_results);
+        return err;
+    }
+    edxn_reg_reset(&vm->regs);
     return EDXN_OK;
 }
 
@@ -72,6 +79,7 @@ void edxn_vm_free(edxn_vm_t *vm) {
     for (size_t i = 0; i < vm->result_set_count; i++)
         edxn_result_free(&vm->result_sets[i]);
     free(vm->result_sets);
+    free(vm->regs.s);
 
     /* Free owned variant prg (swapped in from GRP→PRG resolution) */
     if (vm->owned_prg) {
@@ -299,6 +307,9 @@ edxn_error_t edxn_vm_step(edxn_vm_t *vm) {
 static edxn_error_t run_job_with_bin(edxn_vm_t *vm, int job_idx,
                                       const char *args,
                                       const uint8_t *bin, size_t bin_len) {
+    /* The active SGBD can change after group identification. */
+    edxn_error_t resize_error = edxn_reg_resize_s(&vm->regs, vm->prg->array_size);
+    if (resize_error != EDXN_OK) return resize_error;
     edxn_transport_t *saved_transport = vm->transport;
     bool saved_init = vm->initialized;
     edxn_vm_reset(vm);

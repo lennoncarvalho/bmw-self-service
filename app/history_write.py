@@ -17,11 +17,17 @@ from app.history_files import (
     valid_vin,
     validate_project,
 )
-from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
+from app.protocol.contracts import (
+    ENET_HEADUNIT_READ_TIMING,
+    FailureKind,
+    OperationContext,
+    ProtocolFailure,
+    TransportKind,
+)
 from app.resources import resource_path
 from app.service_history import decode_nbt_add_result, encode_nbt_add
 from app.session import LIVE, check_binding, environment
-from app.vehicle import DiagnosticCatalog, did_data
+from app.vehicle import DiagnosticCatalog, WriteConditionsBlocked, check_write_conditions, did_data
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -98,6 +104,7 @@ def build_plan(
     known_dates: set[date],
     consumed: set[str],
     session: dict[str, str] | None = None,
+    write_conditions: str = "",
 ) -> HistoryPlan:
     """Freeze append or replacement against local data, never an invented car baseline."""
     data, digest = contracts()
@@ -168,6 +175,7 @@ def build_plan(
         "intended": intended,
         "requests": requests,
         "draft_ids": ids,
+        "write_conditions": write_conditions,
     }
     return HistoryPlan(
         json.dumps(plan, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
@@ -228,6 +236,12 @@ def validate_execution(data: dict) -> dict:
     return definition
 
 
+def file_vin_mismatch(data: dict) -> bool:
+    """Check provenance against the confirmed target without changing the staged file."""
+    file_vin = data["local_before"]["vin"]
+    return file_vin is not None and file_vin != data["vin"]
+
+
 class HistoryPrepareWorker(CarWorker):
     """Read target identity and freeze the staging area before confirmation."""
 
@@ -248,9 +262,10 @@ class HistoryPrepareWorker(CarWorker):
         self.mode, self.index = mode, index
         self.known_dates = set(known_dates or ())
         self.consumed = set(consumed or ())
+        self.guard_notice = ""
 
     def do_work(self) -> HistoryPlan:
-        """Prepare on the owner with a whole30second read budget, no mutations."""
+        """Prepare on the owner within one 30-second budget."""
         connection = self.connection
         if connection.read_only or connection.kind != TransportKind.HSFZ:
             raise PermissionError("History writes require a supported writable session")
@@ -263,16 +278,29 @@ class HistoryPrepareWorker(CarWorker):
         consumed = self.consumed
         context.remaining()
 
+        conditions = ""
+
         def prepare(services: Any, ctx: OperationContext) -> bytes:
-            identity = services.invoke(b"\x22\xf1\x50", ctx)
-            match = DiagnosticCatalog().identify(0x63, identity)
-            if (
-                match.get("address_index") != row["address_index"]
-                or match.get("name") != row["name"]
-            ):
-                raise ValueError("Headunit identity changed; refresh before writing")
-            software = services.invoke(b"\x22\xf1\x01", ctx)
+            nonlocal conditions
+            timing = ctx.response_timing
+            ctx.response_timing = ENET_HEADUNIT_READ_TIMING
+            try:
+                identity = services.invoke(b"\x22\xf1\x50", ctx)
+                match = DiagnosticCatalog().identify(0x63, identity)
+                if (
+                    match.get("address_index") != row["address_index"]
+                    or match.get("name") != row["name"]
+                ):
+                    raise ValueError("Headunit identity changed; refresh before writing")
+                software = services.invoke(b"\x22\xf1\x01", ctx)
+            finally:
+                ctx.response_timing = timing
             validate_software(software)
+            try:
+                conditions = check_write_conditions(connection, self.ecus, ctx)
+            except WriteConditionsBlocked as error:
+                self.guard_notice = str(error)
+                raise
             return json.dumps(
                 {
                     "address": 0x63,
@@ -295,6 +323,7 @@ class HistoryPrepareWorker(CarWorker):
             known_dates=known_dates,
             consumed=consumed,
             session=environment(connection).binding(),
+            write_conditions=conditions,
         )
 
 
@@ -308,11 +337,15 @@ class HistoryWriteWorker(CarWorker):
         *,
         power_acknowledged: bool = False,
         replacement_acknowledged: bool = False,
+        file_vin_acknowledged: bool = False,
+        ecus: list[dict] | None = None,
     ) -> None:
         super().__init__(connection)
         self.plan = plan
         self.power_acknowledged = power_acknowledged
         self.replacement_acknowledged = replacement_acknowledged
+        self.file_vin_acknowledged = file_vin_acknowledged
+        self.ecus = [dict(row) for row in ecus or ()]
         self._executed = False
         self.report: dict[str, Any] = {
             "state": "not-started",
@@ -330,6 +363,8 @@ class HistoryWriteWorker(CarWorker):
         data = self.plan.data()
         check_binding(connection, data.get("session"))
         definition = validate_execution(data)
+        if file_vin_mismatch(data) and not self.file_vin_acknowledged:
+            raise PermissionError("Review the mismatched source file VIN before writing")
         if (
             not self.power_acknowledged
             or getattr(connection, "power_sufficient", None) is False
@@ -361,6 +396,15 @@ class HistoryWriteWorker(CarWorker):
             nonlocal attempted, accepted_mutation, failure
             for step, request in enumerate(requests):
                 ctx.remaining()
+                if request["kind"] == "session":
+                    try:
+                        self.report["write_conditions"] = check_write_conditions(
+                            connection, self.ecus, ctx
+                        )
+                    except WriteConditionsBlocked as error:
+                        self.report["instructions"] = str(error)
+                        failure = "blocked"
+                        return b""
                 attempted = step
                 record("sending", step)
                 self.progress.emit(
@@ -368,7 +412,10 @@ class HistoryWriteWorker(CarWorker):
                 )
                 payload = bytes.fromhex(request["request"])
                 deadline = ctx.deadline
+                timing = ctx.response_timing
                 ctx.deadline = min(deadline, time.monotonic() + 30.0)
+                if payload in (b"\x22\xf1\x50", b"\x22\xf1\x01"):
+                    ctx.response_timing = ENET_HEADUNIT_READ_TIMING
                 try:
                     # Nested owner call remains inline on this executor, including gateway VIN.
                     try:
@@ -381,6 +428,7 @@ class HistoryWriteWorker(CarWorker):
                         response = exc.raw
                 finally:
                     ctx.deadline = deadline
+                    ctx.response_timing = timing
                 if response[:1] == b"\x7f":
                     record("rejected", step, response, "ECU rejected this request")
                     failure = "rejected"

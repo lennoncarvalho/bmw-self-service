@@ -153,21 +153,21 @@ def load_record(path: Path) -> dict[str, Any]:
 
 
 def coding_comparison_basis(record: dict) -> str | None:
-    """Return the saved byte set a completed coding operation can be checked against."""
+    """Select a completed byte set or both sets for an interrupted operation."""
     original = record["original"]
     if original["kind"] != "coding" or original["mode"] not in ("live", "demo"):
         return None
     for event in reversed(record["events"]):
+        if event["observed"].get("kind") == "coding-comparison":
+            continue
         state = event["state"]
         if state in {"response-confirmed", "cycle-required"}:
             return "intended"
         if state == "recovered":
             return "baseline"
-        if (
-            state not in {"verified", "mismatch"}
-            or event["observed"].get("kind") != "coding-comparison"
-        ):
-            return None
+        if state in {"writing", "partial", "uncertain"}:
+            return "both"
+        return None
     return None
 
 

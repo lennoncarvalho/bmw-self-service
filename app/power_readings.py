@@ -8,7 +8,7 @@ from typing import Any
 
 from app.ediabas import JobError
 from app.ista_jobs import JobBackend, JobRun
-from app.protocol.contracts import OperationCancelled, TransportKind
+from app.protocol.contracts import OperationCancelled, OperationContext, TransportKind
 from app.resources import resource_path
 
 logger = logging.getLogger(__name__)
@@ -155,7 +155,13 @@ def decode_reading(run: JobRun, reader: dict[str, Any]) -> dict[str, dict[str, A
     return output
 
 
-def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, Any]:
+def read_power_status(
+    connection: Any,
+    ecus: list[dict[str, Any]],
+    *,
+    ignition_only: bool = False,
+    context: OperationContext | None = None,
+) -> dict[str, Any]:
     """Read every applicable exact variant within one shared 30-second operation budget.
 
     Independent sources remain separate observations. Definite failures retain
@@ -168,6 +174,8 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
         report["detail"] = "Power readers need a recovered logical-address mapping"
         return report
     deadline = time.monotonic() + 30.0
+    if context is not None:
+        deadline = min(deadline, context.deadline)
     profiles = reader_profiles()
     stopped = False
     backend = JobBackend(connection)
@@ -178,6 +186,13 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
                 continue
             profile = profiles.get(name)
             if ecu.get("identified") is not True or profile is None:
+                continue
+            readers = [
+                reader
+                for reader in profile["readers"]
+                if not ignition_only or "kl15" in reader["values"]
+            ]
+            if not readers:
                 continue
             # A matching name alone is insufficient: keep the exact address/index
             # and generated native decoder identity bound to each observation.
@@ -195,7 +210,7 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
             except (JobError, OSError, ValueError):
                 logger.warning("Power reader job unavailable %s", name, exc_info=True)
                 matching = False
-            for reader in profile["readers"]:
+            for reader in readers:
                 remaining = deadline - time.monotonic()
                 decoded = {}
                 reason = "Exact verified job data unavailable"
@@ -211,6 +226,7 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
                             reader["args"],
                             timeout=remaining,
                             deadline=deadline,
+                            cancelled=context.cancelled if context is not None else None,
                         )
                         if run.error is not None:
                             logger.warning(
@@ -220,8 +236,16 @@ def read_power_status(connection: Any, ecus: list[dict[str, Any]]) -> dict[str, 
                         stopped = (
                             isinstance(run.error, OperationCancelled) or run.state() == "cancelled"
                         )
+                        if context is not None and isinstance(
+                            run.error, (ConnectionError, TimeoutError, OperationCancelled)
+                        ):
+                            raise run.error
                         decoded = decode_reading(run, reader)
-                    except (JobError, OSError, ValueError):
+                    except (JobError, OSError, ValueError) as error:
+                        if context is not None and isinstance(
+                            error, (ConnectionError, TimeoutError)
+                        ):
+                            raise
                         logger.warning(
                             "Power result unavailable %s/%s", name, reader["job"], exc_info=True
                         )

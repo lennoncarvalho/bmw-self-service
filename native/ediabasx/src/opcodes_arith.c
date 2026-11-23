@@ -59,10 +59,11 @@ edxn_error_t edxn_op_arith(edxn_vm_t *vm, uint8_t op,
             size_t blen;
             const uint8_t *bin = edxn_resolve_binary(vm, a1, &blen);
             len = edxn_reg_byte_len(&a0->u.reg);
-            int32_t val = 0;
+            /* Local: accumulate all four bytes without a signed left shift. */
+            uint32_t val = 0;
             for (int i = 0; i < len && (size_t)i < blen; i++)
-                val |= (int32_t)(bin ? bin[i] : 0) << (i * 8);
-            edxn_reg_set_int(&vm->regs, &a0->u.reg, val);
+                val |= (uint32_t)(bin ? bin[i] : 0) << (i * 8);
+            edxn_reg_set_int(&vm->regs, &a0->u.reg, (int32_t)val);
         } else {
             v1 = edxn_resolve_int(vm, a1);
             edxn_reg_set_int(&vm->regs, &a0->u.reg, v1);

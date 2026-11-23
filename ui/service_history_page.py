@@ -477,7 +477,7 @@ class ServiceHistoryPage(QWidget):
             "File operation failed; the staged list is retained. Check the file and session log."
             if isinstance(self._worker, HistoryFileWorker)
             else "History operation could not complete. "
-            + message
+            + (getattr(self._worker, "guard_notice", "") or message)
             + " No automatic retry will occur."
         )
 
@@ -904,8 +904,9 @@ class ServiceHistoryPage(QWidget):
             return ""
         from app.history_write import INSTRUCTIONS
 
-        if self._write_results:
-            return str(self._write_results[-1]["summary"])
+        for result in reversed(self._write_results):
+            if result["report"]["state"] != "blocked":
+                return str(result["summary"])
         return "A previous history write was interrupted or incomplete. " + INSTRUCTIONS
 
     @Slot()
@@ -961,7 +962,7 @@ class ServiceHistoryPage(QWidget):
         self._start_worker(worker, prepared)
 
     def _confirm_history(self, plan: object, before: dict, key: str, connection: object) -> None:
-        from app.history_write import HistoryPlan, HistoryWriteWorker
+        from app.history_write import HistoryPlan, HistoryWriteWorker, file_vin_mismatch
 
         if (
             not isinstance(plan, HistoryPlan)
@@ -1009,14 +1010,18 @@ class ServiceHistoryPage(QWidget):
             )
         )
         power = CheckInput(
-            "I confirm sufficient vehicle and computer power for the entire operation."
+            "I confirm ignition is on, the engine is off, and vehicle and computer power are adequate."
         )
         layout.addWidget(power)
-        layout.addWidget(
-            _label(
-                "No source-derived power threshold is available for this operation; reliable power sufficiency is unknown. Do not proceed if the car or computer reports insufficient power."
-            )
-        )
+        layout.addWidget(_label(data["write_conditions"]))
+        file_vin = data["local_before"]["vin"]
+        mismatch = file_vin_mismatch(data)
+        if file_vin is not None:
+            label = "Staged file VIN differs" if mismatch else "Staged file VIN"
+            layout.addWidget(_label(f"{label}: {file_vin}"))
+        vin_ack = CheckInput("I checked that these entries belong to the connected vehicle.")
+        vin_ack.setVisible(mismatch)
+        layout.addWidget(vin_ack)
         irreversible = CheckInput(
             "I accept irreversible loss of all car entries absent from this replacement list."
         )
@@ -1037,11 +1042,12 @@ class ServiceHistoryPage(QWidget):
         def valid() -> None:
             ok.setEnabled(
                 power.isChecked()
+                and (not mismatch or vin_ack.isChecked())
                 and (data["mode"] != "replace" or irreversible.isChecked())
                 and (not needs_prior or prior.isChecked())
             )
 
-        for check in (power, irreversible, prior):
+        for check in (power, vin_ack, irreversible, prior):
             check.toggled.connect(valid)
         valid()
         buttons.accepted.connect(dialog.accept)
@@ -1063,6 +1069,8 @@ class ServiceHistoryPage(QWidget):
             plan,
             power_acknowledged=power.isChecked(),
             replacement_acknowledged=irreversible.isChecked(),
+            file_vin_acknowledged=vin_ack.isChecked(),
+            ecus=self._ecus,
         )
         self._start_worker(worker, self._history_written)
 
@@ -1112,7 +1120,8 @@ class ServiceHistoryPage(QWidget):
                 and metadata[identity].get("write_state") not in ("accepted", "uncertain")
             ):
                 metadata[identity]["write_state"] = state
-        self._uncertain_operation = value["state"] not in ("response-confirmed", "rejected")
+        if value["state"] != "blocked":
+            self._uncertain_operation = value["state"] not in ("response-confirmed", "rejected")
         summary = self._write_summary(intent, value)
         self._write_results.append(
             {"intent": copy.deepcopy(intent), "report": copy.deepcopy(value), "summary": summary}

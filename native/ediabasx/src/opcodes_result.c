@@ -66,7 +66,7 @@ edxn_error_t edxn_op_result(edxn_vm_t *vm, uint8_t op,
     /* ergs (0x39) — result string */
     case 0x39: {
         edxn_resolve_string(vm, a0, name, sizeof(name));
-        char val[EDXN_S_REG_MAXLEN + 1];
+        char val[vm->regs.s_capacity + 1];
         edxn_resolve_string(vm, a1, val, sizeof(val));
         return edxn_result_add_binary(&vm->current_results, name, EDXN_TYPE_STRING,
                                        (const uint8_t *)val, strlen(val));

@@ -169,6 +169,14 @@ static edxn_error_t parse_ediabas_object(edxn_prg_t *prg, const uint8_t *data, s
     prg->header.version = edxn_read_u32_le(data + EDXN_OBJECT_VERSION_OFF);
     prg->header.data_off = EDXN_OBJECT_DATA_START;
 
+    /* Local: unencrypted SSIZE at 0x18, with zero selecting the default. */
+    uint32_t array_size = edxn_read_u32_le(data + 0x18);
+    if (array_size != 0) {
+        if (array_size > EDXN_MAX_ARRAY_SIZE)
+            return EDXN_ERR_INVALID_PRG;
+        prg->array_size = array_size;
+    }
+
     /* XOR-decode data section */
     prg->decoded_len = len;
     prg->decoded = (uint8_t *)malloc(len);
@@ -257,6 +265,7 @@ edxn_error_t edxn_prg_parse(edxn_prg_t *prg, const uint8_t *data, size_t len) {
     memset(prg, 0, sizeof(*prg));
     prg->raw     = data;
     prg->raw_len = len;
+    prg->array_size = EDXN_DEFAULT_ARRAY_SIZE;
 
     if (is_ediabas_object(data, len))
         return parse_ediabas_object(prg, data, len);

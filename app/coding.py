@@ -9,10 +9,10 @@ from typing import Any
 from PySide6.QtCore import Signal
 
 from app.coding_db import CodingDatabase, _number
-from app.coding_prerequisites import ENET_READER_TIMING, applies, reader_contract, run_prerequisites
-from app.protocol.contracts import ProtocolFailure, TransportKind
+from app.coding_prerequisites import applies, reader_contract, run_prerequisites
+from app.protocol.contracts import ENET_HEADUNIT_READ_TIMING, ProtocolFailure, TransportKind
 from app.session import operation_store
-from app.vehicle import DiagnosticCatalog, did_data
+from app.vehicle import DiagnosticCatalog, WriteConditionsBlocked, check_write_conditions, did_data
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ class CodingCatalogueWorker(CarWorker):
         context = self.connection.context(min(30.0, remaining))
         context.deadline = min(context.deadline, self._deadline)
         if address == self._timed_address:
-            context.response_timing = ENET_READER_TIMING
+            context.response_timing = ENET_HEADUNIT_READ_TIMING
         result: bytes = self.connection.send_uds(address, payload, context=context)
         return result
 
@@ -222,10 +222,13 @@ class CodingValuesWorker(CodingCatalogueWorker):
 
     sensitive_operation_requested = Signal(object)
 
-    def __init__(self, connection: Any, row: dict, vin: str) -> None:
+    def __init__(
+        self, connection: Any, row: dict, vin: str, ecus: list[dict] | None = None
+    ) -> None:
         """Retain the exact catalogue identity for this on-demand value batch."""
         super().__init__(connection, [row], vin)
         self.row = copy.deepcopy(row)
+        self.power_ecus = copy.deepcopy(ecus or [])
         self._stage = "identity"
 
     def do_work(self) -> list[dict]:
@@ -235,6 +238,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
         row = self.row
         row.update(blocks={}, presets=[], loaded=False, partial=False)
         sensitive = False
+        guard_notice = ""
         address = int(str(row["addr"]), 0)
         source_presets: list[dict] = []
         primary = ""
@@ -365,6 +369,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
 
                 def prerequisites(services: Any, context: Any) -> bytes:
                     """Run sourced reader controls under one bounded protocol owner."""
+                    nonlocal guard_notice
 
                     def read(payload: bytes, override: int | None = None) -> bytes:
                         """Bound nested requests while preserving the owner's outer deadline."""
@@ -377,6 +382,12 @@ class CodingValuesWorker(CodingCatalogueWorker):
 
                     if did_data(read(b"\x22\xf1\x90", 0x10), 0xF190).decode("ascii") != self.vin:
                         raise ValueError("Vehicle VIN changed before coding values were read")
+                    if sensitive:
+                        try:
+                            check_write_conditions(self.connection, self.power_ecus, context)
+                        except WriteConditionsBlocked as error:
+                            guard_notice = str(error)
+                            raise
                     run_prerequisites(
                         address=address,
                         variant=row["variant"],
@@ -522,7 +533,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                 self.connection.request_close()
             row["presets"] = [display_preset(preset) for preset in source_presets]
             if isinstance(exc, PermissionError):
-                row["state"] = (
+                row["state"] = guard_notice or (
                     "Current values require reader prerequisites disabled in read-only mode"
                 )
             elif not row["available"]:

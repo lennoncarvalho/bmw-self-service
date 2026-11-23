@@ -6,7 +6,9 @@
 #include <stdbool.h>
 
 #define EDXN_S_REG_COUNT   16
-#define EDXN_S_REG_MAXLEN  256
+/* Local: honor the SGBD's array size within the supported allocation bound. */
+#define EDXN_DEFAULT_ARRAY_SIZE 1024u
+#define EDXN_MAX_ARRAY_SIZE     65536u
 #define EDXN_F_REG_COUNT   8
 #define EDXN_NUM_REG_BYTES 32
 

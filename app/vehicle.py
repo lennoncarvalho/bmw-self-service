@@ -15,8 +15,8 @@ from typing import Any, cast
 from app.diagnostic_texts import diagnostic_texts
 from app.ista_data import DataFormatError
 from app.ista_jobs import JobBackend, data_source, fault_records
-from app.power_readings import read_power_status
-from app.protocol.contracts import TransportKind
+from app.power_readings import read_power_status, reader_profiles
+from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
 from app.resources import resource_path
 from app.uds import decode_dtc_records
 from app.vehicle_order import read_vehicle_order
@@ -263,6 +263,78 @@ def decode_measurement(response: bytes, row: dict[str, Any]) -> float:
     return float(raw * row["mul"] / row["div"] + row["add"])
 
 
+def read_supply_voltage(
+    connection: Any, ecus: list[dict[str, Any]], *, context: OperationContext | None = None
+) -> float | None:
+    """Read live supply voltage using an applicable engine definition."""
+    engines = [row for row in ecus if row.get("addr") == "0x12" and row.get("identified") is True]
+    if len(engines) != 1:
+        return None
+    ecu = engines[0]
+    name = ecu["name"]
+    if name == "DME_BX8":
+        if ecu.get("address_index") not in reader_profiles().get(name, {}).get("selectors", ()):
+            return None
+        request = b"\x22\x40\x2b"
+        measurement = None
+    else:
+        measurement = next(
+            (row for row in engine_measurements().get(name, []) if row["label"] == "Battery"),
+            None,
+        )
+        if measurement is None or measurement["unit"] not in {"mV", "V"}:
+            return None
+        request = b"\x22" + int(measurement["did"]).to_bytes(2, "big")
+    try:
+        response = connection.send_uds(0x12, request, context=context)
+        if measurement is None:
+            return decode_voltage(response)
+        value = decode_measurement(response, measurement)
+        return value / 1000 if measurement["unit"] == "mV" else value
+    except ProtocolFailure as error:
+        if error.kind != FailureKind.NEGATIVE or error.reconnect:
+            raise
+    except ValueError:
+        logger.debug("Supply voltage response unavailable", exc_info=True)
+    return None
+
+
+class WriteConditionsBlocked(PermissionError):
+    """An observed condition makes a sensitive operation unsafe to start."""
+
+
+def check_write_conditions(
+    connection: Any, ecus: list[dict[str, Any]], context: OperationContext
+) -> str:
+    """Read fresh conditions on the held owner and refuse known unsafe ignition/power."""
+    if getattr(connection, "power_sufficient", None) is False:
+        raise WriteConditionsBlocked("Vehicle power is insufficient.")
+    deadline = context.deadline
+    context.deadline = min(deadline, time.monotonic() + 30.0)
+    try:
+        status = read_power_status(connection, ecus, ignition_only=True, context=context)
+        ignition = [item for item in status["kl15"] if item["state"] in {"read", "transition"}]
+        for observation in ignition:
+            if observation["raw_value"] != 10:
+                raise WriteConditionsBlocked(
+                    f"{observation['source']} reports {observation['value']}. "
+                    "Turn the ignition on with the engine off before continuing."
+                )
+        voltage = read_supply_voltage(connection, ecus, context=context)
+        context.remaining()
+    finally:
+        context.deadline = deadline
+    if not connection.alive_ok:
+        raise ConnectionError("Connection lost while checking vehicle power and ignition")
+    ignition_text = "Ignition on (KL15)" if ignition else "Ignition unavailable"
+    voltage_text = (
+        f"Supply voltage {voltage:.2f} V" if voltage is not None else "Voltage unavailable"
+    )
+    result = f"{ignition_text}. {voltage_text}. Confirm stable vehicle and computer power."
+    logger.info("Vehicle write preflight conn=%s %s", context.generation, result)
+    return result
+
+
 def read_engine_data(connection: Any, ecus: list[dict[str, Any]]) -> list[dict[str, object]] | None:
     """Read core engine values for an exactly identified definition; failures stay per item."""
     engines = [row for row in ecus if row.get("addr") == "0x12" and row.get("identified") is True]
@@ -450,6 +522,10 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
             raise ValueError("This information read needs a recovered logical-address mapping")
         return read(connection)
 
+    def voltage(connection: Any) -> str | None:
+        value = read_supply_voltage(connection, ecus)
+        return None if value is None else f"{value:.2f} V"
+
     return [
         ("ECU list", inventory),
         ("MIL", lambda conn: read_engine_faults(conn, ecus)),
@@ -468,9 +544,6 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
         ),
         (
             "Battery voltage",
-            lambda conn: supported(
-                conn,
-                lambda active: f"{decode_voltage(active.send_uds(0x12, b'\x22\x40\x2b')):.2f} V",
-            ),
+            lambda conn: supported(conn, voltage),
         ),
     ]

@@ -163,8 +163,13 @@ class BackupsPage(QWidget):
                         lambda checked=False, source=path: self.restore_requested.emit(source)
                     )
                     box.addWidget(restore)
-                    if coding_comparison_basis(record) is not None:
-                        verify = QPushButton("Verify coding after vehicle cycle")
+                    basis = coding_comparison_basis(record)
+                    if basis is not None:
+                        verify = QPushButton(
+                            "Compare interrupted coding"
+                            if basis == "both"
+                            else "Verify coding after vehicle cycle"
+                        )
                         verify.clicked.connect(
                             lambda checked=False, source=path: self.verification_requested.emit(
                                 source
