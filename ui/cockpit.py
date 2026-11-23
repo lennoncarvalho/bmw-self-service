@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 
-from PySide6.QtCore import QEvent, Qt, Slot
+from PySide6.QtCore import QEvent, Qt, Signal, Slot
 from PySide6.QtGui import QIcon, QPainter, QPixmap, QResizeEvent, QShowEvent
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
@@ -191,12 +191,20 @@ class PageHeader(QFrame):
 class ResponsiveColumns(QWidget):
     """Two content columns that stack within the page's one outer viewport."""
 
-    def __init__(self, left: QWidget, right: QWidget, *, ratio: tuple[int, int] = (2, 1)) -> None:
-        """Keep both columns top aligned and stack below the desktop breakpoint."""
+    def __init__(
+        self,
+        left: QWidget,
+        right: QWidget,
+        *,
+        ratio: tuple[int, int] = (2, 1),
+        breakpoint: int = 1150,
+    ) -> None:
+        """Keep both columns top aligned and stack when the viewport is narrow."""
         super().__init__()
         self.setProperty("class", "transparent")
         self._left, self._right = left, right
         self._ratio = ratio
+        self._breakpoint = breakpoint
         self._wide: bool | None = None
         self.box = QGridLayout(self)
         self.box.setContentsMargins(0, 0, 0, 0)
@@ -204,7 +212,7 @@ class ResponsiveColumns(QWidget):
         self._reflow()
 
     def _reflow(self) -> None:
-        wide = self.width() >= 1150
+        wide = self.width() >= self._breakpoint
         if wide == self._wide:
             return
         self._wide = wide
@@ -268,6 +276,8 @@ class CardGrid(QWidget):
 class CardSearch(QLineEdit):
     """Local search over already rendered cards, with no vehicle requests."""
 
+    matches_changed = Signal(int)
+
     def __init__(self, target: QWidget, placeholder: str) -> None:
         """Filter tagged cards using their visible text and optional search terms."""
         super().__init__()
@@ -281,6 +291,7 @@ class CardSearch(QLineEdit):
     def apply(self) -> None:
         """Apply the current query after edits or a settled page render."""
         query = self.text().strip().casefold()
+        matches = 0
         for card in self._target.findChildren(QFrame, "recordCard"):
             parent = card.parentWidget()
             owner = parent.layout() if parent is not None else None
@@ -288,7 +299,10 @@ class CardSearch(QLineEdit):
                 continue
             text = str(card.property("searchText") or "")
             text += " ".join(label.text() for label in card.findChildren(QLabel))
-            card.setVisible(not query or query in text.casefold())
+            matched = not query or query in text.casefold()
+            card.setVisible(matched)
+            matches += matched
+        self.matches_changed.emit(matches)
 
 
 class StatusLabel(QLabel):

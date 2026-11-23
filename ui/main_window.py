@@ -315,7 +315,7 @@ class MainWindow(QMainWindow):
         )
         self.vehicle_page.scan_button.setEnabled(self._connected and not self._mutation_active)
         self.vehicle_page.health_value.setText(
-            f"{len(self.diag_page._dtcs)} recorded faults"
+            f"{self.diag_page.fault_memory_count} fault-memory entries"
             if self._connected and self.diag_page._loaded
             else "Not scanned"
         )
@@ -1318,7 +1318,8 @@ class MainWindow(QMainWindow):
                 if isinstance(worker, QThread):
                     self._retire_worker(worker)
                     setattr(page, name, None)
-            page._connection = None
+        self.diag_page.set_connection(None, [])
+        self.coding_page._connection = None
         self._worker = None
         self._post_connect_worker = None
         if self._connection:

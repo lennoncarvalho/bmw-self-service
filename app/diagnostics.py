@@ -16,6 +16,7 @@ from collections import Counter
 from functools import cache
 from typing import Any, cast
 
+from app.diagnostic_texts import is_non_relevant_fault
 from app.fault_details import DETAIL_JOBS, decode_fault_details
 from app.ista_jobs import APP_SOURCE, JobBackend, fault_records
 from app.protocol.contracts import FailureKind
@@ -310,6 +311,10 @@ class DiagnosticReadWorker(CarWorker):
                             "ecu_name": name,
                             "ecu_addr": address,
                             "memory": memory,
+                            "known_non_relevant": (
+                                memory == "Fault"
+                                and is_non_relevant_fault(record["code"], ecu=name)
+                            ),
                             "description": description or "Description unavailable",
                             "job_text": record["text"],
                             "job_presence": record["presence"],

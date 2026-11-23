@@ -88,6 +88,17 @@ complete agreeing English first, then a separate source-language agreement query
 No arbitrary `LIMIT 1`, per-row language mixing or code filtering. The older
 `dtc_descriptions.db` remains a separate read-only fallback asset.
 
+The same producer's `--relevance-output` option builds
+`coding_data/diagnostic_relevance.json` from `XEP_FAULTCODES`. Only exact
+normal-memory variant/code pairs whose candidates all have unconditional
+`RELEVANCE=0` can be excluded from the default view. Unknown, conflicting and
+conditioned classifications remain visible when their status matches. The
+workshop application's `FaultMemoryViewModelBase.FilterCallback` (ISTAGUI
+`0x060002bd`) calls `Logic.FilterDTCRelevance` (RheingoldSessionController
+`0x060002b4`), which checks fault relevance, groups, hidden classes, mileage
+bounds and source presence conditions. The app uses its own explicit
+present-fault default, with all captured records available through filters.
+
 ### Coding data access
 
 `scripts/build_coding_bundle.py` decrypts the supplied coding JSON members using

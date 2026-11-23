@@ -93,6 +93,11 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
 
 - Read all identified supported ECUs/memories with explicit failed/unattempted
   coverage. Empty partial results do not mean the whole car is healthy.
+- Start Diagnostics with present normal faults, excluding only exact entries
+  that the source marks unconditionally non-relevant. Independent memory and
+  status filters expose every result, with the displayed and total record counts.
+  Search and filters apply locally to the settled scan. Clear All retains its
+  whole-scan scope.
 - Provide one Clear All action, available for supported targets even with
   incomplete coverage; disclose gaps, continue after definite local rejection on
   a usable stream, and reread. No per-code/per-ECU clear UI, backup or saved-report

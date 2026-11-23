@@ -20,6 +20,10 @@
       "bytes": 35542,
       "sha256": "e50dbff58e70d2c33c1406f59c359ef3ac1f52dfcfa8fb75eca535e633dd4ba5"
     },
+    "coding_data/diagnostic_relevance.json": {
+      "bytes": 25605,
+      "sha256": "5439558c9403d192bb53340f820e4709122212014c3426fac7fc7348d088bc85"
+    },
     "coding_data/diagnostic_texts.db": {
       "bytes": 41050112,
       "sha256": "f62f002ba038e55fdc1802856423ef9d296ce1c4f00e224ddece8cb3db6714e0"

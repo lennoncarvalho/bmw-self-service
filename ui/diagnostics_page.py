@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.diagnostics import DiagnosticClearWorker, DiagnosticReadWorker, coverage_complete
+from app.vehicle import ACTIVE, CONFIRMED
 from app.worker import CarWorker
 from ui.cockpit import (
     CardSearch,
@@ -33,9 +34,28 @@ from ui.cockpit import (
     set_lamp_state,
 )
 from ui.dialogs import MessageBox as QMessageBox
+from ui.form_inputs import SelectInput
 from ui.regional import regional_locale
 
 logger = logging.getLogger(__name__)
+WARNING_REQUESTED = 0x80
+RELEVANT_FAULTS = "relevant-faults"
+
+MEMORY_FILTERS = (
+    ("Relevant faults", RELEVANT_FAULTS),
+    ("Fault memory", "Fault"),
+    ("All memories", None),
+    ("Information memory", "Information"),
+    ("Permanent memory", "Permanent"),
+)
+STATUS_FILTERS = (
+    ("Present", "present"),
+    ("Any status", None),
+    ("Confirmed", "confirmed"),
+    ("Stored, not present", "stored"),
+    ("Unconfirmed", "unconfirmed"),
+    ("Warning indicator requested", "warning-requested"),
+)
 
 
 class DiagnosticsPage(QWidget):
@@ -56,6 +76,7 @@ class DiagnosticsPage(QWidget):
         self._coverage: list[dict] = []
         self._retired: list[CarWorker] = []
         self._loaded = False
+        self._scan_complete = False
         self._inventory_revision = 0
         self.can_mutate: Callable[[], bool] = lambda: True
         self._worker: CarWorker | None = None
@@ -84,7 +105,7 @@ class DiagnosticsPage(QWidget):
         self.summary_card.box.addWidget(self.scan_summary)
         self.coverage_summary = caption("Coverage unavailable until a scan completes.")
         self.summary_card.box.addWidget(self.coverage_summary)
-        self.summary_card.box.addWidget(caption("Recorded faults by ECU", "identity"))
+        self.summary_card.box.addWidget(caption("Scan records by ECU", "identity"))
         self.system_summary = caption("No recorded faults to summarize.")
         self.summary_card.box.addWidget(self.system_summary)
         self.summary_card.box.addStretch()
@@ -132,20 +153,41 @@ class DiagnosticsPage(QWidget):
         list_layout = QVBoxLayout(self.list_container)
         list_layout.setContentsMargins(0, 0, 0, 0)
 
-        scroll_container = QWidget()
-        self.dtc_list_layout = QVBoxLayout(scroll_container)
+        filters = QHBoxLayout()
+        self.memory_filter = SelectInput(options=MEMORY_FILTERS)
+        self.memory_filter.setAccessibleName("Fault memory filter")
+        self.memory_filter.setToolTip(
+            "Relevant faults shows fault memory and excludes entries explicitly marked "
+            "non-relevant in the diagnostic data."
+        )
+        self.status_filter = SelectInput(options=STATUS_FILTERS)
+        self.status_filter.setAccessibleName("Fault status filter")
+        filters.addWidget(self.memory_filter, 1)
+        filters.addWidget(self.status_filter, 1)
+        list_layout.addLayout(filters)
+
+        self.search = CardSearch(self.list_container, "Search fault code, ECU or description")
+        list_layout.addWidget(self.search)
+        self.filter_summary = caption("")
+        list_layout.addWidget(self.filter_summary)
+
+        cards = QWidget()
+        self.dtc_list_layout = QVBoxLayout(cards)
+        self.dtc_list_layout.setContentsMargins(0, 0, 0, 0)
         self.dtc_list_layout.setSpacing(8)
-        self.dtc_list_layout.addStretch()
-        list_layout.addWidget(scroll_container)
+        list_layout.addWidget(cards)
+        self.memory_filter.currentIndexChanged.connect(self._render_faults)
+        self.status_filter.currentIndexChanged.connect(self._render_faults)
+        self.search.matches_changed.connect(self._show_match_count)
 
         # Clear button
         self.clear_btn = DangerButton("Clear All DTCs")
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         self.clear_btn.setVisible(False)
-        self.search = CardSearch(self.list_container, "Search fault code, ECU or description")
-        results_box.insertWidget(0, self.search)
         results_box.addWidget(self.list_container)
-        layout.addWidget(ResponsiveColumns(self.summary_card, results, ratio=(1, 2)))
+        layout.addWidget(
+            ResponsiveColumns(self.summary_card, results, ratio=(1, 2), breakpoint=840)
+        )
         header.action_layout.addWidget(self.clear_btn)
         layout.addStretch()
 
@@ -171,10 +213,15 @@ class DiagnosticsPage(QWidget):
             self._update_actions()
             return
         self._inventory_revision += 1
+        self._dtcs = []
+        self._scan_complete = False
         if connection is not self._connection:
             self._clear_summary.clear()
             self._clear_summary.hide()
             self._clear_blocked = False
+            self.memory_filter.setCurrentIndex(0)
+            self.status_filter.setCurrentIndex(0)
+            self.search.clear()
         self._clear_refresh_pending = False
         self._connection = connection
         self._ecus = [dict(ecu) for ecu in ecus]
@@ -185,7 +232,7 @@ class DiagnosticsPage(QWidget):
         self.system_summary.setText("No recorded faults to summarize.")
         self.coverage_summary.setText("Coverage unavailable until a scan completes.")
         self._coverage = []
-        self._dtcs = []
+        self._clear_cards()
         self._stale_scan_notice.hide()
         self.read_btn.setEnabled(self._worker is None)
         self.clear_btn.setEnabled(False)
@@ -210,7 +257,7 @@ class DiagnosticsPage(QWidget):
             return
         self.read_btn.setEnabled(False)
         self.clear_btn.setEnabled(False)
-        self._empty_text.setText("Reading confirmed fault codes...")
+        self._empty_text.setText("Reading vehicle fault memories...")
         self.empty_state.setVisible(True)
         self.list_container.setVisible(False)
 
@@ -280,10 +327,19 @@ class DiagnosticsPage(QWidget):
             complete = True
         self._dtcs = dtcs
         self._loaded = True
+        self._scan_complete = complete
         self._stale_scan_notice.hide()
         self._update_actions()
 
-        self.scan_summary.setText(f"{len(dtcs)} recorded faults")
+        by_memory = Counter(dtc.get("memory") for dtc in dtcs)
+        self.scan_summary.setText(
+            f"Fault memory · {self.fault_memory_count}"
+            + "".join(
+                f"\n{memory} memory · {by_memory[memory]}"
+                for memory in ("Information", "Permanent")
+                if by_memory[memory]
+            )
+        )
         self.coverage_summary.setText(
             ("Scan complete" if complete else "Scan incomplete")
             + (
@@ -301,48 +357,41 @@ class DiagnosticsPage(QWidget):
 
         by_ecu = Counter(str(dtc.get("ecu_name") or "Unknown ECU") for dtc in dtcs)
         self.system_summary.setText(
-            "\n\n".join(f"{name} · {count} recorded faults" for name, count in by_ecu.items())
-            or "No faults returned by the memories read."
+            "\n".join(
+                f"{name} · {count} {'record' if count == 1 else 'records'}"
+                for name, count in by_ecu.items()
+            )
+            or "No records returned by the memories read."
         )
 
-        # Clean existing cards
-        while self.dtc_list_layout.count() > 1:
+        self._render_faults()
+        self.empty_state.hide()
+        self.list_container.show()
+
+    @property
+    def fault_memory_count(self) -> int:
+        """Count normal fault-memory records across the full scan."""
+        return sum(dtc.get("memory") == "Fault" for dtc in self._dtcs)
+
+    def _clear_cards(self) -> None:
+        while self.dtc_list_layout.count():
             item = self.dtc_list_layout.takeAt(0)
-            if item is None:
-                continue
-            child = item.widget()
+            child = item.widget() if item is not None else None
             if child is not None:
                 child.hide()
                 child.deleteLater()
 
-        self.empty_state.setVisible(False)
-        self.list_container.setVisible(True)
-        if self._coverage or isinstance(result, dict):
-            summary = QLabel(
-                ("Scan complete" if complete else "Scan incomplete")
-                + f" · {len(dtcs)} {'fault' if len(dtcs) == 1 else 'faults'} found"
-            )
-            if not complete:
-                summary.setText(
-                    summary.text() + "\nSome vehicle fault memories could not be checked."
-                )
-            if isinstance(result, dict) and not result.get("topology_known", True):
-                summary.setText(
-                    summary.text()
-                    + "\nVehicle inventory is unavailable; results cover identified controllers only."
-                )
-            summary.setWordWrap(True)
-            summary.setTextFormat(Qt.TextFormat.PlainText)
-            self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, summary)
-        if not dtcs:
-            label = QLabel(
-                "No faults returned by the memories read."
-                if complete
-                else "No faults returned; some targets or memories could not be read."
-            )
-            label.setWordWrap(True)
-            self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, label)
-
+    @Slot()
+    def _render_faults(self) -> None:
+        """Build cards for the selected memory and status from settled scan data."""
+        self._clear_cards()
+        memory = self.memory_filter.currentData()
+        status = self.status_filter.currentData()
+        dtcs = (
+            dtc
+            for dtc in self._dtcs
+            if _matches_memory(dtc, memory) and _matches_status(dtc.get("status_byte", 0), status)
+        )
         for dtc in dtcs:
             code = dtc.get("code", "???")
             description = dtc.get("description") or "Description unavailable"
@@ -355,34 +404,47 @@ class DiagnosticsPage(QWidget):
             card_layout = QVBoxLayout(card)
             card_layout.setSpacing(8)
             header = QHBoxLayout()
-            code_label = caption(str(code), "technical")
-            code_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            header.addWidget(code_label, 0, Qt.AlignmentFlag.AlignTop)
-            heading = QLabel(description)
+            heading = caption(description, "cardTitle")
             heading.setObjectName("dtcHeading")
-            heading.setWordWrap(True)
-            heading.setTextFormat(Qt.TextFormat.PlainText)
             heading.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            header.addWidget(heading, 1)
-            search = QPushButton("Search web")
-            search.setObjectName("dtcSearchButton")
-            search.setToolTip(f"Search the web for {code} BMW")
-            search.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
-            header.addWidget(search, 0, Qt.AlignmentFlag.AlignTop)
+            header.addWidget(heading, 1, Qt.AlignmentFlag.AlignTop)
+            code_label = caption(str(code), "technical")
+            code_label.setObjectName("dtcCode")
+            code_label.setWordWrap(False)
+            code_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            header.addWidget(code_label, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
             card_layout.addLayout(header)
 
-            meta = QLabel(
+            meta = caption(
                 f"ECU: {ecu_text} · {dtc.get('memory', 'Fault')} memory · "
                 f"{_decode_dtc_status(dtc.get('status_byte', 0))}"
             )
+            if dtc.get("known_non_relevant") is True:
+                meta.setText(meta.text() + " · Marked non-relevant in diagnostic data")
             meta.setObjectName("dtcMeta")
-            meta.setWordWrap(True)
-            meta.setTextFormat(Qt.TextFormat.PlainText)
             meta.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             card_layout.addWidget(meta)
             _add_recorded_details(card_layout, dtc)
-            self.dtc_list_layout.insertWidget(self.dtc_list_layout.count() - 1, card)
+
+            search = QPushButton("Search web")
+            search.setProperty("class", "secondary")
+            search.setToolTip(f"Search the web for {code} BMW")
+            search.clicked.connect(lambda checked, c=code: self._open_search(checked, c))
+            card_layout.addWidget(search, alignment=Qt.AlignmentFlag.AlignRight)
+            self.dtc_list_layout.addWidget(card)
         self.search.apply()
+
+    @Slot(int)
+    def _show_match_count(self, matches: int) -> None:
+        if self._dtcs:
+            text = f"Showing {matches} of {len(self._dtcs)} records"
+            if not matches:
+                text += " · No records match these filters."
+        elif self._scan_complete:
+            text = "No records returned by the memories read."
+        else:
+            text = "No records returned. Some fault memories could not be read."
+        self.filter_summary.setText(text)
 
     def _on_dtc_error(self, msg: str) -> None:
         """Report an unavailable scan without leaving stale results or a healthy-car claim."""
@@ -630,12 +692,33 @@ def _add_recorded_details(layout: QVBoxLayout, dtc: dict) -> None:
         add("\n".join(lines) or "No recorded conditions were returned.")
 
 
+def _matches_memory(dtc: dict, selected: str | None) -> bool:
+    """Limit the default view to normal faults without a known exclusion."""
+    memory = dtc.get("memory")
+    if selected == RELEVANT_FAULTS:
+        return memory == "Fault" and dtc.get("known_non_relevant") is not True
+    return selected is None or memory == selected
+
+
+def _matches_status(status: int, selected: str | None) -> bool:
+    """Match independent diagnostic flags without treating confirmation as presence."""
+    if selected is None:
+        return True
+    return {
+        "present": bool(status & ACTIVE),
+        "confirmed": bool(status & CONFIRMED),
+        "stored": bool(status & CONFIRMED) and not status & ACTIVE,
+        "unconfirmed": not status & CONFIRMED,
+        "warning-requested": bool(status & WARNING_REQUESTED),
+    }[selected]
+
+
 def _decode_dtc_status(status: int) -> str:
-    """Present a UDS status byte as ISTA does: present, stored (confirmed) or not confirmed."""
-    if status & 0x01:
-        state = "Present (active)"
-    elif status & 0x08:
-        state = "Stored, not present now (confirmed)"
+    """Show present and confirmed flags independently on a fault card."""
+    if status & ACTIVE:
+        state = "Present (confirmed)" if status & CONFIRMED else "Present (unconfirmed)"
+    elif status & CONFIRMED:
+        state = "Stored, not present (confirmed)"
     else:
-        state = "Not confirmed"
-    return state + (" · warning lamp requested" if status & 0x80 else "")
+        state = "Unconfirmed"
+    return state + (" · warning indicator requested" if status & WARNING_REQUESTED else "")

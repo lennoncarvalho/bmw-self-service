@@ -176,19 +176,6 @@ QLabel#milStatus[role="metric"] { font-size: 22px; }
 QLabel#milStatus[milState="on"] { color: #ffb4ab; background: #44222b; }
 QLabel#milStatus[milState="off"] { color: #66cc88; background: #203328; }
 
-QLabel#faultDetailValue { font-size: 12px; color: #c2c6d5; }
-
-QLabel#dtcMeta { font-size: 11px; color: #c2c6d5; }
-QPushButton#dtcSearchButton {
-    background: #262a34;
-    color: #1c69d2;
-    border: 1px solid #1c69d2;
-    border-radius: 4px;
-    padding: 9px 14px;
-    font-size: 13px;
-}
-QPushButton#dtcSearchButton:hover { background: #353943; }
-
 /* Foreground loading blocks interaction with the underlying pages. */
 QFrame#loadingBackdrop {
     background-color: rgba(0, 0, 0, 155);
@@ -479,12 +466,6 @@ QCheckBox::indicator:checked {
 QCheckBox QLabel:disabled { color: #8c909e; }
 QProgressBar { background: #31353f; border: none; border-radius: 3px; }
 QProgressBar::chunk { background: #adc7ff; border-radius: 3px; }
-QLabel#dtcHeading {
-    color: #dfe2ef;
-    font-family: "Space Grotesk";
-    font-size: 18px;
-    font-weight: 500;
-}
 QLabel#faultDetailHeading { font-weight: bold; color: #adc7ff; font-size: 13px; }
 QLabel#faultDetailValue, QLabel#dtcMeta { color: #c2c6d5; font-size: 13px; }
 QDialog#cockpitDialog QLabel { color: #c2c6d5; }
