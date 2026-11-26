@@ -10,9 +10,14 @@ from PySide6.QtCore import Signal
 
 from app.coding_db import CodingDatabase, _number
 from app.coding_prerequisites import applies, reader_contract, run_prerequisites
-from app.protocol.contracts import ENET_HEADUNIT_READ_TIMING, ProtocolFailure, TransportKind
+from app.protocol.contracts import (
+    ENET_HEADUNIT_READ_TIMING,
+    ProtocolFailure,
+    TransportKind,
+    WriteConditionsBlocked,
+)
 from app.session import operation_store
-from app.vehicle import DiagnosticCatalog, WriteConditionsBlocked, check_write_conditions, did_data
+from app.vehicle import DiagnosticCatalog, check_write_conditions, did_data
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -238,7 +243,6 @@ class CodingValuesWorker(CodingCatalogueWorker):
         row = self.row
         row.update(blocks={}, presets=[], loaded=False, partial=False)
         sensitive = False
-        guard_notice = ""
         address = int(str(row["addr"]), 0)
         source_presets: list[dict] = []
         primary = ""
@@ -369,7 +373,6 @@ class CodingValuesWorker(CodingCatalogueWorker):
 
                 def prerequisites(services: Any, context: Any) -> bytes:
                     """Run sourced reader controls under one bounded protocol owner."""
-                    nonlocal guard_notice
 
                     def read(payload: bytes, override: int | None = None) -> bytes:
                         """Bound nested requests while preserving the owner's outer deadline."""
@@ -383,11 +386,7 @@ class CodingValuesWorker(CodingCatalogueWorker):
                     if did_data(read(b"\x22\xf1\x90", 0x10), 0xF190).decode("ascii") != self.vin:
                         raise ValueError("Vehicle VIN changed before coding values were read")
                     if sensitive:
-                        try:
-                            check_write_conditions(self.connection, self.power_ecus, context)
-                        except WriteConditionsBlocked as error:
-                            guard_notice = str(error)
-                            raise
+                        check_write_conditions(self.connection, self.power_ecus, context)
                     run_prerequisites(
                         address=address,
                         variant=row["variant"],
@@ -532,9 +531,13 @@ class CodingValuesWorker(CodingCatalogueWorker):
             if sensitive and isinstance(exc, (ConnectionError, TimeoutError, ProtocolFailure)):
                 self.connection.request_close()
             row["presets"] = [display_preset(preset) for preset in source_presets]
-            if isinstance(exc, PermissionError):
-                row["state"] = guard_notice or (
+            if isinstance(exc, WriteConditionsBlocked):
+                row["state"] = str(exc)
+            elif isinstance(exc, PermissionError):
+                row["state"] = (
                     "Current values require reader prerequisites disabled in read-only mode"
+                    if self.connection.read_only
+                    else "Reader prerequisites were blocked. See the session log."
                 )
             elif not row["available"]:
                 row["state"] = "Coding software changed; reconnect to identify its options again"

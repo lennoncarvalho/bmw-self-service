@@ -16,12 +16,13 @@ from collections import Counter
 from functools import cache
 from typing import Any, cast
 
+from app.diagnostic_texts import is_non_relevant_fault
 from app.fault_details import DETAIL_JOBS, decode_fault_details
 from app.ista_jobs import APP_SOURCE, JobBackend, fault_records
 from app.protocol.contracts import FailureKind
 from app.resources import resource_path
 from app.uds import decode_dtc_records
-from app.vehicle import DiagnosticCatalog, did_data, fault_state
+from app.vehicle import DiagnosticCatalog, did_data, fault_state, read_mil
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -310,6 +311,10 @@ class DiagnosticReadWorker(CarWorker):
                             "ecu_name": name,
                             "ecu_addr": address,
                             "memory": memory,
+                            "known_non_relevant": (
+                                memory == "Fault"
+                                and is_non_relevant_fault(record["code"], ecu=name)
+                            ),
                             "description": description or "Description unavailable",
                             "job_text": record["text"],
                             "job_presence": record["presence"],
@@ -329,7 +334,13 @@ class DiagnosticReadWorker(CarWorker):
             "coverage": coverage,
             "complete": complete,
             "topology_known": self.coverage_known,
-            "mil": None,
+            "mil": (
+                None
+                if self._cancelled.is_set() or stopped or not self.connection.alive_ok
+                else read_mil(
+                    self.connection, self.ecus, timeout=min(30.0, deadline - time.monotonic())
+                )
+            ),
         }
 
     def _read_details(

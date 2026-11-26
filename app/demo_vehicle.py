@@ -9,9 +9,11 @@ import struct
 import threading
 import uuid
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 from app.cbs import reset_request
+from app.coding import bootloader_identifier
 from app.coding_authorization import derive_authorization_key
 from app.coding_db import CodingDatabase
 from app.history_files import valid_vin
@@ -22,15 +24,18 @@ from app.service_history import _HEADER, _ITEM
 from app.session import SessionEnvironment
 
 logger = logging.getLogger(__name__)
+CAPTURED_DEMO_PROFILE = Path.home() / "BMW-Tool" / "demo" / "captured_vehicle.json"
+HEADUNIT_ENTITLEMENT_LIST = bytes.fromhex("31010f1f04")
 
 
 class DemoVehicle:
     """One virtual vehicle instance, retained across connection generations."""
 
-    def __init__(self) -> None:
+    def __init__(self, profile_path: Path | None = None) -> None:
         """Load a bounded standalone profile without starting any communication."""
         self.environment = SessionEnvironment("demo", uuid.uuid4().hex)
-        with resource_path("assets/demo_vehicle.json").open("rb") as stream:
+        path = profile_path or resource_path("assets/demo_vehicle.json")
+        with path.open("rb") as stream:
             raw = stream.read(1024 * 1024 + 1)
         if len(raw) > 1024 * 1024:
             raise ValueError("DEMO vehicle profile exceeds its size limit")
@@ -44,6 +49,7 @@ class DemoVehicle:
         ):
             raise ValueError("Unsupported DEMO vehicle profile")
         self.vin: str = profile["vin"]
+        self.captured = "capture" in profile
         self._ecus: dict[int, dict[str, Any]] = {
             int(address, 16): copy.deepcopy(ecu) for address, ecu in profile["ecus"].items()
         }
@@ -60,10 +66,16 @@ class DemoVehicle:
                         raise ValueError("Invalid DEMO data identifier")
                     if len(bytes.fromhex(value)) > 65536:
                         raise ValueError("DEMO value exceeds its size limit")
-            for record in ecu["cbs"]:
+            responses = ecu.get("responses", {})
+            if not isinstance(responses, dict):
+                raise ValueError("Invalid DEMO captured responses")
+            for request, response in responses.items():
+                if not bytes.fromhex(request) or not 1 <= len(bytes.fromhex(response)) <= 65536:
+                    raise ValueError("Invalid DEMO captured exchange")
+            for record in ecu.get("cbs", ()):
                 if len(bytes.fromhex(record)) != 12:
                     raise ValueError("Invalid DEMO service record")
-            for fault in ecu["faults"]:
+            for fault in ecu.get("faults", ()):
                 if len(bytes.fromhex(fault["code"])) != 3 or not 0 <= fault["status"] <= 255:
                     raise ValueError("Invalid DEMO fault record")
         self._lock = threading.Lock()
@@ -139,21 +151,27 @@ class DemoVehicle:
         ecu = self._ecus.get(address)
         if ecu is None:
             return reject
+        responses = ecu.get("responses", {})
+        captured_reply = responses.get(request.hex())
         if sid == 0x22 and len(request) == 3:
             did = request[1:].hex().upper()
-            if did == "1001":
+            if did == "1001" and "cbs" in ecu:
                 return b"\x62\x10\x01" + b"".join(bytes.fromhex(r) for r in ecu["cbs"])
-            if did == "1002":
+            if did == "1002" and not self.captured:
                 return bytes.fromhex("621002010000")
-            if did == "2000":
+            if did == "2000" and not self.captured:
                 return b"\x62\x20\x00"  # The virtual profile has no information-memory entries.
             value = ecu["blocks"].get(did, ecu["reads"].get(did))
             if value is not None:
                 return b"\x62" + request[1:] + bytes.fromhex(value)
+            if captured_reply is not None:
+                return bytes.fromhex(captured_reply)
             logger.debug("DEMO unsupported DID ecu=%02X request=%s", address, request.hex())
             return reject
         if sid == 0x19:
-            return self._fault_reply(ecu, request)
+            if captured_reply is not None:
+                return bytes.fromhex(captured_reply)
+            return reject if self.captured else self._fault_reply(ecu, request)
         if sid == 0x10 and request[1:] in (b"\x01", b"\x03", b"\x41", b"\x42"):
             sessions[address] = request[1]
             unlocked.discard(address)
@@ -165,22 +183,50 @@ class DemoVehicle:
             unlocked.discard(address)
             return b"\x51\x01"
         if request == b"\x14\xff\xff\xff":
-            ecu["faults"].clear()
+            if self.captured:
+                for key, value in responses.items():
+                    if key.startswith("1902") and value.startswith("5902"):
+                        responses[key] = value[:6]
+                for key in tuple(responses):
+                    if key.startswith(("1904", "1906", "1909")):
+                        responses.pop(key)
+            else:
+                ecu["faults"].clear()
+                if "clear_lamp_did" in ecu:
+                    ecu["reads"][ecu["clear_lamp_did"]] = "00"
             return b"\x54"
         if request == bytes.fromhex("31010f06"):
+            if self.captured:
+                for key, value in responses.items():
+                    if key.startswith("1917") and value.startswith("5917"):
+                        responses[key] = value[:8]
+                for key in tuple(responses):
+                    if key.startswith(("1918", "1919", "2220")):
+                        responses.pop(key)
+                for did in tuple(ecu["reads"]):
+                    if did.startswith("20"):
+                        ecu["reads"].pop(did)
+                        if did == "2000":
+                            ecu["reads"][did] = ""
             return bytes.fromhex("71010f06")
         if sid == 0x27 and sessions.get(address) == 0x41:
             if request == bytes.fromhex("2701ffffffff"):
                 return bytes.fromhex("670101020304")
             db = CodingDatabase()
-            key = derive_authorization_key(bytes.fromhex("01020304"), db.authorization("00000003"))
+            try:
+                bootloader = bootloader_identifier(bytes.fromhex("62f101" + ecu["reads"]["F101"]))
+                key = derive_authorization_key(
+                    bytes.fromhex("01020304"), db.authorization(bootloader)
+                )
+            except (KeyError, ValueError):
+                return reject
             if request == b"\x27\x02" + key:
                 unlocked.add(address)
                 return b"\x67\x02"
             return bytes((0x7F, sid, 0x35))
         if sid == 0x2E:
             if request[:3] == b"\x2e\x10\x01":
-                for index, raw in enumerate(ecu["cbs"]):
+                for index, raw in enumerate(ecu.get("cbs", ())):
                     record = bytearray.fromhex(raw)
                     if request == reset_request(record[0]):
                         record[4] = (record[4] + 1) % 31
@@ -204,8 +250,11 @@ class DemoVehicle:
                 return b"\x6e" + request[1:3]
             return reject
         if address == 0x63 and sessions.get(address, 1) in (1, 0x42):
-            if request == bytes.fromhex("31010f1f04"):
-                return bytes.fromhex("71010f1f0000000000") + bytes(7)
+            if request == HEADUNIT_ENTITLEMENT_LIST:
+                if captured_reply is not None:
+                    return bytes.fromhex(captured_reply)
+                if not self.captured:
+                    return bytes.fromhex("71010f1f0000000000") + bytes(7)
             if request == bytes.fromhex("3101a080"):
                 self._history.clear()
                 return bytes.fromhex("7101a08000")

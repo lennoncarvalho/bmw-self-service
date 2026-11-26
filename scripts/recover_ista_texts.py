@@ -52,6 +52,24 @@ JOIN XEP_FAULTLABELS l ON l.ID=r.LABELID AND l.CODE=f.CODE
 WHERE f.DATATYPE IN ('F','I') AND l.DATATYPE=f.DATATYPE
 ORDER BY f.ID,l.ID
 """
+# An exact variant/code may have several source rows. Exclude it only when
+# every candidate marks it non-relevant without any vehicle-specific conditions.
+_RELEVANCE_QUERY = """
+SELECT lower(v.NAME) variant, f.CODE code
+FROM XEP_FAULTCODES f
+JOIN XEP_ECUVARIANTS v ON v.ID=f.ECUVARIANTID
+WHERE f.DATATYPE='F'
+GROUP BY lower(v.NAME), f.CODE
+HAVING COUNT(*) = SUM(CASE WHEN f.RELEVANCE=0
+    AND coalesce(f.RELEVANCE_F_VORH_NR,'')=''
+    AND coalesce(f.DIAGNOSEINDEX,'')=''
+    AND coalesce(f.SCHEINFEHLER,'')=''
+    AND coalesce(f.AUSBLENDINDEX,'')=''
+    AND coalesce(f.VALIDFROM,'') IN ('','0001-01-01 00:00:00')
+    AND coalesce(f.VALIDTO,'') IN ('','0001-01-01 00:00:00')
+    THEN 1 ELSE 0 END)
+ORDER BY variant, CAST(code AS INTEGER)
+"""
 _ECU_QUERY = """
 SELECT lower(NAME) variant,
        coalesce(nullif(TITLE_ENGB,''),TITLE_ENUS,'') text_en,
@@ -95,6 +113,41 @@ def query(reader: Path, source: Path, sql: str) -> list[dict[str, Any]]:
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise ValueError("Source reader returned an unsupported result")
     return rows
+
+
+def build_relevance(source: Path, reader: Path, output: Path) -> int:
+    """Publish exact, unconditional non-relevant normal fault codes."""
+    if output.resolve() == source.resolve():
+        raise ValueError("Output must not replace the source database")
+    source_hash = sha256_file(source)
+    rows = query(reader, source, _RELEVANCE_QUERY)
+    non_relevant: dict[str, list[int]] = {}
+    for row in rows:
+        variant, code = row["variant"], row["code"]
+        if (
+            not isinstance(variant, str)
+            or not variant
+            or not isinstance(code, str)
+            or not code.isascii()
+            or not code.isdecimal()
+            or not 0 <= int(code) <= 0xFFFFFF
+        ):
+            raise ValueError("Source relevance identity is incomplete")
+        non_relevant.setdefault(variant, []).append(int(code))
+    if not non_relevant or sha256_file(source) != source_hash:
+        raise ValueError("Source relevance data is unavailable or the source changed")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=output.parent, prefix=".relevance-", delete=False
+    ) as stream:
+        temporary = Path(stream.name)
+    try:
+        data = {"schema": 1, "source_sha256": source_hash, "variants": non_relevant}
+        temporary.write_text(json.dumps(data, separators=(",", ":")) + "\n", encoding="utf-8")
+        os.replace(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return len(rows)
 
 
 def build(source: Path, reader: Path, output: Path) -> dict[str, Any]:
@@ -209,5 +262,11 @@ if __name__ == "__main__":
     parser.add_argument("source", type=Path)
     parser.add_argument("--reader", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=Path("coding_data/diagnostic_texts.db"))
+    parser.add_argument("--relevance-output", type=Path)
     args = parser.parse_args()
-    print(json.dumps(build(args.source, args.reader, args.output), indent=2))
+    metadata = build(args.source, args.reader, args.output)
+    if args.relevance_output is not None:
+        metadata["non_relevant_codes"] = build_relevance(
+            args.source, args.reader, args.relevance_output
+        )
+    print(json.dumps(metadata, indent=2))

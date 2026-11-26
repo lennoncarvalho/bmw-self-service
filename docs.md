@@ -88,6 +88,17 @@ complete agreeing English first, then a separate source-language agreement query
 No arbitrary `LIMIT 1`, per-row language mixing or code filtering. The older
 `dtc_descriptions.db` remains a separate read-only fallback asset.
 
+The same producer's `--relevance-output` option builds
+`coding_data/diagnostic_relevance.json` from `XEP_FAULTCODES`. Only exact
+normal-memory variant/code pairs whose candidates all have unconditional
+`RELEVANCE=0` can be excluded from the default view. Unknown, conflicting and
+conditioned classifications remain visible when their status matches. The
+workshop application's `FaultMemoryViewModelBase.FilterCallback` (ISTAGUI
+`0x060002bd`) calls `Logic.FilterDTCRelevance` (RheingoldSessionController
+`0x060002b4`), which checks fault relevance, groups, hidden classes, mileage
+bounds and source presence conditions. The app uses its own explicit
+present-fault default, with all captured records available through filters.
+
 ### Coding data access
 
 `scripts/build_coding_bundle.py` decrypts the supplied coding JSON members using
@@ -151,6 +162,14 @@ coding definitions remain in the fixture. These are simulated values, not an
 owner-car capture or physical validation. Unsupported requests receive explicit
 negative responses; supported writes update state and source restarts finish
 simulated activation without adding a history reader or cycle control.
+The builder's `--capture` option pairs final UDS read replies by connection,
+operation, request and ECU. It compiles the last reply per addressed request from
+one identified HSFZ session. A local snapshot preserves the captured ECU inventory,
+identity/software, fault memories and details, CBS records and coding reads.
+Uncaptured reads remain unavailable. `--observed-mil` records an in-person lamp
+observation against the exact scalar contract when the log has no lamp reply.
+The owner-only snapshot stays outside the repository. The app loads the compiled
+profile, never the original session log.
 
 `app/session.py` separates immutable live/DEMO context and virtual-instance
 identity from each connection generation. Plans, records and stores check that
@@ -199,9 +218,17 @@ Loaded variants decide permanent-memory support through `FS_LESEN_PERMANENT`,
 including variants absent from the older request metadata. Native lists are
 reconciled against their complete wire records; recovered partial lists retain
 codes but never count as complete coverage.
-Preserve raw status bytes. The engine indicator uses `19 02 0C` present/confirmed
-faults (bits 0/3), not the old 4A69/F303 lamp-command readers. Those retained
-source records do not authorize restoring the superseded dashboard behavior.
+Preserve raw fault status bytes. The MIL comes from the exact address/index
+and name match in `coding_data/mil_contracts.json`. For DME_BX8,
+`SG_FUNKTIONEN` row 256 (`ISMIL`, `STAT_MIL_EIN`) reads `22 4A69` with a
+single-byte 0/1 result. `scripts/recover_mil_contracts.py` regenerates this
+table from canonical jobs plus the hash-bound D94 supplement. This is the
+engine controller's lamp command. Startup
+lamp checks can illuminate the cluster independently of a stored fault. The
+owner's F48 returned lamp command off with the engine running and stopped.
+Keep the latest successful read and
+age within a connection. Dynamic-slot-only contracts remain unavailable during
+read-only refresh and scans.
 
 Recorded fault conditions are collected by `FS_LESEN_DETAIL` / `IS_LESEN_DETAIL`
 after the basic memory lists. Pass only decimal `F_CODE`; legacy information
@@ -269,22 +296,26 @@ The full runtime builder runs this producer. No runtime source-folder access.
   Stable KL15, accessory/off, transitions, KL50 cranking, initialization and invalid
   states remain distinct; no unknown state becomes ignition-off or engine-running.
 
-Overview reads share one 30-second operation budget and publish in the normal
-settled batch. Exact observed address/index, variant and bundled job hash must
-match. Multiple sources stay separately labelled; failures preserve independent
-results. Percentages outside 0–100 are unavailable. Reported quality 0 is retained;
+Exact observed address/index, variant and bundled job hash must match.
+Multiple sources stay separately labelled; failures preserve independent results.
+Percentages outside 0–100 are unavailable. Reported quality 0 is retained;
 invalid/missing required qualifiers disable that value. No quality acceptance
 threshold is established, and AEP readers explicitly report absent quality.
-The fixed DEMO uses SOC 82%, SOH 90% and KL15 on through the normal HSFZ/native path.
-Native/error and source-free Qt/DEMO checks passed; physical reads remain unverified.
-These fields do not grant power-readiness or write authority. Supply voltage is
-separate, and installed I-Levels do not establish available software upgrades.
+Overview retains supply voltage in the status bar. SOC, SOH and KL15 are no
+longer displayed there. Power-reading fields do not grant write authority.
+Installed I-Levels do not establish available software upgrades.
 History and Easy Coding read fresh KL15 and available supply voltage under the
 same owner before write sessions. Coding also checks before headunit reader
-sessions. Confirmed off, cranking or transition states block the operation.
-Voltage uses the exact DME_BX8 `402B` decoder or the applicable engine
-measurement row. No write-voltage threshold is established. Retain explicit
-operator confirmation of power, ignition on and engine off.
+sessions. BDC `DC56` value `0A` is ignition on (KL15); `08` is accessory
+mode (KLR), which can leave the gateway and headunit reachable. Confirmed off,
+cranking or transition states block the operation. Report the terminal
+condition separately from a read-only policy denial. Voltage uses the exact
+DME_BX8 `402B` decoder or the applicable engine measurement row. No
+write-voltage threshold is established. Retain explicit operator confirmation
+of power, ignition on and engine off. The coding reference's
+[connection instructions](https://bimmercode.app/manual/) specify engine off.
+The supplied History writer help gives no verified engine-state requirement
+for its ADD request; the engine-off acknowledgement is app safety policy.
 
 ### CBS
 

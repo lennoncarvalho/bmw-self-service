@@ -15,7 +15,7 @@ from typing import Any
 
 from PySide6.QtCore import QThread, Signal
 
-from app.protocol.contracts import OperationCancelled
+from app.protocol.contracts import OperationCancelled, WriteConditionsBlocked
 from app.protocol.owner import ProtocolOwner
 
 logger = logging.getLogger(__name__)
@@ -80,11 +80,18 @@ class CarWorker(QThread):
             self.error.emit(
                 "The vehicle did not respond in time. Check the cable, ignition and session log."
             )
+        except WriteConditionsBlocked as exc:
+            logger.info("Vehicle operation blocked by write conditions: %s", exc)
+            self.error.emit(str(exc))
         except Exception as exc:
             logger.error("CarWorker failed: %s", exc, exc_info=True)
             message = "The operation could not be completed. Check the connection and session log."
             if isinstance(exc, PermissionError):
-                message = "This operation is blocked in the current session. Check read-only mode and vehicle access."
+                message = (
+                    "This operation is disabled in the read-only session."
+                    if getattr(self.connection, "read_only", False)
+                    else "The application blocked this operation. Check the session log."
+                )
             elif "Multiple vehicles" in str(exc):
                 message = "Multiple vehicles responded. Leave only one vehicle on the selected Ethernet connection, then retry."
             elif "identities differ" in str(exc) or "conflicting vehicle" in str(exc):

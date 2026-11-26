@@ -18,6 +18,7 @@ from app.protocol.contracts import (
     OperationContext,
     OperationOutcome,
     ProtocolFailure,
+    WriteConditionsBlocked,
 )
 
 logger = logging.getLogger(__name__)
@@ -106,11 +107,13 @@ class ProtocolOwner:
             self._queue.put(None)
 
     @staticmethod
-    def _complete(handle: OperationHandle, failure: FailureKind) -> None:
+    def _complete(handle: OperationHandle, failure: FailureKind, *, detail: str = "") -> None:
         context = handle.context
         cause = failure
         if context.sent and context.mutation:
             failure = FailureKind.UNCERTAIN
+        if detail:
+            logger.info("Vehicle operation blocked conn=%s: %s", context.generation, detail)
         logger.debug(
             "Operation failure conn=%s operation=%s kind=%s cause=%s sent=%s ecu=%s",
             context.generation,
@@ -128,6 +131,7 @@ class ProtocolOwner:
                 sent=context.sent,
                 ecu=context.ecu,
                 request_id=context.request_id,
+                detail=detail,
             )
         )
 
@@ -203,6 +207,8 @@ class ProtocolOwner:
                             request_id=context.request_id,
                         )
                     )
+                except WriteConditionsBlocked as exc:
+                    self._complete(handle, FailureKind.WRITE_CONDITIONS, detail=str(exc))
                 except PermissionError:
                     self._complete(handle, FailureKind.POLICY)
                 except ValueError:

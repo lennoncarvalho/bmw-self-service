@@ -17,15 +17,14 @@ acceptance remains in this milestone.
 
 ## History and integrated acceptance
 
-- [ ] On the owner's ENTRYNAV, confirm that append preparation reaches review.
-  During the next intended physical append, compare the confirmed request and
-  activation with the date and items shown in iDrive. Replacement remains
-  physically unverified and requires an independently intended operation.
+- [ ] During the next intended physical ENTRYNAV append, verify KL15 at
+  execution and compare the checked ADD and activation responses with the date
+  and items shown in iDrive. Preparation has reached review on KL15.
+  Replacement requires an independently intended operation.
 - [ ] Confirm live reconnect after a naturally interrupted read and Clear All
   results during an intended fault clear. Retain actual identities and outcomes.
-- [ ] During an intended car session, verify the source-backed Overview battery
-  SOC/SOH and ignition readings. Their source/native checks do not establish
-  physical read acceptance.
+- [ ] During an intended car session, compare the latest Overview MIL read with
+  the cluster lamp after startup. Retain the lamp observation and command reply.
 
 ## Later implementation choices
 

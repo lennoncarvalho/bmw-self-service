@@ -109,6 +109,8 @@ def build(
         str(reader),
         "--output",
         str(data / "diagnostic_texts.db"),
+        "--relevance-output",
+        str(data / "diagnostic_relevance.json"),
     )
     run(
         sys.executable,

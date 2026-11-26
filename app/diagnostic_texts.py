@@ -4,9 +4,11 @@ The database is generated during development. Runtime needs only the ordinary
 SQLite asset; it never opens research sources, decrypts data or invokes a tool.
 """
 
+import json
 import logging
 import sqlite3
 from contextlib import closing
+from functools import cache
 from pathlib import Path
 
 from app.resources import resource_path
@@ -14,6 +16,40 @@ from app.resources import resource_path
 logger = logging.getLogger(__name__)
 _MAX_ASSET_BYTES = 128 * 1024 * 1024
 _MAX_CANDIDATES = 128
+
+
+@cache
+def _non_relevant_codes() -> dict[str, frozenset[int]]:
+    """Read the bounded source classification once, independently of description availability."""
+    try:
+        with resource_path("coding_data/diagnostic_relevance.json").open("rb") as stream:
+            raw = stream.read(262145)
+        if len(raw) > 262144:
+            raise ValueError("Diagnostic relevance definitions exceed their supported size")
+        data = json.loads(raw)
+        if (
+            not isinstance(data, dict)
+            or data.get("schema") != 1
+            or not isinstance(data.get("variants"), dict)
+        ):
+            raise ValueError("Unsupported diagnostic relevance schema")
+        result = {}
+        for variant, codes in data["variants"].items():
+            if not isinstance(codes, list) or any(
+                type(code) is not int or not 0 <= code <= 0xFFFFFF for code in codes
+            ):
+                raise ValueError("Invalid diagnostic relevance codes")
+            result[variant] = frozenset(codes)
+        return result
+    except (OSError, TypeError, ValueError):
+        logger.warning("Embedded diagnostic relevance lookup unavailable", exc_info=True)
+        return {}
+
+
+def is_non_relevant_fault(code: int, *, ecu: str) -> bool:
+    """Return whether an exact normal fault is explicitly non-relevant in the source."""
+    codes = _non_relevant_codes().get(ecu.casefold())
+    return codes is not None and code in codes
 
 
 class DiagnosticTexts:

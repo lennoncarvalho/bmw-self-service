@@ -9,24 +9,27 @@ import json
 import logging
 import time
 from collections.abc import Callable
+from functools import cache
 from pathlib import Path
 from typing import Any, cast
 
 from app.diagnostic_texts import diagnostic_texts
 from app.ista_data import DataFormatError
-from app.ista_jobs import JobBackend, data_source, fault_records
+from app.ista_jobs import data_source
 from app.power_readings import read_power_status, reader_profiles
-from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
+from app.protocol.contracts import (
+    FailureKind,
+    OperationContext,
+    ProtocolFailure,
+    TransportKind,
+    WriteConditionsBlocked,
+)
 from app.resources import resource_path
-from app.uds import decode_dtc_records
 from app.vehicle_order import read_vehicle_order
 
 logger = logging.getLogger(__name__)
 
 
-# D-59 (owner, 2026-10-30): the overview indicator follows engine fault memory, as
-# ISTA presents it, not the ECU's lamp command (which is lit at key-on, engine off).
-ENGINE_ADDRESSES = ("0x12", "0x13")
 ACTIVE = 0x01  # ISO 14229 testFailed: fault present now
 CONFIRMED = 0x08  # ISO 14229 confirmedDTC: fault stored as confirmed
 
@@ -40,87 +43,47 @@ def fault_state(status: int) -> str:
     return "not-confirmed"
 
 
-def read_engine_faults(
-    connection: Any, ecus: list[dict[str, Any]], backend: JobBackend | None = None
-) -> dict[str, object]:
-    """Red when an engine ECU stores a present or confirmed fault (D-59).
+@cache
+def mil_contracts() -> dict[str, dict[str, Any]]:
+    """Load the exact engine identities and lamp-command contracts."""
+    with resource_path("coding_data/mil_contracts.json").open("rb") as stream:
+        raw = stream.read(65537)
+    if len(raw) > 65536:
+        raise ValueError("MIL definitions exceed their supported size")
+    data = json.loads(raw)
+    if data.get("schema") != 1 or not isinstance(data.get("engines"), dict):
+        raise ValueError("Unsupported MIL definition format")
+    return cast(dict[str, dict[str, Any]], data["engines"])
 
-    Uses the same read as the fault scan: the variant's FS_LESEN job where its job
-    file is available, else `19 02 0C`. Green needs every responding engine ECU
-    read successfully; an unread engine leaves the indicator unavailable.
-    """
-    engines = [
-        row
-        for row in ecus
-        if row.get("addr") in ENGINE_ADDRESSES
-        # A gateway-listed engine is installed even if its identity read failed;
-        # a catalogue candidate counts only once it answered.
-        and (
-            row.get("origin", "gateway") != "catalogue"
-            or row.get("identity_state") in ("identified", "unmatched-variant")
-        )
-    ]
-    if not engines:
-        return {"on": None, "detail": "Engine ECU not found in this session"}
-    jobs = backend if backend is not None else JobBackend(connection)
+
+def read_mil(
+    connection: Any, ecus: list[dict[str, Any]], *, timeout: float = 30.0
+) -> dict[str, object]:
+    """Observe the ECU lamp command through the matching scalar read contract."""
+    if connection.kind != TransportKind.HSFZ:
+        return {"on": None, "detail": "MIL is unavailable on this transport."}
+    engines = [row for row in ecus if row.get("addr") == "0x12"]
+    if len(engines) != 1 or engines[0].get("identified") is not True:
+        return {"on": None, "detail": "Engine controller identity is unavailable."}
+    engine = engines[0]
+    name = engine["name"]
+    if timeout <= 0 or not connection.alive_ok:
+        return {"on": None, "detail": "Lamp command could not be read in this operation."}
     try:
-        return _engine_faults(connection, engines, jobs)
-    finally:
-        if backend is None:
-            jobs.close()
-
-
-def _engine_faults(
-    connection: Any, engines: list[dict[str, Any]], jobs: JobBackend
-) -> dict[str, object]:
-    counts = {"present": 0, "stored": 0, "not-confirmed": 0}
-    names, sources = [], []
-    for row in engines:
-        name = str(row.get("name") or row["addr"])
-        names.append(name)
-        if not connection.alive_ok:
-            return {"on": None, "detail": f"Engine {name} fault memory was not read"}
-        statuses: list[int] | None = None
-        job_failure = ""
-        if row.get("identified") and jobs.has_job(name, "FS_LESEN"):
-            run = jobs.run(name, int(row["addr"], 16), "FS_LESEN", timeout=30.0)
-            if run.interpreter_failed:
-                job_failure = f" (job FS_LESEN failed: {run.error})"
-            else:
-                try:
-                    if not run.ok:
-                        raise ValueError(f"FS_LESEN {run.state()}")
-                    statuses = [record["status"] for record in fault_records(run)]
-                except ValueError:
-                    logger.warning(
-                        "Engine fault job unavailable addr=%s", row["addr"], exc_info=True
-                    )
-                    return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
-                sources.append(run.source)
-        if statuses is None:
-            try:
-                response = connection.send_uds(int(row["addr"], 16), b"\x19\x02\x0c", timeout=30.0)
-                statuses = [status for _code, status in decode_dtc_records(response)]
-            except Exception:  # any failure leaves the indicator unavailable, never green
-                logger.warning(
-                    "Engine fault memory unavailable addr=%s", row["addr"], exc_info=True
-                )
-                return {"on": None, "detail": f"Engine {name} fault memory could not be read"}
-            sources.append(jobs.fallback_source(name) + job_failure)
-        for status in statuses:
-            counts[fault_state(status)] += 1
-    serious = counts["present"] + counts["stored"]
-    parts = []
-    if counts["present"]:
-        parts.append(f"{counts['present']} present")
-    if counts["stored"]:
-        parts.append(f"{counts['stored']} confirmed, not present now")
-    if counts["not-confirmed"]:
-        parts.append(f"{counts['not-confirmed']} not confirmed")
-    summary = ", ".join(parts) or "no stored faults"
+        contract = mil_contracts().get(engine.get("address_index", ""), {})
+        if contract.get("name") != name or contract.get("state") != "scalar-boolean":
+            return {"on": None, "detail": f"No verified direct lamp read for {name}."}
+        did = contract["did"]
+        response = connection.send_uds(0x12, b"\x22" + did.to_bytes(2, "big"), timeout=timeout)
+        value = did_data(response, did)
+        if value not in (b"\x00", b"\x01"):
+            raise ValueError("Invalid scalar lamp-command response")
+    except (OSError, ValueError, ProtocolFailure):
+        logger.warning("MIL command unavailable for %s", name, exc_info=True)
+        return {"on": None, "detail": f"Lamp command could not be read from {name}."}
     return {
-        "on": serious > 0,
-        "detail": f"Engine {' / '.join(names)}: {summary} (source: {'; '.join(sources)})",
+        "on": value == b"\x01",
+        "detail": f"Lamp command from {name}. The light may illuminate during startup checks.",
         "observed_clock": time.monotonic(),
     }
 
@@ -299,10 +262,6 @@ def read_supply_voltage(
     return None
 
 
-class WriteConditionsBlocked(PermissionError):
-    """An observed condition makes a sensitive operation unsafe to start."""
-
-
 def check_write_conditions(
     connection: Any, ecus: list[dict[str, Any]], context: OperationContext
 ) -> str:
@@ -316,9 +275,17 @@ def check_write_conditions(
         ignition = [item for item in status["kl15"] if item["state"] in {"read", "transition"}]
         for observation in ignition:
             if observation["raw_value"] != 10:
+                logger.info(
+                    "Vehicle write preflight blocked conn=%s source=%s terminal=0x%02X",
+                    context.generation,
+                    observation["source"],
+                    observation["raw_value"],
+                )
                 raise WriteConditionsBlocked(
                     f"{observation['source']} reports {observation['value']}. "
-                    "Turn the ignition on with the engine off before continuing."
+                    "Switch on the ignition (KL15) while keeping the engine off. "
+                    "On vehicles with a Start/Stop button, release the brake and clutch pedals "
+                    "before switching on the ignition."
                 )
         voltage = read_supply_voltage(connection, ecus, context=context)
         context.remaining()
@@ -528,13 +495,12 @@ def post_connect_tasks() -> list[tuple[str, Callable[[Any], object]]]:
 
     return [
         ("ECU list", inventory),
-        ("MIL", lambda conn: read_engine_faults(conn, ecus)),
+        ("MIL", lambda conn: read_mil(conn, ecus)),
         ("Mileage", lambda conn: supported(conn, lambda active: read_odometer(active, ecus))),
         (
             "Engine data",
             lambda conn: supported(conn, lambda active: read_engine_data(active, ecus)),
         ),
-        ("Power status", lambda conn: read_power_status(conn, ecus)),
         ("Vehicle order", read_vehicle_order),
         (
             "I-Level",
