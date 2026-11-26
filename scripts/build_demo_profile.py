@@ -16,7 +16,11 @@ sys.path.insert(0, str(ROOT))
 from app.coding import decode_cafd_identifiers  # noqa: E402
 from app.coding_db import CodingDatabase, _number  # noqa: E402
 from app.coding_write import _groups  # noqa: E402
-from app.demo_vehicle import CAPTURED_DEMO_PROFILE, HEADUNIT_ENTITLEMENT_LIST  # noqa: E402
+from app.demo_vehicle import (  # noqa: E402
+    CAPTURED_DEMO_PROFILE,
+    HEADUNIT_ENTITLEMENT_LIST,
+    DemoVehicle,
+)
 from app.history_files import valid_vin  # noqa: E402
 from app.ista_data import IstaDataSource  # noqa: E402
 from app.vehicle import decode_inventory  # noqa: E402
@@ -234,6 +238,7 @@ def _write_capture(destination: Path, data: dict[str, Any]) -> None:
             json.dump(data, stream, indent=2)
             stream.write("\n")
             stream.close()
+            DemoVehicle(temporary)
             os.replace(temporary, destination)
         finally:
             temporary.unlink(missing_ok=True)
