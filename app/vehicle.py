@@ -17,7 +17,13 @@ from app.diagnostic_texts import diagnostic_texts
 from app.ista_data import DataFormatError
 from app.ista_jobs import data_source
 from app.power_readings import read_power_status, reader_profiles
-from app.protocol.contracts import FailureKind, OperationContext, ProtocolFailure, TransportKind
+from app.protocol.contracts import (
+    FailureKind,
+    OperationContext,
+    ProtocolFailure,
+    TransportKind,
+    WriteConditionsBlocked,
+)
 from app.resources import resource_path
 from app.vehicle_order import read_vehicle_order
 
@@ -256,10 +262,6 @@ def read_supply_voltage(
     return None
 
 
-class WriteConditionsBlocked(PermissionError):
-    """An observed condition makes a sensitive operation unsafe to start."""
-
-
 def check_write_conditions(
     connection: Any, ecus: list[dict[str, Any]], context: OperationContext
 ) -> str:
@@ -273,9 +275,17 @@ def check_write_conditions(
         ignition = [item for item in status["kl15"] if item["state"] in {"read", "transition"}]
         for observation in ignition:
             if observation["raw_value"] != 10:
+                logger.info(
+                    "Vehicle write preflight blocked conn=%s source=%s terminal=0x%02X",
+                    context.generation,
+                    observation["source"],
+                    observation["raw_value"],
+                )
                 raise WriteConditionsBlocked(
                     f"{observation['source']} reports {observation['value']}. "
-                    "Turn the ignition on with the engine off before continuing."
+                    "Switch on the ignition (KL15) while keeping the engine off. "
+                    "On vehicles with a Start/Stop button, release the brake and clutch pedals "
+                    "before switching on the ignition."
                 )
         voltage = read_supply_voltage(connection, ecus, context=context)
         context.remaining()

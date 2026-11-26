@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
         self.diag_page = DiagnosticsPage()
         self.vehicle_page.mil_changed.connect(self.diag_page.set_mil_observation)
         self.diag_page.mil_observed.connect(self.vehicle_page.set_mil_observation)
-        self.diag_page.mutation_active.connect(self._on_diagnostics_mutation_active)
+        self.diag_page.mutation_active.connect(self._on_mutation_active)
         self.diag_page.loading_changed.connect(self._set_diagnostics_loading)
         self.diag_page.loading_progress.connect(self._on_diagnostics_loading_progress)
         self.diag_page.can_mutate = self._can_start_mutation
@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
 
         self.history_page = ServiceHistoryPage()
         self.history_page.can_mutate = self._can_start_mutation
-        self.history_page.mutation_active.connect(self._set_mutation_active)
+        self.history_page.mutation_active.connect(self._on_mutation_active)
         self.history_page.vehicle_loading_changed.connect(self._set_history_loading)
         self.history_page.vehicle_loading_progress.connect(self._on_history_loading_progress)
         self.stack.addWidget(self.history_page)
@@ -1610,8 +1610,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Service Reset Not Started", message)
 
     @Slot(bool, bool)
-    def _on_diagnostics_mutation_active(self, active: bool, refresh_overview: bool) -> None:
-        """Honor the diagnostic worker's explicit follow-up decision."""
+    def _on_mutation_active(self, active: bool, refresh_overview: bool) -> None:
+        """Honor the feature worker's explicit follow-up decision."""
         self._set_mutation_active(active, refresh_overview=refresh_overview)
 
     @Slot(bool)

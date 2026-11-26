@@ -17,6 +17,7 @@ from app.protocol.contracts import (
     OperationOutcome,
     ProtocolFailure,
     TransportKind,
+    WriteConditionsBlocked,
 )
 from app.protocol.doip import DoipAdapter
 from app.protocol.hsfz import HsfzAdapter
@@ -169,8 +170,12 @@ class DiagnosticConnection:
                 raise ConnectionError(
                     "Vehicle outcome is uncertain; reconnect and reread before recovery"
                 )
+            if result.failure == FailureKind.WRITE_CONDITIONS:
+                raise WriteConditionsBlocked(result.detail or "Vehicle write conditions are unsafe")
             if result.failure == FailureKind.POLICY:
-                raise PermissionError("This operation is disabled in the read-only session")
+                if self.read_only:
+                    raise PermissionError("This operation is disabled in the read-only session")
+                raise PermissionError("Vehicle operation blocked by the application policy")
             if result.failure in (FailureKind.INVALID, FailureKind.UNSUPPORTED):
                 raise ValueError("Vehicle operation is invalid or unsupported")
             raise ConnectionError("Vehicle operation failed; reconnect if the connection was lost")

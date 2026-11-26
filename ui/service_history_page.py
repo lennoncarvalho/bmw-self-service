@@ -315,7 +315,7 @@ class ServiceHistoryPage(QWidget):
     """In-memory staging, cleared on page exit, disconnect or environment change."""
 
     busy_changed = Signal(bool)
-    mutation_active = Signal(bool)
+    mutation_active = Signal(bool, bool)
     vehicle_loading_changed = Signal(bool)
     vehicle_loading_progress = Signal(str)
 
@@ -477,7 +477,7 @@ class ServiceHistoryPage(QWidget):
             "File operation failed; the staged list is retained. Check the file and session log."
             if isinstance(self._worker, HistoryFileWorker)
             else "History operation could not complete. "
-            + (getattr(self._worker, "guard_notice", "") or message)
+            + message
             + " No automatic retry will occur."
         )
 
@@ -493,7 +493,8 @@ class ServiceHistoryPage(QWidget):
         was_writing = self._writing
         self._writing = False
         if was_writing:
-            self.mutation_active.emit(False)
+            report = getattr(worker, "report", {})
+            self.mutation_active.emit(False, report.get("state") != "blocked")
         if not isinstance(worker, HistoryFileWorker):
             self.vehicle_loading_changed.emit(False)
         if self._shutting_down:
@@ -1063,7 +1064,7 @@ class ServiceHistoryPage(QWidget):
         ):
             return
         self._writing = True
-        self.mutation_active.emit(True)
+        self.mutation_active.emit(True, False)
         worker = HistoryWriteWorker(
             connection,
             plan,

@@ -23,11 +23,12 @@ from app.protocol.contracts import (
     OperationContext,
     ProtocolFailure,
     TransportKind,
+    WriteConditionsBlocked,
 )
 from app.resources import resource_path
 from app.service_history import decode_nbt_add_result, encode_nbt_add
 from app.session import LIVE, check_binding, environment
-from app.vehicle import DiagnosticCatalog, WriteConditionsBlocked, check_write_conditions, did_data
+from app.vehicle import DiagnosticCatalog, check_write_conditions, did_data
 from app.worker import CarWorker
 
 logger = logging.getLogger(__name__)
@@ -262,7 +263,6 @@ class HistoryPrepareWorker(CarWorker):
         self.mode, self.index = mode, index
         self.known_dates = set(known_dates or ())
         self.consumed = set(consumed or ())
-        self.guard_notice = ""
 
     def do_work(self) -> HistoryPlan:
         """Prepare on the owner within one 30-second budget."""
@@ -296,11 +296,7 @@ class HistoryPrepareWorker(CarWorker):
             finally:
                 ctx.response_timing = timing
             validate_software(software)
-            try:
-                conditions = check_write_conditions(connection, self.ecus, ctx)
-            except WriteConditionsBlocked as error:
-                self.guard_notice = str(error)
-                raise
+            conditions = check_write_conditions(connection, self.ecus, ctx)
             return json.dumps(
                 {
                     "address": 0x63,
@@ -516,7 +512,7 @@ class HistoryWriteWorker(CarWorker):
                 step,
                 detail="Stopped after an earlier failed or uncertain step",
             )
-        record(overall, detail=INSTRUCTIONS)
+        record(overall, detail=self.report["instructions"])
         return self.report
 
 

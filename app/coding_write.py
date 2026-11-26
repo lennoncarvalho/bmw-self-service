@@ -35,9 +35,10 @@ from app.protocol.contracts import (
     OperationContext,
     ProtocolFailure,
     TransportKind,
+    WriteConditionsBlocked,
 )
 from app.session import check_binding, check_record, check_store, environment, operation_store
-from app.vehicle import DiagnosticCatalog, WriteConditionsBlocked, check_write_conditions, did_data
+from app.vehicle import DiagnosticCatalog, check_write_conditions, did_data
 from app.vehicle_order import decode_vehicle_order
 from app.worker import CarWorker
 
@@ -693,11 +694,7 @@ class CodingVerificationWorker(CarWorker):
             if headunit_reader:
                 if connection.read_only:
                     raise PermissionError("This ECU requires an available headunit reader session")
-                try:
-                    check_write_conditions(connection, self.ecus, ctx)
-                except WriteConditionsBlocked as error:
-                    self.guard_notice = str(error)
-                    raise
+                check_write_conditions(connection, self.ecus, ctx)
                 acknowledged = Event()
                 self.sensitive_operation_requested.emit(acknowledged)
                 while not acknowledged.wait(0.05):

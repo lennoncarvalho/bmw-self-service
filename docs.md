@@ -225,8 +225,8 @@ single-byte 0/1 result. `scripts/recover_mil_contracts.py` regenerates this
 table from canonical jobs plus the hash-bound D94 supplement. This is the
 engine controller's lamp command. Startup
 lamp checks can illuminate the cluster independently of a stored fault. The
-owner's F48 session captured no command reply and the owner observed the lamp
-off. Its DME normal fault list was empty. Keep the latest successful read and
+owner's F48 returned lamp command off with the engine running and stopped.
+Keep the latest successful read and
 age within a connection. Dynamic-slot-only contracts remain unavailable during
 read-only refresh and scans.
 
@@ -306,10 +306,16 @@ longer displayed there. Power-reading fields do not grant write authority.
 Installed I-Levels do not establish available software upgrades.
 History and Easy Coding read fresh KL15 and available supply voltage under the
 same owner before write sessions. Coding also checks before headunit reader
-sessions. Confirmed off, cranking or transition states block the operation.
-Voltage uses the exact DME_BX8 `402B` decoder or the applicable engine
-measurement row. No write-voltage threshold is established. Retain explicit
-operator confirmation of power, ignition on and engine off.
+sessions. BDC `DC56` value `0A` is ignition on (KL15); `08` is accessory
+mode (KLR), which can leave the gateway and headunit reachable. Confirmed off,
+cranking or transition states block the operation. Report the terminal
+condition separately from a read-only policy denial. Voltage uses the exact
+DME_BX8 `402B` decoder or the applicable engine measurement row. No
+write-voltage threshold is established. Retain explicit operator confirmation
+of power, ignition on and engine off. The coding reference's
+[connection instructions](https://bimmercode.app/manual/) specify engine off.
+The supplied History writer help gives no verified engine-state requirement
+for its ADD request; the engine-off acknowledgement is app safety policy.
 
 ### CBS
 

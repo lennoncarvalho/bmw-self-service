@@ -133,9 +133,14 @@ class FailureKind(StrEnum):
     INVALID = "invalid-response"
     UNEXPECTED = "unexpected-response"
     POLICY = "policy-blocked"
+    WRITE_CONDITIONS = "write-conditions-blocked"
     UNSUPPORTED = "unsupported"
     TRANSPORT_REJECTED = "transport-rejected"
     CONNECTION_LOST = "connection-lost"
+
+
+class WriteConditionsBlocked(PermissionError):
+    """A verified vehicle condition prevented a sensitive operation."""
 
 
 @dataclass(frozen=True)
@@ -149,6 +154,7 @@ class OperationOutcome:
     sent: bool = False
     ecu: EcuIdentity | None = None
     request_id: str | None = None
+    detail: str = ""
 
     @property
     def nrc(self) -> int | None:
