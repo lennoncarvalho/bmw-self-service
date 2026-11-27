@@ -124,6 +124,15 @@ It contains two related routes:
   `XEP_ECUFUNCSTRUCTURES.ID` and `XEP_ECUFIXEDFUNCTIONS.PARENTID`.
   A fixed function can have operator text without an executable job.
 
+Walk the guided tree and ECU function structures independently to find related
+tests. The guided root record (40372107) branches by vehicle family. The same
+power-tailgate initialization info object (2000008902616) is linked from two
+diagnosis nodes. Inside an ECU, sibling rows share an
+`XEP_ECUFUNCSTRUCTURES.ID`. For example, BDC wash/wipe groups contain pump,
+wiper, parking-contact and fluid-level functions. A shared group is a discovery
+lead. Follow the attached jobs to distinguish readings from output commands:
+the BDC front indicator row 20000155880874 only reads output status.
+
 Evaluate applicable `XEP_RULES` and included rules, date/visibility constraints
 and the relevant vehicle context before using a record. For example, BDC window
 movement and HKFM11 open/close rows carry rules even after an exact ECU match.
@@ -141,18 +150,25 @@ PRG. Even one ECU uses several services, such as BDC `STEUERN` (0x2E),
 | Inside mirror dimming and status | BDC fixed function 20000155893359. `ABL_DIT_AT5116_BDCISECO.Funktionstest` (`0x0600000f`) checks fitment and invokes a timed full-dim test. In `bdc.prg`, `EC_SPIEGEL_VORHANDEN` (D330) reports fitment, and `EC_SPIEGEL_ABBLENDEN` (D32F) takes seconds and returns dimming percentage. The test does not expose a voltage setpoint or measured mirror voltage. |
 | Front wiper service position | FEM_20 fixed functions 20000352521148/20000352521268 enter/release service position. `bdc.prg` defines `WISCHER_FRONT_SERVICE` enter/release/status (D363). REA shows `ABL_DIT_AS6160_BDCWIINO.Wischer_einlernen` (`0x0600000c`) invoking it, while `Wischer_einlernen_alt` (`0x0600000e`) uses installation position (D362). BDC_G05 also has an installation-position function 20000348376327. Establish fitment, safe entry conditions and park/restoration before enabling each variant. |
 | Electric seats | FAS_12 fixed function 20000352527592 is a seat-depth movement with an explicit Reset job. `fas_12.prg` `MOTOR` (D708) selects the motor and direction/stop, reports motor status and takes PWM. Gate individual axes by fitment and establish a bounded stop on disconnect. |
-| Headlight leveling | BDC 20000155892941 is an LWR reference run with two ranked jobs and status in `AHL_LWR_REFERENZLAUF` (D547). FLE_L/R have separate reference runs 20000343665902/20000343666703 and `LWR_REFERENZLAUF` in their jobs. A reference run does not measure optical beam aim. Recover the correct workflow for the fitted headlights and keep optical aiming guided by the repair procedure. |
 | Individual windows | BDC 20000155893229/20000155893224 use `FH_VERFAHREN_PROZENT` (A17F) for driver window open/close. Its result table distinguishes pending, running, completed, failed and aborted. The catalog warns about pinch risk and calls for normalization. Verify safety behavior and keep window learning a separate guided procedure. |
 | Powered tailgate | HKFM11 20000359018721/20000359018569 are open/close. `hkfm11.prg` `STEUERN_HECKKLAPPENANTRIEB` (D248) defines stop/open/close and `POSITION_HKL` (D231) reports position segments. BDC 20000155893917 only actuates the latch button. Power-tailgate initialization is a separate ABL, e.g. `ABL_DIT_AS4162_HKLINIT`. |
 | Speaker tones | ENTRYNAV 20000131776112–20000131776114 use `SINUSGENERATOR` (A001) with an explicit stop. `entrynav.prg` also defines channel masks in `TAudioKanal` and reads the audio system via D002. RAM01 e.g. 20000370007808 addresses one speaker output with a different argument layout. Show only verified installed outputs. One output can drive several speakers. |
 | Exterior mirrors | BDC 20000372805131 folds/unfolds and 20000155893449 commands a timed directional movement. `bdc.prg` has fold fitment/status and position via `AUSSENSPIEGEL_LINKS_POS` (D328) and `AUSSENSPIEGEL_RECHTS_POS` (D333). Horizontal/vertical position is in ECU increments. Degrees and support for absolute position on a specific mirror remain unverified. |
-| Lighting and rain sensor | BDC has exterior-light jobs (e.g. 20000155893083 for number-plate lights) and rain sensor initialization (20000155880997). FLE_L/R have independent headlamp functions (e.g. DRL 20000343665903/20000343666704). Grouped outputs and input-status rows do not establish independent bulb control. Start with verified outputs and weather/light readings before calibration. |
+| Exterior and cabin lighting | BDC fixed function 20000155893084 selects four tail-light outputs with ranked jobs. `bdc.prg` `STEUERN_LEUCHTENAUSGANG_DIGITAL` (4501) uses `TAB_AUSGANG_LEUCHTEN` and defines on, off and return-to-ECU actions. The table includes individual left/right turn, brake and reverse outputs, cabin outputs, and a BDC-local `ALLE` selector. `STATUS_LEUCHTENAUSGANG_DIGITAL` (4500) reports an ECU output state. FLE_L/R have separate headlamp routines, e.g. DRL 20000343665903/20000343666704. Resolve fitted outputs and compatibility before grouping them for a walk-around. |
+| Display and radio | ENTRYNAV groups CID connection and identification reads (20000131775884/20000131775885) with RGB test cards, e.g. 20000155845204 uses `CID_TESTBILD` with a Reset job. The tuner group offers field strength and signal quality (20000155917424/20000155917425). Establish which display and tuner are fitted before exposing the tests. |
+| HVAC airflow | IHX_I1 blower test 20000080286815 and fresh-air/recirculation flap tests 20000104934938/20000104935176 have Main and Reset jobs. Cabin and evaporator temperatures have separate reads (20000350476668/20000350476952). The guided `ABL_DIT_AS6450_LGEICHLAUFLV` has product-line selection and a separate calibration step (`s21_Steuern_Eichlauf`, `0x0600000d`). |
+| Wash system and weather | BDC wash/wipe has washer-fluid status (20000155891157) and independent front/rear pump tests (20000155893689/20000155893687). The rain/light group has light sensor data (20000155881141), rain sensor fitment (20000372803665), and an initialization routine (20000155880997). |
+| Switches and parking sensors | BDC door contacts and the outer tailgate button have status reads (e.g. 20000155891024/20000155891026). PMA_15 distance groups expose individual parking sensor readings (e.g. 20000358400359/20000358400355) and call for active PDC. Use normal PDC activation to troubleshoot with the vehicle stationary. |
+| Horn and brake-fluid switch | BDC horn function 20000155893443 uses the timed `HUPE` job input. DSC_I1 brake-fluid level 20000358394237 is a status read. |
 
 Offline native-job checks used a socket-free recipient to verify BDC mirror dimming
 and wiper enter/release/status requests and ENTRYNAV tone start/stop requests.
 The recipient supplied synthetic positive replies. These checks establish
 request encoding only. The F48 capture identifies BDC, FAS_12, HKFM11, FLE_L/R
 and ENTRYNAV, with no Service Functions execution or post-state evidence.
+The same offline method confirmed BDC individual-output and `ALLE`
+selectors and their return-control encoding. It did not establish vehicle
+fitment, simultaneous activation or optical lamp operation.
 
 Public development references include
 [EdiabasLib's ECU function extractor notes](https://github.com/uholeschak/ediabaslib/blob/master/Tools/ExtractEcuFunctions/ISTA-D_Debug.txt)

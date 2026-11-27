@@ -32,12 +32,16 @@ acceptance remains in this milestone.
   from the [catalog and PRG contracts](docs.md#service-functions-source-contracts).
   Verify identity/rule inputs, job phases and result decoding. Cover additional
   ECU variants where the same behavior has source evidence.
-- [ ] Exercise the timed interior-mirror test and audio tone through the existing
-  owner and DEMO. Check incompatible equipment, rejected commands, timeouts,
-  disconnects, stop/release and post-state before enabling live controls.
-- [ ] Add source-verified lighting and wiper/mirror tests next. Admit seats,
-  windows and powered tailgate movement only after proving bounds on lost
-  communication. Recover guided leveling and learning procedures separately.
+- [ ] Exercise individual lighting, timed interior-mirror dimming and audio tone
+  through the existing owner and DEMO. Check incompatible equipment, rejected
+  commands, timeouts, disconnects, stop/release and post-state.
+- [ ] Compose the walk-around from verified lamp outputs. Check safe concurrent
+  groups, access to each phase, duration, early exit and release when a stage
+  fails partway. Require confirmed fitment and control return before live use.
+- [ ] Add the display/radio, HVAC, washer, switch, parking sensor, horn and
+  brake-fluid checks from the source guide. Admit wiper/mirror, seat, window and
+  powered tailgate movement only with verified bounds on lost communication.
+  Recover guided learning and initialization procedures separately.
 - [ ] Show semantic feature/option names in coding backup comparisons alongside
   original/intended bytes, using exact saved-definition matching. Current
   comparisons retain bytes and do not explain each changed setting.

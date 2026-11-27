@@ -208,19 +208,30 @@ controls, live results and diagnostic outcome. Resolve support from fresh
 vehicle identity and exact ECU variants, source applicability, fitted equipment
 and available state. Hide functions whose compatibility cannot be established.
 
-- First candidates are the timed electrochromic inside-mirror test and an audio
-  test tone. Use presence or audio-configuration reads to show available controls.
-  Exercise the normal path in DEMO before enabling a source-backed live contract.
-- Add verified individual lighting outputs, wiper service position and exterior
-  mirror fold or directional movement when entry, stop/release and post-state
-  checks are established. Grouped outputs retain their actual grouping.
+- Start with verified individual lighting controls and a **Walk-around Lights**
+  preset for a parked vehicle. Show which installed lamps each stage checks.
+  Keep compatible steady exterior lights on together for a bounded inspection.
+  Stage indicators, brake lights, reverse lights and any incompatible outputs
+  separately as needed. Reverse-light testing must work while safely parked
+  without selecting reverse. Provide an explicit end-test control and return each
+  affected output to ECU control on completion. Keep cabin-light tests separate.
+  Report ECU output state separately from the owner's visual check.
+- Use the timed electrochromic inside-mirror test and audio tone as additional
+  early tests. Use presence or audio-configuration reads to show available
+  controls. Exercise the normal path in DEMO before enabling live contracts.
+- Add wiper service position and exterior-mirror fold or directional movement
+  when entry, stop/release and post-state checks are established.
 - Plan seats, windows and the powered tailgate as stationary component tests
-  with clear movement boundaries and verified stop behavior. Keep headlight
-  reference runs, window or tailgate learning, and rain sensor initialization
-  as guided procedures with their own preconditions and completion checks.
-- Consider additional lighting, weather, oil level, fluid, temperature, battery,
-  HVAC and actuator cards through the same eligibility rules. Reuse existing
-  Overview readers for the values they already own.
+  with clear movement boundaries and verified stop behavior.
+- Include display connection and RGB patterns, radio signal quality, HVAC blower
+  and recirculation flap tests, washer pumps and fluid status, door and tailgate
+  switch status, parking-sensor distances, a brief horn test, and brake-fluid
+  switch status where supported. Reuse existing Overview readers for the values
+  they already own.
+- Keep window or tailgate learning and rain sensor initialization as guided
+  procedures with their own preconditions and completion checks. Consider
+  further weather, oil level, fluid, temperature and battery observations
+  through the same eligibility rules.
 
 Use a generated, versioned allowlist with exact source coordinates, typed inputs
 and outputs, vehicle conditions, bounded phases, completion and release behavior.
