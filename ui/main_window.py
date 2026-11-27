@@ -48,6 +48,7 @@ from ui.dialogs import MessageBox as QMessageBox
 from ui.form_inputs import CheckInput
 from ui.ista_settings_dialog import IstaSettingsDialog
 from ui.page_stack import PageStack
+from ui.service_functions_page import ServiceFunctionsPage
 from ui.service_history_page import ServiceHistoryPage
 from ui.vehicle_page import VehiclePage
 from ui.welcome_page import WelcomePage
@@ -75,6 +76,7 @@ class MainWindow(QMainWindow):
         ("History", CLIPBOARD_ICON),
         ("CBS", ""),
         ("Backups", ""),
+        ("Service Functions", ""),
     ]
 
     def __init__(self, *, read_only: bool = False) -> None:
@@ -172,6 +174,12 @@ class MainWindow(QMainWindow):
         self.vehicle_page.cbs_panel.show()
         cbs_layout.addStretch()
         self.stack.addWidget(self.cbs_page)
+        self.functions_page = ServiceFunctionsPage()
+        self.functions_page.can_start = self._can_start_mutation
+        self.functions_page.mutation_active.connect(self._on_mutation_active)
+        self.functions_page.discovery_loading.connect(self._set_functions_loading)
+        self.functions_page.settled.connect(self._on_connection_lost)
+        self.stack.addWidget(self.functions_page)
 
         self.content_scroll = QScrollArea()
         self.content_scroll.setObjectName("pageScrollArea")
@@ -237,9 +245,9 @@ class MainWindow(QMainWindow):
         layout.setSpacing(6)
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
-        icons = ("overview", "faults", "coding", "history", "service", "backups")
-        labels = ("Overview", "Faults", "Coding", "History", "CBS", "Backups")
-        for index in (0, 1, 4, 2, 3, 5):
+        icons = ("overview", "faults", "coding", "history", "service", "backups", "functions")
+        labels = ("Overview", "Faults", "Coding", "History", "CBS", "Backups", "Functions")
+        for index in (0, 1, 4, 6, 2, 3, 5):
             nav_button = QToolButton()
             nav_button.setText(labels[index])
             nav_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
@@ -249,8 +257,8 @@ class MainWindow(QMainWindow):
             nav_button.setIcon(cockpit_icon(icons[index]))
             nav_button.setIconSize(QSize(22, 22))
             nav_button.setFixedHeight(62)
-            nav_button.setAccessibleName(labels[index])
-            nav_button.setToolTip(labels[index])
+            nav_button.setAccessibleName(self.NAV_ITEMS[index][0])
+            nav_button.setToolTip(self.NAV_ITEMS[index][0])
             self.nav_group.addButton(nav_button, index)
             nav_button.setEnabled(index in (0, 3, 5))
             layout.addWidget(nav_button)
@@ -465,6 +473,7 @@ class MainWindow(QMainWindow):
             self._coding_loading
             or self._diagnostics_loading
             or self._cbs_worker is not None
+            or self.functions_page.worker is not None
             or self.history_page.is_using_vehicle()
         ):
             return
@@ -476,6 +485,16 @@ class MainWindow(QMainWindow):
         self._cancel_btn.setVisible(False)
         self._spinner_cancel_timer.stop()
         self._spinner_retry_timer.stop()
+
+    @Slot(bool)
+    def _set_functions_loading(self, active: bool) -> None:
+        """Cover discovery while allowing active tests to report inside their modal."""
+        if active:
+            self.show_spinner("Checking service functions and fitted equipment…")
+            self._spinner_cancel_timer.stop()
+            self._spinner_retry_timer.stop()
+        else:
+            self.hide_spinner()
 
     @Slot(bool)
     def _set_coding_loading(self, active: bool) -> None:
@@ -561,7 +580,12 @@ class MainWindow(QMainWindow):
         if self._demo_mode:
             reset_demo = menu.addAction("Reset DEMO vehicle")
             reset_demo.setEnabled(self._can_reset_demo())
-            reset_demo.triggered.connect(self._reset_demo)
+            reset_demo.triggered.connect(lambda: self._reset_demo())
+            if CAPTURED_DEMO_PROFILE.exists() and self._demo_vehicle is not None:
+                other = "bundled" if self._demo_vehicle.captured else "captured"
+                switch = menu.addAction(f"Reset DEMO to {other} vehicle")
+                switch.setEnabled(self._can_reset_demo())
+                switch.triggered.connect(lambda: self._reset_demo(bundled=other == "bundled"))
 
         menu.addSeparator()
 
@@ -612,10 +636,10 @@ class MainWindow(QMainWindow):
         self.welcome_page.set_demo_mode(checked)
         logger.info("DEMO mode %s", "enabled" if checked else "disabled")
 
-    def _load_demo_vehicle(self) -> DemoVehicle | None:
+    def _load_demo_vehicle(self, *, bundled: bool = False) -> DemoVehicle | None:
         """Load the private capture when installed, otherwise use the bundled profile."""
         try:
-            if CAPTURED_DEMO_PROFILE.exists():
+            if not bundled and CAPTURED_DEMO_PROFILE.exists():
                 return DemoVehicle(CAPTURED_DEMO_PROFILE)
             return DemoVehicle()
         except (OSError, ValueError, KeyError, TypeError):
@@ -638,15 +662,18 @@ class MainWindow(QMainWindow):
             and not self._coding_loading
             and not self._diagnostics_loading
             and self._cbs_worker is None
+            and self.functions_page.worker is None
             and not self.history_page.is_busy()
         )
 
     @Slot()
-    def _reset_demo(self) -> None:
+    def _reset_demo(self, *, bundled: bool | None = None) -> None:
         """Retire the old connection and start a fresh isolated virtual vehicle."""
         if not self._demo_mode or not self._can_reset_demo():
             return
-        vehicle = self._load_demo_vehicle()
+        if bundled is None:
+            bundled = self._demo_vehicle is not None and not self._demo_vehicle.captured
+        vehicle = self._load_demo_vehicle(bundled=bundled)
         if vehicle is None:
             return
         was_connected = self._connected
@@ -673,6 +700,7 @@ class MainWindow(QMainWindow):
             and not self._coding_loading
             and not self._diagnostics_loading
             and self._cbs_worker is None
+            and self.functions_page.worker is None
             and not self.history_page.is_using_vehicle()
         ):
             if index == 0 and not self._connected:
@@ -685,6 +713,7 @@ class MainWindow(QMainWindow):
                     self.history_page,
                     self.cbs_page,
                     self.backups_page,
+                    self.functions_page,
                 )
                 self.stack.setCurrentWidget(pages[index])
                 if index == 5:
@@ -692,7 +721,7 @@ class MainWindow(QMainWindow):
             self.nav_group.button(index).setChecked(True)
             self.content_scroll.verticalScrollBar().setValue(0)
             page = self.stack.currentWidget()
-            if page in (self.diag_page, self.coding_page):
+            if page in (self.diag_page, self.coding_page, self.functions_page):
                 page.activate()
 
     @Slot(object)
@@ -746,6 +775,8 @@ class MainWindow(QMainWindow):
                 local_ip="127.0.0.1",
                 read_only=read_only,
                 environment=vehicle.environment,
+                synthetic_service_outputs=not vehicle.captured,
+                demo_wiper_stalk=None if vehicle.captured else vehicle.set_wiper_stalk,
                 stream_factory=vehicle.connect_stream,
             )
             context = conn.context(30.0, cancelled)
@@ -953,6 +984,7 @@ class MainWindow(QMainWindow):
             or self._coding_loading
             or self._diagnostics_loading
             or self._cbs_worker is not None
+            or self.functions_page.worker is not None
             or self.history_page.is_using_vehicle()
             or self._post_connect_worker is not None
             or not getattr(self._connection, "alive_ok", True)
@@ -1063,6 +1095,7 @@ class MainWindow(QMainWindow):
             return  # A modal message can deliver disconnect/reconnect events.
 
         # Vehicle reads start on demand when their page is opened.
+        self.functions_page.set_connection(connection, ecus)
         self.diag_page.set_connection(connection, ecus)
         if overview_refresh:
             self.history_page.set_targets(ecus)
@@ -1103,6 +1136,7 @@ class MainWindow(QMainWindow):
         if self._connection is not connection or self._closing:
             return
         # Still try to set up the other pages with what we have
+        self.functions_page.set_connection(self._connection, [])
         self.diag_page.set_connection(self._connection, [])
         self.history_page.set_connection(self._connection)
         self.coding_page.set_connection(self._connection, [])
@@ -1147,10 +1181,15 @@ class MainWindow(QMainWindow):
         if self._mutation_active:
             logger.warning("Connection lost during mutation; waiting for explicit outcomes")
             return
+        dialog = self.functions_page.dialog
+        if dialog is not None and self.functions_page.worker is None:
+            dialog.connection_lost()
+            return
         if (
             self._coding_loading
             or self._diagnostics_loading
             or self._cbs_worker is not None
+            or self.functions_page.worker is not None
             or self.history_page.is_using_vehicle()
         ):
             logger.warning("Connection lost during a foreground read; waiting for its outcome")
@@ -1311,6 +1350,10 @@ class MainWindow(QMainWindow):
         for worker in (self._worker, self._post_connect_worker):
             if worker is not None:
                 self._retire_worker(worker)
+        if self.functions_page.worker is not None:
+            self._retire_worker(self.functions_page.worker)
+            self.functions_page.worker = None
+        self.functions_page.set_connection(None, [])
         self.history_page.set_connection(None)
         for page in (self.diag_page, self.coding_page):
             for name in ("_worker", "_coding_reader", "_coding_writer"):
@@ -1378,6 +1421,7 @@ class MainWindow(QMainWindow):
             and not self._coding_loading
             and not self._diagnostics_loading
             and self._cbs_worker is None
+            and self.functions_page.worker is None
             and not self.history_page.is_busy()
             and (self.diag_page._worker is None or not self.diag_page._worker.isRunning())
             and not self.coding_page.is_reading()

@@ -1,0 +1,126 @@
+{
+  "catalog_sha256": "247682de1535d6e6aeef7d641001a7bc253410f198f130111eb01785213ee28a",
+  "profiles": {
+    "BCP_SP21": {
+      "present": {
+        "args": "ARG;EC_SPIEGEL_VORHANDEN",
+        "field": "STAT_INNENSPIEGEL_EC_VORHANDEN",
+        "job": "STATUS_LESEN",
+        "request": "22d330"
+      },
+      "seconds": 10,
+      "sha256": "5c37a2c5bba34b410e2b7687e5fb21fe29c5f309ebbccd44dae457b4cf13ce8f",
+      "source": {
+        "address": 16,
+        "fixed_id": 20000634214574,
+        "job_id": 20000634214651,
+        "link_id": 2000056382172,
+        "structure_id": 2000063421466,
+        "variant_id": 20000563725502
+      },
+      "start": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN;10",
+        "job": "STEUERN",
+        "reply": "6ed32f",
+        "request": "2ed32f0a"
+      },
+      "state": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN",
+        "field": "STAT_INNENSPIEGEL_ABBLEND_WERT",
+        "job": "STATUS_LESEN",
+        "request": "22d32f"
+      }
+    },
+    "BDC": {
+      "present": {
+        "args": "ARG;EC_SPIEGEL_VORHANDEN",
+        "field": "STAT_VORHANDEN_EC_SPIEGEL",
+        "job": "STATUS_LESEN",
+        "request": "22d330"
+      },
+      "seconds": 5,
+      "sha256": "68d093538e262a3ee431e62812d3871335446db00c99af5334e3f1887bb94666",
+      "source": {
+        "address": 64,
+        "fixed_id": 20000155893359,
+        "job_id": 20000155893423,
+        "link_id": 2000000573706,
+        "structure_id": 2000001179955,
+        "variant_id": 61322399499
+      },
+      "start": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN;5",
+        "job": "STEUERN",
+        "reply": "6ed32f",
+        "request": "2ed32f05"
+      },
+      "state": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN",
+        "field": "STAT_INNENSPIEGEL_ABBLEND_WERT",
+        "job": "STATUS_LESEN",
+        "request": "22d32f"
+      }
+    },
+    "BDC_G05": {
+      "present": {
+        "args": "ARG;EC_SPIEGEL_VORHANDEN",
+        "field": "STAT_INNENSPIEGEL_EC_VORHANDEN",
+        "job": "STATUS_LESEN",
+        "request": "22d330"
+      },
+      "seconds": 10,
+      "sha256": "03eda3f6ad72455cf5943f1df77f8cda30bb14eeb313c44a9e52a57c75794056",
+      "source": {
+        "address": 64,
+        "fixed_id": 20000374085724,
+        "job_id": 20000374087905,
+        "link_id": 2000032662837,
+        "structure_id": 2000033178572,
+        "variant_id": 20000326628321
+      },
+      "start": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN;10",
+        "job": "STEUERN",
+        "reply": "6ed32f",
+        "request": "2ed32f0a"
+      },
+      "state": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN",
+        "field": "STAT_INNENSPIEGEL_ABBLEND_WERT",
+        "job": "STATUS_LESEN",
+        "request": "22d32f"
+      }
+    },
+    "FEM_20": {
+      "present": {
+        "args": "ARG;EC_SPIEGEL_VORHANDEN",
+        "field": "STAT_VORHANDEN_EC_SPIEGEL",
+        "job": "STATUS_LESEN",
+        "request": "22d330"
+      },
+      "seconds": 5,
+      "sha256": "b00015f5021e068eafdea0109df2bf87023ae59132a8b97222e4dc72b013f67b",
+      "source": {
+        "address": 64,
+        "fixed_id": 20000350471818,
+        "job_id": 20000350471907,
+        "link_id": 2000000571497,
+        "structure_id": 2000001164111,
+        "variant_id": 17874575499
+      },
+      "start": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN;5",
+        "job": "STEUERN",
+        "reply": "6ed32f",
+        "request": "2ed32f05"
+      },
+      "state": {
+        "args": "ARG;EC_SPIEGEL_ABBLENDEN",
+        "field": "STAT_INNENSPIEGEL_ABBLEND_WERT",
+        "job": "STATUS_LESEN",
+        "request": "22d32f"
+      }
+    }
+  },
+  "schema": 1
+}

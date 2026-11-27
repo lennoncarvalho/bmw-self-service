@@ -16,6 +16,7 @@ from app.cbs import reset_request
 from app.coding import bootloader_identifier
 from app.coding_authorization import derive_authorization_key
 from app.coding_db import CodingDatabase
+from app.demo_service_mirror import DemoMirror
 from app.history_files import valid_vin
 from app.protocol.contracts import OperationContext
 from app.protocol.stream import MAX_BODY, BoundedStream
@@ -78,9 +79,19 @@ class DemoVehicle:
             for fault in ecu.get("faults", ()):
                 if len(bytes.fromhex(fault["code"])) != 3 or not 0 <= fault["status"] <= 255:
                     raise ValueError("Invalid DEMO fault record")
+        self._mirror = None if self.captured else DemoMirror()
         self._lock = threading.Lock()
         self._peers: list[tuple[socket.socket, threading.Thread]] = []
         self._history: list[bytes] = []
+
+    def set_wiper_stalk(self, service: bool) -> None:
+        """Move the bundled vehicle's virtual stalk independently of diagnostic commands."""
+        from app.service_wipers import set_demo_position
+
+        if self.captured:
+            raise ValueError("A captured vehicle has no virtual wiper stalk")
+        with self._lock:
+            set_demo_position(self._ecus[0x40], service)
 
     def connect_stream(self, context: OperationContext) -> BoundedStream:
         """Create a private socket pair; never discover or connect a network endpoint."""
@@ -151,6 +162,10 @@ class DemoVehicle:
         ecu = self._ecus.get(address)
         if ecu is None:
             return reject
+        if self._mirror is not None:
+            reply = self._mirror.reply(variant=ecu["name"], request=request, reads=ecu["reads"])
+            if reply is not None:
+                return reply
         responses = ecu.get("responses", {})
         captured_reply = responses.get(request.hex())
         if sid == 0x22 and len(request) == 3:

@@ -59,7 +59,7 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   produce visible results through normal workflows. Do not randomize each
   connection or expose failure-injection UI.
 - Keep virtual vehicle changes across disconnect/reconnect within the app run.
-  Restarting the app or explicit Reset DEMO restores the bundled vehicle state.
+  Reset DEMO restores the selected profile’s initial vehicle state.
   Saved DEMO backups/journals remain separate from this volatile vehicle state
   and are not deleted by reset. Fresh instances must not inherit stale caches,
   consumed-draft markers or recovery locks from earlier DEMO instances.
@@ -198,6 +198,72 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   exportable, with affected car writes blocked until corrected. Do not constrain
   entries by a current-odometer read or claim knowledge of unreadable car history.
   Use the sourced service types/field limits in [docs.md](docs.md#history-data).
+
+## Service Functions
+
+The first release covers five read-only functions: washer-fluid status, brake-fluid
+switch status, radio reception, climate temperatures and the last wake-up reason
+stored for the intelligent battery sensor. It also includes windshield wiper
+service position and timed darkening of the electrochromic interior rearview mirror.
+Use the vehicle-specific stalk procedure for the wipers and check ECU blade
+position where available. Verify mirror release after the ECU timer expires.
+
+Show categorized cards for supported functions on the connected vehicle. Each
+modal identifies the component, applicable preconditions, controls and results.
+Recheck the vehicle, ECU software and source contract before acting. Distinguish
+the ECU's report from the owner's physical observation.
+
+### Future Service Functions
+
+- Start with verified individual lighting controls and a **Walk-around Lights**
+  preset for a parked vehicle. Show which installed lamps each stage checks.
+  Keep compatible steady exterior lights on together for a bounded inspection.
+  Stage indicators, brake lights, reverse lights and any incompatible outputs
+  separately as needed. Reverse-light testing must work while safely parked
+  without selecting reverse. Provide an explicit end-test control and return each
+  affected output to ECU control on completion. Keep cabin-light tests separate.
+  Report ECU output state separately from the owner's visual check.
+- Add a bounded speaker-tone test for verified audio configurations.
+- Add exterior-mirror fold or directional movement
+  when entry, stop/release and post-state checks are established.
+- Plan seats, windows and the powered tailgate as stationary component tests
+  with clear movement boundaries and verified stop behavior.
+- Include display connection and RGB patterns, HVAC blower
+  and recirculation flap tests, washer pumps, door and tailgate
+  switch status, parking-sensor distances and a brief horn test where supported.
+  Reuse existing Overview readers for the values they already own.
+- Add read-only TPMS diagnostics. Show sensor IDs, assigned corners, last valid
+  pressures and temperatures, reception quality and sensor battery estimates
+  when available. Distinguish direct TPMS, indirect monitoring and unknown
+  equipment. For retrofit research, check the exact vehicle order, receiver
+  hardware and compatible sensor family before concluding what can be fitted.
+- Add read-only battery-drain history. Show recorded parked-current durations
+  and additional stored wake-up history where the identified ECU exposes it. Keep the
+  historical records separate from live current and charging measurements.
+- Add **Register 12 V Battery Replacement** as a guided, one-time service
+  operation. Start with a physically installed, like-for-like replacement
+  matching the vehicle's configured chemistry and capacity. Show the known
+  battery configuration and previous replacement record before confirmation.
+  Check vehicle identity, power and the applicable preconditions, then reread
+  the replacement record to verify registration. Disclose and confirm clearing the
+  nonpersistent BDC pre-damage record and setting the cluster clock. Block the
+  procedure if it would require clearing DME faults. A different capacity or
+  chemistry needs its own verified configuration workflow.
+- Keep window or tailgate learning and rain sensor initialization as guided
+  procedures with their own preconditions and completion checks. Consider
+  further weather, oil level, fluid and temperature observations
+  through the same eligibility rules.
+
+Use a generated, versioned allowlist with exact source coordinates, typed inputs
+and outputs, vehicle conditions, bounded phases, completion and release behavior.
+Run each operation through the existing ENET owner and CarWorker. Require
+stationary and power conditions appropriate to the function. Hand control back
+on the normal exit path and verify the resulting state when readable. An app
+timeout alone cannot stop a disconnected actuator. Enable movement only with
+source-backed behavior that bounds the effect if communication is lost. Report
+unknown post-state or release explicitly and require a fresh observation before
+another affected operation. Never automatically replay an uncertain action.
+See [source contracts](docs.md#service-functions-source-contracts).
 
 ## Validation boundary
 

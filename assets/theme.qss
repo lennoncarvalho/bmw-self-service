@@ -122,11 +122,7 @@ QLabel#spinnerText {
 
 /* ── Checkbox ──────────────────────────────────────────────────────── */
 
-QCheckBox {
-    color: #dfe2ef;
-    spacing: 8px;
-}
-
+QCheckBox { min-height: 22px; }
 QCheckBox::indicator {
     width: 18px;
     height: 18px;

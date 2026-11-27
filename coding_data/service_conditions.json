@@ -1,0 +1,34 @@
+{
+  "engines": {
+    "D83BX7C0": {
+      "dids": [
+        18234,
+        22869
+      ],
+      "sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648"
+    },
+    "DME8FF_R": {
+      "dids": [
+        18439,
+        19121
+      ],
+      "sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf"
+    },
+    "DME_BX8": {
+      "dids": [
+        18439,
+        19121
+      ],
+      "sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db"
+    },
+    "S55": {
+      "dids": [
+        18439,
+        19121
+      ],
+      "sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b"
+    }
+  },
+  "measurements_sha256": "ef2046d3d8c65780445dbfbec12b18603e77edee8bfa23c719ef9c734ea3c8ae",
+  "schema": 1
+}

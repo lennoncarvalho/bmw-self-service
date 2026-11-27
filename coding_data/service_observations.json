@@ -1,0 +1,404 @@
+{
+  "catalog_sha256": "247682de1535d6e6aeef7d641001a7bc253410f198f130111eb01785213ee28a",
+  "profiles": {
+    "BDC": {
+      "readers": {
+        "IBS_WAKEUP_GRUND": {
+          "args": "ARG;IBS_WAKEUP_GRUND",
+          "group": "wake",
+          "job": "STATUS_LESEN",
+          "request": "224f0e",
+          "size": 1
+        },
+        "WASCHWASSERSTAND": {
+          "args": "ARG;WASCHWASSERSTAND",
+          "catalog": [
+            {
+              "arg": "WASCHWASSERSTAND",
+              "fixed": 20000155891157,
+              "job_id": 20000155891185,
+              "reference": 2000000573706,
+              "structure": 2000001185423,
+              "variant": "BDC"
+            },
+            {
+              "arg": "WASCHWASSERSTAND",
+              "fixed": 20000180321506,
+              "job_id": 20000180321546,
+              "reference": 2000000573706,
+              "structure": 2000001159395,
+              "variant": "BDC"
+            }
+          ],
+          "group": "washer",
+          "job": "STATUS_LESEN",
+          "request": "22d357",
+          "size": 3
+        }
+      },
+      "selectors": [
+        "40 0F19C0"
+      ],
+      "sha256": "68d093538e262a3ee431e62812d3871335446db00c99af5334e3f1887bb94666"
+    },
+    "BDC_G11": {
+      "readers": {
+        "WASCHWASSERSTAND": {
+          "args": "ARG;WASCHWASSERSTAND",
+          "catalog": [
+            {
+              "arg": "WASCHWASSERSTAND",
+              "fixed": 20000154492414,
+              "job_id": 20000154492434,
+              "reference": 2000011441754,
+              "structure": 2000011511586,
+              "variant": "BDC_G11"
+            },
+            {
+              "arg": "WASCHWASSERSTAND",
+              "fixed": 20000154510158,
+              "job_id": 20000154510233,
+              "reference": 2000011441754,
+              "structure": 2000011511238,
+              "variant": "BDC_G11"
+            }
+          ],
+          "group": "washer",
+          "job": "STATUS_LESEN",
+          "request": "22d357",
+          "size": 3
+        }
+      },
+      "selectors": [
+        "40 0F2050"
+      ],
+      "sha256": "8733bab7214a25b5804952ca7d1e40839e152c9fdfedd903684daf1ea2a4ba54"
+    },
+    "CHAMP2": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000135991273,
+              "job_id": 20000135991219,
+              "reference": 2000000634320,
+              "structure": 2000001176319,
+              "variant": "CHAMP2"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000135991274,
+              "job_id": 20000135991311,
+              "reference": 2000000634320,
+              "structure": 2000001176319,
+              "variant": "CHAMP2"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F1580"
+      ],
+      "sha256": "30ae075209a42cda7c42f28426de1e27a7b140dfc1ccb32e9f1fafc4c334dac9"
+    },
+    "CIC": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000135990333,
+              "job_id": 20000135990258,
+              "reference": 2000000634929,
+              "structure": 2000001178083,
+              "variant": "CIC"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000135990334,
+              "job_id": 20000135990259,
+              "reference": 2000000634929,
+              "structure": 2000001178083,
+              "variant": "CIC"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F12D0"
+      ],
+      "sha256": "d77e5bf8dd036d58354fa560dff1403610a1e194a21d2b650066b4baaa853650"
+    },
+    "CICM": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000134531801,
+              "job_id": 20000134531736,
+              "reference": 2000000635660,
+              "structure": 2000001173559,
+              "variant": "CICM"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000134531802,
+              "job_id": 20000134531737,
+              "reference": 2000000635660,
+              "structure": 2000001173559,
+              "variant": "CICM"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F15B0"
+      ],
+      "sha256": "08cd6fefcb2a08900871419f8001f4c102fc1e7b117357b9f0b563f5d723c7c6"
+    },
+    "DSC_I1": {
+      "readers": {
+        "BREMSFLUESSIGKEITSSCHALTER": {
+          "args": "ARG;BREMSFLUESSIGKEITSSCHALTER",
+          "catalog": [
+            {
+              "arg": "BREMSFLUESSIGKEITSSCHALTER",
+              "fixed": 20000358394237,
+              "job_id": 20000358394228,
+              "reference": 2000002233849,
+              "structure": 2000003663318,
+              "variant": "DSC_I1"
+            }
+          ],
+          "group": "brake",
+          "job": "STATUS_LESEN",
+          "request": "22dc1f",
+          "size": 1
+        }
+      },
+      "selectors": [
+        "29 0F1970",
+        "29 0F1C50",
+        "29 0F1CE0"
+      ],
+      "sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8"
+    },
+    "ENTRY": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000142967423,
+              "job_id": 20000142967395,
+              "reference": 2000000636712,
+              "structure": 2000001162659,
+              "variant": "ENTRY"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000479784082,
+              "job_id": 20000479784103,
+              "reference": 2000000636712,
+              "structure": 2000001162659,
+              "variant": "ENTRY"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F1820"
+      ],
+      "sha256": "800fb0b8c9c54938aaf38ad48cc772afcd816a57e702da0ca1c4389d6a5aeb66"
+    },
+    "ENTRYNAV": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000155917424,
+              "job_id": 20000155917444,
+              "reference": 2000000638325,
+              "structure": 2000001164259,
+              "variant": "ENTRYNAV"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000155917425,
+              "job_id": 20000155917445,
+              "reference": 2000000638325,
+              "structure": 2000001164259,
+              "variant": "ENTRYNAV"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F1BE0"
+      ],
+      "sha256": "8adf15810a89fcc46a0814b61e40d33d02bc9ddbc2a3641819557f0d208bae67"
+    },
+    "IHX_I1": {
+      "readers": {
+        "TEMP_INNEN_UNBELUEFTET": {
+          "args": "ARG;TEMP_INNEN_UNBELUEFTET",
+          "catalog": [
+            {
+              "arg": "TEMP_INNEN_UNBELUEFTET",
+              "fixed": 20000350476668,
+              "job_id": 20000350476911,
+              "reference": 2000000627958,
+              "structure": 2000001179787,
+              "variant": "IHX_I1"
+            }
+          ],
+          "group": "climate",
+          "job": "STATUS_LESEN",
+          "request": "22d85c",
+          "size": 1
+        },
+        "TEMP_VERDAMPFER_WERT": {
+          "args": "ARG;TEMP_VERDAMPFER_WERT",
+          "catalog": [
+            {
+              "arg": "TEMP_VERDAMPFER_WERT",
+              "fixed": 20000350476952,
+              "job_id": 20000350477024,
+              "reference": 2000000627958,
+              "structure": 2000001179787,
+              "variant": "IHX_I1"
+            }
+          ],
+          "group": "climate",
+          "job": "STATUS_LESEN",
+          "request": "22d95c",
+          "size": 1
+        }
+      },
+      "selectors": [
+        "78 0F1C70"
+      ],
+      "sha256": "0e3274ef88a0e4b2edbdaca361ebc0294417f0c8cd295f5189099bfa838c29e5"
+    },
+    "NBT": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000131690595,
+              "job_id": 20000131690643,
+              "reference": 2000000637323,
+              "structure": 2000001172139,
+              "variant": "NBT"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000131690596,
+              "job_id": 20000131690644,
+              "reference": 2000000637323,
+              "structure": 2000001172139,
+              "variant": "NBT"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F1A30"
+      ],
+      "sha256": "e94e3b4434c9f8563448ee0b89153ed62856cce3d72db61b18373b184f896415"
+    },
+    "NBTEVO": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000376755976,
+              "job_id": 20000376756323,
+              "reference": 2000009729849,
+              "structure": 2000009762715,
+              "variant": "NBTEVO"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F2230"
+      ],
+      "sha256": "ee29a5f65809a17b7104f2eae2715a976b5d588b0342b2d696af18242ebbe1a0"
+    },
+    "RAD_UKL": {
+      "readers": {
+        "STATUS_ANT_QFS": {
+          "args": "ARG;STATUS_ANT_QFS",
+          "catalog": [
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000132255424,
+              "job_id": 20000132255462,
+              "reference": 2000000638073,
+              "structure": 2000001172583,
+              "variant": "RAD_UKL"
+            },
+            {
+              "arg": "STATUS_ANT_QFS",
+              "fixed": 20000132255425,
+              "job_id": 20000132255463,
+              "reference": 2000000638073,
+              "structure": 2000001172583,
+              "variant": "RAD_UKL"
+            }
+          ],
+          "group": "radio",
+          "job": "STATUS_LESEN",
+          "request": "22d010",
+          "size": 8
+        }
+      },
+      "selectors": [
+        "63 0F1CD0"
+      ],
+      "sha256": "9b92f1a3890d58d0140ac0663a66feec294c947db9c1edbbc2adff782ad7b960"
+    }
+  },
+  "schema": 1
+}

@@ -99,6 +99,112 @@ workshop application's `FaultMemoryViewModelBase.FilterCallback` (ISTAGUI
 bounds and source presence conditions. The app uses its own explicit
 present-fault default, with all captured records available through filters.
 
+### Service Functions source contracts
+
+The supplied `DiagDocDb.sqlite` reports version 4.29.14
+(SHA-256 `247682de1535d6e6aeef7d641001a7bc253410f198f130111eb01785213ee28a`).
+It contains two related routes:
+
+- Guided procedures start at `XEP_NODECLASSES.DiagnosticObjectServicefunctionRoot`
+  (40113154). `XEP_DIAGNOSISOBJECTS` and `XEP_REFDIAGNOSISTREE` form the
+  category tree. `XEP_REFINFOOBJECTS` links diagnosis control IDs to
+  `XEP_INFOOBJECTS` records. The catalog holds titles, visibility, validity and
+  applicability references. An ABL `IDENTIFIKATOR` can identify a matching
+  `Testmodule/ABL_*.dll`. Inspect its branches and embedded adapter configuration,
+  including jobs, operator steps and postconditions. Localized content is separate
+  from the procedures in the `*primitive_ENGB.sqlite` stores.
+- ECU functions are a separate entry point for an identified control unit. REA
+  shows `RheingoldSessionController.EcuFunctionService.RetrieveFunctionDefinition`
+  (`0x06000389`) using ECU address, group and variant, retrieving structure and
+  fixed functions, and evaluating XEP rules. The group/variant function route
+  uses `XEP_ECUGROUPS`, `XEP_ECUGROUPFUNCTIONS` and `XEP_ECUVARFUNCTIONS`.
+  For the example variants below, join `XEP_ECUVARIANTS.ID` to
+  `XEP_REFECUVARIANTS.ECUVARIANTID`, match its reference ID to
+  `XEP_REFECUFUNCSTRUCTS.ID`, and follow `ECUFUNCSTRUCTID` to
+  `XEP_ECUFUNCSTRUCTURES.ID` and `XEP_ECUFIXEDFUNCTIONS.PARENTID`.
+  A fixed function can have operator text without an executable job.
+
+Walk the guided tree and ECU function structures independently to find related
+tests. The guided root record (40372107) branches by vehicle family. The same
+power-tailgate initialization info object (2000008902616) is linked from two
+diagnosis nodes. Inside an ECU, sibling rows share an
+`XEP_ECUFUNCSTRUCTURES.ID`. For example, BDC wash/wipe groups contain pump,
+wiper, parking-contact and fluid-level functions. A shared group is a discovery
+lead. Follow the attached jobs to distinguish readings from output commands:
+the BDC front indicator row 20000155880874 only reads output status.
+
+Evaluate applicable `XEP_RULES` and included rules, date/visibility constraints
+and the relevant vehicle context before using a record. For example, BDC window
+movement and HKFM11 open/close rows carry rules even after an exact ECU match.
+`XEP_REFECUJOBS` supplies phase and rank, `XEP_ECUJOBS` supplies the job and
+adapter configuration, and the parameter/result rows supply inputs and decoding.
+REA confirms `EcuFunctionComponentTrigger.DoTriggerComponent` (`0x06000331`)
+calls Preset, Main and Reset and checks the configured activation duration.
+The phase methods (`0x06000334`–`0x06000336`) call `ApiJob` and check `IsOkay`.
+Resolve the named job and its argument/result tables against the exact canonical
+PRG. Even one ECU uses several services, such as BDC `STEUERN` (0x2E),
+`STEUERN_IO` (0x2F) and `STEUERN_ROUTINE` (0x31).
+
+The first release ships three sets of versioned contracts. Each producer runs
+against the development catalog and canonical jobs. The runtime reads the
+generated definitions and checks the current vehicle and ECU identity.
+
+- `scripts/recover_service_observations.py` selects native status jobs for washer
+  fluid (D357), the brake-fluid switch (DC1F), tuner reception (D010), cabin and
+  evaporator temperature (D85C and D95C), and the last IBS wake-up reason (4F0E).
+  The last value describes one stored event. It cannot establish a drain history.
+- `scripts/recover_service_mirror.py` verifies the fitment read D330, the D32F
+  command timer and percentage readback. The catalog specifies five seconds on
+  BDC/FEM_20 and ten on BDC_G05/BCP_SP21. The test checks an idle baseline,
+  full dimming and return to zero. The owner records the optical result separately.
+  `scripts/recover_service_conditions.py` binds the motion readers used before actuation.
+- `scripts/recover_service_wipers.py` matches vehicle-order series and type to
+  the repair instruction and its English content digest. For types missing
+  from the catalog, the compiler also checks the explicit brand, series and body
+  fields in the KIS vehicle-type table against the passenger-car classifications.
+  For example, F056 type row 747308596 identifies HS71 as F48. Repair document
+  2000012946159 specifies its accessory-power and stalk sequence.
+  Other instructions specify different stalk directions. BDC, FEM_20 and BDC_G11
+  report service and park independently. BDC_G05 and BCP_SP21 distinguish parked
+  from outside park, so upright position requires visual confirmation. Entry and
+  return use the stalk. The learning procedure below lacks a verified bound on
+  diagnostic actuation after a lost connection.
+
+| Candidate | Verified source coordinates and remaining work |
+|---|---|
+| Inside mirror dimming and status | BDC fixed function 20000155893359. `ABL_DIT_AT5116_BDCISECO.Funktionstest` (`0x0600000f`) checks fitment and invokes a timed full-dim test. In `bdc.prg`, `EC_SPIEGEL_VORHANDEN` (D330) reports fitment, and `EC_SPIEGEL_ABBLENDEN` (D32F) takes seconds and returns dimming percentage. The test does not expose a voltage setpoint or measured mirror voltage. |
+| Front wiper service position | FEM_20 fixed functions 20000352521148/20000352521268 enter/release service position. `bdc.prg` defines `WISCHER_FRONT_SERVICE` enter/release/status (D363). REA shows `ABL_DIT_AS6160_BDCWIINO.Wischer_einlernen` (`0x0600000c`) invoking it, while `Wischer_einlernen_alt` (`0x0600000e`) uses installation position (D362). BDC_G05 also has an installation-position function 20000348376327. The manual stalk procedure above handles service and return. Diagnostic learning and installation remain separate future work. |
+| Electric seats | FAS_12 fixed function 20000352527592 is a seat-depth movement with an explicit Reset job. `fas_12.prg` `MOTOR` (D708) selects the motor and direction/stop, reports motor status and takes PWM. Gate individual axes by fitment and establish a bounded stop on disconnect. |
+| Individual windows | BDC 20000155893229/20000155893224 use `FH_VERFAHREN_PROZENT` (A17F) for driver window open/close. Its result table distinguishes pending, running, completed, failed and aborted. The catalog warns about pinch risk and calls for normalization. Verify safety behavior and keep window learning a separate guided procedure. |
+| Powered tailgate | HKFM11 20000359018721/20000359018569 are open/close. `hkfm11.prg` `STEUERN_HECKKLAPPENANTRIEB` (D248) defines stop/open/close and `POSITION_HKL` (D231) reports position segments. BDC 20000155893917 only actuates the latch button. Power-tailgate initialization is a separate ABL, e.g. `ABL_DIT_AS4162_HKLINIT`. |
+| Speaker tones | ENTRYNAV 20000131776112–20000131776114 use `SINUSGENERATOR` (A001) with an explicit stop. `entrynav.prg` also defines channel masks in `TAudioKanal` and reads the audio system via D002. RAM01 e.g. 20000370007808 addresses one speaker output with a different argument layout. Show only verified installed outputs. One output can drive several speakers. |
+| Exterior mirrors | BDC 20000372805131 folds/unfolds and 20000155893449 commands a timed directional movement. `bdc.prg` has fold fitment/status and position via `AUSSENSPIEGEL_LINKS_POS` (D328) and `AUSSENSPIEGEL_RECHTS_POS` (D333). Horizontal/vertical position is in ECU increments. Degrees and support for absolute position on a specific mirror remain unverified. |
+| Exterior and cabin lighting | BDC fixed function 20000155893084 selects four tail-light outputs with ranked jobs. `bdc.prg` `STEUERN_LEUCHTENAUSGANG_DIGITAL` (4501) uses `TAB_AUSGANG_LEUCHTEN` and defines on, off and return-to-ECU actions. The table includes individual left/right turn, brake and reverse outputs, cabin outputs, and a BDC-local `ALLE` selector. `STATUS_LEUCHTENAUSGANG_DIGITAL` (4500) reports an ECU output state. FLE_L/R have separate headlamp routines, e.g. DRL 20000343665903/20000343666704. Resolve fitted outputs and compatibility before grouping them for a walk-around. |
+| Display and radio | ENTRYNAV groups CID connection and identification reads (20000131775884/20000131775885) with RGB test cards, e.g. 20000155845204 uses `CID_TESTBILD` with a Reset job. The tuner group offers field strength and signal quality (20000155917424/20000155917425). Establish which display and tuner are fitted before exposing the tests. |
+| HVAC airflow | IHX_I1 blower test 20000080286815 and fresh-air/recirculation flap tests 20000104934938/20000104935176 have Main and Reset jobs. Cabin and evaporator temperatures have separate reads (20000350476668/20000350476952). The guided `ABL_DIT_AS6450_LGEICHLAUFLV` has product-line selection and a separate calibration step (`s21_Steuern_Eichlauf`, `0x0600000d`). |
+| Wash system and weather | BDC wash/wipe has washer-fluid status (20000155891157) and independent front/rear pump tests (20000155893689/20000155893687). The rain/light group has light sensor data (20000155881141), rain sensor fitment (20000372803665), and an initialization routine (20000155880997). |
+| Switches and parking sensors | BDC door contacts and the outer tailgate button have status reads (e.g. 20000155891024/20000155891026). PMA_15 distance groups expose individual parking sensor readings (e.g. 20000358400359/20000358400355) and call for active PDC. Use normal PDC activation to troubleshoot with the vehicle stationary. |
+| Horn and brake-fluid switch | BDC horn function 20000155893443 uses the timed `HUPE` job input. DSC_I1 brake-fluid level 20000358394237 is a status read. |
+| TPMS diagnostics | In `dsc_i1.prg`, `STATUS_RDC_LESEN` (DC95) reports RDC status. `RDC_MESSDATENBLOCK_1`–`4` (DC98–DC9B) decode sensor ID, assigned position, last valid pressure and temperature, reception and remaining battery life. The PRG also defines separate indirect RPA data. The F48 capture identifies DSC_I1, and the owner reports no wheel sensors installed. Supported PRG rows and missing sensor replies alone provide insufficient evidence of receiver fitment or retrofit compatibility. |
+| Battery-drain history | In `dme_bx8.prg`, `IZR82` (586B), `IZR21` (586C) and `IZRG1` (586E) expose stored durations for parked-current bands. Recover the storage window and sentinels from the source before labeling or totaling values. REA traces the wake-history ABL `ABL_GEN_G6100_END.Daten_Auslesen_s` (`0x06000009`) to an example `D_ZGM` history job. A wake-history contract still needs to be established for each target variant. The card reads stored data without starting a drain test. |
+| 12 V battery replacement registration | Catalog objects 2000008824426 and 2000015131166 resolve to `ABL_WAR_AS6120_WECHSEL` and `ABL_WAR_AS6120_BATT_CHANGE`. REA shows the newer procedure reading configured battery data and history in `Auswahl` (`0x06000009`), with separate registration and retrofit branches. Its `Registrieren_Durchführung` (`0x0600000c`) uses `BZEDIAG_BATTERIETAUSCH`. The older `Registrieren_04_s` (`0x0600000d`) references `STEUERN_BATTERIETAUSCH_REGISTRIEREN` and AEP Info 1. In `dme_bx8.prg` that dedicated job emits a specific payload under routine F030, which is also used for other adaptation resets. Check the full request, required follow-up and variant conditions. `STATUS_SYSTEMCHECK_AEP_INFO_1` (4022) reports the two previous replacement mileages. Treat unchanged or ambiguous readback as unverified. |
+
+Offline native-job checks used a socket-free recipient to verify BDC mirror dimming
+and wiper enter/release/status requests and ENTRYNAV tone start/stop requests.
+The recipient supplied synthetic positive replies. These checks establish
+request encoding only. The F48 capture identifies BDC, FAS_12, HKFM11, FLE_L/R
+and ENTRYNAV, with no Service Functions execution or post-state evidence.
+The same offline method confirmed BDC individual-output and `ALLE`
+selectors and their return-control encoding. It did not establish vehicle
+fitment, simultaneous activation or optical lamp operation.
+
+Public development references include
+[EdiabasLib's ECU function extractor notes](https://github.com/uholeschak/ediabaslib/blob/master/Tools/ExtractEcuFunctions/ISTA-D_Debug.txt)
+for the database joins and
+[klartext](https://github.com/HadiCherkaoui/klartext) for offline job discovery
+and transmit gating. Use them to cross-check the supplied artifacts. The app
+already has its own native job interpreter and protocol owner.
+
 ### Coding data access
 
 `scripts/build_coding_bundle.py` decrypts the supplied coding JSON members using
@@ -157,7 +263,7 @@ owns only the other endpoint; it is not another app protocol owner.
 `assets/demo_vehicle.json` from that root's bundled jobs, coding catalogue and
 measurement contracts. The full asset builder runs it and manifests its output.
 The fixed synthetic VIN, faults, service values and source-sized/signed coding
-blocks cover ZGW_01, DME_BX8, BDC, KOMB25 and NBT. Per-ECU job hashes and exact
+blocks cover ZGW_01, DME_BX8, DSC_I1, BDC, KOMB25, IHX_I1 and NBT. Per-ECU job hashes and exact
 coding definitions remain in the fixture. These are simulated values, not an
 owner-car capture or physical validation. Unsupported requests receive explicit
 negative responses; supported writes update state and source restarts finish
