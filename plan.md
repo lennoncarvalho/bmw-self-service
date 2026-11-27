@@ -199,6 +199,40 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   entries by a current-odometer read or claim knowledge of unreadable car history.
   Use the sourced service types/field limits in [docs.md](docs.md#history-data).
 
+## Planned Service Functions
+
+Service Functions is a future page for component tests, live observations and
+guided service procedures. Show categorized cards for supported functions on the
+connected vehicle. A card opens a modal with affected components, preconditions,
+controls, live results and diagnostic outcome. Resolve support from fresh
+vehicle identity and exact ECU variants, source applicability, fitted equipment
+and available state. Hide functions whose compatibility cannot be established.
+
+- First candidates are the timed electrochromic inside-mirror test and an audio
+  test tone. Use presence or audio-configuration reads to show available controls.
+  Exercise the normal path in DEMO before enabling a source-backed live contract.
+- Add verified individual lighting outputs, wiper service position and exterior
+  mirror fold or directional movement when entry, stop/release and post-state
+  checks are established. Grouped outputs retain their actual grouping.
+- Plan seats, windows and the powered tailgate as stationary component tests
+  with clear movement boundaries and verified stop behavior. Keep headlight
+  reference runs, window or tailgate learning, and rain sensor initialization
+  as guided procedures with their own preconditions and completion checks.
+- Consider additional lighting, weather, oil level, fluid, temperature, battery,
+  HVAC and actuator cards through the same eligibility rules. Reuse existing
+  Overview readers for the values they already own.
+
+Use a generated, versioned allowlist with exact source coordinates, typed inputs
+and outputs, vehicle conditions, bounded phases, completion and release behavior.
+Run each operation through the existing ENET owner and CarWorker. Require
+stationary and power conditions appropriate to the function. Hand control back
+on the normal exit path and verify the resulting state when readable. An app
+timeout alone cannot stop a disconnected actuator. Enable movement only with
+source-backed behavior that bounds the effect if communication is lost. Report
+unknown post-state or release explicitly and require a fresh observation before
+another affected operation. Never automatically replay an uncertain action.
+See [source contracts](docs.md#service-functions-source-contracts).
+
 ## Validation boundary
 
 Implement broad source-supported branches without waiting for other vehicles.

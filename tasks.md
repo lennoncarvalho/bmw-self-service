@@ -28,6 +28,16 @@ acceptance remains in this milestone.
 
 ## Later implementation choices
 
+- [ ] After Service Functions implementation is authorized, compile an allowlist
+  from the [catalog and PRG contracts](docs.md#service-functions-source-contracts).
+  Verify identity/rule inputs, job phases and result decoding. Cover additional
+  ECU variants where the same behavior has source evidence.
+- [ ] Exercise the timed interior-mirror test and audio tone through the existing
+  owner and DEMO. Check incompatible equipment, rejected commands, timeouts,
+  disconnects, stop/release and post-state before enabling live controls.
+- [ ] Add source-verified lighting and wiper/mirror tests next. Admit seats,
+  windows and powered tailgate movement only after proving bounds on lost
+  communication. Recover guided leveling and learning procedures separately.
 - [ ] Show semantic feature/option names in coding backup comparisons alongside
   original/intended bytes, using exact saved-definition matching. Current
   comparisons retain bytes and do not explain each changed setting.
