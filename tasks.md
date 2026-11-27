@@ -42,6 +42,13 @@ acceptance remains in this milestone.
   brake-fluid checks from the source guide. Admit wiper/mirror, seat, window and
   powered tailgate movement only with verified bounds on lost communication.
   Recover guided learning and initialization procedures separately.
+- [ ] Recover the TPMS measurement and equipment reads for supported variants.
+  Check corner assignment, stale or missing sensors and incompatible equipment.
+  Establish the F48 retrofit prerequisites from the exact hardware and vehicle
+  order before proposing parts or coding.
+- [ ] Decode stored parked-current durations and variant-specific wake-up
+  history. Verify that the feature uses read-only requests and labels historical
+  data and unavailable values explicitly.
 - [ ] Show semantic feature/option names in coding backup comparisons alongside
   original/intended bytes, using exact saved-definition matching. Current
   comparisons retain bytes and do not explain each changed setting.

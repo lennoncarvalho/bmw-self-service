@@ -228,9 +228,17 @@ and available state. Hide functions whose compatibility cannot be established.
   switch status, parking-sensor distances, a brief horn test, and brake-fluid
   switch status where supported. Reuse existing Overview readers for the values
   they already own.
+- Add read-only TPMS diagnostics. Show sensor IDs, assigned corners, last valid
+  pressures and temperatures, reception quality and sensor battery estimates
+  when available. Distinguish direct TPMS, indirect monitoring and unknown
+  equipment. For retrofit research, check the exact vehicle order, receiver
+  hardware and compatible sensor family before concluding what can be fitted.
+- Add read-only battery-drain history. Show recorded parked-current durations
+  and stored wake-up reasons where the identified ECU exposes them. Keep the
+  historical records separate from live current and charging measurements.
 - Keep window or tailgate learning and rain sensor initialization as guided
   procedures with their own preconditions and completion checks. Consider
-  further weather, oil level, fluid, temperature and battery observations
+  further weather, oil level, fluid and temperature observations
   through the same eligibility rules.
 
 Use a generated, versioned allowlist with exact source coordinates, typed inputs
