@@ -242,17 +242,14 @@ class ServiceContext:
         power = reader_profiles()
         targets = []
         ignition = False
-        has_motion_reader = False
+        has_engine = False
         missing_engine = False
         for ecu in self.ecus:
             name = ecu.get("name", "")
             engine = conditions["engines"].get(name)
-            wheels = conditions["wheel_readers"].get(name)
             power_profile = power.get(name)
             if engine is not None:
                 digest = engine["sha256"]
-            elif wheels is not None:
-                digest = wheels["sha256"]
             elif power_profile and any("kl15" in r["values"] for r in power_profile["readers"]):
                 digest = power_profile["job_sha256"]
             else:
@@ -262,58 +259,29 @@ class ServiceContext:
                 missing_engine = True
             if target is not None:
                 targets.append(target)
-                has_motion_reader |= engine is not None or wheels is not None
+                has_engine |= engine is not None
                 ignition |= bool(
                     power_profile
                     and target["address_index"] in power_profile["selectors"]
                     and any("kl15" in r["values"] for r in power_profile["readers"])
                     and power_profile["job_sha256"] == digest
                 )
-        return targets, has_motion_reader and ignition and not missing_engine
+        return targets, has_engine and ignition and not missing_engine
 
     def check_stationary(self) -> None:
         """Require a fresh stationary vehicle, stopped engine and stable ignition reading."""
         targets, available = self.stationary_targets()
         if not available:
             raise WriteConditionsBlocked(
-                "Motion or ignition reader identity changed. Check availability again."
+                "Road speed, engine speed and ignition need verified readers. Check availability again."
             )
         engines = [e for e in targets if e["name"] in _condition_definitions()["engines"]]
-        if engines:
-            rows = (
-                read_engine_data(self.connection, engines, labels={"Speed", "Engine speed"}) or []
+        rows = read_engine_data(self.connection, engines, labels={"Speed", "Engine speed"}) or []
+        readings = {(row["label"], row["unit"]): row["value"] for row in rows}
+        if readings.get(("Speed", "km/h")) != 0 or readings.get(("Engine speed", "1/min")) != 0:
+            raise WriteConditionsBlocked(
+                "Zero road speed and a stopped engine could not be confirmed."
             )
-            readings = {(row["label"], row["unit"]): row["value"] for row in rows}
-            if readings.get(("Speed", "km/h")) != 0 or readings.get(("Engine speed", "1/min")) != 0:
-                raise WriteConditionsBlocked(
-                    "Zero road speed and a stopped engine could not be confirmed."
-                )
-        else:
-            definitions = _condition_definitions()["wheel_readers"]
-            wheels = [e for e in targets if e["name"] in definitions]
-            if len(wheels) != 1:
-                raise WriteConditionsBlocked("A unique source for vehicle standstill is required.")
-            target = wheels[0]
-            spec = definitions[target["name"]]
-            values, _ = self.read_fields(
-                target["name"],
-                target["address"],
-                spec["job"],
-                spec["args"],
-                bytes.fromhex(spec["request"]),
-                spec["size"] - 3,
-            )
-            if (
-                any(values.get(k) != 0 for k in spec["speeds"])
-                or any(values.get(k) != "Stand" for k in spec["directions"])
-                or not all(
-                    isinstance(values.get(k), (float, int)) and 50 < values[k] <= 100
-                    for k in spec["quality"]
-                )
-            ):
-                raise WriteConditionsBlocked(
-                    "Wheel speeds, directions and signal quality did not confirm standstill."
-                )
         self.progress(
             check_write_conditions(self.connection, targets, self.ctx, require_ignition=True)
         )
@@ -474,7 +442,9 @@ class ServiceWorker(CarWorker):
                         listing.cards[key] = (owner, replace(card, actions=reads))
                     else:
                         del listing.cards[key]
-                listing.notices.append("Controls need verified standstill and ignition readers.")
+                listing.notices.append(
+                    "Controls need verified road speed, engine speed and ignition readers."
+                )
         return listing
 
     def _execute(self, context: ServiceContext, listing: ServiceListing) -> ServiceResult:

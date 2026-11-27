@@ -71,7 +71,8 @@ def _fixed(db: Path, reader: Path) -> list[dict]:
       AND (SELECT count(*) FROM xep_refecuparameters x WHERE x.id=f.id)=2
       AND EXISTS (SELECT 1 FROM xep_refecuparameters x JOIN xep_ecuparameters a
           ON a.id=x.ecuparameterid WHERE x.id=f.id AND x.phase='Main' AND a.ecujobid=j.id
-          AND a.name='P1' AND a.paramvalue='ARG')
+          AND a.name='P1' AND a.paramvalue='ARG'
+          AND NOT EXISTS (SELECT 1 FROM xep_rules_include inc WHERE inc.id=a.id))
       AND NOT EXISTS (SELECT 1 FROM xep_rules x WHERE x.id IN ({ids}))
       AND NOT EXISTS (SELECT 1 FROM xep_rules_include x WHERE x.id IN ({ids}))
       AND NOT EXISTS (SELECT 1 FROM xep_refecuresults rr JOIN xep_rules x ON x.id=rr.ecuresultid

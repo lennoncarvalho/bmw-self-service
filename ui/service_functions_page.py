@@ -137,11 +137,10 @@ class ServiceDialog(CockpitDialog):
     def set_running(self, active: bool) -> None:
         """Lock operation inputs until the held worker releases the vehicle."""
         self.running = active
+        self.observe("")
         if active:
             self.outcome_label.clear()
             self.owner_log.clear()
-            self.owner.setEnabled(False)
-            self._stage = ""
             self.progress.setText("Checking vehicle and component…")
         else:
             for check in self.checks:

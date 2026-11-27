@@ -122,7 +122,6 @@ def build(asset_root: Path = ROOT) -> dict:
         ecu["reads"].update(demo_reads(ecu["name"]))
         ecu["reads"].update(wiper_reads(ecu["name"]))
     ecus["40"]["reads"].update({"D330": "01", "D32F": "00"})
-    ecus["29"]["reads"]["DBE4"] = (bytes(15) + bytes((80, 85, 90, 95))).hex()
     return {"schema": 1, "vin": vin, "ecus": ecus}
 
 

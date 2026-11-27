@@ -9,90 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from app.ediabas import JobEngine  # noqa: E402
-from app.ista_data import (  # noqa: E402
-    DataFormatError,
-    read_group_assignments,
-    read_job_table,
-    uds_variant_map,
-)
-from scripts.recover_power_readers import _Peer, _run, _write  # noqa: E402
-
-
-def wheel_readers(ecu_dir: Path) -> dict:
-    """Verify the five standstill speeds, direction flags and signal quality for each DSC."""
-    bases = [ecu_dir / f"{name}.prg" for name in ("dsc_i1", "dsc_25")]
-
-    def layout(path: Path) -> tuple:
-        _, rows = read_job_table(path, "SG_FUNKTIONEN")
-        (row,) = [r for r in rows if r[0] == "GESCHWINDIGKEIT_RAD"]
-        return (
-            row[1],
-            row[-3:],
-            read_job_table(path, row[-1]),
-            read_job_table(path, "TAB_DREHRICHTUNG"),
-        )
-
-    examples = [layout(p) for p in bases]
-    assignment = uds_variant_map(read_group_assignments(ecu_dir / "t_grtb.prg"))
-    request = bytes.fromhex("22dbe4")
-    # Five signed speeds, five directions, then four separate quality bytes.
-    payload = bytes(15) + bytes((80, 85, 90, 95))
-    profiles = {}
-    for name in sorted({v for v in assignment.values() if v.startswith("DSC_")}):
-        path = ecu_dir / (name.lower() + ".prg")
-        try:
-            if layout(path) not in examples:
-                continue
-        except (ValueError, OSError, DataFormatError):
-            continue
-        addresses = {int(key.split()[0], 16) for key, v in assignment.items() if v == name}
-        if len(addresses) != 1:
-            continue
-        peer = _Peer(addresses.pop())
-        engine = JobEngine(peer)
-        try:
-            engine.load(path, ecu_dir=ecu_dir)
-            job = {
-                "job": "STATUS_LESEN",
-                "args": "ARG;GESCHWINDIGKEIT_RAD",
-                "request": request.hex(),
-                "size": 3 + len(payload),
-            }
-            result = _run(engine, peer, job, payload)
-            (values,) = result.sets
-            quality = [
-                key
-                for key in values
-                if key.startswith("STAT_SIGNALQUALITAET_") and key.endswith("_WERT")
-            ]
-            speeds = [
-                key
-                for key in values
-                if key.startswith("STAT_GESCHWINDIGKEIT_") and key.endswith("_WERT")
-            ]
-            directions = [
-                key
-                for key in values
-                if key.startswith("STAT_DREHRICHTUNG_") and values[key] == "Stand"
-            ]
-            if (
-                len(speeds) != 5
-                or len(directions) != 5
-                or any(values[k] != 0 for k in speeds)
-                or sorted(values[k] for k in quality) != [80, 85, 90, 95]
-            ):
-                raise ValueError(f"Unexpected standstill result fields for {name}")
-            profiles[name] = dict(
-                job,
-                sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
-                speeds=speeds,
-                directions=directions,
-                quality=quality,
-            )
-        finally:
-            engine.close()
-    return profiles
+from app.ista_data import DataFormatError, read_job_table  # noqa: E402
+from scripts.recover_power_readers import _write  # noqa: E402
 
 
 def build(ecu_dir: Path, measurements: Path) -> dict:
@@ -142,7 +60,6 @@ def build(ecu_dir: Path, measurements: Path) -> dict:
         "schema": 1,
         "measurements_sha256": hashlib.sha256(measurements.read_bytes()).hexdigest(),
         "engines": profiles,
-        "wheel_readers": wheel_readers(ecu_dir),
     }
 
 

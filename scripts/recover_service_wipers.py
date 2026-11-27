@@ -239,7 +239,9 @@ def applicability(rheingold: Path, reader: Path) -> tuple[dict, dict, dict]:
             models = rule_types(bytes.fromhex(document["predicate"]), by_characteristic)
             for rule in includes:
                 if rule["coordinate"] == coordinate:
-                    models &= rule_types(bytes.fromhex(rule["predicate"]), by_characteristic)
+                    models = models.intersection(
+                        rule_types(bytes.fromhex(rule["predicate"]), by_characteristic)
+                    )
             sources[coordinate] = {"guide": guide, "content": document["text_id"], "sha256": digest}
             for model in sorted(models):
                 model_documents[model].append(coordinate)

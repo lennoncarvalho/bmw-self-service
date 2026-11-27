@@ -1,8 +1,8 @@
 {
   "files": {
     "assets/demo_vehicle.json": {
-      "bytes": 22377,
-      "sha256": "c9bdf16eb6d4ae90ecadcbe33dcd4a3d0044891a59a2785fc4d2d1f8be48b224"
+      "bytes": 22319,
+      "sha256": "6e3c4ca42bcb0ec9dd22682a67957db5c4aaa1cb1aa7cffc240baa39edacf2f2"
     },
     "coding_data/cbs_definitions.json": {
       "bytes": 66003,
@@ -49,8 +49,8 @@
       "sha256": "75e2c23ac7d675e6bc997102b2b15818656155097d1e41774417b1bfbb1ec775"
     },
     "coding_data/service_conditions.json": {
-      "bytes": 3338,
-      "sha256": "f27f95c43aa12f018ab4e1da8dfef089069c3a74ab7b10c6672ce3b8a9d06b4f"
+      "bytes": 772,
+      "sha256": "4a9b7346db5782f5e1424d9ffd4cf76b41f5fc762fc384d7a6b2fdf816c178d7"
     },
     "coding_data/service_mirror.json": {
       "bytes": 3606,
