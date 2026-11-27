@@ -34,6 +34,8 @@ def build(asset_root: Path = ROOT) -> dict:
     selected = {
         "ZGW_01": ("10 0F1310", None),
         "DME_BX8": ("12 0F1D20", None),
+        "DSC_I1": ("29 0F1970", None),
+        "IHX_I1": ("78 0F1C70", None),
         "BDC": ("40 0F19C0", "000017BE-005-016-064"),
         "KOMB25": ("60 0F1630", "00000760-007-003-017"),
         "NBT": ("63 0F1A30", "00000DED-001-016-001"),
@@ -113,6 +115,14 @@ def build(asset_root: Path = ROOT) -> dict:
         bytes((3, 128, 0, 1, 2, 100, 255, 11, 28, 24, 0, 0)).hex(),
         bytes((17, 11, 54, 1, 3, 47, 50, 9, 28, 48, 0, 0)).hex(),
     ]
+    from app.service_wipers import demo_reads as wiper_reads
+    from scripts.recover_service_observations import demo_reads
+
+    for ecu in ecus.values():
+        ecu["reads"].update(demo_reads(ecu["name"]))
+        ecu["reads"].update(wiper_reads(ecu["name"]))
+    ecus["40"]["reads"].update({"D330": "01", "D32F": "00"})
+    ecus["29"]["reads"]["DBE4"] = (bytes(15) + bytes((80, 85, 90, 95))).hex()
     return {"schema": 1, "vin": vin, "ecus": ecus}
 
 

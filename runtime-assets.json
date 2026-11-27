@@ -1,8 +1,8 @@
 {
   "files": {
     "assets/demo_vehicle.json": {
-      "bytes": 21349,
-      "sha256": "96d2f402f2c3e97fabca208d2fac1354105ccf0a30906ae867a57f3e710c3136"
+      "bytes": 22377,
+      "sha256": "c9bdf16eb6d4ae90ecadcbe33dcd4a3d0044891a59a2785fc4d2d1f8be48b224"
     },
     "coding_data/cbs_definitions.json": {
       "bytes": 66003,
@@ -47,6 +47,22 @@
     "coding_data/reader_contracts.json": {
       "bytes": 1730,
       "sha256": "75e2c23ac7d675e6bc997102b2b15818656155097d1e41774417b1bfbb1ec775"
+    },
+    "coding_data/service_conditions.json": {
+      "bytes": 3338,
+      "sha256": "f27f95c43aa12f018ab4e1da8dfef089069c3a74ab7b10c6672ce3b8a9d06b4f"
+    },
+    "coding_data/service_mirror.json": {
+      "bytes": 3606,
+      "sha256": "1d275c560784a4bbb92c03078ca924e4b57b860b80763c166968937c56c4e273"
+    },
+    "coding_data/service_observations.json": {
+      "bytes": 11402,
+      "sha256": "e20878ba9aeb65d1010c2f9b28e71a435877937f87a0c3910c6961e53a45cff8"
+    },
+    "coding_data/service_wipers.json": {
+      "bytes": 258791,
+      "sha256": "869ab69e57549a97e7d6c3334984052ec822b3257a11d1d6c36c8621dba3cdbc"
     },
     "coding_data/vehicle_equipment.json": {
       "bytes": 239076,

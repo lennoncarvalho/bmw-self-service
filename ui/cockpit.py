@@ -3,7 +3,7 @@
 from collections.abc import Iterable
 
 from PySide6.QtCore import QEvent, Qt, Signal, Slot
-from PySide6.QtGui import QIcon, QPainter, QPixmap, QResizeEvent, QShowEvent
+from PySide6.QtGui import QIcon, QMouseEvent, QPainter, QPixmap, QResizeEvent, QShowEvent
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -23,6 +23,7 @@ _PATHS = {
     "overview": '<path d="M4 17a9 9 0 1 1 16 0M12 13l5-6M4 18h16"/><circle cx="12" cy="13" r="2"/>',
     "faults": '<path d="M6 3v6a6 6 0 0 0 12 0V3M3 3h6M15 3h6M12 15v3a3 3 0 0 0 6 0v-2"/><circle cx="18" cy="13" r="2"/>',
     "service": '<circle cx="12" cy="12" r="9"/><path d="m8 7 2 5 5 3M16 5l-3 5"/>',
+    "functions": '<path d="M14 6a5 5 0 0 0-6 6l-5 5a2 2 0 0 0 3 3l6-6a5 5 0 0 0 6-6l-3 3-3-3 3-3z"/>',
     "coding": '<path d="M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6"/>',
     "history": '<path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/>',
     "backups": '<path d="M5 3h12l3 3v15H4V3zM8 3v6h8V3M8 21v-8h8v8"/>',
@@ -143,6 +144,28 @@ class CockpitCard(QFrame):
         if context is not None:
             self.box.addWidget(caption(context))
         self.box.addWidget(caption(title, "cardTitle"))
+
+
+class ActionCard(CockpitCard):
+    """Open a card from its surface or its keyboard-accessible action button."""
+
+    def __init__(self, title: str, component: str) -> None:
+        super().__init__(title)
+        self.box.addWidget(caption(component))
+        self.button = QPushButton("Open")
+        self.button.setAccessibleName(f"Open {title}")
+        self.box.addWidget(self.button, alignment=Qt.AlignmentFlag.AlignRight)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        """Forward a left click on the card body to the same action as its button."""
+        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(
+            event.position().toPoint()
+        ):
+            self.button.click()
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
 
 
 class ReviewItem(QFrame):

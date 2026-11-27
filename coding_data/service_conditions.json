@@ -1,0 +1,117 @@
+{
+  "engines": {
+    "D83BX7C0": {
+      "dids": [
+        18234,
+        22869
+      ],
+      "sha256": "183b2622f5103c3627eca341ddd9628954119106fc28411ba4ea78050d9d7648"
+    },
+    "DME8FF_R": {
+      "dids": [
+        18439,
+        19121
+      ],
+      "sha256": "0155a47c43e7d112afb0990e6995b3bf2c5efd580348f9cfafbf46b9c8e0accf"
+    },
+    "DME_BX8": {
+      "dids": [
+        18439,
+        19121
+      ],
+      "sha256": "97d7b17d056fcf2e1d2e5a4936279d7664a7145069a77c1a0a16c9533ab2c2db"
+    },
+    "S55": {
+      "dids": [
+        18439,
+        19121
+      ],
+      "sha256": "cfc5cc7598837175cc634711a4ce2ace7776db74d3b359ed831ae98af5fb558b"
+    }
+  },
+  "measurements_sha256": "ef2046d3d8c65780445dbfbec12b18603e77edee8bfa23c719ef9c734ea3c8ae",
+  "schema": 1,
+  "wheel_readers": {
+    "DSC_10": {
+      "args": "ARG;GESCHWINDIGKEIT_RAD",
+      "directions": [
+        "STAT_DREHRICHTUNG_VLO",
+        "STAT_DREHRICHTUNG_VRO",
+        "STAT_DREHRICHTUNG_HLO",
+        "STAT_DREHRICHTUNG_HRO",
+        "STAT_DREHRICHTUNG_REFO"
+      ],
+      "job": "STATUS_LESEN",
+      "quality": [
+        "STAT_SIGNALQUALITAET_VL_WERT",
+        "STAT_SIGNALQUALITAET_VR_WERT",
+        "STAT_SIGNALQUALITAET_HL_WERT",
+        "STAT_SIGNALQUALITAET_HR_WERT"
+      ],
+      "request": "22dbe4",
+      "sha256": "39d3a1283982894cef9dc426f099d4b7cae39c9a065831ad42f6383b625bc92d",
+      "size": 22,
+      "speeds": [
+        "STAT_GESCHWINDIGKEIT_RAD_VL_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_VR_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_HL_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_HR_WERT",
+        "STAT_GESCHWINDIGKEIT_FZG_WERT"
+      ]
+    },
+    "DSC_25": {
+      "args": "ARG;GESCHWINDIGKEIT_RAD",
+      "directions": [
+        "STAT_DREHRICHTUNG_VLO",
+        "STAT_DREHRICHTUNG_VRO",
+        "STAT_DREHRICHTUNG_HLO",
+        "STAT_DREHRICHTUNG_HRO",
+        "STAT_DREHRICHTUNG_REFO"
+      ],
+      "job": "STATUS_LESEN",
+      "quality": [
+        "STAT_SIGNALQUALITAET_VL_WERT",
+        "STAT_SIGNALQUALITAET_VR_WERT",
+        "STAT_SIGNALQUALITAET_HL_WERT",
+        "STAT_SIGNALQUALITAET_HR_WERT"
+      ],
+      "request": "22dbe4",
+      "sha256": "4d80aa6b47121ab0c601dc23942a8762d3f8921cccfafc72775d6d0b6246b101",
+      "size": 22,
+      "speeds": [
+        "STAT_GESCHWINDIGKEIT_RAD_VL_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_VR_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_HL_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_HR_WERT",
+        "STAT_GESCHWINDIGKEIT_FZG_WERT"
+      ]
+    },
+    "DSC_I1": {
+      "args": "ARG;GESCHWINDIGKEIT_RAD",
+      "directions": [
+        "STAT_DREHRICHTUNG_VLO",
+        "STAT_DREHRICHTUNG_VRO",
+        "STAT_DREHRICHTUNG_HLO",
+        "STAT_DREHRICHTUNG_HRO",
+        "STAT_DREHRICHTUNG_REFO"
+      ],
+      "job": "STATUS_LESEN",
+      "quality": [
+        "STAT_SIGNALQUALITAET_VL_WERT",
+        "STAT_SIGNALQUALITAET_VR_WERT",
+        "STAT_SIGNALQUALITAET_HL_WERT",
+        "STAT_SIGNALQUALITAET_HR_WERT"
+      ],
+      "request": "22dbe4",
+      "sha256": "c0ba86109f340c9a89aad28f4c7f948af171abe227b7e2401ace78c4e4d8e5e8",
+      "size": 22,
+      "speeds": [
+        "STAT_GESCHWINDIGKEIT_RAD_VL_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_VR_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_HL_WERT",
+        "STAT_GESCHWINDIGKEIT_RAD_HR_WERT",
+        "STAT_GESCHWINDIGKEIT_FZG_WERT"
+      ]
+    }
+  }
+}

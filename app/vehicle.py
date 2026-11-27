@@ -263,7 +263,11 @@ def read_supply_voltage(
 
 
 def check_write_conditions(
-    connection: Any, ecus: list[dict[str, Any]], context: OperationContext
+    connection: Any,
+    ecus: list[dict[str, Any]],
+    context: OperationContext,
+    *,
+    require_ignition: bool = False,
 ) -> str:
     """Read fresh conditions on the held owner and refuse known unsafe ignition/power."""
     if getattr(connection, "power_sufficient", None) is False:
@@ -273,6 +277,10 @@ def check_write_conditions(
     try:
         status = read_power_status(connection, ecus, ignition_only=True, context=context)
         ignition = [item for item in status["kl15"] if item["state"] in {"read", "transition"}]
+        if require_ignition and not ignition:
+            raise WriteConditionsBlocked(
+                "Ignition could not be verified. Check KL15 before starting."
+            )
         for observation in ignition:
             if observation["raw_value"] != 10:
                 logger.info(
@@ -302,7 +310,9 @@ def check_write_conditions(
     return result
 
 
-def read_engine_data(connection: Any, ecus: list[dict[str, Any]]) -> list[dict[str, object]] | None:
+def read_engine_data(
+    connection: Any, ecus: list[dict[str, Any]], *, labels: set[str] | None = None
+) -> list[dict[str, object]] | None:
     """Read core engine values for an exactly identified definition; failures stay per item."""
     engines = [row for row in ecus if row.get("addr") == "0x12" and row.get("identified") is True]
     if len(engines) != 1:
@@ -312,6 +322,8 @@ def read_engine_data(connection: Any, ecus: list[dict[str, Any]]) -> list[dict[s
         return None
     values: list[dict[str, object]] = []
     for row in rows:
+        if labels is not None and row["label"] not in labels:
+            continue
         item: dict[str, object] = {"label": row["label"], "unit": row["unit"], "value": None}
         if connection.alive_ok:
             try:

@@ -145,10 +145,35 @@ Resolve the named job and its argument/result tables against the exact canonical
 PRG. Even one ECU uses several services, such as BDC `STEUERN` (0x2E),
 `STEUERN_IO` (0x2F) and `STEUERN_ROUTINE` (0x31).
 
+The first release ships three sets of versioned contracts. Each producer runs
+against the development catalog and canonical jobs. The runtime reads the
+generated definitions and checks the current vehicle and ECU identity.
+
+- `scripts/recover_service_observations.py` selects native status jobs for washer
+  fluid (D357), the brake-fluid switch (DC1F), tuner reception (D010), cabin and
+  evaporator temperature (D85C and D95C), and the last IBS wake-up reason (4F0E).
+  The last value describes one stored event. It cannot establish a drain history.
+- `scripts/recover_service_mirror.py` verifies the fitment read D330, the D32F
+  command timer and percentage readback. The catalog specifies five seconds on
+  BDC/FEM_20 and ten on BDC_G05/BCP_SP21. The test checks an idle baseline,
+  full dimming and return to zero. The owner records the optical result separately.
+  `scripts/recover_service_conditions.py` binds the motion readers used before actuation.
+- `scripts/recover_service_wipers.py` matches vehicle-order series and type to
+  the repair instruction and its English content digest. For types missing
+  from the catalog, the compiler also checks the explicit brand, series and body
+  fields in the KIS vehicle-type table against the passenger-car classifications.
+  For example, F056 type row 747308596 identifies HS71 as F48. Repair document
+  2000012946159 specifies its accessory-power and stalk sequence.
+  Other instructions specify different stalk directions. BDC, FEM_20 and BDC_G11
+  report service and park independently. BDC_G05 and BCP_SP21 distinguish parked
+  from outside park, so upright position requires visual confirmation. Entry and
+  return use the stalk. The learning procedure below lacks a verified bound on
+  diagnostic actuation after a lost connection.
+
 | Candidate | Verified source coordinates and remaining work |
 |---|---|
 | Inside mirror dimming and status | BDC fixed function 20000155893359. `ABL_DIT_AT5116_BDCISECO.Funktionstest` (`0x0600000f`) checks fitment and invokes a timed full-dim test. In `bdc.prg`, `EC_SPIEGEL_VORHANDEN` (D330) reports fitment, and `EC_SPIEGEL_ABBLENDEN` (D32F) takes seconds and returns dimming percentage. The test does not expose a voltage setpoint or measured mirror voltage. |
-| Front wiper service position | FEM_20 fixed functions 20000352521148/20000352521268 enter/release service position. `bdc.prg` defines `WISCHER_FRONT_SERVICE` enter/release/status (D363). REA shows `ABL_DIT_AS6160_BDCWIINO.Wischer_einlernen` (`0x0600000c`) invoking it, while `Wischer_einlernen_alt` (`0x0600000e`) uses installation position (D362). BDC_G05 also has an installation-position function 20000348376327. Establish fitment, safe entry conditions and park/restoration before enabling each variant. |
+| Front wiper service position | FEM_20 fixed functions 20000352521148/20000352521268 enter/release service position. `bdc.prg` defines `WISCHER_FRONT_SERVICE` enter/release/status (D363). REA shows `ABL_DIT_AS6160_BDCWIINO.Wischer_einlernen` (`0x0600000c`) invoking it, while `Wischer_einlernen_alt` (`0x0600000e`) uses installation position (D362). BDC_G05 also has an installation-position function 20000348376327. The manual stalk procedure above handles service and return. Diagnostic learning and installation remain separate future work. |
 | Electric seats | FAS_12 fixed function 20000352527592 is a seat-depth movement with an explicit Reset job. `fas_12.prg` `MOTOR` (D708) selects the motor and direction/stop, reports motor status and takes PWM. Gate individual axes by fitment and establish a bounded stop on disconnect. |
 | Individual windows | BDC 20000155893229/20000155893224 use `FH_VERFAHREN_PROZENT` (A17F) for driver window open/close. Its result table distinguishes pending, running, completed, failed and aborted. The catalog warns about pinch risk and calls for normalization. Verify safety behavior and keep window learning a separate guided procedure. |
 | Powered tailgate | HKFM11 20000359018721/20000359018569 are open/close. `hkfm11.prg` `STEUERN_HECKKLAPPENANTRIEB` (D248) defines stop/open/close and `POSITION_HKL` (D231) reports position segments. BDC 20000155893917 only actuates the latch button. Power-tailgate initialization is a separate ABL, e.g. `ABL_DIT_AS4162_HKLINIT`. |
@@ -238,7 +263,7 @@ owns only the other endpoint; it is not another app protocol owner.
 `assets/demo_vehicle.json` from that root's bundled jobs, coding catalogue and
 measurement contracts. The full asset builder runs it and manifests its output.
 The fixed synthetic VIN, faults, service values and source-sized/signed coding
-blocks cover ZGW_01, DME_BX8, BDC, KOMB25 and NBT. Per-ECU job hashes and exact
+blocks cover ZGW_01, DME_BX8, DSC_I1, BDC, KOMB25, IHX_I1 and NBT. Per-ECU job hashes and exact
 coding definitions remain in the fixture. These are simulated values, not an
 owner-car capture or physical validation. Unsupported requests receive explicit
 negative responses; supported writes update state and source restarts finish

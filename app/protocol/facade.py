@@ -55,10 +55,18 @@ class DiagnosticConnection:
         local_ip: str,
         entity: int = 0x10,
         environment: SessionEnvironment = LIVE,
+        synthetic_service_outputs: bool = False,
+        demo_wiper_stalk: Callable[[bool], None] | None = None,
         stream_factory: Callable[[OperationContext], BoundedStream] | None = None,
     ) -> None:
         if (environment.mode == "demo") != (stream_factory is not None):
             raise ValueError("DEMO requires a local stream factory; live sessions use TCP")
+        if synthetic_service_outputs and environment.mode != "demo":
+            raise ValueError("Synthetic output fixtures require a local DEMO peer")
+        if demo_wiper_stalk is not None and not synthetic_service_outputs:
+            raise ValueError("A virtual stalk requires the synthetic DEMO peer")
+        self.demo_wiper_stalk = demo_wiper_stalk
+        self.synthetic_service_outputs = synthetic_service_outputs
         self._environment = environment
         self._stream_factory = stream_factory
         self.host = host
@@ -317,7 +325,31 @@ class DiagnosticConnection:
             ctx.cancelled = scope.cancelled
 
         def exchange(active: OperationContext) -> bytes:
-            response = self._service(ecu_addr).invoke(payload, active, raw=raw, grant=grant)
+            try:
+                response = self._service(ecu_addr).invoke(payload, active, raw=raw, grant=grant)
+            except ProtocolFailure as exc:
+                # A held-owner job needs its correlated NRC just like a queued telegram.
+                if self._active is None:
+                    raise
+                if exc.reconnect:
+                    self.request_close()
+                elif exc.kind == FailureKind.NEGATIVE:
+                    return exc.raw
+                raise
+            except TimeoutError:
+                # Native jobs may consume exceptions. Settle the stream here before
+                # a phase can send a release or read behind an outstanding reply.
+                if (
+                    self._active is not None
+                    and active.sent
+                    and (self._active.mutation or not self._quarantine(active))
+                ):
+                    self.request_close()
+                raise
+            except ConnectionError:
+                if self._active is not None:
+                    self.request_close()
+                raise
             if payload[:1] == b"\x10" and response[:1] == b"\x50":
                 self._last_session[ecu_addr] = time.monotonic()
             return response

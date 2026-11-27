@@ -182,6 +182,24 @@ def build(
     library = ROOT / "native/build" / ("libedx.dylib" if sys.platform == "darwin" else "libedx.so")
     if output != ROOT:
         shutil.copy2(library, output / library.name)
+    run(
+        sys.executable,
+        str(ROOT / "scripts/recover_service_conditions.py"),
+        str(rheingold / "Ecu"),
+        str(data / "engine_measurements.json"),
+        str(data / "service_conditions.json"),
+    )
+    for feature in ("observations", "mirror", "wipers"):
+        run(
+            sys.executable,
+            str(ROOT / f"scripts/recover_service_{feature}.py"),
+            "--rheingold",
+            str(rheingold),
+            "--reader",
+            str(reader),
+            "--output",
+            str(data / f"service_{feature}.json"),
+        )
     run(sys.executable, str(ROOT / "scripts/build_demo_profile.py"), "--asset-root", str(output))
     publish_manifest(output)
 

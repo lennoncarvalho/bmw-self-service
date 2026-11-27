@@ -59,7 +59,7 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   produce visible results through normal workflows. Do not randomize each
   connection or expose failure-injection UI.
 - Keep virtual vehicle changes across disconnect/reconnect within the app run.
-  Restarting the app or explicit Reset DEMO restores the bundled vehicle state.
+  Reset DEMO restores the selected profile’s initial vehicle state.
   Saved DEMO backups/journals remain separate from this volatile vehicle state
   and are not deleted by reset. Fresh instances must not inherit stale caches,
   consumed-draft markers or recovery locks from earlier DEMO instances.
@@ -199,14 +199,21 @@ implementation stays in [tasks.md](tasks.md); reusable facts belong in
   entries by a current-odometer read or claim knowledge of unreadable car history.
   Use the sourced service types/field limits in [docs.md](docs.md#history-data).
 
-## Planned Service Functions
+## Service Functions
 
-Service Functions is a future page for component tests, live observations and
-guided service procedures. Show categorized cards for supported functions on the
-connected vehicle. A card opens a modal with affected components, preconditions,
-controls, live results and diagnostic outcome. Resolve support from fresh
-vehicle identity and exact ECU variants, source applicability, fitted equipment
-and available state. Hide functions whose compatibility cannot be established.
+The first release covers five read-only functions: washer-fluid status, brake-fluid
+switch status, radio reception, climate temperatures and the last wake-up reason
+stored for the intelligent battery sensor. It also includes windshield wiper
+service position and timed darkening of the electrochromic interior rearview mirror.
+Use the vehicle-specific stalk procedure for the wipers and check ECU blade
+position where available. Verify mirror release after the ECU timer expires.
+
+Show categorized cards for supported functions on the connected vehicle. Each
+modal identifies the component, applicable preconditions, controls and results.
+Recheck the vehicle, ECU software and source contract before acting. Distinguish
+the ECU's report from the owner's physical observation.
+
+### Future Service Functions
 
 - Start with verified individual lighting controls and a **Walk-around Lights**
   preset for a parked vehicle. Show which installed lamps each stage checks.
@@ -216,32 +223,31 @@ and available state. Hide functions whose compatibility cannot be established.
   without selecting reverse. Provide an explicit end-test control and return each
   affected output to ECU control on completion. Keep cabin-light tests separate.
   Report ECU output state separately from the owner's visual check.
-- Use the timed electrochromic inside-mirror test and audio tone as additional
-  early tests. Use presence or audio-configuration reads to show available
-  controls. Exercise the normal path in DEMO before enabling live contracts.
-- Add wiper service position and exterior-mirror fold or directional movement
+- Add a bounded speaker-tone test for verified audio configurations.
+- Add exterior-mirror fold or directional movement
   when entry, stop/release and post-state checks are established.
 - Plan seats, windows and the powered tailgate as stationary component tests
   with clear movement boundaries and verified stop behavior.
-- Include display connection and RGB patterns, radio signal quality, HVAC blower
-  and recirculation flap tests, washer pumps and fluid status, door and tailgate
-  switch status, parking-sensor distances, a brief horn test, and brake-fluid
-  switch status where supported. Reuse existing Overview readers for the values
-  they already own.
+- Include display connection and RGB patterns, HVAC blower
+  and recirculation flap tests, washer pumps, door and tailgate
+  switch status, parking-sensor distances and a brief horn test where supported.
+  Reuse existing Overview readers for the values they already own.
 - Add read-only TPMS diagnostics. Show sensor IDs, assigned corners, last valid
   pressures and temperatures, reception quality and sensor battery estimates
   when available. Distinguish direct TPMS, indirect monitoring and unknown
   equipment. For retrofit research, check the exact vehicle order, receiver
   hardware and compatible sensor family before concluding what can be fitted.
 - Add read-only battery-drain history. Show recorded parked-current durations
-  and stored wake-up reasons where the identified ECU exposes them. Keep the
+  and additional stored wake-up history where the identified ECU exposes it. Keep the
   historical records separate from live current and charging measurements.
 - Add **Register 12 V Battery Replacement** as a guided, one-time service
   operation. Start with a physically installed, like-for-like replacement
   matching the vehicle's configured chemistry and capacity. Show the known
   battery configuration and previous replacement record before confirmation.
   Check vehicle identity, power and the applicable preconditions, then reread
-  the replacement record to verify registration. A different capacity or
+  the replacement record to verify registration. Disclose and confirm clearing the
+  nonpersistent BDC pre-damage record and setting the cluster clock. Block the
+  procedure if it would require clearing DME faults. A different capacity or
   chemistry needs its own verified configuration workflow.
 - Keep window or tailgate learning and rain sensor initialization as guided
   procedures with their own preconditions and completion checks. Consider
