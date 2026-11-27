@@ -236,6 +236,13 @@ and available state. Hide functions whose compatibility cannot be established.
 - Add read-only battery-drain history. Show recorded parked-current durations
   and stored wake-up reasons where the identified ECU exposes them. Keep the
   historical records separate from live current and charging measurements.
+- Add **Register 12 V Battery Replacement** as a guided, one-time service
+  operation. Start with a physically installed, like-for-like replacement
+  matching the vehicle's configured chemistry and capacity. Show the known
+  battery configuration and previous replacement record before confirmation.
+  Check vehicle identity, power and the applicable preconditions, then reread
+  the replacement record to verify registration. A different capacity or
+  chemistry needs its own verified configuration workflow.
 - Keep window or tailgate learning and rain sensor initialization as guided
   procedures with their own preconditions and completion checks. Consider
   further weather, oil level, fluid and temperature observations

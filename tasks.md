@@ -49,6 +49,10 @@ acceptance remains in this milestone.
 - [ ] Decode stored parked-current durations and variant-specific wake-up
   history. Verify that the feature uses read-only requests and labels historical
   data and unavailable values explicitly.
+- [ ] Recover like-for-like 12 V battery registration contracts, including the
+  configured type/capacity, required inputs, power and ignition conditions, and
+  before/after history. Verify the exact request, rejected or uncertain writes,
+  unchanged or ambiguous history, and no automatic replay in DEMO.
 - [ ] Show semantic feature/option names in coding backup comparisons alongside
   original/intended bytes, using exact saved-definition matching. Current
   comparisons retain bytes and do not explain each changed setting.
